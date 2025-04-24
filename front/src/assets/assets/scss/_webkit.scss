@@ -1,0 +1,54 @@
+/*Webkit*/
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar:window-inactive {
+  display: none;
+}
+::-webkit-scrollbar:corner-present  {
+}
+::-webkit-scrollbar-track-piece {
+  border-radius: 2px;
+  background-color: #2556a3;
+  background-clip: content-box;
+  border-radius: 6px;
+  border: solid 4px transparent;
+}
+::-webkit-scrollbar-track-piece:decrement {
+  background: rgba(187, 65, 25);
+  background-clip: content-box;
+  border: solid 4px transparent;
+}
+section::-webkit-scrollbar-button:vertical:start:decrement {
+  background: transparent url(https://elcssar.com/ejemplos/arrow_up.png) no-repeat center center;
+}
+section::-webkit-scrollbar-button:vertical:end:decrement {
+  background: transparent url(https://elcssar.com/ejemplos/arrow_up.png) no-repeat center center;
+}
+section::-webkit-scrollbar-button:vertical:end:increment {
+  background: transparent url(https://elcssar.com/ejemplos/arrow_down.png) no-repeat center center;
+}
+section::-webkit-scrollbar-button:horizontal:decrement {
+  background: transparent url(https://elcssar.com/ejemplos/arrow_left.png) no-repeat center center;
+}
+::-webkit-scrollbar-button:horizontal:increment {
+  background: transparent url(https://elcssar.com/ejemplos/arrow_right.png) no-repeat center center;
+}
+
+::-webkit-scrollbar-thumb  {
+  height: 10px;
+  width: 4px;
+  background-color: #56abe0;
+  border-radius: 6px;
+  box-shadow: 0 3px 6px -2px rgba(86,171,224,0.5);
+}
+::-webkit-scrollbar-corner {
+  background: transparent ;
+}
+::-webkit-resizer {
+  background: transparent url(https://elcssar.com/ejemplos/expandIcon.png) no-repeat -1px -1px;
+}
+::-webkit-scrollbar-track-piece:no-button {
+  background-color: red;
+}

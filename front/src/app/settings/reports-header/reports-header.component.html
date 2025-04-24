@@ -1,0 +1,48 @@
+<div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header">{{ 'general.createEdit' | translate | uppercase }} {{ 'Encabezado de informes' | uppercase  }}</div>
+      <div class="card-body">
+        <form  [formGroup]="customForm">
+          <div class="row">
+            <div class="col">
+              <div class="form-group">
+                <app-html-editor [valueContent]="line1" (valueChanged)="onChangeLine1($event)"></app-html-editor>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col">
+              <div class="form-group">
+                <app-html-editor [valueContent]="line2" (valueChanged)="onChangeLine2($event)"></app-html-editor>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col">
+              <div class="form-group">
+                <app-html-editor [valueContent]="foot" (valueChanged)="onChangeFoot($event)"></app-html-editor>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="file">Seleccionar imagen</label>
+                <input type="file" id="file" #uploadFile
+                (change)="uploadImage($event)" class="form-control-file">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <img width="128px" [src]="imgData"  class="img-thumbnail" fallimg>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="card-footer">
+        <app-footer-form [showAaveACreate]="false" [saveAClose]="saveAClose" (closeEvent)="cancel()"
+                          (saveAndCreateEvent)="saveAndCreate()" (saveAndCloseEvent)="saveAndClose()"></app-footer-form>
+      </div>
+    </div>
+  </div>
+</div>

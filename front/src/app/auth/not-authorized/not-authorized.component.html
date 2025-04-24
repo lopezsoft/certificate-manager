@@ -1,0 +1,37 @@
+<!-- Not authorized-->
+<div class="misc-wrapper">
+    <a class="brand-logo" href="/#">
+        <img src="{{ coreConfig.app.appLogoImage }}" alt="brand-logo" height="28" />
+    </a
+    >
+    <div class="misc-inner p-2 p-sm-3">
+        <div class="w-100 text-center">
+            <h2 class="mb-1">Usted no está autorizado! 🔐</h2>
+            <p class="mb-2">
+                Lo sentimos, no tienes permiso para acceder a esta sección de la aplicación. Si crees que esto es un error, por favor, comunícate con el soporte técnico o revisa tus permisos en la configuración de tu cuenta.
+            </p>
+            <div class="d-grid">
+                <a class="btn btn-primary mb-1 btn-sm-block" routerLink="/auth/login"
+                >Ir al inicio</a
+                >
+                <button
+                        class="btn btn-outline-primary btn-sm-block"
+                        (click)="resetAccess()"
+                >
+                    Restablecer acceso
+                    <i class="fas fa-undo ms-1"></i>
+                </button>
+            </div>
+            <img
+                    class="img-fluid"
+                    [src]="
+          coreConfig.layout.skin === 'dark'
+            ? 'assets/images/pages/not-authorized-dark.svg'
+            : 'assets/images/pages/not-authorized.svg'
+        "
+                    alt="Not authorized page"
+            />
+        </div>
+    </div>
+</div>
+<!-- / Not authorized-->

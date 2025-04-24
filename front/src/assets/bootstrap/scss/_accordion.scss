@@ -1,0 +1,147 @@
+//
+// Base styles
+//
+
+$accordion-border-color: rgba(0, 0, 0, 0.15);
+$accordion-margin-color: rgba(0, 0, 0, 0.05);
+$header-padding-y: 1px;  // Ajusta este valor según sea necesario
+$header-padding-x: 1px;  // Ajusta este valor según sea necesario
+
+.accordion {
+  --#{$prefix}accordion-color: #{$accordion-color};
+  --#{$prefix}accordion-bg: #{$accordion-bg};
+  --#{$prefix}accordion-transition: all 0.3s ease-in-out;  // Ajuste de transición
+  --#{$prefix}accordion-border-color: #{$accordion-border-color};
+  --#{$prefix}accordion-border-width: 1px;  // Ajuste de ancho de borde
+  --#{$prefix}accordion-border-radius: 8px;  // Ajuste de radio de borde
+  --#{$prefix}accordion-inner-border-radius: 8px;  // Ajuste de radio de borde interno
+  --#{$prefix}accordion-btn-padding-x: .5rem;  // Ajuste de padding
+  --#{$prefix}accordion-btn-padding-y: .5rem;  // Ajuste de padding
+  --#{$prefix}accordion-btn-color: #{$accordion-button-color};
+  --#{$prefix}accordion-btn-bg: #{$accordion-button-bg};
+  --#{$prefix}accordion-btn-icon: #{escape-svg($accordion-button-icon)};
+  --#{$prefix}accordion-btn-icon-width: 12px;  // Ajuste de ancho de icono
+  --#{$prefix}accordion-btn-icon-transform: rotate(0deg);  // Ajuste de transformación de icono
+  --#{$prefix}accordion-btn-icon-transition: transform 0.3s ease-in-out;  // Ajuste de transición de icono
+  --#{$prefix}accordion-btn-active-icon: #{escape-svg($accordion-button-active-icon)};
+  --#{$prefix}accordion-btn-focus-border-color: #{$accordion-button-focus-border-color};
+  --#{$prefix}accordion-btn-focus-box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);  // Ajuste de sombra de enfoque
+  --#{$prefix}accordion-body-padding-x: .5rem;  // Ajuste de padding
+  --#{$prefix}accordion-body-padding-y: .5rem;  // Ajuste de padding
+  --#{$prefix}accordion-active-color: #{$accordion-button-active-color};
+  --#{$prefix}accordion-active-bg: #{$accordion-button-active-bg};
+}
+
+.accordion-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: var(--#{$prefix}accordion-btn-padding-y) var(--#{$prefix}accordion-btn-padding-x);
+  @include font-size($font-size-base);
+  color: var(--#{$prefix}accordion-btn-color);
+  text-align: left;
+  background-color: var(--#{$prefix}accordion-btn-bg);
+  border: 0 solid var(--#{$prefix}accordion-border-color);  // Ajuste de borde
+  @include border-radius(0.5rem);  // Ajuste de radio de borde
+  overflow-anchor: none;
+  @include transition(var(--#{$prefix}accordion-transition), box-shadow 0.3s ease-in-out);  // Ajuste de transición
+
+  &:not(.collapsed) {
+    color: var(--#{$prefix}accordion-active-color);
+    background-color: var(--#{$prefix}accordion-active-bg);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);  // Ajuste de sombra
+
+    &::after {
+      background-image: var(--#{$prefix}accordion-btn-active-icon);
+      transform: var(--#{$prefix}accordion-btn-icon-transform);
+    }
+  }
+
+  &::after {
+    flex-shrink: 0;
+    width: var(--#{$prefix}accordion-btn-icon-width);
+    height: var(--#{$prefix}accordion-btn-icon-width);
+    margin-left: auto;
+    content: "";
+    background-image: var(--#{$prefix}accordion-btn-icon);
+    background-repeat: no-repeat;
+    background-size: var(--#{$prefix}accordion-btn-icon-width);
+    @include transition(var(--#{$prefix}accordion-btn-icon-transition));
+  }
+
+  &:hover {
+    z-index: 2;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);  // Ajuste de sombra en hover
+  }
+
+  &:focus {
+    z-index: 3;
+    border-color: var(--#{$prefix}accordion-btn-focus-border-color);
+    outline: 0;
+    box-shadow: 0 0 0 0.1rem rgba(0, 123, 255, 0.11), 0 1px 2px rgba(0, 0, 0, 0.1);  // Ajuste de sombra en foco
+  }
+}
+
+.accordion-header {
+  margin-bottom: 0;
+  padding: $header-padding-y $header-padding-x;  // Ajuste de padding
+}
+
+.accordion-item {
+  color: var(--#{$prefix}accordion-color);
+  background-color: var(--#{$prefix}accordion-bg);
+  border: var(--#{$prefix}accordion-border-width) solid var(--#{$prefix}accordion-border-color);
+
+  &:first-of-type {
+    @include border-top-radius(var(--#{$prefix}accordion-border-radius));
+
+    .accordion-button {
+      @include border-top-radius(var(--#{$prefix}accordion-inner-border-radius));
+    }
+  }
+
+  &:not(:first-of-type) {
+    border-top: 0;
+  }
+
+  &:last-of-type {
+    @include border-bottom-radius(var(--#{$prefix}accordion-border-radius));
+
+    .accordion-button {
+      &.collapsed {
+        @include border-bottom-radius(var(--#{$prefix}accordion-inner-border-radius));
+      }
+    }
+
+    .accordion-collapse {
+      @include border-bottom-radius(var(--#{$prefix}accordion-border-radius));
+    }
+  }
+}
+
+.accordion-body {
+  padding: 0.5rem 1rem;  // Ajuste de padding
+}
+
+.accordion-flush {
+  .accordion-collapse {
+    border-width: 0;
+  }
+
+  .accordion-item {
+    border-right: 0;
+    border-left: 0;
+    @include border-radius(0);
+
+    &:first-child { border-top: 0; }
+    &:last-child { border-bottom: 0; }
+
+    .accordion-button {
+      &,
+      &.collapsed {
+        @include border-radius(0);
+      }
+    }
+  }
+}

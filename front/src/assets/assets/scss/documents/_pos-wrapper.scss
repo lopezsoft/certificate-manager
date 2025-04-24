@@ -1,0 +1,60 @@
+@import "mixes";
+.pos-wrapper {
+  background-color: #fff;
+  padding: 0;
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: auto 540px;
+  @include media-breakpoint-up(md) {
+    grid-template-columns: auto 400px;
+  }
+  @include media-breakpoint-up(lg) {
+    grid-template-columns: auto 480px;
+  }
+  @include media-breakpoint-up(xl) {
+    grid-template-columns: auto 560px;
+  }
+}
+
+.pos-first-column {
+  padding: .5rem 4px;
+}
+
+.pos-last-column {
+  padding: .5rem 4px;
+  overflow: hidden;
+  overflow-y: auto;
+}
+
+
+// Mixin para estilos comunes
+@mixin common-styles-child-pos {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  height: auto;
+}
+
+@mixin common-styles-large-pos {
+  height: 100vh;
+  overflow: hidden;
+  display: grid;
+}
+
+// Itera sobre los breakpoints y aplica los estilos
+@each $breakpoint in xs, xsm, sm {
+  @include media-breakpoint-up($breakpoint) {
+    .pos-wrapper {
+      @include common-styles-child-pos;
+    }
+  }
+}
+@each $breakpoint in md, lg, xl, xxl {
+  @include media-breakpoint-up($breakpoint) {
+    .pos-wrapper {
+      @include common-styles-large-pos;
+    }
+  }
+}

@@ -1,0 +1,16 @@
+<div class="card card-information">
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-2 col-lg-1 d-flex justify-content-center">
+        <img src="/assets/img/aviso.svg"
+             alt="info"
+             class="img-fluid">
+      </div>
+      <div class="col-md-10 col-lg-11">
+        <ng-content></ng-content>
+      </div>
+    </div>
+  </div>
+  <ng-content select="[footer]">
+  </ng-content>
+</div>

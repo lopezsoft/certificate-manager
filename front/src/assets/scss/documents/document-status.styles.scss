@@ -1,0 +1,63 @@
+// Definición de colores para cada estado
+// Definición de colores para cada estado
+$colors: (
+        DRAFT: #7C7C7C,
+        SENT: #2980B9,
+        OVERDUE: #C0392B,
+        PAID: #10572d,
+        PARTIALLY_PAID: #F39C12,
+        CANCELLED: #E74C3C,
+        REJECTED: #D35400,
+        DISPUTED: #E67E22,
+        REFUNDED: #3498DB,
+        ON_HOLD: #F1C40F,
+        DEFINITIVE: #00427c,
+        CLOSED: #085d2c,
+        OPEN: #c57f11,
+        PENDING: #F39C12,
+        DELETE: #E74C3C,
+        ANNULLED: #E74C3C,
+        ACCEPTED: #10572d,
+        PROCESSING: #F39C12,
+        PROCESSED: #085d2c,
+        ACCOUNTED: #085d2c,
+        UNKNOWN: #7C7C7C,
+        CREATED: #3498DB,
+        RUNNING: #F39C12,
+        VALIDATING: #F39C12,
+        FINISHED: #085d2c,
+        ERROR: #E74C3C,
+        SENDING: #F39C12
+);
+
+// Creación de clases para cada estado
+@each $status, $color in $colors {
+  .document-status-#{$status} {
+    background-color: $color;
+    color: #ffffff !important;  // Color de texto
+    border-radius: 4px;  // Bordes redondeados
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);  // Sombra suave
+    transition: background-color 0.3s ease;  // Transición suave
+    padding: .25rem .5rem !important;  // Espaciado interno
+    display: inline-block;  // Hacer que el span se comporte como un bloque
+    margin: 0.15rem;  // Espaciado externo
+    text-transform: uppercase;  // Texto en mayúsculas
+    font-weight: bold;  // Texto en negrita
+    font-size: 12px;  // Tamaño de fuente
+    span, label, b, p, div {
+      color: #fff5ef !important;  // Color de texto basado en el color de fondo
+    }
+  }
+}
+
+// Función para determinar el color de texto basado en el color de fondo
+@function contrast-color($background-color) {
+  $light-color: #ffffff;
+  $dark-color: #000000;
+  $perceived-brightness: (0.299 * red($background-color) + 0.587 * green($background-color) + 0.114 * blue($background-color)) / 255;
+  @if $perceived-brightness > 0.5 {
+    @return $dark-color;
+  } @else {
+    @return $light-color;
+  }
+}

@@ -1,0 +1,45 @@
+.clock-span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 550;
+}
+
+.content-clock {
+  position: fixed;
+  min-width: 15rem;
+  min-height: 2.5rem;
+  background-color: white;
+  border-radius: .25rem;
+  padding: .5rem;
+  z-index: 2050;
+  right: .5rem;
+  bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+  box-shadow: 0 4px 24px #22292f1a;
+  transition: all .3s ease-in-out,background 0s,color 0s,border-color 0s;
+}
+
+
+.update-application {
+  position: fixed;
+  min-width: 15rem;
+  min-height: 4rem;
+  background-color: white;
+  border-radius: .25rem;
+  padding: 1rem;
+  z-index: 2030;
+  left: .5rem;
+  bottom: 4.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+  box-shadow: 0 4px 24px #22292f1a;
+  transition: all .3s ease-in-out,background 0s,color 0s,border-color 0s;
+}

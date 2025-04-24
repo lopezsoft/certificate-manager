@@ -1,0 +1,53 @@
+<div class="support-container" [class]="{'active': isMenuOpen}">
+  <!-- Menú desplegable con opciones de soporte -->
+  <div *ngIf="isMenuOpen" class="support-menu open">
+    <div class="column-data" (click)="openChat()">
+      <span class="remote-style">
+        Chat de soporte técnico
+      </span>
+      <button class="btn remote-style">
+        <i class="material-symbols-outlined">chat</i>
+      </button>
+    </div>
+    <div class="column-data" (click)="openYoutube()">
+      <span class="youtube-style">
+        Tutoriales en youtube
+      </span>
+      <button class="btn youtube-style">
+        <i class="material-symbols-outlined">
+          video_library
+        </i>
+      </button>
+    </div>
+    <div class="column-data"
+          appCustomTooltip="Asistente soporte técnico con IA"
+         (click)="openSupport()">
+      <span class="facebook-style">
+        Asistente soporte técnico
+      </span>
+      <button class="btn facebook-style">
+        <i class="material-symbols-outlined">smart_toy
+        </i>
+      </button>
+    </div>
+    <div class="column-data"
+         appCustomTooltip="Soporte por WhatsApp"
+         tooltipDirection="right"
+         (click)="openWhatsApp()">
+      <span class="whatsapp-style">
+        Soporte por WhatsApp
+      </span>
+      <button class="btn whatsapp-style">
+        <i class="fab fa-whatsapp"></i>
+      </button>
+    </div>
+  </div>
+  <!-- Botón flotante para abrir el menú -->
+  <button class="btn support-btn rounded-circle"
+          appCustomTooltip="Soporte"
+          tooltipDirection="right"
+          (click)="toggleSupportMenu()">
+    <i class="material-symbols-outlined" *ngIf="!isMenuOpen">support_agent</i>
+    <i class="material-symbols-outlined" *ngIf="isMenuOpen">close</i>
+  </button>
+</div>

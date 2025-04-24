@@ -1,0 +1,230 @@
+// Variables de color para la personalización
+@import '../variables.scss';
+
+// Contenedor principal del soporte
+.support-container {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  z-index: 1500; // Asegura que esté por encima de otros elementos
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding-bottom: 30px;
+  padding-right: 15px;
+  &.active {
+    width: 25rem;
+    height: 30rem;
+    border-top-left-radius: 100%;
+    // Añadir difuminado al fondo para resaltar el contenedor
+    box-shadow: 2px 2rem 16rem 82px rgba(37, 86, 163, 0.60);
+    // ligera transición para el efecto de apertura
+    transition: width 0.5s ease, height 0.5s ease, border-top-left-radius 0.5s ease;
+    // gradient background
+    background: #98c4f4 linear-gradient(145deg, #65a5ea, #3072e3);
+  }
+}
+
+// Estilo del botón flotante con animación
+.support-btn {
+  background-color: white !important;
+  color: $background-container;
+  border-color: $background-container !important;
+  border-width: $support-button-border-with;
+  font-size: 28px;
+  box-shadow: 0 0 10px $shadow-color;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.3s ease, border-color 0.13s, filter 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 50%;
+  width: $button-size !important;
+  height: $button-size !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  vertical-align: middle;
+  padding: 4px;
+  animation: heart-beat 5s infinite; // Aplicamos la animación del latido
+
+  i {
+    font-size: 32px;
+    color: $background-container;
+  }
+
+  &.active {
+    transform: scale(1.05);  // Hacer un pequeño zoom para dar un toque interactivo
+    box-shadow: 0 0 15px $shadow-color; // Sombra más pronunciada
+    animation: none; // Detenemos la animación del latido
+  }
+  &:hover {
+    filter: brightness(1.1); // Aumentar el brillo al pasar el mouse
+    i {
+      color: $white !important;
+    }
+    background-color: $background-container !important;
+    border-color: $hover-border-color  !important;
+  }
+  &:focus {
+    outline: none;
+    background-color: rgba(250, 199, 38, 0.95) !important;
+    border: rgba(143, 112, 15, 0.35) $support-button-border-with solid !important;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 22px;
+    width: 50px;
+    height: 50px;
+  }
+}
+
+// Menú de soporte desplegable
+.support-menu {
+  background-color: transparent;
+  border-radius: 8px;
+  box-shadow: none;
+  padding: 5px;
+  max-width: 280px;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.4s ease, transform 0.4s ease, bottom 0.3s ease-in-out;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-row-gap: 5px;
+  &.open {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .column-data {
+    display: grid;
+    justify-content: center;
+    align-items: center;
+    grid-template-columns: 1fr 34px;
+    grid-column-gap: 5px;
+    padding: 5px;
+    border-radius: 24px;
+    background-color: $menu-bg;
+    box-shadow: 0 0 10px $shadow-color;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    border: 1px solid #ddd;
+    &:hover {
+      background-color: $menu-bg-hover;
+      transform: scale(1.05);
+      cursor: pointer;
+    }
+    span {
+      font-size: 11px;
+      font-weight: 700;
+      border-right: 1px solid #ddd;
+      padding-right: 3px;
+    }
+    .whatsapp-style {
+      color: $whatsapp-green;
+    }
+    .youtube-style {
+      color: #FF0000;
+    }
+    .facebook-style {
+      color: #3b5998;
+    }
+    .remote-style {
+      color: #FF0000;
+    }
+    // Estilos para los botones del menú
+    button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 6px;
+      background-color: $button-bg;
+      border: 1px solid #ddd;
+      border-radius: 100%;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+      width: $button-size-sm !important;
+      height: $button-size-sm !important;
+      &:hover {
+        background-color: $hover-border-color;
+        color: $white;
+        transform: scale(1.05);
+      }
+
+      i {
+        font-size: 24px;
+      }
+
+      &.whatsapp-style {
+        background-color: $whatsapp-green;
+        color: $white;
+        border: 1px solid $whatsapp-green;
+        &:hover {
+          background-color: darken($whatsapp-green, 10%);
+        }
+      }
+       // Yuo tube button
+      &.youtube-style {
+        background-color: #FF0000;
+        color: $white;
+        border: 1px solid #FF0000;
+        &:hover {
+          background-color: darken(#FF0000, 10%);
+        }
+      }
+
+      // Facebook button
+      &.facebook-style {
+        background-color: #3b5998;
+        color: $white;
+        border: 1px solid #3b5998;
+        &:hover {
+          background-color: darken(#3b5998, 10%);
+        }
+      }
+
+      // Support remote app
+      &.remote-style {
+        background-color: #FF0000;
+        color: $white;
+        border: 1px solid #FF0000;
+        &:hover {
+          background-color: darken(#FF0000, 10%);
+        }
+      }
+
+      &:focus {
+        outline: none;
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    max-width: 220px;
+  }
+}
+
+
+// Definimos la animación de latido
+@keyframes heart-beat {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  25% {
+    transform: scale(1.1); // Aumentamos el tamaño del botón
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  75% {
+    transform: scale(1.1); // Vuelve a aumentar el tamaño
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    border-color: $heart-beat-border-color !important;
+    background-color: rgba(255, 0, 0, 0.1) !important;
+  }
+}

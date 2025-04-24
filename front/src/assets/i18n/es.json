@@ -1,0 +1,248 @@
+{
+  "export": {
+    "excel" : " - Exportar a Excel",
+    "csv"   : " - Exportar a CSV",
+    "pdf"   : " - Exportar a PDF",
+    "xml"   : " - Exportar a XML",
+    "html"  : " - Exportar a HTML",
+    "json"  : " - Exportar a JSON",
+    "tsv"   : " - Exportar a TSV",
+    "print" : " - Imprimir"
+  },
+  "placeholder" : {
+    "password"        : "Contraseña",
+    "confirmPassword" : "Confirmar contraseña",
+    "search"          : "Búsqueda...",
+    "email"           : "Correo electrónico"
+  },
+  "recoverPassword": {
+    "header"      : "Recuperar contraseña",
+    "description" : "Ingrese su dirección de correo electrónico y le enviaremos un enlace para que pueda cambiar su contraseña.",
+    "button"      : {
+      "recover"     : "Recuperar",
+      "recovering"  : "Recuperando..."
+    }
+  },
+  "login" : {
+    "rememberMe"  : "Recuérdame",
+    "headerForm"  : "Inicio de sesión",
+    "button"      : {
+      "startNow"  : "Iniciar ahora",
+      "loggingIn" : "Iniciando sesión"
+    },
+    "label"      : {
+      "youHaveNotRegistered"  : "¿No te has registrado?",
+      "createAccount"         : "Crear cuenta",
+      "forgotYourPassword"    : "¿Has olvidado tu contraseña?",
+      "recoverPassword"       : "Recordar contraseña"
+    }
+  },
+  "resend": {
+    "header"      : "Correo de confirmación",
+    "description" : "Ingrese su dirección de correo electrónico y le enviaremos un nuevo correo de confirmación.",
+    "button"      : {
+      "resend"     : "Reenviar correo de confirmación",
+      "resending"  : "Reenviando..."
+    },
+    "label"      : {
+      "notReceived"    : "¿No has recibido el correo de confirmación?",
+      "resend"         : "Reenviar correo de confirmación"
+    }
+  },
+  "register" : {
+    "title"       : "Crear cuenta",
+    "description" : "Complete el siguiente formulario para crear una nueva cuenta.",
+    "headerForm"  : "Formulario de Registro",
+    "userData"  	: "Datos del usuario",
+    "companyData" : "Datos de la empresa",
+    "button"      : {
+      "registerNow"       : "Registrar ahora",
+      "creatingAccount"   : "Creando cuenta..."
+    },
+    "label"      : {
+      "youRegistered" : "¿Ya te has registrado?",
+      "login"         : "Iniciar sesión"
+    },
+    "placeholder" : {
+      "nameAndSurname" : "Ingrese su nombre y apellidos"
+    },
+    "messages" : {
+      "successfulRegistration"  : "Registro exitoso.",
+      "differentPasswords"      : "Las contraseñas son diferentes."
+    }
+  },
+  "titleMessages"    : {
+    "emptyFields"     : "Campos en blanco",
+    "delete"          : "Eliminar registro",
+    "logout"          : "Cerrar sesión"
+  },
+  "bodyMessages"    : {
+    "emptyFields"   : "Por favor llene los campos del formulario.",
+    "logout"        : "¿Desea cerrar la sesión?",
+    "delete"        : "¿Seguro que desea eliminar el registro?"
+  },
+  "menu" : {
+    "user"      : {
+      "closeApp"    : "Salir",
+      "profile"     : "Perfil"
+    }
+  },
+  "buttons" : {
+    "goToStart" : "Ir al inicio",
+    "recover"   : "Recuperar",
+    "yes"     : "Si",
+    "not"     : "No",
+    "cancel"  : "Cancelar",
+    "edit"  	: "Editar",
+    "delete"  : "Borrar",
+    "close"   : "Cancelar",
+    "back"    : "Atrás",
+    "save"    : "Guardar",
+    "new"     : "Nuevo",
+    "import"  : "Importar",
+    "download"  : "Descargar",
+    "search"  : "Buscar",
+    "report"  : "Informe",
+    "saveAndClose"  : "Guardar y cerrar",
+    "saveAndCreate" : "Guardar y crear nuevo",
+    "acept"   : "Aceptar"
+  },
+  "general" : {
+    "error"               : "Error",
+    "isRequired"          : "Es requerido",
+    "pleaseWait"          : "Espere por favor",
+    "savedSuccessfully"   : "Guardado exitosamente",
+    "successfullyCreated" : "Creado exitosamente",
+    "loading"             : "Cargando",
+    "createEdit"          : "Crear/Editar",
+    "currency"            : "Moneda",
+    "tax"                 : "Impuesto",
+    "country"             : "País",
+    "aterisk"             : "*",
+    "404"                 : "404 La página no existe",
+    "asterisk"            : "*"
+  },
+	"messages": {
+		"loading"							: "Procesando petición, espere por favor...",
+		"confirmProccess"			: "Seguro que desea procesar esta petición?",
+		"proccessSuccessfull"	: "Petición procesada correctamente."
+	},
+  "companies": {
+    "company_name"      : "Nombre o razón social",
+    "trade_name"        : "Nombre comercial",
+    "reference"         : "Referencia",
+    "type_organization" : "Tipo de contribuyente",
+    "tax_level"         : "Tipo de responsabilidad",
+    "tax_regime"        : "Regimen contable",
+    "identity_document" : "Tipo de documento",
+    "type_person_id"    : "Tipo de cliente",
+    "number_employees"  : "Número de empleados",
+    "currency"          : "Moneda",
+    "country"           : "País",
+    "city"              : "Ciudad/Municipio",
+    "dni"               : "Número del documento",
+    "dv"                : "Digite DV",
+    "address"           : "Dirección principal",
+    "location"          : "Dirección postal",
+    "postal_code"       : "Código postal",
+    "mobile"            : "Número de celular",
+    "phone"             : "Número de télefono fijo",
+    "email"             : "Correo electrónico",
+    "web"               : "Sitio web"
+  },
+  "taxes": {
+    "title"       : "Grupo de impuestos",
+    "name"        : "Nombre del grupo",
+    "is_vat"      : "¿Es IVA?",
+    "description" : "Descripción",
+    "rate"       : {
+      "title"       : "Rango de impuestos",
+      "group"       : "Grupo",
+      "name"        : "Nombre de la tarifa",
+      "is_exempt"   : "¿Es Exlucido?",
+      "abbre"       : "Abreviatura",
+      "decimal"     : "Tasa decimal",
+      "frecuency"   : "Frecuencia de envío",
+      "additional_tax"   : "Impuesto adicional",
+      "accountName" : "Cuenta contable",
+      "value"       : "Tasa"
+    }
+  },
+  "currency": {
+    "title"                 : "Monedas",
+    "ISO"                   : "ISO",
+    "name"                  : "Nombre de la moneda",
+    "singularName"          : "Nombre singular",
+    "pluralName"            : "Nombre plural",
+    "symbol"                : "Simbolo",
+    "exchangeRateValue"     : "Tasa de cambio",
+    "denomination"          : "Denominación",
+    "nationalCurrency"      : "¿Moneda nacional?"
+  },
+  "identityDocuments": {
+    "title"           : "Documentos de identidad",
+    "name"            : "Nombre del documento",
+    "abbrev"          : "Abreviatura",
+    "active"          : "Activo",
+    "code"            : "Código"
+  },
+  "branchs" : {
+    "title"         : "Sucursales",
+    "name"          : "Nombre de la sucursal",
+    "address"       : "Dirección principal",
+    "address2"      : "Dirección de la sucursal",
+    "location"      : "Ubicación geografica",
+    "email"         : "Correo electrónico",
+    "phone"         : "Teléfono",
+    "web"           : "Sitio web",
+    "postalCode"    : "Código postal",
+    "isPointOfSale" : "¿Es un punto de venta?",
+    "mobile"        : "Celular"
+  },
+  "pointsofsale" : {
+    "title"         : "Puntos de venta",
+    "name"          : "Nombre del punto de venta",
+    "branch_name"   : "Sucursal",
+    "address"       : "Dirección",
+    "phone"         : "Teléfono",
+    "mobile"        : "Celular"
+  },
+  "departments" : {
+    "title"         : "Departamentos",
+    "name"          : "Nombre del departamento",
+    "branch"        : "Sucursal"
+  },
+  "wineries" : {
+    "title"         : "Bodegas",
+    "name"          : "Nombre de la bodega",
+    "branch"        : "Sucursal",
+    "department"    : "Departamento"
+  },
+  "typeOrganization" : {
+    "title"         : "Tipos de empresa",
+    "name"          : "Nombre del tipo de empresa"
+  },
+  "accounting"  : {
+    "title"         : "Catalógo de cuentas",
+    "account"       : "Cuenta",
+    "name"          : "Nombre de la cuenta",
+    "description"   : "Descripción",
+    "number"        : "Número",
+    "group"         : "Grupo contable",
+    "master"        : "Cuenta maestra",
+    "isSubAccount"  : "¿Subcuenta?",
+    "groups"        : {
+      "title"         : "Grupos contables",
+      "group"         : "Grupo contable",
+      "name"          : "Nombre del grupo",
+      "classOfAccount": "Close de cuenta",
+      "number"        : "Número"
+    },
+    "class"        : {
+      "title"         : "Clases de cuentas",
+      "class"         : "Clase de cuenta",
+      "name"          : "Nombre de la clase de cuenta",
+      "number"        : "Número"
+    }
+  }
+}

@@ -1,0 +1,63 @@
+<div class="row">
+  <div class="col-md-12">
+    <div class="card custom-form">
+      <div class="card-header">{{ title | uppercase}}</div>
+      <div class="card-body">
+        <form [formGroup]="customForm">
+          <div class="row">
+            <div class="col-md-6">
+              <label>{{ 'currency.name' | translate }}</label>
+              <ng-select formControlName="currency_id" required
+                [class.is-invalid]="isInvalid('invalidCurrencyId')" (change)="onCurrencyChange($event)">
+                <ng-option *ngFor="let cur of currency" [value]="cur.id">
+                  <img height="15" width="15" [src]="'assets/flags/'+cur.image"/>
+                  {{ cur.CurrencyISO }} - {{ cur.CurrencyName }}
+                </ng-option>
+              </ng-select>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label><strong class="asterisk">{{ 'general.asterisk' | translate }}</strong> {{ 'currency.exchangeRateValue' | translate }}</label>
+                <input #exchangeRateValue type="text"  class="form-control"
+                  formControlName="exchange_rate_value" #focusElement autofocus [class.is-invalid]="isInvalid('invalidExchangeRateValue')"
+                  required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label><strong class="asterisk">{{ 'general.asterisk' | translate }}</strong>{{ 'currency.pluralName' | translate }}</label>
+                <input type="text" class="form-control" formControlName="plural_name" [class.is-invalid]="isInvalid('invalidPluralName')" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label><strong class="asterisk">{{ 'general.asterisk' | translate }}</strong>{{ 'currency.singularName' | translate }}</label>
+                <input type="text"  class="form-control" formControlName="singular_name" [class.is-invalid]="isInvalid('invalidSingularName')" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>{{ 'currency.denomination' | translate }}</label>
+                <input type="text" class="form-control" formControlName="denomination">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <br><br>
+              <div class="form-group">
+                <input type="checkbox" formControlName="national_currency"  id="national_currency"
+                  [class.is-invalid]="isInvalid('invalidNationalCurrency')" style="margin-right: 2%;">
+                <label for="national_currency">{{ 'currency.nationalCurrency' | translate }}</label>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="card-footer">
+        <app-footer-form [saveAClose]="saveAClose" (closeEvent)="cancel()"
+                          (saveAndCreateEvent)="saveAndCreate()" (saveAndCloseEvent)="saveAndClose()"
+                          [maskSpinner]="maskSpinner" >
+        </app-footer-form>
+      </div>
+    </div>
+  </div>
+</div>

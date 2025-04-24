@@ -1,0 +1,79 @@
+<section class="users-edit">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-content">
+          <div class="card-body">
+            <!-- Account content starts -->
+            <div class="mt-2" id="account">
+              <!-- Media object starts -->
+              <div class="media">
+                <img [src]="imgData" alt="user edit avatar" class="users-avatar-shadow avatar mr-3 rounded-circle" height="64" width="64">
+                <div class="media-body">
+                  <h4>Avatar</h4>
+                  <div class="d-flex flex-sm-row flex-column justify-content-start px-0 mb-sm-2">
+                    <div class="form-group">
+                      <!-- <label for="file">Seleccionar imagen</label> -->
+                      <input type="file" id="file" #uploadFile
+                      (change)="uploadImage($event)" class="form-control-file">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Media object ends -->
+
+              <!-- Account form starts -->
+              <form [formGroup]="customForm">
+                <div class="row">
+									<div class="col-md-4">
+										<div class="form-group">
+											<label>Nombre</label>
+											<input class="form-control" type="text" formControlName="first_name" placeholder="Nombre" [class.is-invalid]="invalidFirstName" required autofocus   #focusElement>
+											<small class="text-danger" *ngIf="invalidFirstName">Nombre muy corto</small>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label>Apellidos</label>
+											<input class="form-control" type="text" formControlName="last_name"
+												placeholder="Apellidos"  [class.is-invalid]="invalidLastName" required>
+											<small class="text-danger" *ngIf="invalidLastName">Apellidos muy cortos</small>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label>{{'placeholder.email' | translate}}</label>
+											<input class="form-control" type="email" formControlName="email" required
+												placeholder="Correo electrónico" inputmode="email"  [class.is-invalid]="invalidEmail" [readonly]="editing">
+											<small class="text-danger" *ngIf="invalidEmail">Correo electrónico incorrecto</small>
+										</div>
+									</div>
+                </div>
+                <div class="row">
+                  <div class="col-12 col-md-8">
+                    <ng-select formControlName="type_id" [readonly]="editing">
+                      <ng-option *ngFor="let item of userTypes" [value]="item.id">
+                        {{ item.user_type_name }}
+                      </ng-option>
+                    </ng-select>
+                  </div>
+                  <div class="col-12 col-md-4">
+                      <div class="form-group custom-control-inline mb-1 mb-xl-0 switchery-success align-items-center">
+                        <ui-switch checked class="switchery" size="large"  formControlName="active"></ui-switch>
+                        <label for="switchery" class="ml-2">Activo</label>
+                      </div>
+                    </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <app-footer-form [saveAClose]="saveAClose" (closeEvent)="cancel()"
+                            (saveAndCreateEvent)="saveAndCreate()" (saveAndCloseEvent)="saveAndClose()" [maskSpinner]="maskSpinner">
+					</app-footer-form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

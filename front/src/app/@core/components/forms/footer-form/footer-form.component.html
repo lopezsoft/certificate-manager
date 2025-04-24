@@ -1,0 +1,17 @@
+<div class="d-flex justify-content-end p-1">
+    <button (click)= "cancelMessage()" class="btn custom-button fas-fa-red border"  [disabled]="loading">
+        <i class="fas fa-undo fas-fa-18 fas-fa-red"></i>
+        <strong>{{ 'buttons.cancel' | translate }} </strong>
+    </button>
+    <ng-container *ngIf="showAaveACreate">
+        <button class="btn custom-button border ms-25 fas-fa-ok" (click) ="saveAndCreateMessage()" [disabled]="loading">
+            <i [ngClass]="{'fa-save':!saveACreate, 'fa-spinner fa-spin':saveACreate }" class="fas-fa-18 space-right fas-fa-ok fas">
+            </i>
+            {{'buttons.saveAndCreate' | translate }}
+        </button>
+    </ng-container>
+    <button class="btn custom-button border fas-fa-qr ms-25" (click) ="saveAndCloseMessage()"  [disabled]="loading">
+        <i [ngClass]="{'fa-save':!saveAClose, 'fa-spinner fa-spin':saveAClose }" class="fas-fa-18 space-right fas-fa-qr fas"></i>
+        {{'buttons.saveAndClose' | translate }}
+    </button>
+</div>

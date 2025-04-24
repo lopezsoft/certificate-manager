@@ -1,0 +1,57 @@
+<!--Forgot Password Starts-->
+<section>
+  <div class="auth-wrapper auth-v2">
+    <div class="auth-inner row m-0">
+      <!-- Brand logo--><a class="brand-logo" href="javascript:void(0);">
+      <img src="{{ coreConfig.app.appLogoImage }}" alt="brand-logo" height="36" /></a
+    >
+      <!-- /Brand logo-->
+      <!-- Left Text-->
+      <div class="d-none d-lg-flex col-lg-8 align-items-center p-5 auth-image">
+        <div class="w-100 d-lg-flex align-items-center justify-content-center px-5">
+          <img class="img-fluid" [src]="
+              coreConfig.layout.skin === 'dark'
+                ? 'assets/images/pages/forgot-password-v2-dark.svg'
+                : 'assets/images/pages/forgot-password-v2.svg'
+            " alt="Forgot password V2" />
+        </div>
+      </div>
+      <!-- /Left Text-->
+      <!-- Forgot password-->
+      <div class="d-flex col-lg-4 align-items-center auth-bg px-2 p-lg-5">
+        <div class="col-12 col-sm-8 col-md-6 col-lg-12 px-xl-2 mx-auto">
+          <form class="auth-login-form mt-2" [formGroup]="customForm">
+            <h4 class="mb-2 card-title">{{ 'recoverPassword.header' | translate }}</h4>
+            <p class="card-text text-justify mb-3">{{ 'recoverPassword.description'  | translate }}</p>
+            <div class="form-group">
+              <input #focusElement class="form-control" type="email" [placeholder]="placeholderEmail" required
+                inputmode="email" formControlName="email" [class.is-invalid]="invalidEmail" autofocus>
+              <div *ngIf="invalidEmail" class="help-block mt-1 text-danger"> <i
+                  class="ft-alert-circle align-middle"></i> <span>
+                  {{ 'general.isRequired' | translate }} </span>
+              </div>
+            </div>
+              <div class="d-grid">
+                <button class="btn btn-info btn-success btn-block btn-lg mt-25" type="submit" (click)="onSubmit()" [disabled]="loading">
+                  <strong
+                    *ngIf="!loading">{{ 'recoverPassword.button.recover' | translate }}</strong>
+                  <strong
+                    *ngIf="loading">{{ 'recoverPassword.button.recovering' | translate }}</strong>
+                  <i [ngClass]="{'fa-key':!loading, 'fa-spinner fa-spin':loading }" class="fas"
+                    style="text-align: left;padding-left: 10px;">
+                  </i>
+                </button>
+              </div>
+            <label
+              style="padding: 2px;font-size: 12px;">{{ 'register.label.youRegistered' | translate }}
+              <a
+                [routerLink]="['/auth/login']"><strong>{{ 'register.label.login' | translate }}</strong></a>
+            </label>
+          </form>
+        </div>
+      </div>
+      <!-- /Forgot password-->
+    </div>
+  </div>
+</section>
+<!--Forgot Password Ends-->

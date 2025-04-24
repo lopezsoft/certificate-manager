@@ -1,0 +1,23 @@
+<ng-container *ngIf="isAccess()">
+  <div class="d-flex justify-content-end w-100">
+    <ng-content></ng-content>
+  <button
+      (click)="editAction()"
+      *ngIf="isAccess() && showEdit"
+      tooltipDirection="right"
+      [appCustomTooltip]="editTooltip"
+      class="btn custom-button border fas-fa-edit ms-25">
+    <i class="fas fa-edit fa-cursor fas-fa-edit"></i>
+    Editar
+  </button>
+  <button
+      (click)="deleteAction()"
+      *ngIf="showDelete"
+      tooltipDirection="right"
+      [appCustomTooltip]="deleteTooltip"
+      class="btn custom-button border fas-fa-delete ms-25">
+    <i class="fas fa-trash-alt fa-cursor fas-fa-delete"></i>
+    Eliminar
+  </button>
+  </div>
+</ng-container>

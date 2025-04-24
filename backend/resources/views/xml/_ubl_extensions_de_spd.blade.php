@@ -1,0 +1,18 @@
+@isset($softwareManufacturer)
+<ext:UBLExtension>
+    <cbc:ID>2</cbc:ID>
+    <cbc:Name>FabricanteSoftware</cbc:Name>
+    <ext:ExtensionContent>
+        <FabricanteSoftware>
+            <InformacionDelFabricanteDelSoftware>
+                <Name>NombreApellido</Name>
+                <Value>{{$softwareManufacturer->owner_name}}</Value>
+                <Name>RazonSocial</Name>
+                <Value>{{$softwareManufacturer->company_name}}</Value>
+                <Name>NombreSoftware</Name>
+                <Value>{{$softwareManufacturer->software_name}}</Value>
+            </InformacionDelFabricanteDelSoftware>
+        </FabricanteSoftware>
+    </ext:ExtensionContent>
+</ext:UBLExtension>
+@endisset

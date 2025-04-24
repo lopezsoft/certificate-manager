@@ -1,0 +1,76 @@
+<!--Registration Page Starts-->
+<section>
+  <div class="auth-wrapper auth-v2">
+    <div class="auth-inner row m-0">
+      <!-- Brand logo--><a class="brand-logo" href="javascript:void(0);">
+        <img src="{{ coreConfig.app.appLogoImage }}" alt="brand-logo" height="36" />
+      </a>
+      <!-- /Brand logo-->
+      <!-- Left Text-->
+      <div class="d-none d-lg-flex col-lg-8 align-items-center p-5 auth-image">
+        <div class="w-100 d-lg-flex align-items-center justify-content-center px-5">
+          <img class="img-fluid" [src]="
+              coreConfig.layout.skin === 'dark'
+                ? 'assets/images/pages/register-v2-dark.svg'
+                : 'assets/images/pages/registro.svg'
+            " alt="Email Resend" />
+        </div>
+      </div>
+      <!-- /Left Text-->
+      <!-- Register-->
+      <div class="d-flex col-lg-4 align-items-center auth-bg px-2 p-lg-5">
+        <div class="col-12 col-sm-8 col-md-6 col-lg-12 px-xl-2 mx-auto">
+          <h4 class="card-title mb-2 text-break text-center">
+            <strong>{{ 'resend.header' | translate }}</strong>
+          </h4>
+          <p class="message-p">
+            <ng-container *ngIf="!sendEmail">
+              ¿Necesitas un nuevo correo de confirmación? 🤔<br>
+              Ya sea que no lo hayas recibido o que el enlace haya expirado, ¡estamos aquí para ayudarte!<br>
+              Haz clic abajo para reenviar el correo.<br>
+              Gracias por ser parte de {{ environment.config.name }}. 🚀
+              <br/>
+              <br/>
+              Para reenviar el correo de confirmación, por favor ingrese su correo electrónico en el siguiente campo y haga clic en el botón "{{ 'resend.button.resend' | translate }}".
+            </ng-container>
+            <ng-container *ngIf="sendEmail">
+              Se ha enviado un nuevo enlace de verificación a la dirección de correo electrónico que proporcionó durante el registro.<br>
+              <label
+                      style="padding: 2px;font-size: 12px;">{{ 'register.label.youRegistered' | translate }}
+                <a
+                        [routerLink]="['/auth/login']"><strong>{{ 'register.label.login' | translate }}</strong>
+                </a>
+              </label>
+            </ng-container>
+          </p>
+          <form class="auth-register-form mt-2" [formGroup]="customForm" *ngIf="!sendEmail">
+            <div class="form-group">
+              <input class="form-control" type="email" formControlName="email"
+                     [placeholder]="placeholderEmail" inputmode="email" autocomplete="off" [class.is-invalid]="invalidEmail">
+              <small class="text-danger" *ngIf="invalidEmail">Correo electrónico incorrecto</small>
+            </div>
+              <div class="d-grid">
+                <button class="btn btn-info btn-success mt-50 btn-lg" type="submit" (click)="onSave()" [disabled]="loading">
+                  <strong *ngIf="!loading">{{ 'resend.button.resend' | translate }}</strong>
+                  <strong
+                    *ngIf="loading">{{ 'resend.button.resending' | translate }}
+                                </strong>
+                  <i [ngClass]="{'fa-paper-plane':!loading, 'fa-spinner fa-spin':loading }" class="fas"
+                    style="text-align: left;padding-left: 10px;">
+                  </i>
+                </button>
+              </div>
+            <label
+                    style="padding: 2px;font-size: 12px;">{{ 'register.label.youRegistered' | translate }}
+              <a
+                      [routerLink]="['/auth/login']"><strong>{{ 'register.label.login' | translate }}</strong>
+              </a>
+            </label>
+          </form>
+        </div>
+      </div>
+      <!-- /Register-->
+    </div>
+  </div>
+</section>
+<!--Registration Page Ends-->

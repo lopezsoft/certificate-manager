@@ -1,0 +1,47 @@
+<div class="search-container sticky-top mb-50" *ngIf="canShowFilter()">
+  <div class="input-group grid-search">
+    <input type="search"
+           #searchField class="form-control" [placeholder]="placeholder"
+           (keyup)="inputKey($event)"
+           (input)="inputSearch($event)"
+           (change)="$event.stopPropagation()"
+           autofocus>
+    <button class="btn btn-primary"
+            appCustomTooltip="Buscar" tooltipDirection="right"
+            (click)="refreshSearch(searchField.value)" [disabled]="isLoading">
+      <i class="fa-solid fa-magnifying-glass"></i>
+    </button>
+    <button
+        appCustomTooltip="Filtrar búsqueda"
+        class="btn btn-primary filter-icon" (click)="toggleFilterMenu()" [disabled]="isLoading">
+      <i class="material-symbols-outlined">filter_alt</i>
+      <span *ngIf="filterCount > 0 && searchIsClicked" class="badge badge-pill badge-danger filter-badge">{{filterCount}}</span>
+    </button>
+  </div>
+  <div class="filter-menu card shadow" *ngIf="isFilterMenuOpen">
+    <div class="card-body">
+     <ng-content></ng-content>
+    </div>
+    <div class="card-footer text-right">
+      <button class="btn custom-button border fas-fa-close me-25" (click)="clearFilters()">
+        <i class="fas fa-broom"></i>
+        Limpiar ({{filterCount}})
+      </button>
+      <button class="btn custom-button border fas-fa-save" (click)="search()">
+        <i class="fas fa-search-plus"></i>
+        Buscar
+      </button>
+    </div>
+  </div>
+</div>
+<div class="input-group grid-search sticky-top mb-50" *ngIf="!canShowFilter()">
+  <input type="search"
+         #searchField class="form-control" [placeholder]="placeholder"
+         (keyup)="inputKey($event)"
+         (input)="inputSearch($event)"
+         (change)="$event.stopPropagation()"
+         autofocus>
+  <button class="btn btn-primary" (click)="refreshSearch(searchField.value)" [disabled]="isLoading">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+</div>

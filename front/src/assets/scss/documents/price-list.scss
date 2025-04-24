@@ -1,0 +1,108 @@
+$color-white: #fff;
+$color-black: #000;
+$color-gray-light: #f5f5f5;
+$color-gray-dark: #535353;
+$border-color: #ced4da;
+.price-container {
+  position: fixed;
+  z-index: 9999;
+  top: 0;
+  left: 0;
+  width:  max-content;
+  height: max-content;
+  visibility: hidden;
+  opacity: 0;
+  border: 1px solid $border-color;
+  background-color: rgba(87, 87, 87, 0.51);
+  &.active {
+    opacity: 1;
+    visibility: visible;
+  }
+  .price-list {
+    opacity: 1;
+    visibility: visible;
+    transition: all 0.5s ease-in-out;
+  }
+}
+
+.price-content {
+  position: relative;
+  min-width: 4rem;
+  width: 100%;
+  height: 100%;
+  &:hover {
+    .price-list {
+      opacity: 1;
+      visibility: visible;
+      transition: all 0.5s ease-in-out;
+    }
+  }
+}
+.price-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: max-content;
+  height: max-content;
+  min-height: 4rem;
+  max-height: 20rem;
+  min-width: 17rem;
+  padding: 0.5rem;
+  border: 1px solid $border-color;
+  background-color: $color-white;
+  border-radius: 0.25rem;
+  box-shadow: 0 0 0.5rem rgba($color-black, 0.1);
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease-in-out;
+  background-clip: padding-box;
+  overflow: hidden;
+  overflow-y: auto;
+  &.fixed {
+    position: fixed !important;
+    top: 0;
+  }
+  &.active {
+    opacity: 1;
+    visibility: visible;
+  }
+  &.de-active {
+    opacity: 0;
+    visibility: hidden;
+  }
+  .price-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 2rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.15rem;
+    cursor: pointer;
+    border-bottom: 1px solid $border-color;
+    .price-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+    }
+    &.selected {
+      background-color: #cecece;
+    }
+    &:hover {
+      background-color: $color-gray-light;
+    }
+    .price-item__name {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: $color-gray-dark;
+    }
+    .price-item__value {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: $color-gray-dark;
+    }
+  }
+}

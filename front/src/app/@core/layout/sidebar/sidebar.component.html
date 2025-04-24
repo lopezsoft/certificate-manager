@@ -1,0 +1,40 @@
+<div class="sidebar" [ngClass]="{'toggle': toggle}">
+  <div class="sidebar-heading">
+      <a href="/dashboard">
+        <img src="/assets/logos bn-02.png">
+        <span>MATIAS API</span>
+      </a>
+    </div>
+  <ul class="nav nav-pills flex-column mb-auto">
+    <li class="nav-item">
+      <a  routerLink="/dashboard" class="nav-link" routerLinkActive="active" title="Dashboard">
+        <i class="fas fa-tachometer-alt"></i>
+        <span>Dashboard</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a  routerLink="/documents" class="nav-link" routerLinkActive="active" title="Documentos">
+        <i class="fas fa-file-invoice"></i>
+        <span>Documentos</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a routerLink="/customers" class="nav-link" class="nav-link" routerLinkActive="active" title="Perfil">
+        <i class="far fa-id-card"></i>
+        <span>Clientes</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a routerLink="/profile" class="nav-link" class="nav-link" routerLinkActive="active" title="Perfil">
+        <i class="fas fa-user"></i>
+        <span>Perfil</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a routerLink="/settings" class="nav-link" class="nav-link" routerLinkActive="active" title="Ajustes">
+        <i class="fas fa-cogs"></i>
+        <span>Ajustes</span>
+      </a>
+    </li>
+  </ul>
+</div>

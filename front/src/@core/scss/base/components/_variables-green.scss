@@ -1,0 +1,140 @@
+//  ================================================================================================
+//  File Name: variables-green.scss
+//  Description: Custom green theme variables
+//  ----------------------------------------------------------------------------------------------
+//  Item Name: Vuexy - Vuejs, React, Angular, HTML & Laravel Admin Dashboard Template
+//  Author: PIXINVENT
+//  Author URL: http://www.themeforest.net/user/pixinvent
+//  ================================================================================================
+
+//  ================================================================================================
+//  WARNING: PLEASE DO NOT CHANGE THIS VARIABLE FILE.
+//  THIS FILE WILL GET OVERWRITTEN WITH EACH VUEXY HTML TEMPLATE RELEASE.
+//  TIP:
+//  We suggest you to use this (assets/scss/variables/_variables-components.scss) file for overriding components variables.
+//  ================================================================================================
+
+//Body
+$theme-green-body-bg: #79a52b !default;
+$theme-green-body-color: #8dba38 !default;
+$theme-green-border-color: #a8d42e !default;
+$theme-green-custom-control-border-color: #a8d42e !default;
+
+// menu 
+$menu-green-color: #fff !default;
+$menu-green-bg-color: #79a52b !default;
+$menu-green-header-bg-color: #8dba38 !default;
+$menu-green-border-color: #618523 !default;
+$menu-green-active-color: #618523;
+
+// Custom form
+$theme-green-form-bg: #78a52b00 !default;
+$theme-green-form-border-color: #a8d42e !default;
+$theme-green-form-label-color: #8dba38 !default;
+$theme-green-form-text-color: #8dba38 !default;
+$theme-green-form-placeholder-color: #506d1b !default;
+$theme-green-form-error-color: #e01111 !default;
+$theme-green-form-success-color: #8dba38 !default;
+$theme-green-form-disabled-bg: #1f2b0a !default;
+$theme-green-form-disabled-border-color: #192405 !default;
+$theme-green-form-disabled-label-color: #8dba38 !default;
+$theme-green-form-disabled-text-color: #8dba38 !default;
+$theme-green-form-disabled-placeholder-color: #8dba38 !default;
+$theme-green-form-disabled-error-color: #e01111 !default;
+$theme-green-form-disabled-success-color: #8dba38 !default;
+// Custom buttons
+$theme-green-button-bg: #79a52b !default;
+$theme-green-button-border-color: #a8d42e !default;
+$theme-green-button-color: #ffffff !default;
+$theme-green-button-hover-bg: #8dba38 !default;
+$theme-green-button-hover-border-color: #a8d42e !default;
+$theme-green-button-hover-color: #ffffff !default;
+$theme-green-button-border-radius: 0.25rem !default;
+$theme-green-button-border-radius-sm: 0.2rem !default;
+$theme-green-button-border-radius-lg: 0.3rem !default;
+$theme-green-button-border-radius-xl: 0.4rem !default;
+// Button login
+$theme-green-button-login-bg: #79a52b !default;
+$theme-green-button-login-border-color: #a8d42e !default;
+$theme-green-button-login-color: #ffffff !default;
+$theme-green-button-login-hover-bg: #8dba38 !default;
+$theme-green-button-login-hover-border-color: #a8d42e !default;
+
+//Typography
+$theme-green-headings-color: #8dba38 !default;
+$theme-green-label-color: #808080 !default;
+$theme-green-text-muted-color: #3a4e15 !default;
+$theme-green-text-color: #808080 !default;
+$theme-green-text-color-light: #8dba38 !default;
+$theme-green-text-color-dark: #8dba38 !default;
+// link
+$theme-green-link-color: #8dba38 !default;
+$theme-green-link-hover-color: #8dba38 !default;
+$theme-green-link-disabled-color: #8dba38 !default;
+
+//Card
+$theme-green-card-bg: #79a52b !default;
+$theme-green-box-shadow: 0 4px 24px 0 rgba($black, 0.24);
+$theme-green-card-border-color: #a8d42e !default;
+// Card is selected
+$theme-green-card-selected-bg: #8dba38 !default;
+$theme-green-card-selected-border-color: #69851d !default;
+$theme-green-card-selected-box-shadow: 0 4px 24px 0 rgba($black, 0.24) !default;
+
+//Input
+$theme-green-input-bg: #78a52b00 !default;
+$theme-green-input-color: #8dba38 !default;
+$theme-green-input-placeholder-color: #3a4e15 !default;
+$theme-green-input-border-color: #577421 !default;
+$theme-green-input-disabled-bg: #1f2b0a !default;
+$theme-green-input-disabled-border-color: #192405 !default;
+
+// Switch
+$theme-green-switch-bg: #4c681c !default;
+$theme-green-switch-bg-disabled: #2b3a11 !default;
+
+//Table
+$theme-green-table-bg: #fff !default;
+$theme-green-table-header-bg: #79a52b !default;
+$theme-green-table-row-bg: #808080 !default;
+$theme-green-table-hover-bg: #79a52b !default;
+$theme-green-table-striped-bg: #f8f9fa !default;
+$theme-green-table-border-color: #ebe9f1 !default;
+$theme-green-table-striped-color: #8dba38 !default;
+$theme-green-table-header-color: #8dba38 !default;
+$theme-green-table-row-color: #808080 !default;
+$theme-green-table-hover-color: #fff !default;
+
+$theme-green-modal-header-bg: #161d31 !default;
+$theme-green-pagination-bg: #161d31 !default;
+$theme-green-chart-bg: #384056 !default;
+$theme-green-widget-bg: #384056 !default;
+
+// Card table
+$theme-green-card-table-bg: #79a52b !default;
+$theme-green-card-table-border-color: #a8d42e !default;
+$theme-green-card-table-header-bg: #79a52b !default;
+$theme-green-card-table-header-color: #8dba38 !default;
+$theme-green-card-table-row-bg: #79a52b !default;
+$theme-green-card-table-row-color: #8dba38 !default;
+$theme-green-card-table-hover-bg: #79a52b !default;
+
+// input checkbox
+$theme-green-input-checkbox-bg: #79a52b !default;
+$theme-green-input-checkbox-border-color: #a8d42e !default;
+$theme-green-input-checkbox-color: #8dba38 !default;
+$theme-green-input-checkbox-hover-bg: #8dba38 !default;
+$theme-green-input-checkbox-hover-border-color: #a8d42e !default;
+$theme-green-input-checkbox-hover-color: #8dba38 !default;  
+
+// /*Webkit*/
+
+// webkit-scrollbar-track-piece 
+
+$theme-green-webkit-scrollbar-track-piece-bg: #79a52b !default;
+
+$theme-green-webkit-scrollbar-track-piece-bg-decrement: #8dba38 !default;
+
+$theme-green-webkit-scrollbar-track-piece-bg-increment: #8dba38 !default;
+
+$theme-green-webkit-scrollbar-thumb-bg: #a8d42e !default;

@@ -1,0 +1,45 @@
+<div class="card">
+  <div class="card-header">
+    <h5>{{title | uppercase}}</h5>
+  </div>
+  <div class="card-body">
+    <button  class="btn custom-button fas-fa-close mb-1" (click)="goToParent()" [disabled]="loading">
+      <i class="fa-solid fa-door-closed fas-fa-22 fas-fa-close"></i>
+      {{ 'buttons.back' | translate }}
+    </button>
+    <div class="info-import">
+      <div class="left-content">
+        <img
+            class="img-fluid"
+            src="/assets/img/aviso.svg" alt="">
+      </div>
+      <div class="right-content">
+        <span class="title">Aviso...</span>
+        <p>
+          <small>
+            En este apartado podrás importar documentos electrónicos, para la generación de los eventos a que tenga lugar, <b>usando el CUFE/CUDE del documento</b>.<br/>
+            En la caja de texto, podrás ingresar el CUFE/CUDE del documento que deseas importar, y luego presionar el botón <b>"Importar"</b>.<br/>
+            Una vez importado el documento, podrás realizar la importación de otro.
+          </small>
+        </p>
+      </div>
+    </div>
+    <div class="input-group">
+      <input
+          #trackIdInput
+          type="text"
+          class="form-control"
+          id="cufe"
+          placeholder="CUFE/CUDE"
+          autofocus
+          [(ngModel)]="trackId"
+          (keyup.enter)="import()"
+          [disabled]="loading">
+      <button
+          class="btn btn-primary"
+          (click)="import()"
+          [disabled]="loading">
+        <i class="fa fa-download"></i> Importar
+      </button>
+  </div>
+</div>

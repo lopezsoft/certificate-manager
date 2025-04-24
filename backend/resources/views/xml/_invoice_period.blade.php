@@ -1,0 +1,16 @@
+@if(isset($health->invoice_period))
+    <cac:InvoicePeriod>
+        @if(isset($health->invoice_period->start_date))
+            <cbc:StartDate>{{$health->invoice_period->start_date}}</cbc:StartDate>
+        @endif
+        @if(isset($health->invoice_period->start_time))
+            <cbc:StartTime>{{$health->invoice_period->start_time}}-05:00</cbc:StartTime>
+        @endif
+        @if(isset($health->invoice_period->end_date))
+            <cbc:EndDate>{{$health->invoice_period->end_date}}</cbc:EndDate>
+        @endif
+        @if(isset($health->invoice_period->end_time))
+            <cbc:EndTime>{{$health->invoice_period->end_time}}-05:00</cbc:EndTime>
+        @endif
+    </cac:InvoicePeriod>
+@endif

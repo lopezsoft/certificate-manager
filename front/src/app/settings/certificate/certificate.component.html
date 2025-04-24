@@ -1,0 +1,52 @@
+  <div class="card custom-form">
+    <div class="card-header">DATOS DEL CERTIFICADO</div>
+    <div class="card-body">
+      <form  [formGroup]="customForm">
+        <div class ="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Descripción</label>
+              <input type="text"  class="form-control" name="description"
+                formControlName="description">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label> <strong class="asterisk"> {{ 'general.asterisk' | translate }}</strong> Contraseña</label>
+              <input type="password" #focusElement class="form-control"
+                formControlName="password"  [class.is-invalid]="isInvalid('password')" required autofocus>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col mt-2">
+            <div class="form-group">
+              <textarea class="form-control" formControlName="data" requided  [class.is-invalid]="isInvalid('data')" rows="12"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="row" *ngIf="expiration_date">
+            <div class="col-12">
+                <div class="form-group">
+                    <label>Fecha de expiración</label>
+                    <p>{{expiration_date}}</p>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+          <div class="col mt-2">
+            <div class="form-group">
+              <label for="file">Seleccionar archivo</label>
+              <input type="file" id="file" #uploadFile
+              (change)="uploadImage($event)" class="form-control-file">
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="card-footer">
+      <app-footer-form [showAaveACreate]="false" [saveAClose]="saveAClose" (closeEvent)="cancel()"
+                        (saveAndCreateEvent)="saveAndCreate()" (saveAndCloseEvent)="saveAndClose()"></app-footer-form>
+    </div>
+  </div>

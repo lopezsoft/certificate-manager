@@ -1,0 +1,33 @@
+.custom-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  vertical-align: middle;
+  cursor: pointer;
+  min-height: 2rem;
+  height: auto;
+  background: none !important;
+  padding: 4px;
+  border-radius: .25rem;
+  &.border {
+    border: rgba(37, 86, 163, 0.5) 1px solid !important;
+  }
+  &:hover {
+    border-radius: .25rem;
+    background-color: rgba(37, 86, 163, 0.37) !important;
+    border: rgba(37, 86, 163, 0.93) 1px solid !important;
+  }
+  &:focus {
+    background-color: rgba(250, 199, 38, 0.95) !important;
+    border: rgba(143, 112, 15, 0.35) 1px solid !important;
+  }
+  &:active {
+    background-color: rgba(253, 206, 58, 0.76) !important;
+  }
+  font-size: 1rem;
+  i {
+    margin: 0;
+    font-size: 1.2rem;
+    padding: 0 2px !important;
+  }
+}

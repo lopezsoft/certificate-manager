@@ -1,0 +1,217 @@
+<div class="auth-wrapper auth-v2">
+  <div class="auth-inner row m-0">
+    <!-- Brand logo-->
+    <a class="brand-logo" href="javascript:void(0);">
+    <img src="{{ coreConfig.app.appLogoImage }}" alt="brand-logo" height="36" /></a>
+    <!-- /Brand logo-->
+    <!-- Left Text-->
+    <div class="d-none d-lg-flex col-lg-8 align-items-center p-5 auth-image">
+      <img
+              class="img-fluid"
+              [src]="
+            coreConfig.layout.skin === 'dark'
+              ? 'assets/images/pages/register-v2-dark.svg'
+              : 'assets/images/pages/registro.svg'
+          "
+              alt="register V2"
+      />
+    </div>
+    <!-- /Left Text-->
+    <!-- Login-->
+    <div class="d-flex col-lg-4 align-items-center auth-bg px-2 p-lg-5">
+      <div class="col-12 col-sm-8 col-md-6 col-lg-12 px-xl-2 mx-auto">
+        <ng-container *ngIf="submitted">
+          <div class="p-information">
+            <p>
+              ¡Gracias por unirte a {{ environment.config.name }}! 🥳
+            </p>
+            <p>
+              Para activar tu cuenta:
+            </p>
+            <ol>
+              <li>Revisa tu correo 📧.</li>
+              <li>Haz clic en el enlace de confirmación 🔗.</li>
+              <li>¡Disfruta de {{ environment.config.name }}! 🎉</li>
+            </ol>
+            <p>
+              ¿No ves el correo? Revisa la carpeta de spam. Si no lo encuentras, solicita un nuevo correo de confirmación desde {{ environment.config.name }}
+            </p>
+            <p>
+              ¡Nos vemos dentro! 🚀
+            </p>
+            <p>
+              <label
+                      style="padding: 2px;font-size: 12px;">{{ 'register.label.youRegistered' | translate }}
+                <a
+                        [routerLink]="['/auth/login']"><strong>{{ 'register.label.login' | translate }}</strong>
+                </a>
+              </label>
+            </p>
+          </div>
+        </ng-container>
+        <ng-container *ngIf="!submitted">
+        <h2 class="card-title font-weight-bold mb-25">Bienvenido a {{ environment.config.name }}! 👋</h2>
+        <p class="card-text mb-25">Cree su cuenta y comience la aventura.</p>
+          <p class="card-text mb-25">Rellene el siguiente formulario para crear una nueva cuenta.</p>
+        <form class="auth-login-form custom-form mt-25" [formGroup]="customForm">
+          <div class="form-group">
+            <h6>Datos de inicio de sesión</h6>
+          </div>
+          <div class="form-group">
+            <input class="form-control" [class.is-invalid]="isInvalid('email')"
+                type="email" formControlName="email"
+                   autocomplete="off"
+                placeholder="Correo electrónico" autofocus>
+              <small class="text-danger" *ngIf="isInvalid('email')">Correo electrónico incorrecto</small>
+          </div>
+          <div class="form-group">
+            <input class="form-control" [class.is-invalid]="isInvalid('first_name')"
+                   autocomplete="off"
+                   id="first_name"
+                type="text" formControlName="first_name" placeholder="Nombre">
+          </div>
+          <div class="form-group">
+            <input class="form-control" [class.is-invalid]="isInvalid('last_name')"
+                   autocomplete="off"
+            type="text" formControlName="last_name" placeholder="Apellidos">
+          </div>
+          <div class="form-group">
+            <div class="input-group input-group-merge form-password-toggle">
+              <input type="password" class="form-control"
+                     [type]="passwordTextType ? 'text' : 'password'"
+                     [class.is-invalid]="isInvalid('password')"
+                     id="floatingPassword"
+                     autocomplete="off"
+                     placeholder="Contraseña" formControlName="password">
+                <span class="input-group-text cursor-pointer"
+                ><i
+                        class="feather font-small-4"
+                        [ngClass]="{
+                      'icon-eye-off': passwordTextType,
+                      'icon-eye': !passwordTextType
+                    }"
+                        (click)="togglePasswordTextType()"
+                ></i
+                ></span>
+              <div
+                      *ngIf="isInvalid('password') && f.password.errors"
+                      class="invalid-feedback"
+                      [ngClass]="{ 'd-block': isInvalid('password') && f.password.errors }"
+              >
+                <div *ngIf="f.password.errors.required">Ingrese la contraseña</div>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="input-group input-group-merge form-password-toggle">
+              <input
+                     autocomplete="off"
+                     type="password" class="form-control"
+                     [type]="confPasswordTextType ? 'text' : 'password'"
+                     [class.is-invalid]="isInvalid('password_confirmation')"
+                     id="floatingPasswordConfirm"
+                     placeholder="Confirmar contraseña" formControlName="password_confirmation">
+                <span class="input-group-text cursor-pointer"
+                ><i
+                        class="feather font-small-4"
+                        [ngClass]="{
+                      'icon-eye-off': confPasswordTextType,
+                      'icon-eye': !confPasswordTextType
+                    }"
+                        (click)="toggleConfPasswordTextType()"
+                ></i
+                ></span>
+              <div
+                      *ngIf="isInvalid('password_confirmation') && f.password_confirmation.errors"
+                      class="invalid-feedback"
+                      [ngClass]="{ 'd-block': isInvalid('password_confirmation') && f.password_confirmation.errors }"
+              >
+                <div *ngIf="f.password.errors.required">Ingrese la confirmación de la contraseña</div>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <h6>Datos empresariales</h6>
+              <hr>
+          </div>
+          <div class="form-group">
+            <input class="form-control" type="text" formControlName="company_name"
+                   autocomplete="off"
+              placeholder="Nombre o razón social"  [class.is-invalid]="isInvalid('company_name')">
+            <small class="text-danger" *ngIf="isInvalid('company_name')">Nombre o razón social muy corto</small>
+          </div>
+        <div class="form-group">
+            <input class="form-control" type="text" [placeholder]="'companies.trade_name' | translate" formControlName="trade_name">
+        </div>
+        <div class="form-group">
+            <label><span class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.identity_document' | translate}}</label>
+            <ng-select formControlName="identity_document_id" required [class.is-invalid]="isInvalid('invalidIdentity')">
+                <ng-option *ngFor="let docs of identityDocs" [value]="docs.id">
+                    {{ docs.document_name }}
+                </ng-option>
+            </ng-select>
+        </div>
+          <div class="form-group">
+            <input class="form-control" type="text"  formControlName="dni"
+              placeholder="Documento sin digito de verificación" inputmode="numeric" autocomplete="off"
+              [class.is-invalid]="isInvalid('dni')">
+            <small class="text-danger" *ngIf="isInvalid('dni')">Número de documento incorrecto</small>
+          </div>
+            <div class="form-group">
+                <label><span class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.tax_regime' | translate}}</label>
+                <ng-select formControlName="tax_regime_id" required [class.is-invalid]="isInvalid('invalidTaxRegime')" >
+                    <ng-option *ngFor="let taxr of taxregime" [value]="taxr.id">
+                        {{ taxr.code }} - {{ taxr.description }}
+                    </ng-option>
+                </ng-select>
+            </div>
+            <div class="form-group">
+                <label><span
+                        class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.tax_level' | translate}}</label>
+                <ng-select formControlName="tax_level_id" required  [class.is-invalid]="isInvalid('invalidTaxLevel')"
+                >
+                    <ng-option *ngFor="let taxl of taxlevel" [value]="taxl.id">
+                        {{ taxl.code }} - {{ taxl.description }}
+                    </ng-option>
+                </ng-select>
+            </div>
+          <div class="form-group">
+              <label><span class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.type_organization' | translate}}</label>
+            <ng-select  formControlName="type_organization_id"
+              placeholder="Tipo de contribuyente">
+              <ng-option [value]="org.id" *ngFor="let org of organizations">{{ org.description }}</ng-option>
+            </ng-select>
+          </div>
+          <div class="form-group">
+            <input class="form-control" type="text"  formControlName="mobile"
+              placeholder="Teléfono de contacto" autocomplete="on" inputmode="tel" [class.is-invalid]="isInvalid('mobile')">
+            <small class="text-danger" *ngIf="isInvalid('mobile')">Numero de teléfono muy corto</small>
+          </div>
+          <div class="form-group">
+            <input class="form-control" type="text"  formControlName="address" placeholder="Dirección"
+              autocomplete="on" [class.is-invalid]="isInvalid('address')">
+            <small class="text-danger" *ngIf="isInvalid('address')">Dirección muy corta</small>
+          </div>
+          <div class="form-group">
+            <ng-select data-live-search="true"  formControlName="city_id"
+              placeholder="Ciudad o municipio" [virtualScroll]="true">
+              <ng-option [value]="city.id" *ngFor="let city of cities">
+                  {{city.city_code}} - {{ city.name_city }} ({{city.department.name_department}})
+              </ng-option>
+            </ng-select>
+          </div>
+        </form>
+        <div class="d-grid">
+
+        <button (click)="onSave()" type="button" class="btn btn-primary btn-success btn-lg btn-block">
+          <span *ngIf="!loading">Crear cuenta </span>
+          <span *ngIf="loading">Creando cuenta... </span>
+          <i class="fas " [ngClass]="{'fa-user-plus' :!loading, 'fa-spinner fa-spin': loading }" ></i>
+        </button>
+        </div>
+        <p class="mt-1">¿Ya tienes cuenta? <a [routerLink]="[ '/auth/login' ]">Inicia session</a> </p>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div>

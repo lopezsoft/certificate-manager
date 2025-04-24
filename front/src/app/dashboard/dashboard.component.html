@@ -1,0 +1,82 @@
+<div class="content-wrapper" *ngIf="_token.isAuthenticated()">
+    <div class="content-body">
+        <div class="card w-100">
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="company" class="form-label">
+                        <span><strong>{{ 'SELECCIONAR AÑO' | uppercase }}</strong></span>
+                    </label>
+                    <select class="form-select" id="company" [(ngModel)]="selectedYear" (change)="getConsumeDocuments(selectedYear)">
+                        <option *ngFor="let year of years" [value]="year">{{ year }}</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <section id="minimal-statistics">
+            <div class="row gx-1">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <label>
+                                <span><strong>{{ 'CONSUMO DE DOCUMENTOS CUENTA MAESTRA X AÑO' | uppercase }}</strong></span>
+                            </label>
+                        </div>
+                        <div class="card-body table-responsive">
+                            <table class="table table-striped table-bordered table-layout-content shadow">
+                                <caption>
+                                    TOTAL DE DOCUMENTOS POR AÑO
+                                </caption>
+                                <thead>
+                                <tr>
+                                    <th>Año</th>
+                                    <th>Total documentos</th>
+                                    <th>Valor documentos</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr *ngFor="let item of dbs.forCompany || []">
+                                    <td class="text-right">{{ item.nyear }}</td>
+                                    <td class="text-right">{{ item.total }}</td>
+                                    <td class="text-right">{{ ft.getCurrencyFormat('es-CO', 'COP', item.payment ) }}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <label>
+                                <span><strong>{{ 'CONSUMO DE DOCUMENTOS CUENTA MAESTRA X MES Y AÑO' | uppercase }}</strong></span>
+                            </label>
+                        </div>
+                        <div class="card-body table-responsive">
+                            <table class="table table-striped table-bordered table-layout-content shadow">
+                                <caption>
+                                    TOTAL DE DOCUMENTOS POR MES Y AÑO
+                                </caption>
+                                <thead>
+                                <tr>
+                                    <th>Año</th>
+                                    <th>Mes</th>
+                                    <th>Total documentos</th>
+                                    <th>Valor documentos</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr *ngFor="let item of dbs.forCompanyByMonth || []">
+                                    <td class="text-right">{{ item.nyear }}</td>
+                                    <td class="text-right">{{ item.nmonth }}</td>
+                                    <td class="text-right">{{ item.total }}</td>
+                                    <td class="text-right">{{ ft.getCurrencyFormat('es-CO', 'COP', item.payment ) }}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>

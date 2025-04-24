@@ -1,0 +1,21 @@
+<!-- Error page-->
+<div class="misc-wrapper">
+    <a class="brand-logo" href="javascript:void(0);">
+      <img src="{{ coreConfig.app.appLogoImage }}" alt="brand-logo" height="28" /></a
+    >
+    <div class="misc-inner p-2 p-sm-3">
+      <div class="w-100 text-center">
+        <h2 class="mb-1">404 - La página no existe! 🕵🏻‍♀️</h2>
+        <p class="mb-2">Ups! 😖 Es posible que la página que está buscando se haya eliminado, se haya cambiado de nombre o no esté disponible temporalmente.</p>
+        <a class="btn btn-primary mb-2 btn-sm-block" routerLink="/" rippleEffect
+          >Ir al inicio</a
+        ><img
+          class="img-fluid"
+          [src]="coreConfig.layout.skin === 'dark' ? 'assets/images/pages/error-dark.svg' : 'assets/images/pages/error.svg'"
+          alt="Error page"
+        />
+      </div>
+    </div>
+  </div>
+  <!-- / Error page-->
+

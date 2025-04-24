@@ -1,0 +1,240 @@
+<ng-container *ngIf="!currentShipping">
+    <div class="layout-content-empty">
+    <span class="card-text">
+    SELECCIONE UN DOCUMENTO PARA VER SU INFORMACIÓN
+    </span>
+        <img
+                class="img-fluid"
+                src="/assets/img/search-document.svg" alt="Búsqueda documento">
+    </div>
+</ng-container>
+<ng-container *ngIf="currentShipping">
+    <div class="row" [@fadeInOut]>
+        <div class="layout-wrapper custom-form">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <ng-container *ngIf="(currentShipping.is_valid === 0)">
+                            <div class="col-12">
+                                <app-actions-toolbar
+                                        [showEdit]="false"
+                                        [showDelete]="(currentShipping.is_valid === 0)"
+                                        [deleteTooltip]="'Eliminar documento'"
+                                        (onDelete)="deleteDocument()"
+                                ></app-actions-toolbar>
+                            </div>
+                        </ng-container>
+                        <div class="col-sm-12 col-md-12">
+                            <div class="d-flex justify-content-start w-100">
+                                <div class="justify-content">
+                                    <button
+                                            *ngIf="canSendEmail()"
+                                            class="btn custom-button border me-25 fas-fa-mail-send"
+                                            (click)="sendEmail()"
+                                            appCustomTooltip="Enviar correo" >
+                                        <i class="fas fa-paper-plane fa-cursor fas-fa-mail-send"></i>
+                                    </button>
+                                    <button class="btn custom-button border me-25" (click)="getDocument('pdf')"
+                                            tooltipDirection="left"
+                                            appCustomTooltip="Descargar PDF">
+                                        <i class="fas fa-file-pdf fa-cursor fas-fa-pdf"></i>
+                                    </button>
+                                    <button class="btn custom-button border me-25" (click)="getDocument('xml')"
+                                            tooltipDirection="left"
+                                            appCustomTooltip="Descargar XML">
+                                        <i class="fas fa-code fa-cursor fas-fa-edit"></i>
+                                    </button>
+                                    <button *ngIf="currentShipping.is_valid"
+                                            class="btn custom-button border me-25" (click)="getDocument('attached')"
+                                            tooltipDirection="left"
+                                            appCustomTooltip="Descargar Attachment">
+                                        <i class="fas fa-paperclip fa-cursor fas-fa-edit"></i>
+                                    </button>
+                                    <button class="btn custom-button border me-25 fas-fa-ok"
+                                            (click)="openDocument()"
+                                            appCustomTooltip="Abri documento en portal DIAN"
+                                            *ngIf="currentShipping?.XmlDocumentKey && currentShipping.is_valid">
+                                        <i class="fas fa-eye fa-cursor fas-fa-ok"></i>
+                                    </button>
+                                    <button class="btn custom-button border me-25" (click)="statusDocument()"
+                                            tooltipDirection="left"
+                                            appCustomTooltip="Consultar estado del documento en la DIAN">
+                                        <i class="fas fa-search fa-cursor fas-fa-edit"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="content-div">
+                <hr>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label>Tipo de operación</label>
+                                <p class="card-text">
+                                    <strong>{{ currentShipping.operation_type.name | uppercase }}</strong>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label>Nombre del documento</label>
+                                <p class="card-text">
+                                    <strong>{{currentShipping.document.voucher_name | uppercase}} Nº.</strong>
+                                    {{currentShipping.document_number}}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="content-div">
+                <hr>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label>Fecha del documento</label>
+                                <p class="card-text">
+                                    <strong>{{ currentShipping.invoice_date }}</strong>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label>Fecha de creación</label>
+                                <p class="card-text">
+                                    <strong>{{currentShipping.createdAt }}</strong>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label>Fecha última actualización</label>
+                                <p class="card-text">
+                                    <strong>{{currentShipping.updatedAt }}</strong>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="content-div">
+                <hr>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="form-group">
+                                <label><b>CUFE/CUDE/CUNE</b></label>
+                                <p class="card-text">
+                                    {{ currentShipping.XmlDocumentKey }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="content-div" *ngIf="getCurrency()">
+                <hr>
+            </div>
+            <div class="card" *ngIf="getCurrency()">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label>Moneda</label>
+                                <p class="card-text">
+                                    <strong>
+                                        {{ currentShipping.jsonData?.currency?.CurrencyName }}
+                                        ({{ currentShipping.jsonData?.currency?.CurrencyISO }})
+                                    </strong>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label>Total del documento</label>
+                                <p class="card-text">
+                                    <strong>{{format.getCurrencyFormat(getCurrency().Format, getCurrency().CurrencyISO, currentShipping.payable_amount)}}</strong>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card" *ngIf="currentShipping?.jsonData?.payment && currentShipping?.jsonData?.payment.length > 0">
+                <div class="card-body table-responsive">
+                    <table class="table table-striped table-bordered table-layout-content shadow">
+                        <thead>
+                        <tr>
+                            <th>Forma de pago</th>
+                            <th>Medio de pago</th>
+                            <th>Valor</th>
+                            <th>Fecha vencimiento</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr *ngFor="let payment of currentShipping?.jsonData.payment || []">
+                            <td>{{ payment.paymentMethod.payment_method }}</td>
+                            <td>{{ payment.meansPayment.payment_method }}</td>
+                            <td>{{ format.getCurrencyFormat(getCurrency().Format, getCurrency().CurrencyISO, payment.value_paid) }}</td>
+                            <td>{{ payment.payment_due_date }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <ng-container *ngIf="this.emailLogs.emailLogs.length > 0">
+                <div class="content-div">
+                    <hr>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">TRAZABILIDAD DE ENVÍO DE CORREOS</span>
+                    </div>
+                    <div class="card-body table-responsive">
+                        <table class="table table-striped table-bordered table-layout-content shadow">
+                            <thead>
+                            <tr>
+                                <th [style]="{width: 120}">Fecha de envío</th>
+                                <th>Correo</th>
+                                <th>Estado</th>
+                                <th>Aperturas</th>
+                                <th>Fecha apertura</th>
+                                <th>Clicks</th>
+                                <th>Fecha último click</th>
+                                <th>Fecha de entrega</th>
+                                <th>Fecha de rebote</th>
+                                <th>Fecha de reclamo</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr *ngFor="let emailLog of emailLogs.emailLogs">
+                                <td>{{ emailLog.created_at }}</td>
+                                <td>{{ emailLog.email }}</td>
+                                <td>{{ emailLog.status_translated }}</td>
+                                <td>{{ emailLog.opens }}</td>
+                                <td>{{ emailLog.last_opened_at }}</td>
+                                <td>{{ emailLog.clicks }}</td>
+                                <td>{{ emailLog.last_clicked_at }}</td>
+                                <td>{{ emailLog.delivered_at }}</td>
+                                <td>{{ emailLog.bounced_at }}</td>
+                                <td>{{ emailLog.complained_at }}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </ng-container>
+        </div>
+    </div>
+</ng-container>

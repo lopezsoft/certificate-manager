@@ -1,0 +1,20 @@
+// Definición de breakpoints
+$grid-breakpoints: (
+        xs: 0,
+        xsm: 400px,
+        sm: 576px,
+        md: 768px,
+        lg: 992px,
+        xl: 1200px,
+        xxl: 1400px
+);
+
+// Uso de breakpoints en media queries
+@mixin media-breakpoint-up($name) {
+  $min: map-get($grid-breakpoints, $name);
+  @if $min {
+    @media (min-width: $min) {
+      @content;
+    }
+  }
+}

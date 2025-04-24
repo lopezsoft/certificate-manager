@@ -1,0 +1,7 @@
+{
+  "/api": {
+    "target": "http://cm-app.test",
+    "secure": false,
+    "changeOrigin": true
+  }
+}

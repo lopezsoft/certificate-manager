@@ -1,0 +1,32 @@
+<exodo-grid #exodoGrid class="w-100"
+            [caption]="title"
+            [columns]="eColumns"
+            [showPagination]="true"
+            mode="remote"
+
+>
+  <div class="d-flex justify-content-between align-items-center mb-25 w-100" header>
+      <button  class="btn custom-button fas-fa-close me-25" (click)="goToParent()" [disabled]="loading">
+          <i class="fa-solid fa-door-closed fas-fa-22 fas-fa-close"></i>
+          {{ 'buttons.back' | translate }}
+      </button>
+  <ng-container *ngIf="useNewButton">
+    <button class="btn custom-button border fas-fa-ok" (click)="createData()" [disabled]="loading">
+      <i class="fa fa-plus mr-1 fas-fa-22"></i>
+      {{ 'buttons.new' | translate }}
+    </button>
+  </ng-container>
+    <ng-container *ngIf="useOtherButton">
+      <button  class="btn custom-button border ms-25" (click)="onOtherButton()" [disabled]="loading">
+        <i class="{{ faOtherButton }}"></i>
+        {{ textOtherButton }}
+      </button>
+    </ng-container>
+    <ng-container *ngIf="useImport">
+      <button  class="btn custom-button border fas-fa-save ms-25" (click)="importData()" [disabled]="loading">
+        <i class="fa fa-upload mr-1 fas-fa-22"></i>
+        {{ 'buttons.import' | translate }}
+      </button>
+    </ng-container>
+  </div>
+</exodo-grid>

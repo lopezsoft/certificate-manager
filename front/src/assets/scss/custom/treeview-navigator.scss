@@ -1,0 +1,165 @@
+$page-color: #005a9c;
+$body-bg-color: #eee;
+$treeview-link-color: #005a9c;
+$treeview-hover-bg-color: #adddff;
+$treeview-current-bg-color: #ddd;
+$treeview-hover-border-color: #333;
+
+.page {
+  header {
+    border: $page-color solid 2px;
+    background: $page-color;
+    color: white;
+    text-align: center;
+
+    .title {
+      font-size: 2.5em;
+      font-weight: bold;
+      font-family: serif;
+    }
+
+    .tagline {
+      font-style: italic;
+    }
+  }
+
+  footer {
+    border: $page-color solid 2px;
+    background: $page-color;
+    font-family: serif;
+    color: white;
+    font-style: italic;
+    padding-left: 1em;
+  }
+
+  .body {
+    display: grid;
+    grid-template-columns: auto auto;
+    border: $body-bg-color solid 2px;
+
+    nav {
+      margin: 0;
+      padding: 6px;
+      width: 17em;
+      height: 60em;
+      background: $body-bg-color;
+
+      &.focus {
+        padding: 4px;
+        border: 2px solid $page-color;
+      }
+    }
+
+    .page {
+      margin: 0.25em;
+      padding: 0.25em;
+      height: 30em;
+
+      h1 {
+        margin: 0;
+        padding: 0;
+      }
+    }
+  }
+
+  .main {
+    padding: 1em;
+  }
+}
+
+.treeview-navigation {
+  ul, li {
+    margin: 0;
+    padding: 0;
+
+    li span.label {
+      padding-left: 1em;
+
+      li li span.label {
+        padding-left: 2em;
+      }
+    }
+  }
+
+  &[role="tree"] {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+  }
+
+  a[role="treeitem"] {
+    ul {
+      margin: 0;
+      padding: 0;
+    }
+
+    &[aria-expanded="false"] + [role="group"] {
+      display: none;
+    }
+
+    &[aria-expanded="true"] + [role="group"] {
+      display: block;
+    }
+
+    > span svg {
+      transform: translate(0, 0);
+    }
+
+    &[aria-expanded="false"] > span svg {
+      transform: rotate(270deg) translate(2px, 2px);
+    }
+
+    margin: 0;
+    padding: 4px;
+    padding-left: 9px;
+    text-decoration: none;
+    color: $treeview-link-color;
+    border: none;
+    display: block;
+
+    &[aria-current] {
+      border-left: 5px solid $treeview-link-color;
+      padding-left: 4px;
+      background-color: $treeview-current-bg-color;
+    }
+
+    span.icon svg polygon {
+      stroke-width: 2px;
+      fill: currentcolor;
+      stroke: transparent;
+    }
+
+    &:focus {
+      outline: 0;
+      padding: 2px;
+      padding-left: 7px;
+      border: 2px $treeview-link-color solid;
+    }
+
+    &[aria-current]:focus {
+      padding-left: 4px;
+      border-left-width: 5px;
+    }
+
+    &:hover {
+      background-color: $treeview-hover-bg-color;
+      text-decoration: underline;
+      padding-left: 4px;
+      border-left: 5px solid $treeview-hover-border-color;
+    }
+
+    span.icon:hover {
+      color: $treeview-hover-border-color;
+    }
+
+    span.icon svg polygon:hover {
+      stroke: currentcolor;
+    }
+  }
+}

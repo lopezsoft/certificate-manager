@@ -1,0 +1,550 @@
+/*================================================================================
+	Item Name: Vuexy - Vuejs, HTML & Laravel Admin Dashboard Template
+	Author: PIXINVENT
+	Author URL: http://www.themeforest.net/user/pixinvent
+================================================================================
+
+NOTE:
+------
+PLACE HERE YOUR OWN SCSS CODES AND IF NEEDED, OVERRIDE THE STYLES FROM THE OTHER STYLESHEETS.
+WE WILL RELEASE FUTURE UPDATES SO IN ORDER TO NOT OVERWRITE YOUR STYLES IT'S BETTER LIKE THIS.  */
+@import "custom/support-button.component";
+@import "custom/layout-component";
+@import "custom/layout-wrapper";
+@import "./webkit";
+// Define los colores para cada estado
+$status-colors: (
+        'VALIDATING': orange, // Color para el estado 'Validando'
+        'WAITING': #2556a3,    // Color para el estado 'Esperando
+        'INITIAL': blue,   // Color para el estado 'Inicial'
+        'ERROR': red,      // Color para el estado 'Error'
+        'RUNNING': green,  // Color para el estado 'En ejecución'
+        'FINISHED': gray,  // Color para el estado 'Finalizado'
+        'default': black   // Color para 'No definido' o cualquier otro estado
+);
+
+.text-justify {
+  text-align: justify !important;
+}
+// Clase base
+.status {
+  // Valor predeterminado para el color
+  color: map-get($status-colors, 'default');
+
+  // Genera clases modificadoras para cada estado
+  @each $state, $color in $status-colors {
+    &--#{$state} {
+      color: $color;
+      background-color: white;
+      min-height: 2rem;
+      padding: 2px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px $color dotted;
+    }
+  }
+}
+
+.custom-tooltip {
+  background-color: #ffffff; /* Fondo blanco */
+  color: #2556a3; /* Texto en azul intenso */
+  padding: 4px 6px;
+  border-radius: 4px; /* Bordes redondeados para un aspecto elegante */
+  font-size: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Sombra sutil para profundidad */
+  border: 1px solid #a3c7e0; /* Borde en un tono azul claro para complementar */
+  z-index: 99999; /* Asegura que el tooltip sea visible sobre otros elementos */
+  font-family: "Segoe UI", Arial, sans-serif; /* Fuente moderna y legible */
+  line-height: 1.1; /* Espaciado de línea para una mejor legibilidad */
+  max-width: 30rem;
+  max-height: 10rem;
+  overflow-y: auto;
+}
+
+.img-file-icon {
+  width: 32px !important;
+  height: 100%;
+  object-fit: cover;
+  cursor: pointer;
+  &:hover {
+    border-radius: .15rem;
+    background-color: rgba(37, 86, 163, 0.37);
+    border: rgba(37, 86, 163, 0.93) 1px solid;
+    padding: 2px;
+    width: 34px !important;
+  }
+}
+
+.span-latido {
+  animation: latido 2s infinite;
+}
+
+@keyframes latido {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.span-button-lg {
+  width: auto !important;
+  padding: 4px;
+  border: rgba(37, 86, 163, 0.5) 1px solid;
+  border-radius: .15rem;
+}
+
+.span-button {
+  width: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  vertical-align: middle;
+  cursor: pointer;
+  height: 2rem;
+  &:hover {
+    border-radius: .15rem;
+    background-color: rgba(37, 86, 163, 0.37);
+    border: rgba(37, 86, 163, 0.93) 1px solid;
+  }
+  &:active {
+    background-color: rgba(253, 206, 58, 0.82) !important;
+  }
+  i {
+    font-size: 1.5rem;
+  }
+}
+
+
+.media {
+  display: flex;
+  align-items: flex-start;
+  .text-left {
+    text-align: left!important;
+  }
+  .media-body {
+    flex: 1;
+  }
+}
+
+.title-center-black {
+  color: #111e2c !important;
+}
+
+.center-column {
+  margin     : 0 auto;
+  padding-top: 50px;
+}
+
+.fas-fa-ok-thumbs {
+  color: orangered;
+  padding  : 6px;
+  &:before {
+    // font-family: FontAwesome;
+    // content    : '\f164';
+    font-size  : 22px !important;
+    color      : green;
+  }
+}
+
+
+.fas-fa-qr, .fas-fa-save {
+  color: #2556a3!important;
+  padding  : 6px;
+  &:before {
+    font-size  : 22px !important;
+    color: #2556a3!important;
+  }
+  &:hover {
+    color: #2556a3!important;
+  }
+}
+
+.fas-fa-ok {
+  color: green;
+  padding  : 6px;
+  &:before {
+    // font-family: FontAwesome;
+    // content    : '\f00c';
+    font-size  : 22px !important;
+    color      : green;
+  }
+  &:hover {
+    color: green;
+  }
+}
+
+
+.fas-fa-warning {
+  color: orangered;
+  padding  : 6px;
+  &:before {
+    // font-family: FontAwesome;
+    // content    : '\f06a';
+    font-size  : 22px !important;
+    color      : orangered;
+  }
+}
+
+
+.fas-fa-error, .fas-fa-close {
+  color: red;
+  padding  : 6px;
+  &:before {
+    // font-family: FontAwesome;
+    // content    : '\f188';
+    font-size  : 22px !important;
+    color      : red !important;
+  }
+  &:hover {
+    color: red !important;
+  }
+}
+
+
+.fas-fa-pdf {
+  color: red;
+  padding  : 6px;
+  &:before {
+    font-family: FontAwesome;
+    content    : '\f1c1';
+    font-size  : 22px !important;
+    color      : red;
+  }
+}
+
+.fas-fa-xls {
+  color: green;
+
+  &:before {
+    font-size: 22px !important;
+    color    : green;
+  }
+}
+
+.fas-fa-code {
+  color: orangered;
+
+  &:before {
+    font-size: 22px !important;
+    color    : orangered;
+  }
+}
+
+.fas-fa-print {
+  color: blueviolet;
+
+  &:before {
+    font-size: 22px !important;
+    color    : blueviolet;
+  }
+}
+
+
+.fas-fa-mail {
+  color: blueviolet;
+  padding  : 6px;
+  &:before {
+    // font-family: FontAwesome;
+    // content    : '\f658';
+    font-size  : 22px !important;
+    color      : blueviolet;
+  }
+}
+
+.fas-fa-mail-send {
+  color: green;
+  padding  : 6px;
+  &:before {
+    // font-family: FontAwesome;
+    // content    : '\f658';
+    font-size  : 22px !important;
+    color      : green;
+  }
+}
+
+
+.fas-fa-edit {
+  color    : green;
+  font-size: 18px !important;
+  padding  : 6px;
+    &:before {
+        font-size  : 18px !important;
+        color      : green;
+    };
+}
+
+.fas-fa-delete {
+  color    : red;
+  font-size: 18px !important;
+  padding  : 6px;
+  &:before {
+    font-size  : 18px !important;
+    color      : red;
+  }
+}
+
+.fa-cursor {
+  &:hover {
+    cursor: pointer;
+  }
+}
+
+.cursor {
+  &:hover {
+    cursor: pointer;
+  }
+}
+
+.menuExport {
+  padding            : 6px;
+  // background-color: rgba(192, 192, 192, 0.192);
+  height             : 48px;
+  display            : flex;
+  margin-bottom      : 4px;
+}
+
+.radius-button {
+  border-radius: 25px !important;
+}
+
+.space-right {
+  margin-right: 10px
+}
+
+.space-menu {
+  padding-left: 15px !important;
+  padding-right: 15px !important;
+}
+
+.fas-fa-22 {
+  &:before {
+    // font-family: FontAwesome;
+    font-size  : 22px !important;
+  }
+}
+
+.fas-fa-20 {
+  &:before {
+    font-size  : 20px !important;
+  }
+}
+.fas-fa-18 {
+  &:before {
+    font-size  : 18px !important;
+  }
+}
+
+.fas-fa-16 {
+  &:before {
+    font-size  : 16px !important;
+  }
+}
+
+.fas-fa-14 {
+  &:before {
+    font-size  : 14px !important;
+  }
+}
+.fas-fa-12 {
+  &:before {
+    font-size  : 12px !important;
+  }
+}
+
+.fas-fa-red {
+  color: red;
+  &:before {
+    font-size  : 22px !important;
+    color      : red;
+  }
+}
+
+.clearColor {
+  background-color: transparent !important;
+  border          : 0px !important;
+}
+
+.myMenu {
+  width      : 44px !important;
+  // margin-left: auto !important;
+}
+
+.margin-left {
+  margin-left: auto !important;
+}
+
+
+.flex {
+  display: flex;
+  padding: 4px;
+}
+
+.float-right {
+  margin-left: auto;
+}
+
+.padding-top-bottom {
+  padding-top   : 4px;
+  padding-bottom: 4px;
+}
+
+.full-screen {
+  width           : 50%;
+  height          : 50%;
+  z-index         : 10000;
+  background-color: rgba(0, 255, 255, 0.151);
+  position        : fixed;
+  margin          : auto;
+}
+
+.aterisk, .asterisk {
+  color        : red !important;
+  font-weight  : bold;
+  padding-right: 5px;
+  animation: latido 2s infinite;
+}
+
+.select2 {
+  width           : 100% !important;
+  height          : 38px !important;
+
+  .select2-selection__rendered {
+    line-height: 36px !important;
+  }
+  .select2-selection__arrow {
+    height: 36px !important;
+  }
+}
+
+.select2-container {
+  height: 38px !important;
+
+  .select2-selection--single {
+    height: 38px !important;
+  }
+}
+
+.display-none {
+  text-decoration: none !important;
+}
+
+.active-green {
+  color: green;
+  font-weight: bold;
+  padding: 8px !important;
+}
+
+.active-red {
+  color: red;
+  font-weight: bold;
+  padding: 8px !important;
+}
+
+.active-orange {
+  color: orangered;
+  font-weight: bold;
+  padding: 8px !important;
+}
+
+/*
+Full screen Modal
+*/
+.fullscreen-modal {
+  .modal-dialog {
+    width: 100% !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width:none !important;
+  }
+}
+
+#email {
+  text-transform: lowercase;
+}
+
+
+@media (min-width: 768px) {
+  .fullscreen-modal {
+    .modal-dialog {
+      width: 750px;
+    }
+  }
+}
+@media (min-width: 992px) {
+  .fullscreen-modal {
+    .modal-dialog {
+      width: 970px;
+    }
+  }
+}
+@media (min-width: 1200px) {
+  .fullscreen-modal {
+    .modal-dialog {
+      width: 1170px;
+    }
+  }
+}
+
+
+/**** switch ******/
+
+:host  ::ng-deep .switchery-primary {
+  .switch {
+    background: #fff;
+    &.checked {
+      background: #975AFF;
+    }
+  }
+}
+
+:host  ::ng-deep .switchery-info {
+  .switch {
+    background: #fff;
+    &.checked {
+      background: #2F8BE6;
+    }
+  }
+}
+
+:host ::ng-deep .switchery-success {
+  .switch {
+    background: #fff;
+    &.checked {
+      background: #40C057;
+    }
+  }
+}
+
+:host ::ng-deep .switchery-warning {
+  .switch {
+    background: #fff;
+    &.checked {
+      background: #F77E17;
+    }
+  }
+}
+
+:host ::ng-deep .switchery-danger {
+  .switch {
+    background: #fff;
+    &.checked {
+      background: #F55252;
+    }
+  }
+}
+
+:host ::ng-deep .switchery-secondary {
+  .switch {
+    background: #fff;
+    &.checked {
+      background: #616D89;
+    }
+  }
+}
