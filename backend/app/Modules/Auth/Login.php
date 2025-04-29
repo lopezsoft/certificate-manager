@@ -3,6 +3,7 @@
 namespace App\Modules\Auth;
 
 use App\Common\HttpResponseMessages;
+use App\Common\MessageExceptionResponse;
 use App\Models\Company;
 use App\Models\user\UserType;
 use Carbon\Carbon;
@@ -74,12 +75,10 @@ class Login
                 'access_token'  => $tokenResult->accessToken,
                 'user'          => $user,
                 'expires_at'    => Carbon::parse($token->expires_at)->toDateTimeString(),
-                'message'       => 'Bienvenido a Matias. Su sesión ha sido iniciada con éxito.'
+                'message'       => 'Bienvenido. Su sesión ha sido iniciada con éxito.'
             ]);
         }catch (Exception $e) {
-            return HttpResponseMessages::getResponse500([
-                'message'   => $e->getMessage()
-            ]);
+            return MessageExceptionResponse::response($e);
         }
     }
 

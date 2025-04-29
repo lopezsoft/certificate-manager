@@ -26,6 +26,7 @@ class RegisteredUserController extends Controller
     public function store(Request $request): JsonResponse
     {
         $messagesValidate = [
+            'city_id.required'       => 'La ciudad es requerida',
             'first_name.required'   => 'El nombre es requerido',
             'last_name.required'    => 'El apellido es requerido',
             'company_name.required' => 'El nombre de la empresa es requerido',
@@ -37,6 +38,7 @@ class RegisteredUserController extends Controller
         ];
 
         $request->validate([
+            'city_id'       => ['required', 'integer', 'exists:cities,id'],
             'first_name'    => ['required', 'string', 'max:100'],
             'last_name'     => ['required', 'string', 'max:100'],
             'company_name'  => ['required', 'string', 'max:100'],

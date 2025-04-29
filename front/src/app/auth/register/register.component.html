@@ -141,9 +141,6 @@
             <small class="text-danger" *ngIf="isInvalid('company_name')">Nombre o razón social muy corto</small>
           </div>
         <div class="form-group">
-            <input class="form-control" type="text" [placeholder]="'companies.trade_name' | translate" formControlName="trade_name">
-        </div>
-        <div class="form-group">
             <label><span class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.identity_document' | translate}}</label>
             <ng-select formControlName="identity_document_id" required [class.is-invalid]="isInvalid('invalidIdentity')">
                 <ng-option *ngFor="let docs of identityDocs" [value]="docs.id">
@@ -157,24 +154,6 @@
               [class.is-invalid]="isInvalid('dni')">
             <small class="text-danger" *ngIf="isInvalid('dni')">Número de documento incorrecto</small>
           </div>
-            <div class="form-group">
-                <label><span class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.tax_regime' | translate}}</label>
-                <ng-select formControlName="tax_regime_id" required [class.is-invalid]="isInvalid('invalidTaxRegime')" >
-                    <ng-option *ngFor="let taxr of taxregime" [value]="taxr.id">
-                        {{ taxr.code }} - {{ taxr.description }}
-                    </ng-option>
-                </ng-select>
-            </div>
-            <div class="form-group">
-                <label><span
-                        class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.tax_level' | translate}}</label>
-                <ng-select formControlName="tax_level_id" required  [class.is-invalid]="isInvalid('invalidTaxLevel')"
-                >
-                    <ng-option *ngFor="let taxl of taxlevel" [value]="taxl.id">
-                        {{ taxl.code }} - {{ taxl.description }}
-                    </ng-option>
-                </ng-select>
-            </div>
           <div class="form-group">
               <label><span class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.type_organization' | translate}}</label>
             <ng-select  formControlName="type_organization_id"
@@ -183,9 +162,9 @@
             </ng-select>
           </div>
           <div class="form-group">
-            <input class="form-control" type="text"  formControlName="mobile"
-              placeholder="Teléfono de contacto" autocomplete="on" inputmode="tel" [class.is-invalid]="isInvalid('mobile')">
-            <small class="text-danger" *ngIf="isInvalid('mobile')">Numero de teléfono muy corto</small>
+            <input class="form-control" type="text"  formControlName="phone"
+              placeholder="Teléfono de contacto" autocomplete="on" inputmode="tel" [class.is-invalid]="isInvalid('phone')">
+            <small class="text-danger" *ngIf="isInvalid('phone')">Numero de teléfono muy corto</small>
           </div>
           <div class="form-group">
             <input class="form-control" type="text"  formControlName="address" placeholder="Dirección"

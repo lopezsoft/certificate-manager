@@ -6,17 +6,11 @@
   <div class ="card-body">
     <form [formGroup]="customForm">
       <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-12">
           <div class="form-group">
             <label><span class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.company_name' | translate}}</label>
             <input class="form-control" #focusElement type="text" formControlName="company_name"
               [class.is-invalid]="isInvalid('invalidCompanyName')" required autofocus>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="form-group">
-            <label>{{'companies.trade_name' | translate}}</label>
-            <input class="form-control" type="text" formControlName="trade_name">
           </div>
         </div>
       </div>
@@ -46,7 +40,7 @@
         </div>
       </div>
       <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-12">
           <div class="form-group">
             <label><span class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.type_organization' | translate}}</label>
             <ng-select formControlName="type_organization_id" required [class.is-invalid]="isInvalid('invalidOrganization')" >
@@ -56,30 +50,8 @@
             </ng-select>
           </div>
         </div>
-        <div class="col-md-6">
-          <div class="form-group">
-            <label><span class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.tax_regime' | translate}}</label>
-            <ng-select formControlName="tax_regime_id" required [class.is-invalid]="isInvalid('invalidTaxRegime')" >
-              <ng-option *ngFor="let taxr of taxregime" [value]="taxr.id">
-                {{ taxr.code }} - {{ taxr.description }}
-              </ng-option>
-            </ng-select>
-          </div>
-        </div>
       </div>
       <div class="row">
-        <div class="col-md-6">
-          <div class="form-group">
-            <label><span
-                class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.tax_level' | translate}}</label>
-            <ng-select formControlName="tax_level_id" required  [class.is-invalid]="isInvalid('invalidTaxLevel')"
-              >
-              <ng-option *ngFor="let taxl of taxlevel" [value]="taxl.id">
-                {{ taxl.code }} - {{ taxl.description }}
-              </ng-option>
-            </ng-select>
-          </div>
-        </div>
         <div class="col-md-6">
           <div class="form-group">
             <label><span
@@ -92,8 +64,6 @@
             </ng-select>
           </div>
         </div>
-      </div>
-      <div class="row">
         <div class="col-md-6">
           <div class="form-group">
             <label><span
@@ -105,24 +75,18 @@
             </ng-select>
           </div>
         </div>
+      </div>
+      <div class="row">
         <div class="col-md-6">
           <div class="form-group">
             <label><span class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.email' | translate}}</label>
             <input class="form-control" type="email" [class.is-invalid]="isInvalid('invalidEmail')" formControlName="email" required>
           </div>
         </div>
-      </div>
-      <div class="row">
         <div class="col-md-6">
           <div class="form-group">
             <label>{{'companies.address' | translate}}</label>
             <input class="form-control" type="text" formControlName="address">
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="form-group">
-            <label>{{'companies.location' | translate}}</label>
-            <input class="form-control" type="text" formControlName="location">
           </div>
         </div>
       </div>
@@ -134,26 +98,14 @@
           </div>
         </div>
         <div class="col-md-6">
-          <label>{{'companies.mobile' | translate}}</label>
-          <input class="form-control" type="text" formControlName="mobile">
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-6">
           <div class="form-group">
             <label>{{'companies.phone' | translate}}</label>
             <input class="form-control" type="text" formControlName="phone">
           </div>
         </div>
-        <div class="col-md-6">
-          <div class="form-group">
-            <label>{{'companies.web' | translate}}</label>
-            <input class="form-control" type="text" formControlName="web">
-          </div>
-        </div>
       </div>
       <div class="row mt-2">
-        <div div class="col-md-6">
+        <div class="col-md-6">
           <div class="form-group">
             <label for="file">Seleccionar imagen</label>
             <input type="file" id="file" #uploadFile
@@ -168,7 +120,7 @@
   </div>
   <div class="card-footer">
     <app-footer-form [showAaveACreate]="false" [saveAClose]="saveAClose" (closeEvent)="cancel()"
-                      (saveAndCreateEvent)="saveAndCreate()" (saveAndCloseEvent)="saveAndClose()"[maskSpinner]="maskSpinner"></app-footer-form>
+                      (saveAndCreateEvent)="saveAndCreate()" (saveAndCloseEvent)="saveAndClose()"></app-footer-form>
   </div>
 </div>
 </div>

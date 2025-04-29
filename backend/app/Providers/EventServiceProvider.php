@@ -21,9 +21,6 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $listen = [
-        MessageSent::class => [
-            LogSentMessage::class,
-        ],
         Verified::class => [
             LogVerifiedUser::class,
         ],

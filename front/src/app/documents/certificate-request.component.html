@@ -1,0 +1,100 @@
+<app-layout-component
+        (onToggleNavbar)="toggleNavbar()"
+        [isClicked]="isClicked">
+    <ng-container slot="sidebar">
+        <div class="card custom-form">
+            <div class="card-header">
+                <h6 class="card-title mb-0">{{title | uppercase}}</h6>
+            </div>
+            <div class="card-body">
+                <div class="w-100 d-flex align-items-center mb-25">
+                    <div class="w-100 d-flex align-items-center justify-content-between mb-0">
+                        <button
+                                appCustomTooltip="Volver al menú anterior"
+                                tooltipDirection="left"
+                                class="btn custom-button fas-fa-close me-25"
+                                (click)="goRoute('requests')" [disabled]="loading">
+                            <i class="fas fa-chevron-left fas-fa-18 fas-fa-close"></i>
+                            {{ 'buttons.back' | translate }}
+                        </button>
+                        <button
+                                (click)="onNewDocument()"
+                                appCustomTooltip="Nueva solicitud"
+                                tooltipDirection="left"
+                                class="btn custom-button fas-fa-ok me-50">
+                            <i class="fas fa-plus-square fas-fa-18 fas-fa-ok"></i>
+                            {{ 'buttons.new' | translate }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <app-search-data #searchItems
+                         [showFilter]="true"
+                         (onClearFilter)="clearFilter()"
+                         (onSearch)="onSearch({query: $event})">
+            <div class="card">
+                <div class="card-body p-0">
+                    <form [formGroup]="modalForm" class="custom-form">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label>Fecha desde</label>
+                                    <input type="date" class="form-control"  formControlName="start_date" aria-describedby="helpId">
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label>Fecha hasta</label>
+                                    <input type="date" class="form-control"  formControlName="end_date" aria-describedby="helpId">
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Estado del documento</label>
+                                    <ng-select formControlName="document_status" (change)="onSearch({})">
+                                        <ng-option *ngFor="let status of statusDocument" [value]="status.status_id">
+                                            <i [class]='status.icon'></i> {{ status.description }}
+                                        </ng-option>
+                                    </ng-select>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </app-search-data>
+        <div class="row row-cols-1 g-25">
+            <div class="col-md-12 w-100 static-bottom exodogrid-content-style">
+                <exodo-pagination class="pagination w-100" #pagination
+                                  (onRefreshPagination)="onRefreshPagination($event)">
+                </exodo-pagination>
+            </div>
+            <div class="col" *ngFor="let item of shipping.shippingData; index as i">
+                <div class="card cursor layout-content-card single full-height"
+                     [ngClass]="{'is-selected': item.checked}"
+                     (click)="onClickItem(item)">
+                    <div class="card-body">
+                        <p class="card-text item-description w-100">
+                            {{ item.company_name | uppercase }}
+                        </p>
+                        <p class="card-text">
+                            NIT Nº. {{item.document_number}}. Nº. Documento: {{item.document_number}}
+                        </p>
+                        <p class="card-text item-description w-100">
+                            {{ item.address | uppercase }}
+                        </p>
+                        <div class="card-text d-grid">
+                              <span class="w-100 text-center" [class]="'document-status-'+item.request_status">
+                                {{ documentStatusDescription[item.request_status] | uppercase }}
+                              </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+    <app-document-view
+        #documentView
+    ></app-document-view>
+</app-layout-component>

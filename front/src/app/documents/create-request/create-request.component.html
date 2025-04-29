@@ -1,0 +1,229 @@
+<div class="layout-wrapper">
+    <div class="card custom-form">
+        <div class="card-header">
+            {{ title | uppercase }}
+        </div>
+        <div class="card-body">
+            <form [formGroup]="customForm">
+                <div class="form-group">
+                    <h6>DATOS EMPRESARIALES</h6>
+                    <hr>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>
+                                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                                N.I.T sin digito de verificación
+                            </label>
+                            <input class="form-control" type="text"  formControlName="dni"
+                                   #dniInput
+                                   autofocus
+                                   (change)="onChangeDni($event)"
+                                   placeholder="N.I.T sin digito de verificación" inputmode="numeric" autocomplete="off"
+                                   [class.is-invalid]="isInvalid('dni')">
+                            <small class="text-danger" *ngIf="isInvalid('dni')">N.I.T incorrecto</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>
+                                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                                {{'companies.type_organization' | translate}}
+                            </label>
+                            <ng-select
+                                    (change)="onChangeTypeOrganization($event)"
+                                    formControlName="type_organization_id"
+                                    placeholder="Tipo de contribuyente">
+                                <ng-option [value]="org.id" *ngFor="let org of organizations">{{ org.description }}</ng-option>
+                            </ng-select>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                        {{'companies.company_name' | translate}}
+                    </label>
+                    <input class="form-control" type="text" formControlName="company_name"
+                           placeholder="Nombre o razón social" autocomplete="off" [class.is-invalid]="isInvalid('company_name')">
+                    <small class="text-danger" *ngIf="isInvalid('company_name')">Nombre o razón social muy corto</small>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                        {{'companies.city' | translate}}
+                    </label>
+                    <ng-select data-live-search="true"  formControlName="city_id"
+                               placeholder="Ciudad o municipio" [virtualScroll]="true">
+                        <ng-option [value]="city.id" *ngFor="let city of cities">
+                            {{city.city_code}} - {{ city.name_city }} ({{city.department.name_department}})
+                        </ng-option>
+                    </ng-select>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                        Dirección de la empresa
+                    </label>
+                    <input class="form-control" type="text"  formControlName="address" placeholder="Dirección"
+                           autocomplete="on" [class.is-invalid]="isInvalid('address')">
+                    <small class="text-danger" *ngIf="isInvalid('address')">Dirección muy corta</small>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <input class="form-control" type="text"  formControlName="phone"
+                                   placeholder="Teléfono fijo y extension" autocomplete="on" inputmode="tel">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <input class="form-control" type="text"  formControlName="mobile"
+                                   placeholder="Número teléfono móvil" autocomplete="on" inputmode="tel">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <hr>
+                    <h6>DATOS DEL REPRESENTANTE LEGAL</h6>
+                    <hr>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                        Nombre completo de representante legal
+                    </label>
+                    <input class="form-control" type="text"  formControlName="legal_representative"
+                           placeholder="Nombre completo de representante legal" inputmode="text"
+                           [disabled]="isNaturelPerson()"
+                           autocomplete="on" [class.is-invalid]="isInvalid('legal_representative')">
+                    <small class="text-danger" *ngIf="isInvalid('legal_representative')">
+                        Nombre completo de representante legal muy corto
+                    </small>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label><span class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.identity_document' | translate}}</label>
+                            <ng-select formControlName="identity_document_id" required [class.is-invalid]="isInvalid('invalidIdentity')">
+                                <ng-option *ngFor="let docs of identityDocs" [value]="docs.id">
+                                    {{ docs.document_name }}
+                                </ng-option>
+                            </ng-select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>
+                                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                                Número de documento de identidad
+                            </label>
+                            <input class="form-control" type="text"  formControlName="document_number"
+                                   #documentInput (change)="onChangeDocument($event)"
+                                   placeholder="Documento sin digito de verificación" inputmode="numeric" autocomplete="off"
+                                   [class.is-invalid]="isInvalid('document_number')">
+                            <small class="text-danger" *ngIf="isInvalid('document_number')">Número de documento incorrecto</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <textarea class="form-control" formControlName="info"
+                                      placeholder="Información adicional" inputmode="text">
+                            </textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <hr>
+                    <h6>VIGENCIA DEL CERTIFICADO</h6>
+                    <hr>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                        Seleccione la vigencia del certificado
+                    </label>
+                    <ng-select formControlName="life"
+                               required [class.is-invalid]="isInvalid('life')">
+                        <ng-option *ngFor="let validity of validities" [value]="validity.id">
+                            {{ validity.name }}
+                        </ng-option>
+                    </ng-select>
+                </div>
+                <ng-container *ngIf="!canEdit">
+                <div class="form-group">
+                    <hr>
+                    <h6>SUBIDA DE ARCHIVOS</h6>
+                    <hr>
+                </div>
+                <!-- Subida de archivo -->
+                <ng-container *ngIf="!isNaturelPerson()">
+                    <div class="col-md-12">
+                        <small class="text-info">
+                            <i class="fas fa-info-circle"></i>
+                            Aquí puedes subir el archivo PDF de: <br> <b>CERTIFICADO DE CÁMARA DE COMERCIO DE EXISTENCIA Y REPRESENTACIÓN LEGAL</b>.
+                            <br>
+                            <i class="fas fa-info-circle"></i>
+                            El archivo debe ser un PDF y no debe pesar más de <b>1000kb(1MB)</b>.
+                            <br>
+                            <i class="fas fa-info-circle"></i>
+                            El archivo <b>no debe superar los 30</b> dias de expedición.
+                        </small>
+                        <input type="file" id="fileUpload" #fileUpload name="fileUpload" class="form-control primary" required (change)="onUploadPDF()">
+                        <small class="text-muted font-small-2 d-block">
+                            Formato permitido: <strong>.PDF</strong>. Procura no cerrar ni actualizar la página durante el proceso.
+                        </small>
+                    </div>
+                    <hr>
+                </ng-container>
+                <div class="col-md-12">
+                    <small class="text-info">
+                        <i class="fas fa-info-circle"></i>
+                        Aquí puedes subir el archivo PDF de: <br> <b>RUT Actualizado, como se baja de la DIAN</b>.
+                        <br>
+                        <i class="fas fa-info-circle"></i>
+                        El archivo debe ser un PDF y no debe pesar más de <b>1000kb</b>.
+                        <br>
+                    </small>
+                    <input type="file" id="fileUploadRut" #fileUploadRut name="fileUploadRut" class="form-control primary"
+                           required (change)="onUploadRUT()">
+                    <small class="text-muted font-small-2 d-block">
+                        Formato permitido: <strong>.PDF</strong>. Procura no cerrar ni actualizar la página durante el proceso.
+                    </small>
+                </div>
+                <hr>
+                <div class="col-md-12">
+                    <small class="text-info">
+                        <i class="fas fa-info-circle"></i>
+                        Aquí puedes subir el archivo de: <br> <b>Copia de la cedula del representante legal</b>.
+                        <br>
+                        <i class="fas fa-info-circle"></i>
+                        El archivo debe ser un PDF,JPG, PNG o ZIP y no debe pesar más de <b>1000kb(1MB)</b>.
+                        <br>
+                    </small>
+                    <input type="file" id="fileUploadCc" #fileUploadCc name="fileUploadCc" class="form-control primary"
+                           required (change)="onUploadCC()">
+                    <small class="text-muted font-small-2 d-block">
+                        Formato permitido: <strong>.PDF, JPG, PNG, ZIP</strong>. Procura no cerrar ni actualizar la página durante el proceso.
+                    </small>
+                </div>
+                </ng-container>
+            </form>
+            <div class="card-footer mt-2 d-flex justify-content-end">
+                <button type="button" class="btn custom-button border fas-fa-close btn-block"
+                        (click)="onCancel()">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </button>
+                <button (click)="onSave()" type="button" class="btn ms-1 custom-button border fas-fa-save btn-block">
+                    <span *ngIf="!loading">{{buttonText}}</span>
+                    <span *ngIf="loading">Procesando solicitud... </span>
+                    <i class="fas-fa-save fas " [ngClass]="{'fa-plus' :!loading, 'fa-spinner fa-spin': loading }" ></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -21,7 +21,7 @@ export default class TokenService {
     const
       token = this.getToken();
     const user = token.user;
-    return (user && ((user.type_id === 1) || (user && user.type_id === 2)));
+    return (user && (user.type_id === 1));
   }
 
   getToken(): AccessToken {

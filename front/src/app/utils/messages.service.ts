@@ -46,10 +46,10 @@ export class MessagesService {
   }
 
   onMessage(title: string, msg: string) {
-    Swal.fire((title.length > 1) ? title :  "Matias API", msg, "info");
+    Swal.fire((title.length > 1) ? title :  "CERTIFICATE MANAGER", msg, "info");
   }
   errorMessage(title: string, msg: string) {
-    Swal.fire((title.length > 1) ? title :  "Error Matias API", msg, "error");
+    Swal.fire((title.length > 1) ? title :  "Error CERTIFICATE MANAGER", msg, "error");
   }
 
 }

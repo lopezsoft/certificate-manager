@@ -48,24 +48,16 @@ export class RegisterComponent extends AuthMasterComponent implements OnInit, Af
     super.ngOnInit();
   }
   ngAfterViewInit(): void {
-    const ts    = this;
 
-    ts._cities.getData().subscribe({
+    this._cities.getData().subscribe({
       next: (resp) => {
-        ts.cities = resp;
+        this.cities = resp;
       }
     });
     this.documentSer.getIdentityDocuments({}).subscribe((resp) => {
       this.identityDocs  = resp;
     });
-    
-    this.documentSer.getTaxLevel({}).subscribe((resp) => {
-      this.taxlevel  = resp;
-    });
-    
-    this.documentSer.getTaxRegime({}).subscribe((resp) => {
-      this.taxregime  = resp;
-    });
+
     
     this.documentSer.getTypeOrganization({}).subscribe((resp) => {
       this.organizations  = resp;
@@ -82,17 +74,14 @@ export class RegisterComponent extends AuthMasterComponent implements OnInit, Af
       last_name             : ['', [Validators.required, Validators.minLength(2)]],
       company_name          : ['',[Validators.required, Validators.minLength(5)]],
       dni                   : ['',[Validators.required, Validators.minLength(5), Validators.maxLength(12)]],
-      trade_name            : [''],
-      tax_level_id          : [5, [Validators.required]],
-      tax_regime_id         : [2, [Validators.required]],
       identity_document_id  : [3, [Validators.required]],
       type_organization_id  : [1,Validators.required],
-      mobile                : ['',[Validators.required, Validators.minLength(7)]],
+      phone                 : ['',[Validators.required, Validators.minLength(7)]],
       address               : ['',[Validators.required, Validators.minLength(10)]],
-      city_id               : [149,Validators.required],
       password              : ['', [Validators.required]],
       password_confirmation : ['', [Validators.required]],
       dv                    : [''],
+      city_id               : [149, [Validators.required]],
     });
   }
 

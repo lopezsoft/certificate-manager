@@ -1,6 +1,6 @@
 {
   "/api": {
-    "target": "http://cm-app.test",
+    "target": "http://cm-api.test",
     "secure": false,
     "changeOrigin": true
   }

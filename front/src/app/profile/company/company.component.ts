@@ -41,28 +41,20 @@ export class CompanyComponent extends FormComponent implements OnInit, AfterView
     super(fb, msg, api, _token,  router, translate, aRouter);
     this.customForm = this.fb.group({
       city_id                       : [136, [Validators.required]],
-      merchant_registration         : [''],
-      trade_name                    : [''],
       country_id                    : [45, [Validators.required]],
-      tax_level_id                  : [1, [Validators.required]],
-      tax_regime_id                 : [1, [Validators.required]],
       identity_document_id          : [3, [Validators.required]],
       type_organization_id          : [1, [Validators.required]],
       company_name                  : ['', [Validators.required, Validators.minLength(6)]],
       dni                           : ['', [Validators.required, Validators.minLength(2)]],
       address                       : [''],
-      location                      : [''],
-      postal_code                   : [''],
-      mobile                        : [''],
       phone                         : [''],
-      web                           : [''],
       dv                            : [''],
+      postal_code                   : [''],
       email                         : ['', [Validators.required, Validators.pattern('^[a-z0-9._%+-ñ]+@[a-z0-9.-]+\.[a-z]{2,4}$')]]
     });
   }
 
   ngOnInit(): void{
-    const ts  = this;
     this.changeLanguage(this.activeLang);
     this.title  = 'Datos de la empresa';
     this.PutURL   = '/company/';
@@ -78,14 +70,6 @@ export class CompanyComponent extends FormComponent implements OnInit, AfterView
 
     this.citySer.getData({}).subscribe((resp) => {
       this.cities  = resp;
-    });
-
-    this.documentSer.getTaxLevel({}).subscribe((resp) => {
-      this.taxlevel  = resp;
-    });
-
-    this.documentSer.getTaxRegime({}).subscribe((resp) => {
-      this.taxregime  = resp;
     });
 
     this.documentSer.getTypeOrganization({}).subscribe((resp) => {
@@ -113,23 +97,16 @@ export class CompanyComponent extends FormComponent implements OnInit, AfterView
           this.uid      = data.id;
           frm.setValue({
             city_id               : data.city_id               ,
-            merchant_registration : data.merchant_registration ,
-            tax_level_id          : data.tax_level_id          ,
-            tax_regime_id         : data.tax_regime_id         ,
             address               : data.address               ,
             company_name          : data.company_name          ,
-            trade_name            : data.trade_name            ,
             country_id            : data.country_id            ,
             dni                   : data.dni                   ,
             email                 : data.email                 ,
             identity_document_id  : data.identity_document_id  ,
-            location              : data.location              ,
-            mobile                : data.mobile                ,
             phone                 : data.phone                 ,
-            postal_code           : data.postal_code           ,
             type_organization_id  : data.type_organization_id  ,
             dv                    : data.dv  ,
-            web                   : data.web
+            postal_code           : data.postal_code           ,
           });
           this.imgData              = data.full_path_image ? data.full_path_image : '';
         }

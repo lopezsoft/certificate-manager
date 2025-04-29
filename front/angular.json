@@ -51,6 +51,8 @@
             "styles": [
               "src/styles.scss",
               "node_modules/highlight.js/scss/atom-one-dark.scss",
+              "node_modules/jqwidgets-ng/jqwidgets/styles/jqx.base.css",
+              "./node_modules/jqwidgets-ng/jqwidgets/styles/jqx.fluent.css",
               "src/assets/fonts/feather/iconfont.css",
               "src/assets/fonts/font-awesome/css/font-awesome.min.css",
               "node_modules/devextreme/dist/css/dx.light.css",
@@ -150,7 +152,7 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
             "proxyConfig": "proxy.conf.json",
-            "host": "front.apidian.test",
+            "host": "cm-app.test",
             "port": 4700,
             "disableHostCheck": true,
             "buildTarget": "vuexy:build"

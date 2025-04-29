@@ -11,27 +11,20 @@ export const menu: CoreMenu[] = [
   },
   {
     id: 'documents',
-    title: 'Documentos',
+    title: 'Solicitudes',
     // translate: 'MENU.DOCUMENTS',
     type: 'item',
     icon: 'file',
-    url: 'documents'
+    url: 'requests'
   },
-  {
+/*  {
     id: 'customers',
     title: 'Clientes',
     // translate: 'MENU.DOCUMENTS',
     type: 'item',
     icon: 'file',
     url: 'customers'
-  },
-  {
-    id: 'events',
-    title: 'Eventos',
-    type: 'item',
-    icon: 'file',
-    url: 'events',
-  },
+  },*/
   {
     id: 'profile',
     title: 'Perfil',

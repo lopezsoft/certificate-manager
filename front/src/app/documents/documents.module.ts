@@ -6,16 +6,22 @@ import { DocumentsComponent } from './documents.component';
 import { CoreModule } from '../@core/core.module';
 import { DocumentsContainerComponent } from './documents-container.component';
 import {ExodoGridModule} from "exodolibs";
-import {DocumentViewDataComponent} from "./document-view-data.component";
 import {CommonComponentsModule} from "../common/common-components.module";
 import {DocumentViewComponent} from "./document-view/document-view.component";
+import {CreateRequestComponent} from "./create-request/create-request.component";
+import {CertificateRequestComponent} from "./certificate-request.component";
+import {RequestInProcessComponent} from "./request-in-process/request-in-process.component";
+import {RequestInProcessViewComponent} from "./request-in-process-view/request-in-process-view.component";
 
 @NgModule({
   declarations: [
     DocumentsComponent,
     DocumentsContainerComponent,
-    DocumentViewDataComponent,
     DocumentViewComponent,
+    CreateRequestComponent,
+    CertificateRequestComponent,
+      RequestInProcessComponent,
+      RequestInProcessViewComponent
   ],
   imports: [
     CommonModule,
@@ -23,6 +29,15 @@ import {DocumentViewComponent} from "./document-view/document-view.component";
     CoreModule,
     ExodoGridModule,
     CommonComponentsModule
-  ]
+  ],
+  exports: [
+      DocumentsComponent,
+      DocumentsContainerComponent,
+      DocumentViewComponent,
+      CreateRequestComponent,
+      CertificateRequestComponent,
+      RequestInProcessComponent,
+      RequestInProcessViewComponent
+  ],
 })
 export class DocumentsModule { }

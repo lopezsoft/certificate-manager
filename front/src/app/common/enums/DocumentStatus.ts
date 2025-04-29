@@ -37,6 +37,60 @@ export enum DocumentStatusEnum {
 	DESCONOCIDO = 'DESCONOCIDO',
 }
 
+// Descripción de los estados en español en un array asociativo para su uso en el frontend
+
+export const DocumentStatusDescription = {
+	DRAFT: 'Borrador',
+	SENT: 'Enviado',
+	OVERDUE: 'Vencido',
+	PAID: 'Pagado',
+	PARTIALLY_PAID: 'Parcialmente Pagado',
+	CANCELLED: 'Cancelado',
+	REJECTED: 'Rechazado',
+	DISPUTED: 'En disputa',
+	REFUNDED: 'Reembolsado',
+	ON_HOLD: 'En espera',
+	DEFINITIVE: 'Definitivo',
+	CLOSED: 'Cerrado',
+	OPEN: 'Abierto',
+	DELETED: 'Eliminado',
+	PENDING: 'Pendiente',
+	ANNULLED: 'Anulado',
+	ACCEPTED: 'Aceptado',
+	PROCESSING: 'Procesando',
+	ACCOUNTED: 'Contabilizado',
+	PROCESSED: 'Procesado',
+	UNKNOWN: 'Desconocido',
+};
+
+export const DocumentStatusComments = {
+	DRAFT: 'La solicitud está en estado de borrador y no ha sido enviado.',
+	SENT: 'La solicitud a sido enviada para su revisión y aprobación.',
+	OVERDUE: 'La solicitud está vencido y requiere atención.',
+	PAID: 'La solicitud ha sido pagado.',
+	PARTIALLY_PAID: 'La solicitud ha sido parcialmente pagado.',
+	CANCELLED: 'La solicitud del certificado ha sido cancelada.',
+	REJECTED: 'La solicitud ha sido rechazada por algún error en los documentos.',
+	DISPUTED: 'La solicitud está en disputa.',
+	REFUNDED: 'El importe del documento ha sido reembolsado.',
+	ON_HOLD: 'La solicitud está en espera de acción.',
+	DEFINITIVE: 'La solicitud es definitivo y no puede ser modificado.',
+	CLOSED: 'La solicitud ha sido cerrado y no se pueden realizar más acciones sobre él.',
+	OPEN: 'La solicitud está abierto para su revisión o modificación.',
+	DELETED: 'La solicitud ha sido eliminado y no está disponible.',
+	PENDING: 'La solicitud está pendiente de acción o revisión.',
+	ANNULLED: 'La solicitud ha sido anulado y no tiene validez.',
+	ACCEPTED: 'La solicitud ha sido aceptado para ser procesada.',
+	PROCESSING: 'La solicitud está siendo procesado.',
+	ACCOUNTED: 'La solicitud ha sido contabilizado en el sistema.',
+	PROCESSED: 'La solicitud ha sido procesado con éxito.',
+	UNKNOWN: 'Estado desconocido del documento.'
+}
+
+// Ejemplo de uso:
+// const status = DocumentStatusEnum.DRAFT;
+// const description = DocumentStatusDescription[status]; // "Borrador"
+
 /**
  * Estado del documento para las facturas.
  *

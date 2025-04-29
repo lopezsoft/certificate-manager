@@ -8,10 +8,10 @@ export const environment = {
   SOCKET_URL: '',
   APIJWT: 'cm-app-jwt',
   APPURL: 'http://cm-api.test',
-  APIURL: 'http://cm-api.test/api/ubl2.1',
+  APIURL: 'http://cm-api.test/api/v1',
   VERSION: '1.0.0',
   config: {
-    name: 'CERT MANAGER',
+    name: 'MANAGER',
     title: 'CERTIFICATE MANAGER - Aplicación para la gestión de solicitudes de certificados de firma digital',
     logo: 'assets/img/logo-empresa-32.png',
     logoHome: 'assets/img/logo-empresa-32.png',

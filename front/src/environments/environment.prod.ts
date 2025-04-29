@@ -2,15 +2,15 @@ export const environment = {
   production: true,
   hmr: false,
   SOCKET_URL: '',
-  APIJWT: 'apd-V2-jwt',
-  APPURL: 'https://api-v2.matias-api.com',
-  APIURL: 'https://api-v2.matias-api.com/api/ubl2.1',
-  VERSION: '2.6.1',
+  APIJWT: 'cm-app-jwt',
+  APPURL: 'https://api-certs.matias-api.com',
+  APIURL: 'https://api-certs.matias-api.com/api/v1',
+  VERSION: '1.1.1',
   config: {
-    name: 'Matias API',
-    title: 'Matias API - Api para facturación electrónica en Colombia - DIAN',
-    logo: 'assets/img/matias-app-32.png',
-    logoHome: 'assets/img/matias-app-32.png',
+    name: 'MANAGER',
+    title: 'CERTIFICATE MANAGER - Aplicación para la gestión de solicitudes de certificados de firma digital',
+    logo: 'assets/img/logo-empresa-32.png',
+    logoHome: 'assets/img/logo-empresa-32.png',
     skin: 'default', // default, dark, bordered, semi-dark, green
     type: 'vertical', // vertical, horizontal
   }

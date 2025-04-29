@@ -40,18 +40,6 @@ return [
             'url' => env('APP_URL').'/storage',
             'visibility' => 'public',
         ],
-        'json' => [
-            'driver' => 'local',
-            'root' => storage_path('app/jsons'),
-            'url' => env('APP_URL').'/jsons',
-            'visibility' => 'public',
-        ],
-        'qr' => [
-            'driver' => 'local',
-            'root' => storage_path('app/qr'),
-            'url' => env('APP_URL').'/qr',
-            'visibility' => 'public',
-        ],
         'pdf' => [
             'driver' => 'local',
             'root' => storage_path('app/pdf'),

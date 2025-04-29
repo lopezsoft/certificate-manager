@@ -35,8 +35,8 @@ class TableValidationService
     {
         // Implementar lógica para determinar si la columna es obligatoria
         return $column->Null === 'NO' && ($column->Extra !== 'auto_increment' || $column->Key !== 'PRI') &&
-            $column->Default === null && (!preg_match('/^nextval/', $column->Extra) ||
-            !preg_match('/^uuid/', $column->Extra) || !preg_match('/^CURRENT_TIMESTAMP/', $column->Default) ||
+            $column->Default === null && (!str_starts_with($column->Extra, 'nextval') ||
+            !str_starts_with($column->Extra, 'uuid') || !str_starts_with($column->Default, 'CURRENT_TIMESTAMP') ||
             !$column->Type == 'timestamp');
     }
 
@@ -47,7 +47,7 @@ class TableValidationService
         // Extraer el tipo de la columna y, si es aplicable, su longitud
         preg_match('/(\w+)(?:\((\d+)\))?/', $column->Type, $matches);
         $type   = $matches[1];
-        $length = isset($matches[2]) ? $matches[2] : null;
+        $length = $matches[2] ?? null;
 
         // Basar las reglas en el tipo de columna
         switch ($type) {

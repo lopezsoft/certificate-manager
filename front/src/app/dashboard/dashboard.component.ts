@@ -47,48 +47,7 @@ export class DashboardComponent implements OnInit {
 
 
   getConsumeDocuments(year: number) {
-    // 1: Consumo agrupado por mes y año, por cuenta desarrollador.
-    this.dbs.getConsumeDocuments({p_year: year, p_type: 1})
-        .subscribe({
-          next: (res) => {
-              this.forCompanyByMonth = res.dataRecords.data;
-              this.dbs.forCompanyByMonth = res.dataRecords.data;
-          },
-          error: (err) => {
-            console.log(err);
-          }
-        });
-    // 2: Consumo agrupado por año, por cuenta desarrollador.
-    this.dbs.getConsumeDocuments({p_year: year, p_type: 2})
-        .subscribe({
-          next: (res) => {
-            this.forCompany = res.dataRecords.data;
-            this.dbs.forCompany = res.dataRecords.data;
-          },
-          error: (err) => {
-            console.log(err);
-          }
-        });
-    /*// 3: Consumo agrupado por mes y año de cada cliente, por cuenta desarrollador.
-    this.dbs.getConsumeDocuments({p_year: year, p_type: 3})
-        .subscribe({
-          next: (res) => {
-            this.forCustomersByMonth = res.dataRecords.data;
-          },
-          error: (err) => {
-            console.log(err);
-          }
-        });
-    // 4: Consumo agrupado por año de cada cliente, por cuenta desarrollador.
-    this.dbs.getConsumeDocuments({p_year: year, p_type: 4})
-        .subscribe({
-          next: (res) => {
-            this.forCustomers = res.dataRecords.data;
-          },
-          error: (err) => {
-            console.log(err);
-          }
-        });*/
+      // Get the last 4 years
   }
 
 }

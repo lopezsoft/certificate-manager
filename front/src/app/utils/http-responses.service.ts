@@ -18,10 +18,8 @@ export class HttpResponsesService {
   }
 
   private getHeaders(): HttpHeaders{
-    return  new HttpHeaders({timeout: `${36000}`})
-      .set('Accept', 'application/json')
-      .set('Access-Control-Allow-Origin', '*')
-      .set('Access-Control-Allow-Methods', 'GET, POST, DELETE, PUT');
+    return  new HttpHeaders({timeout: `${36000}`, keepalive: 'true'})
+      .set('Accept', 'application/json');
   }
 
   openDocument(url: string) {
