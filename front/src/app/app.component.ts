@@ -2,7 +2,7 @@ import { Component, Inject, OnDestroy, OnInit, ElementRef, Renderer2 } from '@an
 import { DOCUMENT } from '@angular/common';
 import { Title } from '@angular/platform-browser';
 
-import { Subject } from 'rxjs';
+import {Observable, Subject} from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import * as Waves from 'node-waves';
@@ -21,6 +21,8 @@ import { locale as menuGerman } from 'app/menu/i18n/de';
 import { locale as menuPortuguese } from 'app/menu/i18n/pt';
 import {GlobalSettingsService} from "./services/global-settings.service";
 import TokenService from './utils/token.service';
+import {DocumentViewerState} from "./interfaces/file-manager.interface";
+import {DocumentViewerService} from "./services/document-viewer.service";
 
 @Component({
   selector: 'app-root',
@@ -30,6 +32,7 @@ import TokenService from './utils/token.service';
 export class AppComponent implements OnInit, OnDestroy {
   coreConfig: any;
   menu: any;
+  viewerState$: Observable<DocumentViewerState>;
   defaultLanguage: 'es'; // This language will be used as a fallback when a translation isn't found in the current language
   appLanguage: 'es'; // Set application default language i.e fr
 
@@ -40,22 +43,6 @@ export class AppComponent implements OnInit, OnDestroy {
   // Private
   private _unsubscribeAll: Subject<any>;
 
-  /**
-   * Constructor
-   *
-   * @param {DOCUMENT} document
-   * @param {Title} _title
-   * @param {Renderer2} _renderer
-   * @param {ElementRef} _elementRef
-   * @param {CoreConfigService} _coreConfigService
-   * @param {CoreSidebarService} _coreSidebarService
-   * @param {CoreLoadingScreenService} _coreLoadingScreenService
-   * @param {CoreMenuService} _coreMenuService
-   * @param {CoreTranslationService} _coreTranslationService
-   * @param {TranslateService} _translateService
-   * @param _globalSettings
-   * @param _token
-   */
   constructor(
     @Inject(DOCUMENT) private document: any,
     private _title: Title,
@@ -69,7 +56,10 @@ export class AppComponent implements OnInit, OnDestroy {
     private _translateService: TranslateService,
     public _globalSettings: GlobalSettingsService,
     public _token: TokenService,
+    private documentViewerService: DocumentViewerService
   ) {
+
+    this.viewerState$ = this.documentViewerService.state$;
     // Get the application main menu
     this.menu = menu;
 
@@ -275,5 +265,9 @@ export class AppComponent implements OnInit, OnDestroy {
    */
   toggleSidebar(key): void {
     this._coreSidebarService.getSidebarRegistry(key).toggleOpen();
+  }
+
+  closeViewer(): void {
+    this.documentViewerService.close();
   }
 }

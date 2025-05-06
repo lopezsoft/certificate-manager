@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, isDevMode } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
@@ -33,51 +33,56 @@ import {ErrorInterceptor} from "./interceptors/error.interceptor";
 import { StoreModule } from '@ngrx/store';
 import {CommonComponentsModule} from "./common/common-components.module";
 export function createTranslateLoader(http: HttpClient) {
-  return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
 @NgModule({ declarations: [AppComponent],
-    bootstrap: [AppComponent], imports: [BrowserModule,
-    BrowserAnimationsModule,
-    AppRoutingModule,
-    ExodolibsModule,
-    NgSelectModule,
-    BlockUIModule.forRoot(),
-    TranslateModule.forRoot({
-      loader: {
-        provide: TranslateLoader,
-        useFactory: (createTranslateLoader),
-        deps: [HttpClient]
-      },
-      defaultLanguage: 'es',
-    }),
-    ServiceWorkerModule.register('ngsw-worker.js', {
-      enabled: environment.production,
-      // Register the ServiceWorker as soon as the app is stable
-      // or after 30 seconds (whichever comes first).
-      registrationStrategy: 'registerWhenStable:30000'
-    }),
-    //NgBootstrap
-    NgbModule,
-    ToastrModule.forRoot(),
-    // Core modules
-    CoreModule.forRoot(coreConfig),
-    CoreCommonModule,
-    CoreSidebarModule,
-    CoreThemeCustomizerModule,
-    // App modules
-    LayoutModule,
-    SampleModule,
-    NgxLoadingModule,
-    StoreModule.forRoot({}, {}), CommonComponentsModule], providers: [
-        AuthGuard,
-        LoginGuard,
-        httpInterceptorProviders,
-        {
-            provide: HTTP_INTERCEPTORS,
-            useClass: ErrorInterceptor,
-            multi: true,
-        },
-        provideHttpClient(withInterceptorsFromDi()),
-    ] })
+	bootstrap: [AppComponent], imports: [BrowserModule,
+		BrowserAnimationsModule,
+		AppRoutingModule,
+		ExodolibsModule,
+		NgSelectModule,
+		BlockUIModule.forRoot(),
+		TranslateModule.forRoot({
+			loader: {
+				provide: TranslateLoader,
+				useFactory: (createTranslateLoader),
+				deps: [HttpClient]
+			},
+			defaultLanguage: 'es',
+		}),
+		ServiceWorkerModule.register('ngsw-worker.js', {
+			enabled: environment.production,
+			// Register the ServiceWorker as soon as the app is stable
+			// or after 30 seconds (whichever comes first).
+			registrationStrategy: 'registerWhenStable:30000'
+		}),
+		//NgBootstrap
+		NgbModule,
+		ToastrModule.forRoot(),
+		// Core modules
+		CoreModule.forRoot(coreConfig),
+		CoreCommonModule,
+		CoreSidebarModule,
+		CoreThemeCustomizerModule,
+		// App modules
+		LayoutModule,
+		SampleModule,
+		NgxLoadingModule,
+		StoreModule.forRoot({}, {}), CommonComponentsModule, ServiceWorkerModule.register('ngsw-worker.js', {
+			enabled: !isDevMode(),
+			// Register the ServiceWorker as soon as the application is stable
+			// or after 30 seconds (whichever comes first).
+			registrationStrategy: 'registerWhenStable:30000'
+		})], providers: [
+		AuthGuard,
+		LoginGuard,
+		httpInterceptorProviders,
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: ErrorInterceptor,
+			multi: true,
+		},
+		provideHttpClient(withInterceptorsFromDi()),
+	] })
 export class AppModule {}

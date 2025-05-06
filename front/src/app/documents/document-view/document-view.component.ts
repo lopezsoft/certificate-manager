@@ -5,9 +5,15 @@ import {FormatsService} from "../../services/formats.service";
 import {CertificateRequest, FileManager} from "../../interfaces/file-manager.interface";
 import {convertBytesToMB} from "../../common/utils/conversion.helper";
 import {HttpResponsesService, MessagesService} from "../../utils";
-import {DocumentStatusComments, DocumentStatusDescription, DocumentStatusEnum} from "../../common/enums/DocumentStatus";
+import {
+	DocumentStatusComments,
+	DocumentStatusDescription,
+	DocumentStatusEnum,
+	FileDocumentTypeEnum
+} from "../../common/enums/DocumentStatus";
 import {LoadMaskService} from "../../services/load-mask.service";
 import {Router} from "@angular/router";
+import {DocumentViewerService} from "../../services/document-viewer.service";
 
 @Component({
 	selector: 'app-document-view',
@@ -40,6 +46,7 @@ export class DocumentViewComponent {
 		public shipping: ShippingService,
 		public format: FormatsService,
 		protected http: HttpResponsesService,
+		protected documentViewerService: DocumentViewerService,
 		private  msg: MessagesService,
 		private mask: LoadMaskService,
 		private router: Router,
@@ -85,7 +92,11 @@ export class DocumentViewComponent {
 
 	onDownload(file: FileManager) {
 		const url = `${this.http.getAppUrl()}/attachments/${file.file_path}`;
-		this.http.openDocument(url);
+		if (file.extension_file === 'pdf') {
+			this.documentViewerService.open(url, this.currentShipping.company_name);
+		} else {
+			this.http.openDocument(url);
+		}
 	}
 
 	protected selectFile(file: FileManager) {
@@ -158,6 +169,23 @@ export class DocumentViewComponent {
 				this.mask.hideBlockUI();
 			}
 		});
+	}
 
+	protected existFileZip(): boolean {
+		return this.currentShipping.files.some((file) => {
+			return file.document_type === FileDocumentTypeEnum.CERTIFICATE;
+		});
+	}
+
+	protected getFiles(): FileManager[] {
+		return this.currentShipping.files.filter((file) => {
+			return file.document_type === FileDocumentTypeEnum.ATTACHED;
+		});
+	}
+
+	protected getFilesZip(): FileManager[] {
+		return this.currentShipping.files.filter((file) => {
+			return file.document_type === FileDocumentTypeEnum.CERTIFICATE;
+		});
 	}
 }

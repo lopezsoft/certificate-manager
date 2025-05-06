@@ -1,0 +1,22 @@
+<div class="timeline-container" *ngIf="timelineData.length > 0; else noData">
+    <ul>
+        <li *ngFor="let event of timelineData" class="timeline-item">
+            <div class="timeline-marker"></div>
+            <div class="timeline-content" [ngClass]="getStatusClass(event.status)">
+                <span class="time">{{ event.created_at }}</span>
+                <h4>
+                    {{ documentStatusDescription[event.status] | uppercase }}
+                    <span class="actor">({{ event.user_of_change }})</span>
+                    <span class="actor-name">
+                          {{ event.user.first_name }} {{ event.user.last_name }}
+                    </span>
+                </h4>
+                <div [innerHTML]="event.comments"></div>
+            </div>
+        </li>
+    </ul>
+</div>
+
+<ng-template #noData>
+    <p>No hay historial disponible para mostrar.</p>
+</ng-template>

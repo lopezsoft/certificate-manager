@@ -23,7 +23,7 @@ class FileManager extends CoreModel
     ];
     protected $fillable = [
         'certificate_request_id', 'file_name', 'extension_file', 'mime_type', 'file_size',
-        'last_modified', 'status', 'file_path', 'uuid', 'location', 'upload_status'
+        'last_modified', 'status', 'file_path', 'uuid', 'location', 'upload_status', 'document_type'
     ];
     protected $hidden = [
         'certificate_request_id'

@@ -6,6 +6,7 @@ import {ActivatedRoute, Router} from "@angular/router";
 import {CompanyService} from "../../services/companies";
 import {CitiesService, DocumentsService} from "../../services/general";
 import {LoadMaskService} from "../../services/load-mask.service";
+import TokenService from "../../utils/token.service";
 
 @Component({
   selector: 'app-create-request',
@@ -32,6 +33,9 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
   files = [];
   formData: FormData;
   canEdit: boolean = false;
+  hasCc: boolean = false;
+  hasRut: boolean = false;
+  hastCamera: boolean = false;
   buttonText: string = 'Crear solicitud';
   constructor(private fb: FormBuilder,
               private _http: HttpResponsesService,
@@ -42,6 +46,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
               private _cities: CitiesService,
               private _activatedRoute: ActivatedRoute,
               private mask: LoadMaskService,
+              protected _token: TokenService,
   ) {
 
   }
@@ -126,57 +131,72 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
   }
 
   onSave() : void {
-    const ts    = this;
-    const frm   = ts.customForm;
-    ts.onValidateForm(frm);
-    if(frm.invalid) {
-      ts._msg.errorMessage('Error','Por favor llene la información de cada campo.');
-      return;
-    }
-    if (ts.files.length < 2 && !ts.canEdit ) {
-      ts._msg.errorMessage('Error','Por favor suba los documentos requeridos.');
-      return;
-    }
-    let params            =  frm.getRawValue();
-    params.dni            = params.dni.replace(/[^0-9]/g, '');
-    params.document_number= params.document_number.replace(/[^0-9]/g, '');
-    ts.loading            = true;
-    if (!ts.canEdit) {
-      ts.formData = new FormData();
-      // Append all files to formData
-      ts.files.forEach((file: any, index) => {
-        ts.formData.append('file' + index, file.data);
-      });
-      // Append all form values to formData
-      for (const key in params) {
-        if (params.hasOwnProperty(key)) {
-          ts.formData.append(key, params[key]);
+    try {
+      const ts    = this;
+      const frm   = ts.customForm;
+      ts.onValidateForm(frm);
+      if(frm.invalid) {
+        throw new Error('Por favor llene la información de cada campo');
+      }
+      if (ts.files.length < 2 && !ts.canEdit ) {
+        throw new Error('Por favor suba los documentos requeridos.');
+      }
+      let params            =  frm.getRawValue();
+      params.dni            = params.dni.replace(/[^0-9]/g, '');
+      params.document_number= params.document_number.replace(/[^0-9]/g, '');
+      ts.loading            = true;
+      if (!ts.canEdit) {
+        if (!ts.hasRut) {
+          throw new Error('Por favor suba el RUT.');
+        }
+        if (!ts.hasCc) {
+          throw new Error('Por favor suba la cédula del representante legal.');
+        }
+        if (!ts.hastCamera && !ts.isNaturelPerson()) {
+          throw new Error('Por favor suba la cámara de comercio.');
+        }
+        ts.formData = new FormData();
+        // Append all files to formData
+        ts.files.forEach((file: any, index) => {
+          ts.formData.append('file' + index, file.data);
+        });
+        // Append all form values to formData
+        for (const key in params) {
+          if (params.hasOwnProperty(key)) {
+            ts.formData.append(key, params[key]);
+          }
         }
       }
-    }
-    this.mask.showBlockUI('Procesando solicitud...');
-    if (ts.canEdit) {
-      const data  = ts.customForm.getRawValue();
-      const id    = ts._activatedRoute.snapshot.paramMap.get('id');
-      this._http.put(`/certificate-request/${id}`, data)
-        .subscribe({
-            next: (resp) => {
-              ts.finalResponse(resp);
-            },
-            error: () => {
-              ts.onError();
-            }
-        });
-    } else {
-    this._http.post('/certificate-request', ts.formData)
-        .subscribe({
-            next: (resp) => {
-              ts.finalResponse(resp);
-            },
-            error: () => {
-              ts.onError()
-            }
-        });
+      this.mask.showBlockUI('Procesando solicitud...');
+      if (ts.canEdit) {
+        const data  = ts.customForm.getRawValue();
+        const id    = ts._activatedRoute.snapshot.paramMap.get('id');
+        this._http.put(`/certificate-request/${id}`, data)
+          .subscribe({
+              next: (resp) => {
+                ts.finalResponse(resp);
+              },
+              error: () => {
+                ts.onError();
+              }
+          });
+      } else {
+      this._http.post('/certificate-request', ts.formData)
+          .subscribe({
+              next: (resp) => {
+                ts.finalResponse(resp);
+              },
+              error: () => {
+                ts.onError()
+              }
+          });
+      }
+
+    }catch (e) {
+      console.error(e);
+      this.loading = false;
+      this.mask.hideBlockUI();
+      this._msg.errorMessage('Error', e.message);
     }
   }
 
@@ -211,6 +231,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
   onUploadPDF() {
     const fileUpload = this.fileUpload.nativeElement;
     const file = fileUpload.files[0];
+    this.hastCamera = false;
     // Check file size and type 1000kb = 75000
     if (file.size > 1000000) { // 1000kb
       this.fileUpload.nativeElement.value = '';
@@ -226,12 +247,14 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
         this.files.splice(index, 1);
       }
       this.files.push({ data: file, inProgress: false, progress: 0});
+      this.hastCamera = true;
     }
   }
 
   onUploadRUT() {
     const fileUpload = this.fileUploadRut.nativeElement;
     const file = fileUpload.files[0];
+    this.hasRut = false;
     if (file.size > 1000000) { // 1000kb
       this.fileUploadRut.nativeElement.value = '';
       const size = (file.size / 1024).toFixed(2); // Convert to KB
@@ -246,12 +269,14 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
         this.files.splice(index, 1);
       }
       this.files.push({ data: file, inProgress: false, progress: 0});
+      this.hasRut = true;
     }
   }
 
   onUploadCC() {
     const fileUpload = this.fileUploadCc.nativeElement;
     const file = fileUpload.files[0];
+    this.hasCc = false;
     // Check file size and type 1000kb = 1000000
     if (file.size > 1000000) { // 1000kb
       this.fileUploadCc.nativeElement.value = '';
@@ -264,6 +289,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
         this.files.splice(index, 1);
       }
       this.files.push({ data: file, inProgress: false, progress: 0});
+      this.hasCc = true;
     }
   }
 

@@ -118,8 +118,8 @@ class CertificateRequestService
                 'type_organization_id' => $request->type_organization_id,
                 'document_number' => $request->document_number,
                 'address' => $request->address,
-                'legal_representative' => $request->legal_representative,
-                'company_name' => $request->company_name,
+                'legal_representative' => Str::upper($request->legal_representative),
+                'company_name' => Str::upper($request->company_name),
                 'dni' => $dni,
                 'dv' => $dv,
                 'info' => $request->input('info'),
@@ -156,7 +156,7 @@ class CertificateRequestService
             $content        = Storage::disk('public')->get($fileExport);
 
 
-            $path           = "{$folderName}/EXCEL-DATOS-CERTIFICADO.xlsx";
+            $path           = "{$folderName}/EXCEL-DATOS-CERTIFICADO-{$dni}{$dv}.xlsx";
             $disk->put("{$path}", $content);
             Storage::disk('public')->delete($fileExport);
             $format         = pathinfo($path, PATHINFO_EXTENSION);
@@ -165,13 +165,14 @@ class CertificateRequestService
             $lastModified   = $disk->lastModified($path);
             FileManager::create([
                 'certificate_request_id'    =>  $certificate->id,
-                'file_name'         =>  'EXCEL-DATOS-CERTIFICADO.xlsx',
+                'file_name'         =>  "EXCEL-DATOS-CERTIFICADO-{$dni}{$dv}.xlsx",
                 'file_path'         =>  $path,
                 'extension_file'    =>  $format,
                 'mime_type'         =>  $mimeType,
                 'file_size'         =>  $sizeFile,
                 'last_modified'     =>  date('Y-m-d H:i:s', $lastModified),
                 'status'            =>  'COMPLETED',
+                'document_type'     =>  'ATTACHED'
             ]);
 
             foreach ($filesList as $file) {
@@ -192,6 +193,7 @@ class CertificateRequestService
                     'file_size'         =>  $sizeFile,
                     'last_modified'     =>  date('Y-m-d H:i:s', $lastModified),
                     'status'            =>  'COMPLETED',
+                    'document_type'     =>  'ATTACHED'
                 ]);
             }
             DB::commit();
@@ -213,6 +215,11 @@ class CertificateRequestService
     {
         try {
             $company        = CompanyQueries::getCompany();
+            $status         = $request->input('request_status');
+            $search         = $request->input('query');
+            $startDate      = $request->input('start_date');
+            $endDate        = $request->input('end_date');
+            $customerId     = $request->input('company_id');
             $certificate    = CertificateRequest::query()
                 ->where('company_id', $company->id)
                 ->orderBy('created_at', 'desc')
@@ -220,9 +227,33 @@ class CertificateRequestService
                     'identity:id,document_name',
                     'organization:id,description',
                     'city:id,name_city',
-                    'files:id,certificate_request_id,file_name,file_path,extension_file,mime_type,file_size,last_modified,status',
+                    'files:id,certificate_request_id,file_name,file_path,extension_file,mime_type,file_size,last_modified,status,document_type',
                     'files'
                 ]);
+            if (!empty($search)) {
+                $certificate->where(function ($query) use ($search) {
+                    $query->where('company_name', 'LIKE', "%{$search}%")
+                        ->orWhere('dni', 'LIKE', "%{$search}%")
+                        ->orWhere('document_number', 'LIKE', "%{$search}%")
+                        ->orWhere('legal_representative', 'LIKE', "%{$search}%");
+                });
+            }
+            if ($startDate && $endDate) {
+                $startDate = str_replace('/', '-', $startDate);
+                $endDate   = str_replace('/', '-', $endDate);
+                $startDate = date('Y-m-d H:i:s', strtotime($startDate));
+                $endDate   = date('Y-m-d H:i:s', strtotime($endDate.' 23:59:59'));
+                $certificate->whereBetween('created_at', [
+                    $startDate,
+                    $endDate
+                ]);
+            }
+            if (!empty($status)) {
+                $certificate->where('request_status', $status);
+            }
+            if (!empty($customerId)) {
+                $certificate->where('company_id', $customerId);
+            }
             return HttpResponseMessages::getResponse([
                 'message'       => 'Lista de solicitudes de certificados',
                 'dataRecords'   => $certificate->paginate($request->input('limit', 15)),
@@ -243,10 +274,10 @@ class CertificateRequestService
                     'identity:id,document_name',
                     'organization:id,description',
                     'city:id,name_city',
-                    'files:id,certificate_request_id,file_name,file_path,extension_file,mime_type,file_size,last_modified,status',
+                    'files:id,certificate_request_id,file_name,file_path,extension_file,mime_type,file_size,last_modified,status,document_type',
                     'files'
                 ])
-                ->firstOrFail();
+                ->first();
             return HttpResponseMessages::getResponse([
                 'message'       => 'Solicitud de certificado',
                 'dataRecords'   => [
@@ -292,7 +323,7 @@ class CertificateRequestService
             $certificate = CertificateRequest::query()
                 ->where('company_id', $company->id)
                 ->where('id', $id)
-                ->firstOrFail();
+                ->first();
             $dni = $request->dni;
             $dv = VerificationDigit::getDigit($dni);
             $certificate->updateOnlyChanged($request, [
@@ -327,7 +358,7 @@ class CertificateRequestService
             $certificate = CertificateRequest::query()
                 ->where('company_id', $company->id)
                 ->where('id', $id)
-                ->firstOrFail();
+                ->first();
             $certificate->delete();
             return HttpResponseMessages::getResponse([
                 'message'   => 'Solicitud de certificado eliminada exitosamente',
@@ -342,9 +373,8 @@ class CertificateRequestService
         try {
             $company = CompanyQueries::getCompany();
             $certificate = CertificateRequest::query()
-                ->where('company_id', $company->id)
                 ->where('id', $id)
-                ->firstOrFail();
+                ->first();
             DB::beginTransaction();
             $certificate->update([
                 'request_status' => $request->request_status,
@@ -357,13 +387,34 @@ class CertificateRequestService
                 'user_id'               =>  auth()->user()->id,
                 'user_of_change'        =>  $request->user_of_change ?? 'USER',
             ]);
-            DB::commit();
+            /**
+             * Envío de notificación al soporte y al cliente
+             * cuando la solicitud es rechazada
+             */
             if ($request->request_status == DocumentStatusEnum::getRejected() && $request->user_of_change == 'MANAGER') {
                 $certificateCompany = $certificate->company;
                 $messageData = (object) [
-                    'company'   => $certificateCompany,
-                    'data'      => $certificate,
-                    'comments'  => $request->comments,
+                    'company'       => $certificateCompany,
+                    'data'          => $certificate,
+                    'comments'      => $request->comments,
+                    'request_status'=> $request->request_status,
+                ];
+                Notification::route('mail', env('MAIL_SUPPORT_ADDRESS','soporte@matias.com.co'))
+                    ->notify(new CertificateRequestStatusNotification($messageData));
+
+                Notification::route('mail', $certificateCompany->email)
+                    ->notify(new CertificateRequestStatusNotification($messageData));
+            } else if ($request->request_status == DocumentStatusEnum::getProcessed() && $request->user_of_change == 'MANAGER') {
+                $certificateCompany = $certificate->company;
+                // Comments custom in html format
+                $comments = "<p style='font-size: 12px;'>La solicitud <b>({$certificate->uuid})</b> de certificado ha sido procesada exitosamente.</p>
+                            <p style='font-size: 12px;'>Puede proceder con la descarga del certificado desde la interfaz web de CERTIFICATE MANAGER</p>
+                            <p style='font-size: 12px'>Si tiene alguna pregunta o necesita más información, no dude en ponerse en contacto con nosotros.</p>";
+                $messageData = (object) [
+                    'company'       => $certificateCompany,
+                    'data'          => $certificate,
+                    'comments'      => $comments,
+                    'request_status'=> $request->request_status,
                 ];
                 Notification::route('mail', env('MAIL_SUPPORT_ADDRESS','soporte@matias.com.co'))
                     ->notify(new CertificateRequestStatusNotification($messageData));
@@ -371,6 +422,7 @@ class CertificateRequestService
                 Notification::route('mail', $certificateCompany->email)
                     ->notify(new CertificateRequestStatusNotification($messageData));
             }
+            DB::commit();
             return HttpResponseMessages::getResponse([
                 'message'   => 'El estado de la solicitud se ha actualizada exitosamente',
                 'data'      => $certificate,
@@ -385,22 +437,45 @@ class CertificateRequestService
     {
         try {
             $company        = CompanyQueries::getCompany();
-            $status         = $request->input('status');
+            $status         = $request->input('request_status');
+            $search         = $request->input('query');
+            $startDate      = $request->input('start_date');
+            $endDate        = $request->input('end_date');
             $certificate    = CertificateRequest::query()
-                ->where('company_id', $company->id)
-                ->whereNotIn('request_status', [
-                    'DRAFT', 'DELETED', 'CANCELLED'
-                ])
+                ->orderBy('request_status')
                 ->orderBy('created_at', 'desc')
                 ->with([
                     'identity:id,document_name',
                     'organization:id,description',
                     'city:id,name_city',
-                    'files:id,certificate_request_id,file_name,file_path,extension_file,mime_type,file_size,last_modified,status',
-                    'files'
+                    'files:id,certificate_request_id,file_name,file_path,extension_file,mime_type,file_size,last_modified,status,document_type',
+                    'files',
+                    'company:id,company_name,dni,dv,address,email,phone',
                 ]);
-            if ($status) {
+            if (!empty($search)) {
+                $certificate->where(function ($query) use ($search) {
+                    $query->where('company_name', 'LIKE', "%{$search}%")
+                        ->orWhere('dni', 'LIKE', "%{$search}%")
+                        ->orWhere('document_number', 'LIKE', "%{$search}%")
+                        ->orWhere('legal_representative', 'LIKE', "%{$search}%");
+                });
+            }
+            if ($startDate && $endDate) {
+                $startDate = str_replace('/', '-', $startDate);
+                $endDate   = str_replace('/', '-', $endDate);
+                $startDate = date('Y-m-d H:i:s', strtotime($startDate));
+                $endDate   = date('Y-m-d H:i:s', strtotime($endDate.' 23:59:59'));
+                $certificate->whereBetween('created_at', [
+                    $startDate,
+                    $endDate
+                ]);
+            }
+            if (!empty($status)) {
                 $certificate->where('request_status', $status);
+            } else {
+                $certificate->whereIn('request_status', [
+                    'SENT', 'PENDING', 'PROCESSING', 'ACCEPTED'
+                ]);
             }
             return HttpResponseMessages::getResponse([
                 'message'       => 'Lista de solicitudes de certificados',

@@ -1,0 +1,41 @@
+.info-block {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center; /* Alinear icono y texto verticalmente */
+  gap: 15px; /* Espacio entre icono y texto */
+}
+
+.icon {
+  /* Estilos básicos para los iconos de placeholder */
+  flex-shrink: 0; /* Evita que el icono se encoja */
+  width: 40px;
+  height: 40px;
+  background-color: #e0f2ff;
+  border: 1px solid #b3dfff;
+  border-radius: 4px; /* Bordes redondeados */
+  display: inline-flex; /* Para centrar contenido */
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #1a3d7c; /* Color del icono */
+}
+
+.recommendation {
+  background-color: #1a3d7c;
+  color: white !important;
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+.recommendation p {
+  margin-bottom: 5px; /* Menos espacio entre párrafos dentro de la recomendación */
+}
+
+.recommendation strong {
+  font-weight: bold; /* Asegurar que strong sea negrita */
+}
+
+strong {
+  font-weight: bold; /* Asegurar que strong sea negrita globalmente dentro del componente */
+}

@@ -40,7 +40,7 @@ class CertificateRequestCreateNotification extends Notification
                     ->subject("Nueva solicitud de certificado - {$this->messageData->company_name}")
                     ->greeting("Hola, haz recibido una nueva solicitud de certificado.")
                     ->line("Cliente de la solicitud: {$this->messageData->company_name}")
-                    ->action('Abrir sistema', url('certs.matias-api.com'))
+                    ->action('Abrir sistema', url('/'))
                     ->line("Esto es solo un aviso, no es necesario responder.");
     }
 

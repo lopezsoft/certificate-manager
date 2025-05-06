@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Notifications\MailFailedNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -11,6 +12,8 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Headers;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Notification;
+use Throwable;
 
 class SendMail extends Mailable implements ShouldQueue
 {
@@ -26,6 +29,19 @@ class SendMail extends Mailable implements ShouldQueue
     )
     {
         //
+    }
+
+    /**
+     * Handle a failed job.
+     *
+     * @param \Throwable $exception
+     * @return void
+     */
+    public function failed(Throwable $exception): void
+    {
+        $MAIL_SUPPORT_ADDRESS = env('MAIL_SUPPORT_ADDRESS', 'soporte@matias.com.co');
+        // Enviar la notificación por correo electrónico al soporte
+        Notification::route('mail', $MAIL_SUPPORT_ADDRESS)->notify(new MailFailedNotification($exception, $this->messageData));
     }
 
     /**

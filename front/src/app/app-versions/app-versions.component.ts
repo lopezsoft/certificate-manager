@@ -25,6 +25,63 @@ export class AppVersionsComponent implements OnInit {
     this.versiones = [
       {
         isShow: true,
+        number: "1.2.1",
+        date: "01-MAY-2025",
+        changes: [
+          {
+            type:  "caracteristica",
+            description: "Se agregó la opción WEB PWA para la aplicación"
+          },
+        ]
+      },
+      {
+        isShow: true,
+        number: "1.2.0",
+        date: "30-ABR-2025",
+        changes: [
+          {
+            type:  "caracteristica",
+            description: "Se agregó la opción de filtrar por fecha y estado en el historial de solicitudes"
+          },
+          {
+            type:  "caracteristica",
+            description: "Se agregó la opción de importar el zip del certificado de la solicitud. Para usuarios administradores"
+          },
+          {
+            type:  "caracteristica",
+            description: "Se agregó visor de documentos para los certificados de la solicitud"
+          },
+          {
+            type:  "mejora",
+            description: "Mejora en la interfaz de usuario"
+          }
+        ]
+      },
+      {
+        isShow: false,
+        number: "1.1.2",
+        date: "29-ABR-2025",
+        changes: [
+          {
+            type:  "bug",
+            description: "Corrección de errores en la interfaz de usuario"
+          },
+          {
+            type:  "bug",
+            description: "Corrección de errores en enlace al crear un nuevo usuario"
+          },
+          {
+            type:  "mejora",
+            description: "Mejora en la descripción de los mensajes de el estado de las solicitudes"
+          },
+          {
+            type: 'caracteristica',
+            description: "Se agregó el historial de las solicitudes"
+          }
+        ]
+      },
+      {
+        isShow: false,
         number: "1.1.1",
         date: "27-ABR-2025",
         changes: [

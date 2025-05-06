@@ -33,6 +33,14 @@
                                         <i class="fas fa-paper-plane fa-cursor fas-fa-mail-send"></i>
                                         Procesar solicitud
                                     </button>
+                                    <button
+                                            *ngIf="currentShipping.request_status === DocumentStatusEnum.PROCESSING"
+                                            class="btn custom-button border me-25 fas-fa-mail-send"
+                                            (click)="sendEmail(DocumentStatusEnum.PROCESSING)"
+                                            appCustomTooltip="Reenviar correo de solicitud" >
+                                        <i class="fas fa-paper-plane fa-cursor fas-fa-mail-send"></i>
+                                        Reenviar solicitud
+                                    </button>
                                     <!-- Reject button -->
                                     <button
                                             *ngIf="canReject()"
@@ -42,6 +50,23 @@
                                             appCustomTooltip="Rechazar solicitud" >
                                         <i class="fas fa-paper-plane fa-cursor fas-fa-warning"></i>
                                         Rechazar solicitud
+                                    </button>
+                                    <!-- Finalize button -->
+                                    <button
+                                            *ngIf="currentShipping.request_status === DocumentStatusEnum.PROCESSING"
+                                            class="btn custom-button border me-25 fas-fa-save"
+                                            (click)="updateStatus(DocumentStatusEnum.PROCESSED)"
+                                            appCustomTooltip="Finalizar solicitud">
+                                        <i class="fas fa-paper-plane fa-cursor fas-fa-save"></i>
+                                        Finalizar solicitud
+                                    </button>
+                                    <button
+                                            *ngIf="currentShipping.request_status === DocumentStatusEnum.PROCESSED && existFileZip()"
+                                            class="btn custom-button border me-25 fas-fa-mail-send"
+                                            (click)="updateStatus(DocumentStatusEnum.PROCESSED)"
+                                            appCustomTooltip="Reenviar notificación de correo al cliente">
+                                        <i class="fas fa-paper-plane fa-cursor fas-fa-mail-send"></i>
+                                        Reenviar notificación
                                     </button>
                                 </div>
                             </div>
@@ -104,6 +129,55 @@
             <div class="card">
                 <div class="card-body">
                     <div class="row">
+                        <div class="col-sm-12">
+                            <div class="form-group">
+                                <label>Solicitante</label>
+                                <div class="card-text d-grid">
+                                  <span class="w-100">
+                                   <strong> {{ currentShipping.company.company_name | uppercase }} </strong>
+                                  </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label>Identificación del solicitante</label>
+                                <div class="card-text d-grid">
+                                   <span class="w-100">
+                                    <strong> {{ currentShipping.company.dni }}-{{ currentShipping.dv }} </strong>
+                                  </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-5">
+                            <div class="form-group">
+                                <label>Correo del solicitante</label>
+                                <div class="card-text d-grid">
+                                   <span class="w-100">
+                                    <strong> {{ currentShipping.company.email }} </strong>
+                                  </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-3">
+                            <div class="form-group">
+                                <label>Teléfono solicitante</label>
+                                <div class="card-text d-grid">
+                                   <span class="w-100">
+                                    <strong> {{ currentShipping.company.phone }} </strong>
+                                  </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="content-div">
+                <hr>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
                         <div class="col-sm-6">
                             <div class="form-group">
                                 <label>Código de la solicitud</label>
@@ -127,6 +201,80 @@
                     </div>
                 </div>
             </div>
+            <ng-container *ngIf="existFileZip() && currentShipping.request_status === DocumentStatusEnum.PROCESSED">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <app-camerfirma-info [pin]="currentShipping.pin"></app-camerfirma-info>
+                        </div>
+                        <hr>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label>PIN del certificado</label>
+                                <div class="card-text d-grid">
+                              <span class="w-100">
+                               <strong> {{ currentShipping.pin }} </strong>
+                              </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label>Fecha de expiración del certificado</label>
+                                <div class="card-text d-grid">
+                                  <span class="w-100">
+                                    <strong> {{ currentShipping.expiration_date }} </strong>
+                                  </span>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="col-sm-12">
+                            <div class="bg-card-container">
+                                <div class="row row-cols-1 row-cols-sm-1 row-cols-md-1 g-50">
+                                    <div class="col" *ngFor="let file of getFilesZip(); index as i">
+                                        <div class="card card-accounting-voucher h-100"
+                                             [ngClass]="{'selected': file.id === selectedFile?.id}"
+                                             (dblclick)="selectFile(null)"
+                                             (click)="selectFile(file)"
+                                        >
+                                            <div class="card-body">
+                                                <div class="img-container">
+                                                    <img src="assets/files/128/{{file.extension_file.toLowerCase()}}.png"
+                                                         class="img-fluid" alt="{{ file.file_name }}">
+                                                </div>
+                                                <div class="card-body-content">
+                                                    <p class="card-text item-description mb-25 w-100">
+                                                        {{ file.file_name }}
+                                                    </p>
+                                                    <div class="content-p">
+                                                        <p class="card-text" title="Tamaño">
+                                                            <i class="fas fa-hdd"></i>
+                                                            {{ convertBytesToMB(file.file_size) }}<br>
+                                                        </p>
+                                                        <p class="card-text" title="Última modificación">
+                                                            <i class="fas fa-calendar-day"></i> {{ file.last_modified  }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div class="actions-content">
+                                                    <button
+                                                            class="btn custom-button fas-fa-save"
+                                                            (click)="onDownload(file)">
+                                                        <i class="fas fa-download fas-fa-18 fas-fa-save"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </ng-container>
             <div class="content-div">
                 <hr>
             </div>
@@ -266,12 +414,21 @@
                 </div>
                 <div class="card">
                     <div class="card-header">
-                        <span class="card-title">LISTA DE ARCHIVOS</span>
+                        <span class="card-title">Lista de archivos adjuntos</span>
+                        <div class="card-header-actions" *ngIf="currentShipping.request_status === DocumentStatusEnum.PROCESSED && !existFileZip()">
+                            <button
+                                    class="btn custom-button fas-fa-plus fas-fa-save"
+                                    (click)="onAddFile()"
+                                    appCustomTooltip="Agregar archivo zip">
+                                <i class="fas fa-plus fas-fa-16 fas-fa-save"></i>
+                                Agregar archivo zip
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="bg-card-container">
                             <div class="row row-cols-1 row-cols-sm-1 row-cols-md-1 g-50">
-                                <div class="col" *ngFor="let file of currentShipping.files; index as i">
+                                <div class="col" *ngFor="let file of getFiles(); index as i">
                                     <div class="card card-accounting-voucher h-100"
                                          [ngClass]="{'selected': file.id === selectedFile?.id}"
                                          (dblclick)="selectFile(null)"
@@ -300,7 +457,7 @@
                                                 <button
                                                         class="btn custom-button fas-fa-save"
                                                         (click)="onDownload(file)">
-                                                    <i class="fas fa-link fas-fa-18 fas-fa-save"></i>
+                                                    <i class="fas fa-download fas-fa-18 fas-fa-save"></i>
                                                 </button>
                                             </div>
                                         </div>
@@ -311,6 +468,86 @@
                     </div>
                 </div>
             </ng-container>
+            <div class="content-div">
+                <hr>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Historial de la Solicitud</span>
+                </div>
+                <div class="card-body">
+                    <app-time-line
+                            [timelineData]="currentShipping.history"
+                    ></app-time-line>
+                </div>
+            </div>
         </div>
     </div>
+    <ng-container *ngIf="canAddFile">
+        <app-notification-card
+                (onCloseCard)="canAddFile = false"
+        >
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">AGREGAR ARCHIVO ZIP DEL CERTIFICADO</span>
+                    <div class="card-header-actions">
+                        <button
+                                class="btn custom-button fas-fa-close"
+                                (click)="canAddFile = false"
+                                appCustomTooltip="Cerrar">
+                            <i class="fas fa-times fas-fa-16"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-1">
+                    <app-help-information>
+                        <p>
+                            Estimado usuario, por favor sube el archivo ZIP del certificado que deseas adjuntar a la solicitud.<br>
+                            <strong>Nota:</strong> El archivo debe ser un ZIP y no debe pesar más de <b>100kb</b>.
+                            <br>
+                            <strong>Nota:</strong> Procura no cerrar ni actualizar la página durante el proceso.
+                        </p>
+                    </app-help-information>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>PIN del certificado</label>
+                                <input type="text" class="form-control primary"
+                                       [(ngModel)]="pin" required>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <small class="text-info">
+                                <i class="fas fa-info-circle"></i>
+                                Aquí puedes subir el archivo ZIP del certificado que deseas adjuntar a la solicitud.<br>
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Nota:</strong> El archivo debe ser un ZIP y no debe pesar más de <b>100kb</b>.
+                                <br>
+                            </small>
+                            <input type="file" id="fileUploadZip" #fileUploadZip name="fileUploadZip" class="form-control primary"
+                                   required (change)="onUploadZip()">
+                            <small class="text-muted font-small-2 d-block">
+                                Formato permitido: <strong>ZIP</strong>. Procura no cerrar ni actualizar la página durante el proceso.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end mt-1">
+                        <button
+                                class="btn custom-button border fas-fa-close me-25"
+                                (click)="canAddFile = false">
+                            <i class="fas fa-times fas-fa-16"></i>
+                            Cancelar
+                        </button>
+                        <button
+                                class="btn custom-button border fas-fa-save"
+                                (click)="onUploadFile()"
+                                [disabled]="!fileUploadZip?.files?.length">
+                            <i class="fas fa-save fas-fa-16 fas-fa-save"></i>
+                            Guardar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </app-notification-card>
+    </ng-container>
 </ng-container>

@@ -31,7 +31,7 @@ class CertificateRequestMailService
                 'data'      => $query,
                 'subject'   => 'Solicitud de certificado para facturación electrónica',
                 'files'     => $query->files,
-                'email_from'=> 'soporte@matias.com.co',
+                'email_from'=> env('MAIL_FROM','soporte@matias.com.co'),
                 'replyTo'   => env('REPLY_TO_MAIL', 'soporte@matias.com.co')
             ];
             DB::beginTransaction();
@@ -50,7 +50,10 @@ class CertificateRequestMailService
             // Send mail
             $receiptMail = env('RECEIPT_EMAIL', 'gerencia@lopezsoft.net.co');
             Mail::to($receiptMail)->queue(new SendMail($messageData));
-            Mail::to('gerencia@lopezsoft.net.co')->queue(new SendMail($messageData));
+            $send = env('SEND_MAIL_TO_SUPPORT', false);
+            if($send) {
+                Mail::to('gerencia@lopezsoft.net.co')->queue(new SendMail($messageData));
+            }
             return HttpResponseMessages::getResponse([
                 'dataRecords' => [
                     'data' => [$query],

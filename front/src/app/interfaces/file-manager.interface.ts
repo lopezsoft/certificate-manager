@@ -1,5 +1,7 @@
 import {Company} from "./shipping-intetface";
 import {Cities, IdentityDocuments, TypeOrganzation} from "../models/general-model";
+import {DocumentStatusEnum, FileDocumentTypeEnum, UserOfChangeEnum} from "../common/enums/DocumentStatus";
+import {Users} from "../models/users-model";
 
 
 export interface FileManager {
@@ -17,6 +19,7 @@ export interface FileManager {
     updated_at: string;
     status: string;
     uuid: string;
+    document_type: FileDocumentTypeEnum;
 }
 
 export interface CertificateRequest {
@@ -43,7 +46,26 @@ export interface CertificateRequest {
     identity: IdentityDocuments;
     organization: TypeOrganzation;
     files: FileManager[];
+    company: Company;
+    history: TimelineEvent[];
     checked?: boolean;
+    pin: string;
+    expiration_date: string;
     created_at: string;
     updated_at: string;
+}
+
+export interface TimelineEvent {
+    id: number | string;
+    user_of_change: UserOfChangeEnum;
+    status: DocumentStatusEnum;
+    comments: string;
+    created_at: Date | string;
+    user: Users;
+}
+
+export interface DocumentViewerState {
+    isVisible: boolean;
+    sourceUrl: string | null;
+    title: string | null;
 }

@@ -1,0 +1,44 @@
+<div class="viewer-overlay">
+    <div class="viewer-container" role="dialog" aria-modal="true" [attr.aria-labelledby]="title ? 'viewer-title' : null">
+
+        <header class="viewer-header">
+            <h2 *ngIf="title" id="viewer-title" class="viewer-title">{{ title }}</h2>
+            <button class="btn-close" (click)="requestClose()" aria-label="Cerrar visor"></button>
+        </header>
+
+        <div class="viewer-content">
+
+
+            <div *ngIf="isLoading" class="status-indicator loading">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <div *ngIf="hasError && !isLoading" class="status-indicator error">
+                {{ errorMessage || 'No se pudo cargar el documento.' }}
+            </div>
+
+            <ng-container *ngIf="!isLoading && !hasError">
+                <iframe *ngIf="detectedType === 'pdf' && safePdfUrl"
+                        [src]="safePdfUrl"
+                        class="document-iframe"
+                        frameborder="0"
+                        (load)="onIframeLoad()"
+                        (error)="onIframeError()"
+                        title="Visor de PDF">
+                    Tu navegador no soporta iframes o la carga del PDF falló.
+                </iframe>
+
+                <div *ngIf="detectedType === 'image' && currentImageUrl"
+                     class="image-container">
+                    <img [src]="currentImageUrl"
+                         alt="Visor de imagen"
+                         class="document-image"
+                         (load)="onImageLoad()"
+                         (error)="onImageError()" />
+                </div>
+            </ng-container>
+        </div>
+    </div>
+</div>

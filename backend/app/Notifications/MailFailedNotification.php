@@ -42,13 +42,11 @@ class MailFailedNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $company    = $this->messageData->company;
-        $mailToSend = $this->messageData->mailToSend;
-        $customer   = $this->messageData->customer ?? $this->messageData->company;
+        $customer   = $this->messageData->data;
         return (new MailMessage)
             ->subject("Error al enviar el correo - {$company->company_name}")
             ->line("Hola **{$company->company_name}**, ocurrió un error al intentar enviar un correo")
-            ->line("**Cliente:** {$customer->company_name}")
-            ->line("Correo receptor: **{$mailToSend}**")
+            ->line("**Cliente:** {$customer->company_name} - {$customer->dni}")
             ->line('**Detalles del error:**')
             ->line($this->exception->getMessage())
             ->line('Por favor, revisa el sistema para más detalles.');

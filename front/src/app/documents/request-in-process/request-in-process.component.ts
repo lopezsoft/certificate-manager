@@ -3,7 +3,7 @@ import {BaseComponent} from "../../@core/components/base/base.component";
 import {SearchDataComponent} from "../../common/components/search-data/search-data.component";
 import {ExodoPaginationComponent} from "exodolibs";
 import {DocumentViewComponent} from "../document-view/document-view.component";
-import {DianResponse, ProcessSoftware, SoftwareTest} from "../../models/general-model";
+import { ProcessSoftware, SoftwareTest} from "../../models/general-model";
 import {FormBuilder, FormGroup} from "@angular/forms";
 import {HttpResponsesService, MessagesService} from "../../utils";
 import TokenService from "../../utils/token.service";
@@ -15,9 +15,10 @@ import {LoadMaskService} from "../../services/load-mask.service";
 import {FormatsService} from "../../services/formats.service";
 import {DateManager} from "../../common/class/date-manager";
 import {CertificateRequest} from "../../interfaces/file-manager.interface";
-import {Shipping} from "../../interfaces/shipping-intetface";
-import {DownloadFile} from "../../common/class/download-file";
-import {DocumentStatusDescription} from "../../common/enums/DocumentStatus";
+import {
+  DocumentStatusDescription,
+  DocumentStatusEnumArray
+} from "../../common/enums/DocumentStatus";
 
 @Component({
   selector: 'app-request-in-process',
@@ -33,25 +34,9 @@ export class RequestInProcessComponent extends BaseComponent  implements OnInit,
   software: SoftwareTest;
   public modalForm: FormGroup;
   public title = 'Solicitudes en proceso';
-  public statusDocument = [
-    {
-      status_id   : -1,
-      icon        : 'fas fa-check-double fas-fa-ok',
-      description : 'Indiferente'
-    },
-    {
-      status_id   : 0,
-      icon        : 'fas fa-bug fas-fa-error',
-      description : 'Documento sin validar'
-    },
-    {
-      status_id   : 1,
-      icon        : 'fas fa-thumbs-up fas-fa-ok-thumbs',
-      description : 'Documento validado correctamente'
-    }
-  ];
   protected currentTypePersons: any;
   protected isClicked = false;
+  protected readonly statusDocument = DocumentStatusEnumArray;
   protected readonly documentStatusDescription = DocumentStatusDescription;
   constructor(
       public msg: MessagesService,
@@ -71,8 +56,7 @@ export class RequestInProcessComponent extends BaseComponent  implements OnInit,
     this.modalForm = this.fb.group({
       start_date: [DateManager.oldDate()],
       end_date: [currentDate],
-      document_type: [0],
-      document_status: [-1],
+      request_status: [''],
     });
   }
 
@@ -90,7 +74,7 @@ export class RequestInProcessComponent extends BaseComponent  implements OnInit,
   protected onSearch(query: any = {}): void {
     const values  = this.modalForm.getRawValue();
     if ((values.start_date.length > 0 && values.end_date.length > 0)) {
-      values.limit  = 30;
+      values.limit  = 20;
     }
     query = {...query, ...values};
     this.mask.showBlockUI('Cargando datos...');

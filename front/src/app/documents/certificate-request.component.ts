@@ -15,7 +15,7 @@ import {LoadMaskService} from "../services/load-mask.service";
 import {FormatsService} from "../services/formats.service";
 import {DateManager} from "../common/class/date-manager";
 import {CertificateRequest} from "../interfaces/file-manager.interface";
-import {DocumentStatusDescription} from "../common/enums/DocumentStatus";
+import {DocumentStatusDescription, DocumentStatusEnumArray} from "../common/enums/DocumentStatus";
 
 @Component({
   selector: 'app-certificate-request',
@@ -26,29 +26,13 @@ export class CertificateRequestComponent extends BaseComponent  implements OnIni
   @ViewChild('searchItems') searchItems: SearchDataComponent;
   @ViewChild('pagination') pagination: ExodoPaginationComponent;
   @ViewChild('documentView') documentView: DocumentViewComponent;
+  protected readonly documentStatusDescription = DocumentStatusDescription;
   interval: any;
   process: ProcessSoftware;
   software: SoftwareTest;
   public modalForm: FormGroup;
   public title = 'Solicitudes de certificado';
-  public statusDocument = [
-    {
-      status_id   : -1,
-      icon        : 'fas fa-check-double fas-fa-ok',
-      description : 'Indiferente'
-    },
-    {
-      status_id   : 0,
-      icon        : 'fas fa-bug fas-fa-error',
-      description : 'Documento sin validar'
-    },
-    {
-      status_id   : 1,
-      icon        : 'fas fa-thumbs-up fas-fa-ok-thumbs',
-      description : 'Documento validado correctamente'
-    }
-  ];
-  protected readonly documentStatusDescription = DocumentStatusDescription;
+  public statusDocument = DocumentStatusEnumArray;
   protected currentTypePersons: any;
   protected isClicked = false;
   constructor(
@@ -69,8 +53,7 @@ export class CertificateRequestComponent extends BaseComponent  implements OnIni
     this.modalForm = this.fb.group({
       start_date: [DateManager.oldDate()],
       end_date: [currentDate],
-      document_type: [0],
-      document_status: [-1],
+      request_status: [''],
     });
   }
 
@@ -88,7 +71,7 @@ export class CertificateRequestComponent extends BaseComponent  implements OnIni
   protected onSearch(query: any = {}): void {
     const values  = this.modalForm.getRawValue();
     if ((values.start_date.length > 0 && values.end_date.length > 0)) {
-      values.limit  = 30;
+      values.limit  = 20;
     }
     query = {...query, ...values};
     this.mask.showBlockUI('Cargando datos...');

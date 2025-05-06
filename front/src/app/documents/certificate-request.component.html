@@ -51,10 +51,14 @@
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
-                                    <label>Estado del documento</label>
-                                    <ng-select formControlName="document_status" (change)="onSearch({})">
-                                        <ng-option *ngFor="let status of statusDocument" [value]="status.status_id">
-                                            <i [class]='status.icon'></i> {{ status.description }}
+                                    <label>Estado de la solicitud</label>
+                                    <ng-select formControlName="request_status" (change)="onSearch({})">
+                                        <ng-option [value]="''">
+                                            <i class="fas fa-list"></i>
+                                            TODOS
+                                        </ng-option>
+                                        <ng-option *ngFor="let status of statusDocument" [value]="status">
+                                            <i class="fas fa-list"></i> {{ documentStatusDescription[status] | uppercase }}
                                         </ng-option>
                                     </ng-select>
                                 </div>

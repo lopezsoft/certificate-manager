@@ -61,3 +61,10 @@ $colors: (
     @return $light-color;
   }
 }
+
+// --- Clases de estado para variar el color del borde izquierdo ---
+@each $status, $color in $colors {
+  .border-left-status-#{$status} {
+    border-left-color: $color !important;
+  }
+}

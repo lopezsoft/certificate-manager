@@ -1,0 +1,165 @@
+// src/app/components/document-viewer/document-viewer.component.scss
+
+ @import "assets/bootstrap/scss/functions"; // Necesario para funciones usadas en variables
+ @import "assets/bootstrap/scss/variables"; // Variables de Bootstrap
+
+:host {
+  display: block; // Comportamiento de bloque estándar para el componente host
+}
+
+// --- 1. Overlay Principal ---
+.viewer-overlay {
+  position: fixed;
+  inset: 0; // Equivalente a top: 0, right: 0, bottom: 0, left: 0
+  // Usa las variables de z-index de Bootstrap para modales
+  z-index: 9999;
+  // Fondo similar al backdrop modal de Bootstrap
+  background-color: $modal-backdrop-bg; // Usa el color de fondo del backdrop
+  padding: 1.5rem;
+  box-sizing: border-box;
+
+  // Usa flexbox para centrar el contenedor (similar a Bootstrap .d-flex .justify-content-center .align-items-center)
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+// --- 2. Contenedor del Visor (Similar a .modal-content) ---
+.viewer-container {
+  // Dimensiones y límites
+  width: 100%;
+  height: 100%;
+  max-width: 98vw; // Mantenemos estos límites o usamos clases/mixins de Bootstrap
+  max-height: 98vh;
+
+  // Apariencia (usando variables de modal de Bootstrap)
+  background-color: $modal-content-bg;
+  border: $modal-content-border-width solid $modal-content-border-color;
+  border-radius: $modal-content-border-radius;
+
+  // Estructura Flexbox interna
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; // Evita que el contenedor en sí tenga scroll
+
+  // Atributos ARIA para accesibilidad (manejados en HTML, pero relevantes aquí)
+  &[role="dialog"] {
+    // Estilos específicos para el rol dialog si fueran necesarios
+  }
+}
+
+// --- 3. Cabecera del Visor (Similar a .modal-header) ---
+.viewer-header {
+  display: flex;
+  justify-content: space-between; // Separa título y botón de cierre
+  align-items: center;
+  // Usa padding y borde del header de modal de Bootstrap
+  padding: $modal-header-padding;
+  border-bottom: $modal-header-border-width solid $modal-header-border-color;
+  flex-shrink: 0; // No permitir que se encoja
+}
+
+.viewer-title {
+  // Usa el margen del título de modal de Bootstrap
+  margin-bottom: 0; // Sobrescribe si es necesario (Bootstrap puede añadir margen)
+  // Usa el tamaño de fuente de h5 de Bootstrap (o el que corresponda a .modal-title)
+  font-size: $h5-font-size;
+  font-weight: $font-weight-bold; // O $headings-font-weight
+  color: #0c4076; // Color del título del modal
+  line-height: $modal-title-line-height;
+
+  // Para títulos largos
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// --- 4. Contenido Principal del Visor (Similar a .modal-body) ---
+.viewer-content {
+  flex-grow: 1; // Ocupa todo el espacio vertical disponible
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  background-color: $gray-200; // O $light u otra variable Bootstrap
+}
+
+.status-indicator {
+  position: absolute;
+  display: flex; // Usamos flex para centrar los puntos horizontalmente
+  justify-content: center;
+  align-items: center; // Centra los puntos verticalmente
+  background-color: rgba($modal-content-bg, 0.9);
+  z-index: 5;
+  padding: $spacer;
+  gap: ($spacer * 0.5); // Espacio entre los puntos (ajustable)
+
+  // Clase específica para el estado de carga con puntos
+  &.loading {
+    // Estilos para cada punto (los elementos span dentro de .loading)
+    span {
+      display: inline-block;
+      width: 12px; // Tamaño del punto
+      height: 12px;
+      background-color: $primary; // Color azul de Bootstrap
+      border-radius: 50%; // Hace que sean redondos
+      opacity: 0.2; // Opacidad inicial
+
+      // Aplica la animación a cada punto con un retraso diferente
+      animation: loading-dots 1.2s infinite ease-in-out;
+
+      // Retrasos para crear el efecto secuencial
+      &:nth-child(1) {
+        animation-delay: -0.24s;
+      }
+      &:nth-child(2) {
+        animation-delay: -0.12s;
+      }
+      &:nth-child(3) {
+        animation-delay: 0s;
+      }
+    }
+  }
+
+  &.error {
+    color: $danger;
+    font-weight: $font-weight-bold;
+  }
+}
+
+// Keyframes para la animación de los puntos (parpadeo/escala)
+@keyframes loading-dots {
+  0%, 80%, 100% {
+    transform: scale(0.8); // Un poco más pequeño
+    opacity: 0.2;
+  }
+  40% {
+    transform: scale(1.0); // Tamaño normal
+    opacity: 1;
+  }
+}
+
+// --- 6. Contenedores Específicos del Documento ---
+.document-iframe {
+  width: 100%;
+  height: 100%;
+  border: none; // Sin borde para el iframe
+  display: block; // Soluciona problemas de espacio extra
+}
+
+.image-container {
+  width: 100%;
+  height: 100%;
+  display: flex; // Centrar la imagen
+  justify-content: center;
+  align-items: center;
+  overflow: auto; // Scroll si la imagen es más grande que el contenedor
+  padding: $spacer; // Añade un poco de aire usando la variable de espaciado de Bootstrap
+  box-sizing: border-box;
+}
+
+.document-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; // Escala sin recortar
+  display: block; // Soluciona problemas de espacio extra
+}

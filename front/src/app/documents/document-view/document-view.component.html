@@ -11,55 +11,57 @@
 <ng-container *ngIf="currentShipping">
     <div class="row" [@fadeInOut]>
         <div class="layout-wrapper custom-form">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-sm-12 col-md-12">
-                            <div class="d-flex justify-content-start w-100">
-                                <div class="justify-content">
-                                    <button
-                                            *ngIf="canSendEmail()"
-                                            class="btn custom-button border me-25 fas-fa-mail-send"
-                                            (click)="updateStatus(DocumentStatusEnum.SENT)"
-                                            appCustomTooltip="Enviar solicitud" >
-                                        <i class="fas fa-paper-plane fa-cursor fas-fa-mail-send"></i>
-                                        Enviar solicitud
-                                    </button>
-                                    <button
-                                            *ngIf="canSendEmail()"
-                                            class="btn custom-button border me-50 fas-fa-warning"
-                                            (click)="updateStatus(DocumentStatusEnum.CANCELLED)"
-                                            appCustomTooltip="Anular solicitud" >
-                                        <i class="fas fa-paper-plane fa-cursor fas-fa-warning"></i>
-                                        Anular solicitud
-                                    </button>
-                                    <!-- Restaurar -->
-                                    <button
-                                            *ngIf="currentShipping.request_status === 'CANCELLED'"
-                                            class="btn custom-button border me-50 fas-fa-warning"
-                                            (click)="updateStatus(DocumentStatusEnum.DRAFT)"
-                                            appCustomTooltip="Restaurar solicitud" >
-                                        <i class="fas fa-paper-plane fa-cursor fas-fa-warning"></i>
-                                        Restaurar solicitud
-                                    </button>
-                                    <!-- Editar -->
-                                    <button
-                                            [disabled]="!canSendEmail()"
-                                            class="btn custom-button border me-50 fas-fa-ok"
-                                            (click)="onEdit()"
-                                            appCustomTooltip="Editar solicitud" >
-                                        <i class="fas fa-edit fa-cursor fas-fa-ok"></i>
-                                        Editar
-                                    </button>
+            <ng-container *ngIf="currentShipping.request_status !== DocumentStatusEnum.PROCESSED">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-sm-12 col-md-12">
+                                <div class="d-flex justify-content-start w-100">
+                                    <div class="justify-content">
+                                        <button
+                                                *ngIf="canSendEmail()"
+                                                class="btn custom-button border me-25 fas-fa-mail-send"
+                                                (click)="updateStatus(DocumentStatusEnum.SENT)"
+                                                appCustomTooltip="Enviar solicitud" >
+                                            <i class="fas fa-paper-plane fa-cursor fas-fa-mail-send"></i>
+                                            Enviar solicitud
+                                        </button>
+                                        <button
+                                                *ngIf="canSendEmail()"
+                                                class="btn custom-button border me-50 fas-fa-warning"
+                                                (click)="updateStatus(DocumentStatusEnum.CANCELLED)"
+                                                appCustomTooltip="Anular solicitud" >
+                                            <i class="fas fa-paper-plane fa-cursor fas-fa-warning"></i>
+                                            Anular solicitud
+                                        </button>
+                                        <!-- Restaurar -->
+                                        <button
+                                                *ngIf="currentShipping.request_status === 'CANCELLED'"
+                                                class="btn custom-button border me-50 fas-fa-warning"
+                                                (click)="updateStatus(DocumentStatusEnum.DRAFT)"
+                                                appCustomTooltip="Restaurar solicitud" >
+                                            <i class="fas fa-paper-plane fa-cursor fas-fa-warning"></i>
+                                            Restaurar solicitud
+                                        </button>
+                                        <!-- Editar -->
+                                        <button
+                                                [disabled]="!canSendEmail()"
+                                                class="btn custom-button border me-50 fas-fa-ok"
+                                                (click)="onEdit()"
+                                                appCustomTooltip="Editar solicitud" >
+                                            <i class="fas fa-edit fa-cursor fas-fa-ok"></i>
+                                            Editar
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="content-div">
-                <hr>
-            </div>
+                <div class="content-div">
+                    <hr>
+                </div>
+            </ng-container>
             <div class="card">
                 <div class="card-body">
                     <div class="row">
@@ -94,6 +96,80 @@
                     </div>
                 </div>
             </div>
+            <ng-container *ngIf="existFileZip() && currentShipping.request_status === DocumentStatusEnum.PROCESSED">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <app-camerfirma-info [pin]="currentShipping.pin"></app-camerfirma-info>
+                            </div>
+                            <hr>
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label>PIN del certificado</label>
+                                    <div class="card-text d-grid">
+                              <span class="w-100">
+                               <strong> {{ currentShipping.pin }} </strong>
+                              </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label>Fecha de expiración del certificado</label>
+                                    <div class="card-text d-grid">
+                                  <span class="w-100">
+                                    <strong> {{ currentShipping.expiration_date }} </strong>
+                                  </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="col-sm-12">
+                                <div class="bg-card-container">
+                                    <div class="row row-cols-1 row-cols-sm-1 row-cols-md-1 g-50">
+                                        <div class="col" *ngFor="let file of getFilesZip(); index as i">
+                                            <div class="card card-accounting-voucher h-100"
+                                                 [ngClass]="{'selected': file.id === selectedFile?.id}"
+                                                 (dblclick)="selectFile(null)"
+                                                 (click)="selectFile(file)"
+                                            >
+                                                <div class="card-body">
+                                                    <div class="img-container">
+                                                        <img src="assets/files/128/{{file.extension_file.toLowerCase()}}.png"
+                                                             class="img-fluid" alt="{{ file.file_name }}">
+                                                    </div>
+                                                    <div class="card-body-content">
+                                                        <p class="card-text item-description mb-25 w-100">
+                                                            {{ file.file_name }}
+                                                        </p>
+                                                        <div class="content-p">
+                                                            <p class="card-text" title="Tamaño">
+                                                                <i class="fas fa-hdd"></i>
+                                                                {{ convertBytesToMB(file.file_size) }}<br>
+                                                            </p>
+                                                            <p class="card-text" title="Última modificación">
+                                                                <i class="fas fa-calendar-day"></i> {{ file.last_modified  }}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="actions-content">
+                                                        <button
+                                                                class="btn custom-button fas-fa-save"
+                                                                (click)="onDownload(file)">
+                                                            <i class="fas fa-download fas-fa-18 fas-fa-save"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </ng-container>
             <div class="content-div">
                 <hr>
             </div>
@@ -233,7 +309,7 @@
                 </div>
                 <div class="card">
                     <div class="card-header">
-                        <span class="card-title">LISTA DE ARCHIVOS</span>
+                        <span class="card-title">Lista de archivos adjuntos</span>
                         <div class="card-header-actions" *ngIf="currentShipping.files.length < 5">
                             <button
                                     *ngIf="canSendEmail()"
@@ -248,19 +324,19 @@
                     <div class="card-body">
                         <div class="bg-card-container">
                             <div class="row row-cols-1 row-cols-sm-1 row-cols-md-1 g-50">
-                                <div class="col" *ngFor="let file of currentShipping.files; index as i">
+                                <div class="col" *ngFor="let file of getFiles(); index as i">
                                     <div class="card card-accounting-voucher h-100"
                                          [ngClass]="{'selected': file.id === selectedFile?.id}"
                                          (dblclick)="selectFile(null)"
                                          (click)="selectFile(file)"
                                     >
-                                        <div class="card-body">
+                                        <div class="card-body" [title]="file.file_name">
                                             <div class="img-container">
                                                 <img src="assets/files/128/{{file.extension_file.toLowerCase()}}.png"
                                                      class="img-fluid" alt="{{ file.file_name }}">
                                             </div>
                                             <div class="card-body-content">
-                                                <h5 class="card-title mb-25">{{ file.file_name }}</h5>
+                                                <small class="font-small-1 text-muted">{{ file.file_name }}</small>
                                                 <div class="content-p">
                                                     <p class="card-text" title="Tamaño">
                                                         <i class="fas fa-hdd"></i>
@@ -273,17 +349,17 @@
                                             </div>
                                             <div class="actions-content">
                                                 <button
-                                                        title="Descargar archivo"
-                                                        class="btn custom-button fas-fa-save"
-                                                        (click)="onDownload(file)">
-                                                    <i class="fas fa-link fas-fa-16 fas-fa-save"></i>
-                                                </button>
-                                                <button
                                                         [disabled]="!canSendEmail()"
                                                         title="Eliminar archivo"
                                                         class="btn custom-button fas-fa-trash fas-fa-delete"
                                                         (click)="onDeleteFile(file)">
                                                     <i class="fas fa-trash fas-fa-16 fas-fa-trash fas-fa-delete"></i>
+                                                </button>
+                                                <button
+                                                        title="Descargar archivo"
+                                                        class="btn custom-button fas-fa-save"
+                                                        (click)="onDownload(file)">
+                                                    <i class="fas fa-download fas-fa-16 fas-fa-save"></i>
                                                 </button>
                                             </div>
                                         </div>
@@ -294,6 +370,19 @@
                     </div>
                 </div>
             </ng-container>
+            <div class="content-div">
+                <hr>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Historial de la Solicitud</span>
+                </div>
+                <div class="card-body">
+                    <app-time-line
+                            [timelineData]="currentShipping.history"
+                    ></app-time-line>
+                </div>
+            </div>
         </div>
     </div>
     <ng-container *ngIf="canAddFile">

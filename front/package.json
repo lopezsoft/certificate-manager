@@ -1,6 +1,6 @@
 {
   "name": "CERTIFICATE-MANAGER",
-  "version": "1.1.0",
+  "version": "1.2.3",
   "scripts": {
     "ng": "ng",
     "start": "ng serve -o",
@@ -24,8 +24,9 @@
     "@angular/localize": "18.2.10",
     "@angular/platform-browser": "18.2.10",
     "@angular/platform-browser-dynamic": "18.2.10",
+    "@angular/pwa": "^18.0.0",
     "@angular/router": "18.2.10",
-    "@angular/service-worker": "^18.2.10",
+    "@angular/service-worker": "18.2.10",
     "@circlon/angular-tree-component": "11.0.4",
     "@ctrl/ngx-csv": "6.0.0",
     "@ctrl/ngx-rightclick": "4.0.0",
@@ -107,6 +108,7 @@
     "preact": "^10.24.3",
     "prismjs": "1.29.0",
     "pug": "3.0.3",
+    "pwa": "^1.9.7",
     "resize-observer-polyfill": "1.5.1",
     "rxjs": "7.8.1",
     "screenfull": "6.0.2",

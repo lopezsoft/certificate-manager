@@ -7,6 +7,9 @@ import {CoreModule} from "../@core/core.module";
 import {ActionsToolbarComponent} from "./components/actions-toolbar/actions-toolbar.component";
 import {LayoutComponentComponent} from "./components/layout-component/layout-component.component";
 import {SearchDataComponent} from "./components/search-data/search-data.component";
+import {TimeLineComponent} from "./components/time-line/time-line.component";
+import {DocumentViewerComponent} from "./components/document-viewer/document-viewer.component";
+import {CamerfirmaInfoComponent} from "./components/camerfirma-info/camerfirma-info.component";
 @NgModule({
   declarations: [
     NotificationCardComponent,
@@ -14,7 +17,10 @@ import {SearchDataComponent} from "./components/search-data/search-data.componen
     SupportButtonComponent,
     ActionsToolbarComponent,
     LayoutComponentComponent,
-    SearchDataComponent
+    SearchDataComponent,
+    TimeLineComponent,
+    DocumentViewerComponent,
+    CamerfirmaInfoComponent
   ],
   imports: [
     CommonModule,
@@ -26,7 +32,10 @@ import {SearchDataComponent} from "./components/search-data/search-data.componen
     SupportButtonComponent,
     ActionsToolbarComponent,
     LayoutComponentComponent,
-    SearchDataComponent
+    SearchDataComponent,
+    TimeLineComponent,
+    DocumentViewerComponent,
+    CamerfirmaInfoComponent
   ]
 })
 export class CommonComponentsModule { }

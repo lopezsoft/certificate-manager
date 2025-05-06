@@ -38,12 +38,9 @@ class CertificateRequestStatusNotification extends Notification
     {
         return (new MailMessage)
             ->subject("Notificación de estado de solicitud de certificado")
-            ->greeting("Hola, {$this->messageData->company->company_name}.")
-            ->line("El estado de la solicitud ha cambiado a: {$this->messageData->request_status}")
-            ->line("Cliente de la solicitud: {$this->messageData->data->company_name}")
-            ->line("Comentarios: {$this->messageData->comments}")
-            ->action('Abrir sistema', url('certs.matias-api.com'))
-            ->line("Esto es solo un aviso, no es necesario responder.");
+            ->markdown('mail.status-notification', [
+                'data' => $this->messageData
+            ]);
     }
 
     /**

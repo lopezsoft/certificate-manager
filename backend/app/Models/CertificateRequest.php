@@ -20,7 +20,7 @@ class CertificateRequest extends CoreModel
     public $timestamps = true;
 
     protected $with = [
-        'identity', 'organization', 'city', 'files'
+        'identity', 'organization', 'city', 'files', 'history'
     ];
 
     /**
@@ -32,7 +32,8 @@ class CertificateRequest extends CoreModel
         'city_id', 'identity_document_id', 'type_organization_id',
         'company_name', 'dni', 'dv', 'address', 'document_number',
         'phone', 'mobile',  'legal_representative', 'info',  'request_status',
-        'company_id', 'postal_code', 'life', 'base_path'
+        'company_id', 'postal_code', 'life', 'base_path', 'document_type',
+        'pin', 'expiration_date',
     ];
 
     protected $casts = [
@@ -77,5 +78,13 @@ class CertificateRequest extends CoreModel
     public function files(): HasMany
     {
         return $this->hasMany(FileManager::class, 'certificate_request_id');
+    }
+
+    /**
+     * Get the history that owns the certificate request.
+     */
+    public function history(): HasMany
+    {
+        return $this->hasMany(ChangeHistory::class, 'certificate_request_id')->orderBy('created_at', 'desc');
     }
 }

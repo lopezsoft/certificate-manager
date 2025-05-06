@@ -43,6 +43,13 @@
             - <b>Dirección</b>: {{$messageData->data->address}}
         </p>
         <br/>
+        @if(!empty($messageData->data->info))
+        📝 <b>Observaciones:</b>
+        <p class="p-text-justify">
+            {!! $messageData->data->info !!}
+        </p>
+        <br/>
+        @endif
         <p class="p-text-justify">
             📬 Adjunto encontrará la documentación requerida para la emisión del mismo.
         </p>

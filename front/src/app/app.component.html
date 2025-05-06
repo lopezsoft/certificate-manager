@@ -29,3 +29,11 @@
 <ngx-loading [show]="_globalSettings.loading"></ngx-loading>
 <block-ui></block-ui>
 <app-support-button *ngIf="canShowAppSupport"></app-support-button>
+
+<ng-container *ngIf="viewerState$ | async as state">
+    <app-document-viewer *ngIf="state.isVisible"
+         [sourceUrl]="state.sourceUrl"
+         [title]="state.title"
+         (closeRequested)="closeViewer()">
+    </app-document-viewer>
+</ng-container>

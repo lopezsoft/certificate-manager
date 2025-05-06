@@ -9,11 +9,13 @@ use App\Models\FileManager;
 use App\Modules\Company\CompanyQueries;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class CertificateRequestFilesService
 {
-    public function createFile($certificateRequestId): JsonResponse
+    public function createFile(Request $request, $certificateRequestId): JsonResponse
     {
         try {
             $certificateRequest = CertificateRequest::query()
@@ -30,17 +32,15 @@ class CertificateRequestFilesService
             $files = FileManager::query()
                 ->where('certificate_request_id', $certificateRequestId)
                 ->get();
-            if ($files->count() >= 4) {
+            if ($files->count() >= 5) {
                 throw new Exception("No se pueden subir más de 4 archivos.", 400);
             }
             $fileSize = $file->getSize();
-            foreach ($files as $f) {
-                // Validar que el tamaño del archivo no supere los 2MB
-                if ($f->file_size + $fileSize > 2 * 1024 * 1024 + 50) {
-                    throw new Exception("El tamaño del archivo no puede superar los 2MB.", 400);
-                }
+            if ($fileSize > 2 * 1024 * 1024) {
+                throw new Exception("El tamaño del archivo no puede superar los 2MB.", 400);
             }
             $company        = CompanyQueries::getCompany();
+            $pin            = $request->input('pin');
             $disk           = Storage::disk('attachment');
             $basePath       = $certificateRequest->base_path;
             if (!$basePath) {
@@ -60,6 +60,7 @@ class CertificateRequestFilesService
             $mimeType       = $disk->mimeType($path);
             $sizeFile       = $disk->size($path);
             $lastModified   = $disk->lastModified($path);
+            DB::beginTransaction();
             $file = FileManager::create([
                 'certificate_request_id'    =>  $certificateRequestId,
                 'file_name'         =>  $fileName,
@@ -69,14 +70,54 @@ class CertificateRequestFilesService
                 'file_size'         =>  $sizeFile,
                 'last_modified'     =>  date('Y-m-d H:i:s', $lastModified),
                 'status'            =>  'COMPLETED',
+                'document_type'     => $request->input('document_type') ?? 'ATTACHED'
             ]);
+            if ($pin && $format == 'zip') {
+                // Nombre del archivo sin la extensión
+                $fileNameWithoutExtension = pathinfo($fileName, PATHINFO_FILENAME);
+                $extractToPath  = $disk->path("{$basePath}/zip");
+                $password       = $certificateRequest->dni;
+                if ($certificateRequest->type_organization_id == 1) {
+                    $password = "{$certificateRequest->dni}{$certificateRequest->dv}";
+                }
+                $zipFilePath    = $disk->path($path);
+                if ((new ZipExtractorService())->extract((object)[
+                    'zipFilePath'     => $zipFilePath,
+                    'password'        => $password,
+                    'extractToPath'   => $extractToPath,
+                    'fileName'        => $fileNameWithoutExtension,
+                ])) {
+                    $allFiles = $disk->allFiles("{$basePath}/zip");
+                    $content = null;
+                    foreach ($allFiles as $allFile) {
+                        $content = base64_encode($disk->get($allFile));
+                        $extension = pathinfo($allFile, PATHINFO_EXTENSION);
+                        if ($extension == 'p12' || $extension == 'pfx') {
+                            break;
+                        }
+                    }
+                    if (!$content) {
+                        throw new Exception("No se ha encontrado el archivo P12 o PFX en el ZIP.", 400);
+                    }
+
+                    $expirationDate = CertificateValidatorService::getExpirationDate($content, $pin);
+                    $certificateRequest->update([
+                        'expiration_date' => $expirationDate,
+                        'pin'             => $pin,
+                    ]);
+                    // Eliminar el archivo ZIP extraído
+                    $disk->deleteDirectory("{$basePath}/zip");
+                }
+            }
+            DB::commit();
             return HttpResponseMessages::getResponse([
                 'message' => 'Archivo creado correctamente.',
                 'dataRecords' => [
                     'data' => [$file],
                 ],
             ]);
-        }catch (Exception $e) {
+        } catch (Exception $e) {
+            DB::rollBack();
             return MessageExceptionResponse::response($e);
         }
     }
@@ -99,10 +140,8 @@ class CertificateRequestFilesService
                     'data' => [$file],
                 ],
             ]);
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             return MessageExceptionResponse::response($e);
         }
-
     }
-
 }
