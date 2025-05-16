@@ -1,3 +1,4 @@
+import { Role } from "app/auth/models";
 
 export class Users {
   id            : number;
@@ -12,6 +13,7 @@ export class Users {
   last_name     : string;
   success       : boolean;
   user_type     : UserTypes;
+  role?         : Role;
   active        : boolean;
 }
 

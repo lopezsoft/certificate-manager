@@ -32,8 +32,8 @@ class CertificateRequestFilesService
             $files = FileManager::query()
                 ->where('certificate_request_id', $certificateRequestId)
                 ->get();
-            if ($files->count() >= 5) {
-                throw new Exception("No se pueden subir más de 4 archivos.", 400);
+            if ($files->count() >= 6) {
+                throw new Exception("No se pueden subir más de 6 archivos.", 400);
             }
             $fileSize = $file->getSize();
             if ($fileSize > 2 * 1024 * 1024) {

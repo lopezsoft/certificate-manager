@@ -1,25 +1,40 @@
 import { Injectable } from '@angular/core';
 import {HttpResponsesService} from "../utils";
 import {
-  ConsumeForCompany,
-  ConsumeForCompanyByMonth,
-  ConsumeForCustomer,
-  ConsumeForCustomerByMonth
+  ConsumeByYear, ConsumeByYearAndMonth,
 } from "../models/dashboard-model";
 
 @Injectable({
   providedIn: 'root'
 })
 export class DashboardService {
-  public forCompany: ConsumeForCompany[] = [];
-  public forCompanyByMonth: ConsumeForCompanyByMonth[] = [];
-  public forCustomers: ConsumeForCustomer[] = [];
-  public forCustomersByMonth: ConsumeForCustomerByMonth[] = [];
+  public consumeByYear: ConsumeByYear[] = [];
+  public consumeByYearAndMonth: ConsumeByYearAndMonth[] = [];
   constructor(
       public http: HttpResponsesService,
   ) { }
 
-  getConsumeDocuments(params: any = {}) {
-    return this.http.get('/documents/consume', params);
+  getByYear(year: number) {
+    return this.http.get(`/consume/${year}`)
+      .subscribe({
+        next: (response: any) => {
+          this.consumeByYear = response.data;
+        },
+        error: (error) => {
+          console.error('Error fetching data:', error);
+        }
+      });
+  }
+
+  getByYearAndMonth(year: number, month: number) {
+    return this.http.get(`/consume/${year}/${month}`)
+      .subscribe({
+        next: (response: any) => {
+          this.consumeByYearAndMonth = response.data;
+        },
+        error: (error) => {
+          console.error('Error fetching data:', error);
+        }
+      });
   }
 }

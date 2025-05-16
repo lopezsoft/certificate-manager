@@ -1,4 +1,5 @@
 import { CoreMenu } from '@core/types'
+import { Role } from 'app/auth/models'
 
 export const menu: CoreMenu[] = [
   {
@@ -17,14 +18,15 @@ export const menu: CoreMenu[] = [
     icon: 'file',
     url: 'requests'
   },
-/*  {
+ {
     id: 'customers',
     title: 'Clientes',
     // translate: 'MENU.DOCUMENTS',
     type: 'item',
     icon: 'file',
-    url: 'customers'
-  },*/
+    url: 'customers',
+    role: [Role.Admin]
+  },
   {
     id: 'profile',
     title: 'Perfil',
@@ -38,7 +40,8 @@ export const menu: CoreMenu[] = [
     // translate: 'MENU.DOCUMENTS',
     type: 'item',
     icon: 'file',
-    url: 'settings'
+    url: 'settings',
+    role: [Role.Admin]
   },
   {
     id: 'changes-history',

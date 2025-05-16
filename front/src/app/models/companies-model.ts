@@ -25,6 +25,7 @@ export interface Company {
   postal_code: string;
   type_organization_id: number;
   web: string;
+  checked?: boolean;
 }
 
 export interface TypeOrganization {

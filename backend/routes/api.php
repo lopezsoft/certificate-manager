@@ -20,13 +20,20 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 Route::group(['prefix' => 'v1'], function () {
 
     // Public methods
-    require_once __DIR__."/public.php";
+    require_once __DIR__ . "/public.php";
     // end Public methods
     require_once __DIR__ . "/authentication.php";
     require_once __DIR__ . "/auth-api.php";
-    Route::group(['middleware' => 'auth:api'], function() {
+    Route::group(['middleware' => 'auth:api'], function () {
 
         Route::apiResource('crud', 'TableCrudController');
+        // CONSUME DOCUMENTS
+        Route::group(['prefix' => 'consume'], function () {
+            Route::controller('ConsumeController')->group(function () {
+                Route::get('/{year}', 'readByYear');
+                Route::get('/{year}/{month}', 'readByMonth');
+            });
+        });
         // SENT DOCUMENTS
         Route::group(['prefix' => 'certificate-request'], function () {
             Route::controller('CertificateRequestController')->group(function () {
@@ -50,13 +57,10 @@ Route::group(['prefix' => 'v1'], function () {
         Route::group(['prefix' => 'company'], function () {
             Route::controller('CompanyController')->group(function () {
                 Route::get('/',            'read');
-                Route::get('customers',    'customers');
                 Route::group(['prefix' => 'settings'], function () {
                     Route::get('/',         'getSetting');
                     Route::put('/',         'updateSetting');
                 });
-                Route::put('/{id}',  'update');
-                Route::delete('customer/{id}', 'deleteCustomer');
             });
         });
         // Profile

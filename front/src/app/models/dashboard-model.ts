@@ -1,20 +1,11 @@
-export interface ConsumeForCompany {
-    nyear: number;
-    parent_company: string;
-    parent_dni: string;
-    payment: number;
-    total: string;
-}
-
-export interface ConsumeForCompanyByMonth extends ConsumeForCompany {
-    nmonth: string;
-}
-
-export interface ConsumeForCustomer extends ConsumeForCompany {
-    company_dni: string;
+export interface ConsumeByYear {
+    company_id: number;
     company_name: string;
+    total: string;
+    nyear: number;
 }
 
-export interface ConsumeForCustomerByMonth extends ConsumeForCustomer {
+export interface ConsumeByYearAndMonth extends ConsumeByYear {
     nmonth: string;
+    monthname: string;
 }

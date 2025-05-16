@@ -8,18 +8,22 @@ import {
   CustomersComponent,
   CustomerCreateComponent
 } from "./index";
+import { CommonComponentsModule } from 'app/common/common-components.module';
+import { CustomerViewComponent } from './customer-view/customer-view.component';
 
 
 @NgModule({
   declarations: [
     CustomersComponent,
     CustomerFormComponent,
-    CustomerCreateComponent
+    CustomerCreateComponent,
+    CustomerViewComponent
   ],
   imports: [
     CommonModule,
     CustomersRoutingModule,
     CoreModule,
+    CommonComponentsModule,
     ExodolibsModule
   ]
 })

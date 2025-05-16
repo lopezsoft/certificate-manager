@@ -1,0 +1,62 @@
+<ng-container *ngIf="!currentCustomer">
+    <div class="layout-content-empty">
+    <span class="card-text">
+    SELECCIONE UN CLIENTE PARA VER SU INFORMACIÓN
+    </span>
+        <img
+                class="img-fluid"
+                src="/assets/img/search-document.svg" alt="Búsqueda documento">
+    </div>
+</ng-container>
+<ng-container *ngIf="currentCustomer">
+    <div class="row" [@fadeInOut]>
+        <div class="layout-wrapper custom-form">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="form-group">
+                                <label>Cliente</label>
+                                <div class="card-text d-grid">
+                                  <span class="w-100">
+                                   <strong> {{ currentCustomer.company_name | uppercase }} </strong>
+                                  </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label>Identificación del cliente</label>
+                                <div class="card-text d-grid">
+                                   <span class="w-100">
+                                    <strong> {{ currentCustomer.dni }}-{{ currentCustomer.dv }} </strong>
+                                  </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-5">
+                            <div class="form-group">
+                                <label>Correo del cliente</label>
+                                <div class="card-text d-grid">
+                                   <span class="w-100">
+                                    <strong> {{ currentCustomer.email }} </strong>
+                                  </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-3">
+                            <div class="form-group">
+                                <label>Teléfono cliente</label>
+                                <div class="card-text d-grid">
+                                   <span class="w-100">
+                                    <strong> {{ currentCustomer.phone }} </strong>
+                                  </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</ng-container>

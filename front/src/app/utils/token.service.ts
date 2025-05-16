@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { User } from '../auth/models';
 import { AccessToken } from '../interfaces';
 import { HttpResponsesService } from './http-responses.service';
+import { Role } from '../auth/models/role';
 
 @Injectable({
   providedIn: 'root'
@@ -33,7 +34,7 @@ export default class TokenService {
     return token;
   }
 
-    getCurrentUser() {
+  getCurrentUser() {
     const ts = this;
     let user: any = {};
     /**
@@ -48,6 +49,7 @@ export default class TokenService {
         user.lastName     = token.user.last_name;
         user.token        = token.access_token;
         user.id           = token.user.id;
+        user.role         = this.isAdmin() ? Role.Admin : Role.Client;
         localStorage.setItem('currentUser', JSON.stringify(user));
       }
     }
@@ -65,6 +67,7 @@ export default class TokenService {
     user.lastName = data.lastName;
     user.token = ts.currentUser.token;
     user.id = data.id;
+    user.role = data.role ?? Role.Client;
     localStorage.removeItem('currentUser');
     localStorage.setItem('currentUser', JSON.stringify(user));
     ts.currentUser = JSON.parse(localStorage.getItem('currentUser') || '');

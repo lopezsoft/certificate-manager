@@ -11,11 +11,11 @@ class TableList
      */
     public static function getTable($prefix): string
     {
-        if(!$prefix) {
+        if (!$prefix) {
             throw new Exception('No se ha especificado el prefijo de la tabla');
         }
         $tableList = [
-            'T001' => 'price_list',
+            'T001' => 'companies',
             'T002' => 'product_price_list',
             'T003' => 'sellers',
             'T004' => 'cost_centers',

@@ -5,7 +5,7 @@ export const environment = {
   APIJWT: 'cm-app-jwt',
   APPURL: 'https://api-certs.matias-api.com',
   APIURL: 'https://api-certs.matias-api.com/api/v1',
-  VERSION: '1.2.3',
+  VERSION: '1.2.4',
   config: {
     name: 'MANAGER',
     title: 'CERTIFICATE MANAGER - Aplicación para la gestión de solicitudes de certificados de firma digital',

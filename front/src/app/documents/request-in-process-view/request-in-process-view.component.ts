@@ -111,6 +111,26 @@ export class RequestInProcessViewComponent {
 			this.currentShipping.request_status == DocumentStatusEnum.PENDING;
 	}
 
+	protected onDeleteFile(file: FileManager) {
+		this.msg.confirm("¿Está seguro de que desea eliminar el archivo?", "Por favor confirme su acción")
+			.then((result) => {
+				if (result.isConfirmed) {
+					this.mask.showBlockUI("Eliminando archivo...");
+					this.http.delete(`/certificate-request/${this.currentShipping.id}/files/${file.id}`).subscribe({
+						next: (resp) => {
+							this.mask.hideBlockUI();
+							this.currentShipping.files = this.currentShipping.files.filter(f => f.id !== file.id);
+							this.selectedFile = null;
+							this.msg.toastMessage('Éxito', resp.message);
+						},
+						error: () => {
+							this.mask.hideBlockUI();
+						}
+					});
+				}
+			})
+	}
+
 	protected onDownload(file: FileManager) {
 		const url = `${this.http.getAppUrl()}/attachments/${file.file_path}`;
 		if (file.extension_file === 'pdf') {

@@ -454,11 +454,18 @@
                                                 </div>
                                             </div>
                                             <div class="actions-content">
-                                                <button
-                                                        class="btn custom-button fas-fa-save"
-                                                        (click)="onDownload(file)">
-                                                    <i class="fas fa-download fas-fa-18 fas-fa-save"></i>
-                                                </button>
+                                              <button
+                                                      [disabled]="!canSendEmail()"
+                                                      title="Eliminar archivo"
+                                                      class="btn custom-button fas-fa-trash fas-fa-delete"
+                                                      (click)="onDeleteFile(file)">
+                                                  <i class="fas fa-trash fas-fa-16 fas-fa-trash fas-fa-delete"></i>
+                                              </button>
+                                              <button
+                                                      class="btn custom-button fas-fa-save"
+                                                      (click)="onDownload(file)">
+                                                  <i class="fas fa-download fas-fa-18 fas-fa-save"></i>
+                                              </button>
                                             </div>
                                         </div>
                                     </div>

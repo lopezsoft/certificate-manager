@@ -29,7 +29,7 @@ class CertificateRequestMailService
             $messageData = (object) [
                 'company'   => $company,
                 'data'      => $query,
-                'subject'   => 'Solicitud de certificado para facturación electrónica',
+                'subject'   => "Solicitud de certificado para facturación electrónica - {$query->dni}-{$query->dv}",
                 'files'     => $query->files,
                 'email_from'=> env('MAIL_FROM','soporte@matias.com.co'),
                 'replyTo'   => env('REPLY_TO_MAIL', 'soporte@matias.com.co')

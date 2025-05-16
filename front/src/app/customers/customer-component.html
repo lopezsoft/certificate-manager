@@ -1,0 +1,56 @@
+<app-layout-component
+        (onToggleNavbar)="toggleNavbar()"
+        [isClicked]="isClicked">
+    <ng-container slot="sidebar">
+        <div class="card custom-form">
+            <div class="card-header">
+                <h6 class="card-title mb-0">{{title | uppercase}}</h6>
+            </div>
+            <div class="card-body">
+                <div class="w-100 d-flex align-items-center mb-25">
+                    <div class="w-100 d-flex align-items-center justify-content-between mb-0">
+                        <button
+                                appCustomTooltip="Volver al menú anterior"
+                                tooltipDirection="left"
+                                class="btn custom-button fas-fa-close me-25"
+                                (click)="goRoute('requests')" [disabled]="loading">
+                            <i class="fas fa-chevron-left fas-fa-18 fas-fa-close"></i>
+                            {{ 'buttons.back' | translate }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <app-search-data #searchItems
+                         [showFilter]="false"
+                         (onSearch)="onSearch({query: $event})">
+        </app-search-data>
+        <div class="row row-cols-1 g-25">
+            <div class="col-md-12 w-100 static-bottom exodogrid-content-style">
+                <exodo-pagination class="pagination w-100" #pagination
+                                  (onRefreshPagination)="onRefreshPagination($event)">
+                </exodo-pagination>
+            </div>
+            <div class="col" *ngFor="let item of customer.data; index as i">
+                <div class="card cursor layout-content-card single full-height"
+                     [ngClass]="{'is-selected': item.checked}"
+                     (click)="onClickItem(item)">
+                    <div class="card-body">
+                        <p class="card-text item-description w-100">
+                            {{ item.company_name | uppercase }}
+                        </p>
+                        <p class="card-text">
+                            NIT Nº. {{item.dni}}-{{item.dv}}. Correo: {{item.email}}
+                        </p>
+                        <p class="card-text item-description w-100">
+                            {{ item.address | uppercase }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+    <app-customer-view
+        #documentView
+    ></app-customer-view>
+</app-layout-component>

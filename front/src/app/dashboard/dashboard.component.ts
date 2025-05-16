@@ -2,12 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import {SettingsService} from "../services/settings.service";
 import TokenService from "../utils/token.service";
 import {DashboardService} from "../services/dashboard.service";
-import {
-    ConsumeForCompany,
-    ConsumeForCompanyByMonth,
-    ConsumeForCustomer,
-    ConsumeForCustomerByMonth
-} from "../models/dashboard-model";
 import {FormatsService} from "../services/formats.service";
 
 @Component({
@@ -16,13 +10,64 @@ import {FormatsService} from "../services/formats.service";
   styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements OnInit {
-  protected forCompany: ConsumeForCompany[] = [];
-  protected forCompanyByMonth: ConsumeForCompanyByMonth[] = [];
-  protected forCustomers: ConsumeForCustomer[] = [];
-  protected forCustomersByMonth: ConsumeForCustomerByMonth[] = [];
   toggle: boolean = false;
   protected selectedYear = new Date().getFullYear();
   protected years: number[] = [];
+  protected selectedMonth = 0;
+  protected months = [
+    {
+      name: 'todos',
+      value: 0
+    },
+    {
+      name: 'Enero',
+      value: 1
+    },
+    {
+      name: 'Febrero',
+      value: 2
+    },
+    {
+      name: 'Marzo',
+      value: 3
+    },
+    {
+      name: 'Abril',
+      value: 4
+    },
+    {
+      name: 'Mayo',
+      value: 5
+    },
+    {
+      name: 'Junio',
+      value: 6
+    },
+    {
+      name: 'Julio',
+      value: 7
+    },
+    {
+      name: 'Agosto',
+      value: 8
+    },
+    {
+      name: 'Septiembre',
+      value: 9
+    },
+    {
+      name: 'Octubre',
+      value: 10
+    },
+    {
+      name: 'Noviembre',
+      value: 11
+    },
+    {
+      name: 'Diciembre',
+      value: 12
+    }
+  ];
   constructor(
     public _settings: SettingsService,
     public _token: TokenService,
@@ -35,19 +80,20 @@ export class DashboardComponent implements OnInit {
 
     // Get the last 4 years
     const currentYear = new Date().getFullYear();
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 2; i++) {
       this.years.push(currentYear - i);
     }
 
     if (this._token.isAuthenticated()){
       const year = new Date().getFullYear();
-      this.getConsumeDocuments(year);
+      this.getConsumeDocuments(year, 0);
     }
   }
 
 
-  getConsumeDocuments(year: number) {
-      // Get the last 4 years
+  getConsumeDocuments(year: number, month: number) {
+      this.dbs.getByYear(year);
+      this.dbs.getByYearAndMonth(year, month);
   }
 
 }
