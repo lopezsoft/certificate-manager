@@ -73,7 +73,7 @@ export const DocumentStatusDescription = {
 	PAID: 'Pagado',
 	PARTIALLY_PAID: 'Parcialmente Pagado',
 	CANCELLED: 'Cancelada',
-	REJECTED: 'Rechazado',
+	REJECTED: 'Rechazada',
 	DISPUTED: 'En disputa',
 	REFUNDED: 'Reembolsado',
 	ON_HOLD: 'En espera',

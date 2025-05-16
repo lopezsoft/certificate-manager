@@ -3,6 +3,7 @@ import {SettingsService} from "../services/settings.service";
 import TokenService from "../utils/token.service";
 import {DashboardService} from "../services/dashboard.service";
 import {FormatsService} from "../services/formats.service";
+import {DocumentStatusDescription} from "../common/enums/DocumentStatus";
 
 @Component({
   selector: 'app-dashboard',
@@ -14,6 +15,7 @@ export class DashboardComponent implements OnInit {
   protected selectedYear = new Date().getFullYear();
   protected years: number[] = [];
   protected selectedMonth = 0;
+  protected readonly documentStatusDescription = DocumentStatusDescription;
   protected months = [
     {
       name: 'todos',
@@ -95,5 +97,4 @@ export class DashboardComponent implements OnInit {
       this.dbs.getByYear(year);
       this.dbs.getByYearAndMonth(year, month);
   }
-
 }

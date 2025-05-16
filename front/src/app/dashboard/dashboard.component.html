@@ -32,25 +32,33 @@
                     <div class="card">
                         <div class="card-header">
                             <label>
-                                <span><strong>{{ 'CONSUMO DE DOCUMENTOS AÑO' | uppercase }}</strong></span>
+                                <span><strong>{{ 'CONSUMO DE SOLICITUDES AÑO' | uppercase }}</strong></span>
                             </label>
                         </div>
                         <div class="card-body table-responsive">
                             <table class="table table-striped table-bordered table-layout-content shadow">
                                 <caption>
-                                    TOTAL DE DOCUMENTOS POR AÑO
+                                    TOTAL DE SOLICITUDES POR AÑO
                                 </caption>
                                 <thead>
                                 <tr>
                                     <th>Empresa</th>
                                     <th>Año</th>
-                                    <th>Total documentos</th>
+                                    <th>Estado de la solicitud</th>
+                                    <th>Total</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 <tr *ngFor="let item of dbs.consumeByYear || []">
                                     <td>{{ item.company_name }}</td>
                                     <td class="text-right">{{ item.nyear }}</td>
+                                    <td>
+                                        <div class="card-text d-grid">
+                                          <span class="w-100 text-center" [class]="'document-status-'+item.request_status">
+                                            {{ documentStatusDescription[item.request_status] | uppercase }}
+                                          </span>
+                                        </div>
+                                    </td>
                                     <td class="text-right">{{ item.total }}</td>
                                 </tr>
                                 </tbody>
@@ -62,20 +70,21 @@
                     <div class="card">
                         <div class="card-header">
                             <label>
-                                <span><strong>{{ 'CONSUMO DE DOCUMENTOS X MES Y AÑO' | uppercase }}</strong></span>
+                                <span><strong>{{ 'CONSUMO DE SOLICITUDES X MES Y AÑO' | uppercase }}</strong></span>
                             </label>
                         </div>
                         <div class="card-body table-responsive">
                             <table class="table table-striped table-bordered table-layout-content shadow">
                                 <caption>
-                                    TOTAL DE DOCUMENTOS POR MES Y AÑO
+                                    TOTAL DE SOLICITUDES POR MES Y AÑO
                                 </caption>
                                 <thead>
                                 <tr>
                                     <th class="text-left">Empresa</th>
                                     <th class="text-right">Año</th>
                                     <th class="text-right">Mes</th>
-                                    <th>Total documentos</th>
+                                    <th>Estado de la solicitud</th>
+                                    <th>Total</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -83,6 +92,13 @@
                                     <td>{{ item.company_name }}</td>
                                     <td class="text-right">{{ item.nyear }}</td>
                                     <td class="text-right">{{ item.monthname | uppercase }}</td>
+                                    <td>
+                                        <div class="card-text d-grid">
+                                          <span class="w-100 text-center" [class]="'document-status-'+item.request_status">
+                                            {{ documentStatusDescription[item.request_status] | uppercase }}
+                                          </span>
+                                        </div>
+                                    </td>
                                     <td class="text-right">{{ item.total }}</td>
                                 </tr>
                                 </tbody>
