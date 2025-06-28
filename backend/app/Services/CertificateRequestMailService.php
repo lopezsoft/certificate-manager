@@ -21,7 +21,9 @@ class CertificateRequestMailService
         try {
             $company    = CompanyQueries::getCompany();
             $query      = CertificateRequest::query()
-                ->where('id', $id)
+                ->whereHas("files", function ($query) {
+                    $query->where('document_type', 'ATTACHED');
+                })->where('id', $id)
                 ->first();
             if(!$query) {
                 throw new Exception("No se ha encontrado la solicitud de certificado.", 400);

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Core\CoreModel;
 use App\Models\Location\Cities;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -40,6 +41,44 @@ class CertificateRequest extends CoreModel
         'created_at'    => 'datetime:d-m-Y h:i:s a',
         'updated_at'    => 'datetime:d-m-Y h:i:s a',
     ];
+
+    protected $appends = [
+        'created_at_formatted',
+        'updated_at_formatted',
+        'expiration_date_formatted'
+    ];
+
+    /**
+     * Get the created_at formatted attribute.
+     * Carbon instance is used to format the date.
+     *
+     * @return string
+     */
+
+    public function getCreatedAtFormattedAttribute(): string
+    {
+        return Carbon::parse($this->created_at,'America/Bogota')->format('d-m-Y h:i:s a');
+    }
+    /**
+     * Get the updated_at formatted attribute.
+     *
+     * @return string
+     */
+    public function getUpdatedAtFormattedAttribute(): string
+    {
+        return Carbon::parse($this->updated_at,'America/Bogota')->format('d-m-Y h:i:s a');
+    }
+    /**
+     * Get the expiration_date formatted attribute.
+     *
+     * @return string
+     */
+
+    public function getExpirationDateFormattedAttribute(): string
+    {
+        return Carbon::parse($this->expiration_date,'America/Bogota')->format('d-m-Y h:i:s a');
+    }
+
     /**
      * Get the type document identification that owns the company.
      */

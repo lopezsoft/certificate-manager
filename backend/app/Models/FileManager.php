@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\CoreModel;
+use Carbon\Carbon;
 use Illuminate\Support\Str;
 
 /**
@@ -28,6 +29,26 @@ class FileManager extends CoreModel
     protected $hidden = [
         'certificate_request_id'
     ];
+
+    protected $appends = [
+        'created_at_formatted',
+        'updated_at_formatted',
+        'last_modified_formatted'
+    ];
+
+    public function getCreatedAtFormattedAttribute(): string
+    {
+        return Carbon::parse($this->created_at, 'America/Bogota')->format('d-m-Y h:i:s a');
+    }
+    public function getUpdatedAtFormattedAttribute(): string
+    {
+        return Carbon::parse($this->updated_at, 'America/Bogota')->format('d-m-Y h:i:s a');
+    }
+    public function getLastModifiedFormattedAttribute(): string
+    {
+        return Carbon::parse($this->last_modified, 'America/Bogota')->format('d-m-Y h:i:s a');
+    }
+
     protected static function boot(): void
     {
         parent::boot();
