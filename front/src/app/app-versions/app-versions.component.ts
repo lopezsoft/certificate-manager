@@ -25,6 +25,21 @@ export class AppVersionsComponent implements OnInit {
     this.versiones = [
       {
         isShow: true,
+        number: "1.3.0",
+        date: "27-JUN-2025",
+        changes: [
+          {
+            type:  "caracteristica",
+            description: "Se agregó la opción de agregar el soporte de pago de las solicitudes"
+          },
+          {
+            type:  "mejora",
+            description: "Mejora en la visualización de las fechas de las solicitudes"
+          }
+        ]
+      },
+      {
+        isShow: false,
         number: "1.2.1",
         date: "01-MAY-2025",
         changes: [

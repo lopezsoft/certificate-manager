@@ -224,7 +224,7 @@
                                 <label>Fecha de expiración del certificado</label>
                                 <div class="card-text d-grid">
                                   <span class="w-100">
-                                    <strong> {{ currentShipping.expiration_date }} </strong>
+                                    <strong> {{ currentShipping.expiration_date_formatted }} </strong>
                                   </span>
                                 </div>
                             </div>
@@ -254,7 +254,7 @@
                                                             {{ convertBytesToMB(file.file_size) }}<br>
                                                         </p>
                                                         <p class="card-text" title="Última modificación">
-                                                            <i class="fas fa-calendar-day"></i> {{ file.last_modified  }}
+                                                            <i class="fas fa-calendar-day"></i> {{ file.last_modified_formatted  }}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -376,7 +376,7 @@
                             <div class="form-group">
                                 <label>Fecha de creación</label>
                                 <p class="card-text">
-                                    <strong>{{ currentShipping.created_at }}</strong>
+                                    <strong>{{ currentShipping.created_at_formatted }}</strong>
                                 </p>
                             </div>
                         </div>
@@ -384,7 +384,7 @@
                             <div class="form-group">
                                 <label>Fecha de ultimo cambio</label>
                                 <p class="card-text">
-                                    <strong>{{currentShipping.updated_at }}</strong>
+                                    <strong>{{currentShipping.updated_at_formatted }}</strong>
                                 </p>
                             </div>
                         </div>

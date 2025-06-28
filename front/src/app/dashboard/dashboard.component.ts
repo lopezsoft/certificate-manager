@@ -14,7 +14,7 @@ export class DashboardComponent implements OnInit {
   toggle: boolean = false;
   protected selectedYear = new Date().getFullYear();
   protected years: number[] = [];
-  protected selectedMonth = 0;
+  protected selectedMonth = new Date().getMonth() + 1;
   protected readonly documentStatusDescription = DocumentStatusDescription;
   protected months = [
     {
@@ -88,13 +88,27 @@ export class DashboardComponent implements OnInit {
 
     if (this._token.isAuthenticated()){
       const year = new Date().getFullYear();
-      this.getConsumeDocuments(year, 0);
+      this.getConsumeDocuments(year, this.selectedMonth);
     }
   }
 
 
-  getConsumeDocuments(year: number, month: number) {
+  protected getConsumeDocuments(year: number, month: number) {
       this.dbs.getByYear(year);
       this.dbs.getByYearAndMonth(year, month);
+  }
+
+  protected getTotalByYearAndMonth() {
+    // @ts-ignore
+    return this.dbs.consumeByYearAndMonth.reduce((acc, curr) => {
+      return acc + curr.total;
+    }, 0);
+  }
+
+  protected getTotalByYear() {
+    // @ts-ignore
+    return this.dbs.consumeByYear.reduce((acc, curr) => {
+      return acc + curr.total;
+    }, 0);
   }
 }

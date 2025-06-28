@@ -12,6 +12,9 @@ export interface FileManager {
     file_name: string;
     file_path: string;
     last_modified: string;
+    created_at_formatted: string;
+    updated_at_formatted: string;
+    last_modified_formatted: string;
     location: string;
     mime_type: string;
     file_size: string;
@@ -53,6 +56,9 @@ export interface CertificateRequest {
     expiration_date: string;
     created_at: string;
     updated_at: string;
+    updated_at_formatted: string;
+    created_at_formatted: string;
+    expiration_date_formatted: string;
 }
 
 export interface TimelineEvent {
@@ -62,6 +68,8 @@ export interface TimelineEvent {
     comments: string;
     created_at: Date | string;
     user: Users;
+    created_at_formatted: string;
+    updated_at_formatted: string;
 }
 
 export interface DocumentViewerState {

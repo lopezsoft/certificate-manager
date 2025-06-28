@@ -119,7 +119,7 @@
                                     <label>Fecha de expiración del certificado</label>
                                     <div class="card-text d-grid">
                                   <span class="w-100">
-                                    <strong> {{ currentShipping.expiration_date }} </strong>
+                                    <strong> {{ currentShipping.expiration_date_formatted }} </strong>
                                   </span>
                                     </div>
                                 </div>
@@ -149,7 +149,7 @@
                                                                 {{ convertBytesToMB(file.file_size) }}<br>
                                                             </p>
                                                             <p class="card-text" title="Última modificación">
-                                                                <i class="fas fa-calendar-day"></i> {{ file.last_modified  }}
+                                                                <i class="fas fa-calendar-day"></i> {{ file.last_modified_formatted  }}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -271,7 +271,7 @@
                             <div class="form-group">
                                 <label>Fecha de creación</label>
                                 <p class="card-text">
-                                    <strong>{{ currentShipping.created_at }}</strong>
+                                    <strong>{{ currentShipping.created_at_formatted }}</strong>
                                 </p>
                             </div>
                         </div>
@@ -279,7 +279,7 @@
                             <div class="form-group">
                                 <label>Fecha de ultimo cambio</label>
                                 <p class="card-text">
-                                    <strong>{{currentShipping.updated_at }}</strong>
+                                    <strong>{{currentShipping.updated_at_formatted }}</strong>
                                 </p>
                             </div>
                         </div>
@@ -310,14 +310,21 @@
                 <div class="card">
                     <div class="card-header">
                         <span class="card-title">Lista de archivos adjuntos</span>
-                        <div class="card-header-actions" *ngIf="currentShipping.files.length < 5">
+                        <div class="card-header-actions">
                             <button
-                                    *ngIf="canSendEmail()"
-                                    class="btn custom-button fas-fa-plus fas-fa-save"
+                                    *ngIf="canSendEmail() && currentShipping.files.length <= 5"
+                                    class="btn custom-button fas-fa-plus fas-fa-save me-25"
                                     (click)="onAddFile()"
                                     appCustomTooltip="Agregar archivo">
                                 <i class="fas fa-plus fas-fa-16 fas-fa-save"></i>
                                 Agregar archivo
+                            </button>
+                            <button
+                                    class="btn custom-button fas-fa-plus fas-fa-ok"
+                                    (click)="onAddFilePayment()"
+                                    appCustomTooltip="Agregar comprobante de pago">
+                                <i class="fas fa-plus fas-fa-16 fas-fa-ok"></i>
+                                Agregar pago
                             </button>
                         </div>
                     </div>
@@ -336,27 +343,29 @@
                                                      class="img-fluid" alt="{{ file.file_name }}">
                                             </div>
                                             <div class="card-body-content">
-                                                <small class="font-small-1 text-muted">{{ file.file_name }}</small>
+                                                <small class="font-small-1 text-muted">
+                                                    {{ file.file_name }} - <b>{{file.document_type}}</b>
+                                                </small>
                                                 <div class="content-p">
                                                     <p class="card-text" title="Tamaño">
                                                         <i class="fas fa-hdd"></i>
                                                         {{ convertBytesToMB(file.file_size) }}<br>
                                                     </p>
                                                     <p class="card-text" title="Última modificación">
-                                                        <i class="fas fa-calendar-day"></i> {{ file.last_modified  }}
+                                                        <i class="fas fa-calendar-day"></i> {{ file.last_modified_formatted  }}
                                                     </p>
                                                 </div>
                                             </div>
                                             <div class="actions-content">
                                                 <button
-                                                        [disabled]="!canSendEmail()"
-                                                        title="Eliminar archivo"
+                                                        [disabled]="!canSendEmail() && !isPaymentFile(file)"
+                                                        appCustomTooltip="Eliminar archivo"
                                                         class="btn custom-button fas-fa-trash fas-fa-delete"
                                                         (click)="onDeleteFile(file)">
                                                     <i class="fas fa-trash fas-fa-16 fas-fa-trash fas-fa-delete"></i>
                                                 </button>
                                                 <button
-                                                        title="Descargar archivo"
+                                                        appCustomTooltip="Descargar archivo"
                                                         class="btn custom-button fas-fa-save"
                                                         (click)="onDownload(file)">
                                                     <i class="fas fa-download fas-fa-16 fas-fa-save"></i>
@@ -385,7 +394,67 @@
             </div>
         </div>
     </div>
-    <ng-container *ngIf="canAddFile">
+    <ng-container *ngIf="!canAddFile && canAddPaymentFile">
+        <app-notification-card
+                (onCloseCard)="canAddPaymentFile = false"
+        >
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">AGREGAR COMPROBANTE DE PAGO</span>
+                    <div class="card-header-actions">
+                        <button
+                                class="btn custom-button fas-fa-close"
+                                (click)="canAddPaymentFile = false"
+                                appCustomTooltip="Cerrar">
+                            <i class="fas fa-times fas-fa-16"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-1">
+                    <app-help-information>
+                        <p>
+                            Estimado usuario, por favor sube el comprobante de pago que deseas adjuntar a la solicitud.<br>
+                            <strong>Nota:</strong> El archivo debe ser un <b>PDF/PNG/JPG</b> y no debe pesar más de <b>1MB</b>.
+                            <br>
+                            <strong>Nota:</strong> Procura no cerrar ni actualizar la página durante el proceso.
+                        </p>
+                    </app-help-information>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <small class="text-info">
+                                <i class="fas fa-info-circle"></i>
+                                Aquí puedes subir el archivo PDF del soporte de pago que deseas adjuntar a la solicitud.<br>
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Nota:</strong> El archivo debe ser un <b>PDF/PNG/JPG</b>  y no debe pesar más de <b>1MB</b>.
+                                <br>
+                            </small>
+                            <input type="file" id="fileUploadPayment" #fileUploadPayment name="fileUploadPayment" class="form-control primary"
+                                   required (change)="onUploadPayment()">
+                            <small class="text-muted font-small-2 d-block">
+                                Formato permitido: <strong>PDF/PNG/JPG</strong>. Procura no cerrar ni actualizar la página durante el proceso.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end mt-1">
+                        <button
+                                class="btn custom-button border fas-fa-close me-25"
+                                (click)="canAddPaymentFile = false">
+                            <i class="fas fa-times fas-fa-16"></i>
+                            Cancelar
+                        </button>
+                        <button
+                                class="btn custom-button border fas-fa-save"
+                                (click)="onUploadFile()"
+                                [disabled]="!fileUploadPayment?.files?.length">
+                            <i class="fas fa-save fas-fa-16 fas-fa-save"></i>
+                            Guardar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </app-notification-card>
+    </ng-container>
+    <ng-container *ngIf="canAddFile && !canAddPaymentFile">
         <app-notification-card
                 (onCloseCard)="canAddFile = false"
         >

@@ -33,6 +33,7 @@ import {DocumentViewerService} from "../../services/document-viewer.service";
 })
 export class DocumentViewComponent {
 	@ViewChild('fileUploadCc', { static: false}) fileUploadCc: ElementRef;
+	@ViewChild('fileUploadPayment', { static: false}) fileUploadPayment: ElementRef;
 	protected selectedFile: FileManager;
 	protected readonly convertBytesToMB = convertBytesToMB;
 	protected readonly documentStatusDescription = DocumentStatusDescription;
@@ -42,6 +43,8 @@ export class DocumentViewComponent {
 	protected files = [];
 	protected formData: FormData;
 	protected comments: string = null;
+	protected canAddPaymentFile: boolean = false;
+	protected document_type: string = null;
 	constructor(
 		public shipping: ShippingService,
 		public format: FormatsService,
@@ -128,7 +131,14 @@ export class DocumentViewComponent {
 	}
 
 	onAddFile() {
+		this.canAddPaymentFile = false;
 		this.canAddFile = true;
+		this.document_type = null;
+	}
+	onAddFilePayment() {
+		this.canAddPaymentFile = true;
+		this.canAddFile = false;
+		this.document_type = FileDocumentTypeEnum.PAYMENT;
 	}
 
 	onUploadCC() {
@@ -137,6 +147,32 @@ export class DocumentViewComponent {
 		// Check file size and type 1000kb = 1000000
 		if (file.size > 1000000) { // 1000kb
 			this.fileUploadCc.nativeElement.value = '';
+			const size = (file.size / 1024).toFixed(2); // Convert to KB
+			this.msg.errorMessage('',`El archivo no debe ser mayor a 1000kb. Tamaño del archivo ${size}kb.`);
+		} else {
+			this.files = [];
+			this.files.push({ data: file, inProgress: false, progress: 0});
+		}
+	}
+
+	/**
+	 * Sube el archivo de pago
+	 * Se espera que el archivo sea un PDF, JPG, PNG con el archivo de pago
+	 */
+	onUploadPayment() {
+		const fileUpload = this.fileUploadPayment.nativeElement;
+		const file = fileUpload.files[0];
+		const validExtensions = ['pdf', 'jpg', 'jpeg', 'png'];
+		const fileExtension = file.name.split('.').pop().toLowerCase();
+		// Check file extension
+		if (!validExtensions.includes(fileExtension)) {
+			this.fileUploadPayment.nativeElement.value = '';
+			this.msg.errorMessage('', `El archivo debe ser un PDF, JPG o PNG. Extensión actual: ${fileExtension}`);
+			return;
+		}
+		// Check file size and type 1000kb = 1000000
+		if (file.size > 1000000) { // 1000kb
+			this.fileUploadPayment.nativeElement.value = '';
 			const size = (file.size / 1024).toFixed(2); // Convert to KB
 			this.msg.errorMessage('',`El archivo no debe ser mayor a 1000kb. Tamaño del archivo ${size}kb.`);
 		} else {
@@ -155,6 +191,10 @@ export class DocumentViewComponent {
 			this.formData.append('file', file.data);
 		});
 
+		if (this.document_type === FileDocumentTypeEnum.PAYMENT) {
+			this.formData.append('document_type', FileDocumentTypeEnum.PAYMENT);
+		}
+
 		this.mask.showBlockUI("Subiendo archivo...");
 		this.http.post(`/certificate-request/${this.currentShipping.id}/files`, this.formData)
 			.subscribe({
@@ -164,6 +204,7 @@ export class DocumentViewComponent {
 				this.msg.toastMessage('Éxito', resp.message);
 				this.files = [];
 				this.canAddFile = false;
+				this.canAddPaymentFile = false;
 			},
 			error: () => {
 				this.mask.hideBlockUI();
@@ -179,7 +220,7 @@ export class DocumentViewComponent {
 
 	protected getFiles(): FileManager[] {
 		return this.currentShipping.files.filter((file) => {
-			return file.document_type === FileDocumentTypeEnum.ATTACHED;
+			return file.document_type === FileDocumentTypeEnum.ATTACHED || file.document_type === FileDocumentTypeEnum.PAYMENT;
 		});
 	}
 
@@ -187,5 +228,9 @@ export class DocumentViewComponent {
 		return this.currentShipping.files.filter((file) => {
 			return file.document_type === FileDocumentTypeEnum.CERTIFICATE;
 		});
+	}
+
+	protected isPaymentFile(file: FileManager): boolean {
+		return file.document_type === FileDocumentTypeEnum.PAYMENT;
 	}
 }

@@ -44,14 +44,15 @@
                                 <tr>
                                     <th>Empresa</th>
                                     <th>Año</th>
-                                    <th>Estado de la solicitud</th>
                                     <th>Total</th>
+                                    <th>Estado de la solicitud</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 <tr *ngFor="let item of dbs.consumeByYear || []">
                                     <td>{{ item.company_name }}</td>
                                     <td class="text-right">{{ item.nyear }}</td>
+                                    <td class="text-right">{{ item.total }}</td>
                                     <td>
                                         <div class="card-text d-grid">
                                           <span class="w-100 text-center" [class]="'document-status-'+item.request_status">
@@ -59,9 +60,19 @@
                                           </span>
                                         </div>
                                     </td>
-                                    <td class="text-right">{{ item.total }}</td>
                                 </tr>
                                 </tbody>
+                                <tfoot>
+                                <tr>
+                                    <td colspan="2" class="text-right"><strong>Total</strong></td>
+                                    <td class="text-right">
+                                        <strong>
+                                            {{ getTotalByYear() }}
+                                        </strong>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                </tfoot>
                             </table>
                         </div>
                     </div>
@@ -83,8 +94,8 @@
                                     <th class="text-left">Empresa</th>
                                     <th class="text-right">Año</th>
                                     <th class="text-right">Mes</th>
-                                    <th>Estado de la solicitud</th>
                                     <th>Total</th>
+                                    <th>Estado de la solicitud</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -92,6 +103,7 @@
                                     <td>{{ item.company_name }}</td>
                                     <td class="text-right">{{ item.nyear }}</td>
                                     <td class="text-right">{{ item.monthname | uppercase }}</td>
+                                    <td class="text-right">{{ item.total }}</td>
                                     <td>
                                         <div class="card-text d-grid">
                                           <span class="w-100 text-center" [class]="'document-status-'+item.request_status">
@@ -99,9 +111,19 @@
                                           </span>
                                         </div>
                                     </td>
-                                    <td class="text-right">{{ item.total }}</td>
                                 </tr>
                                 </tbody>
+                                <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-right"><strong>Total</strong></td>
+                                    <td class="text-right">
+                                        <strong>
+                                            {{ getTotalByYearAndMonth() }}
+                                        </strong>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                </tfoot>
                             </table>
                         </div>
                     </div>

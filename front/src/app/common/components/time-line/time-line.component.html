@@ -3,7 +3,7 @@
         <li *ngFor="let event of timelineData" class="timeline-item">
             <div class="timeline-marker"></div>
             <div class="timeline-content" [ngClass]="getStatusClass(event.status)">
-                <span class="time">{{ event.created_at }}</span>
+                <span class="time">{{ event.created_at_formatted }}</span>
                 <h4>
                     {{ documentStatusDescription[event.status] | uppercase }}
                     <span class="actor">({{ event.user_of_change }})</span>

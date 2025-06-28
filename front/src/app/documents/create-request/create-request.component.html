@@ -46,7 +46,8 @@
                         {{'companies.company_name' | translate}}
                     </label>
                     <input class="form-control" type="text" formControlName="company_name"
-                           placeholder="Nombre o razón social" autocomplete="off" [class.is-invalid]="isInvalid('company_name')">
+                           placeholder="Nombre o razón social" autocomplete="off"
+                           [class.is-invalid]="isInvalid('company_name')">
                     <small class="text-danger" *ngIf="isInvalid('company_name')">Nombre o razón social muy corto</small>
                 </div>
                 <div class="form-group">
