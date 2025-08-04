@@ -225,7 +225,7 @@ export class RequestInProcessViewComponent {
 
 	protected getFiles(): FileManager[] {
 		return this.currentShipping.files.filter((file) => {
-			return file.document_type === FileDocumentTypeEnum.ATTACHED;
+			return file.document_type === FileDocumentTypeEnum.ATTACHED || file.document_type === FileDocumentTypeEnum.PAYMENT;
 		});
 	}
 

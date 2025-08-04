@@ -170,11 +170,11 @@ export class DocumentViewComponent {
 			this.msg.errorMessage('', `El archivo debe ser un PDF, JPG o PNG. Extensión actual: ${fileExtension}`);
 			return;
 		}
-		// Check file size and type 1000kb = 1000000
-		if (file.size > 1000000) { // 1000kb
+		// Check file size and type 2000kb = 2000000
+		if (file.size > 2000000) { // 2000kb
 			this.fileUploadPayment.nativeElement.value = '';
 			const size = (file.size / 1024).toFixed(2); // Convert to KB
-			this.msg.errorMessage('',`El archivo no debe ser mayor a 1000kb. Tamaño del archivo ${size}kb.`);
+			this.msg.errorMessage('',`El archivo no debe ser mayor a 2000kb. Tamaño del archivo ${size}kb.`);
 		} else {
 			this.files = [];
 			this.files.push({ data: file, inProgress: false, progress: 0});

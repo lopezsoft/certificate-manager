@@ -233,10 +233,10 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     const file = fileUpload.files[0];
     this.hastCamera = false;
     // Check file size and type 1000kb = 75000
-    if (file.size > 1000000) { // 1000kb
+    if (file.size > 2000000) { // 2000kb
       this.fileUpload.nativeElement.value = '';
       const size = (file.size / 1024).toFixed(2); // Convert to KB
-      this._msg.errorMessage('',`El archivo no debe ser mayor a 1000kb. Tamaño del archivo ${size}kb.`);
+      this._msg.errorMessage('',`El archivo no debe ser mayor a 2000kb. Tamaño del archivo ${size}kb.`);
     } else if (file.type !== 'application/pdf') {
       this.fileUpload.nativeElement.value = '';
       this._msg.errorMessage('', 'Formato de archivo incorrecto');
@@ -255,10 +255,10 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     const fileUpload = this.fileUploadRut.nativeElement;
     const file = fileUpload.files[0];
     this.hasRut = false;
-    if (file.size > 1000000) { // 1000kb
+    if (file.size > 2000000) { // 1000kb
       this.fileUploadRut.nativeElement.value = '';
       const size = (file.size / 1024).toFixed(2); // Convert to KB
-      this._msg.errorMessage('',`El archivo no debe ser mayor a 1000kb. Tamaño del archivo ${size}kb.`);
+      this._msg.errorMessage('',`El archivo no debe ser mayor a 2000kb. Tamaño del archivo ${size}kb.`);
     } else if (file.type !== 'application/pdf') {
       this.fileUploadRut.nativeElement.value = '';
       this._msg.errorMessage('', 'Formato de archivo incorrecto');
