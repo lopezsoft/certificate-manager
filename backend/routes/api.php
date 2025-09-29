@@ -79,5 +79,21 @@ Route::group(['prefix' => 'v1'], function () {
                 });
             });
         });
+
+        // AI Services Routes
+        Route::group(['prefix' => 'ai'], function () {
+            Route::controller('AiController')->group(function () {
+                // OCR and AI Analysis
+                Route::post('/process-certificate', 'processCertificateImage');
+                Route::post('/extract-text', 'extractText');
+                Route::post('/classify-document', 'classifyDocument');
+                
+                // Content Generation
+                Route::post('/generate-email', 'generateEmailContent');
+                
+                // Service Status
+                Route::get('/status', 'getServiceStatus');
+            });
+        });
     });
 });

@@ -64,8 +64,8 @@ class CertificateRequestService
                 throw new Exception('No se ha enviado la información de los archivos adjuntos.', 400);
             }
             foreach ($filesList as $file) {
-                if ($file->getSize() > 2 * 1024 * 1024) { // 2 MB
-                    throw new Exception('El tamaño de los archivos adjuntos supera los 2 MB soportados.', 400);
+                if ($file->getSize() > 2 * 1024 * 1024) { // 6 MB
+                    throw new Exception('El tamaño del adjunto supera los 2 MB soportados.', 400);
                 }
             }
             foreach ($filesList as $file) {
@@ -74,7 +74,7 @@ class CertificateRequestService
 
             if ($size > 0) {
                 $size   = round((($size / 1024) / 1024), 2);
-                if ($size > 2.05) { // 2 MB
+                if ($size > 6.05) { // 6 MB
                     throw new Exception("El tamaño de los archivos adjuntos supera los 2 MB soportados. Tamaño adjunto: {$size} MB", 400);
                 }
             }
