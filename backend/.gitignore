@@ -12,3 +12,9 @@ npm-debug.log
 yarn-error.log
 *.zip
 /.idea
+/examples
+/.vscode
+.DS_Store
+Thumbs.db
+*.log
+/storage/debugbar

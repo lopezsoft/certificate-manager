@@ -115,6 +115,9 @@ class CertificateRequestFilesService
             // Process image files with AI if they are supported formats
             $this->processFileWithAI($file, $certificateRequestId);
             
+            // Check if we should trigger comprehensive document analysis
+            $this->checkForComprehensiveAnalysis($certificateRequestId);
+            
             DB::commit();
             return HttpResponseMessages::getResponse([
                 'message' => 'Archivo creado correctamente.',
@@ -243,6 +246,49 @@ class CertificateRequestFilesService
                 'certificate_request_id' => $certificateRequestId
             ]);
             return 'Estimado usuario';
+        }
+    }
+
+    /**
+     * Check if comprehensive document analysis should be triggered
+     *
+     * @param int $certificateRequestId
+     * @return void
+     */
+    private function checkForComprehensiveAnalysis(int $certificateRequestId): void
+    {
+        try {
+            // Count total documents for this certificate request
+            $totalFiles = FileManager::where('certificate_request_id', $certificateRequestId)
+                ->where('document_type', 'ATTACHED')
+                ->whereIn('extension_file', ['jpg', 'jpeg', 'png', 'pdf'])
+                ->count();
+
+            // Trigger comprehensive analysis if we have multiple documents (likely a complete set)
+            if ($totalFiles >= 2) {
+                Log::info("Triggering comprehensive document analysis", [
+                    'certificate_request_id' => $certificateRequestId,
+                    'total_files' => $totalFiles
+                ]);
+
+                // Dispatch comprehensive analysis in background with delay to allow file processing to complete
+                ProcessCertificateJob::dispatch(
+                    '', // Empty path since we're analyzing all files
+                    auth()->id(),
+                    $certificateRequestId,
+                    [
+                        'comprehensive_analysis' => true,
+                        'analysis_trigger' => 'file_upload',
+                        'total_files' => $totalFiles
+                    ]
+                )->delay(now()->addSeconds(30)); // 30 second delay to ensure file processing is complete
+            }
+
+        } catch (Exception $e) {
+            Log::error("Error checking for comprehensive analysis", [
+                'error' => $e->getMessage(),
+                'certificate_request_id' => $certificateRequestId
+            ]);
         }
     }
 }
