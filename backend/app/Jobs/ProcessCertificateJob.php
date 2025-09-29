@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Events\CertificateProcessedWithAI;
 use App\Services\OcrService;
 use App\Services\AiContentService;
 use Illuminate\Bus\Queueable;
@@ -46,6 +47,8 @@ class ProcessCertificateJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $startTime = microtime(true);
+        
         try {
             Log::info("Starting certificate processing job", [
                 'file_path' => $this->filePath,
@@ -74,17 +77,31 @@ class ProcessCertificateJob implements ShouldQueue
             $aiAnalysis = $aiService->analyzeCertificateText($ocrResult['data']['full_text']);
             $classification = $aiService->classifyDocument($ocrResult['data']['full_text']);
 
+            // Calculate processing time
+            $processingTime = microtime(true) - $startTime;
+
             // Prepare results
             $results = [
                 'ocr_results' => $ocrResult['data'],
                 'ai_analysis' => $aiAnalysis['success'] ? $aiAnalysis['data'] : null,
                 'classification' => $classification['success'] ? $classification['data'] : null,
                 'processed_at' => now()->toISOString(),
-                'processing_time' => microtime(true) - LARAVEL_START
+                'processing_time' => $processingTime
             ];
 
             // Store results (customize based on your database structure)
             $this->storeResults($results);
+
+            // Fire event for handling AI processing completion
+            if ($this->requestId && isset($this->options['file_id'])) {
+                CertificateProcessedWithAI::dispatch(
+                    $this->requestId,
+                    $this->options['file_id'],
+                    $results,
+                    $processingTime,
+                    $this->userId
+                );
+            }
 
             // Send notification if email generation is requested
             if ($this->options['generate_email'] ?? false) {
@@ -99,7 +116,8 @@ class ProcessCertificateJob implements ShouldQueue
             Log::info("Certificate processing completed successfully", [
                 'file_path' => $this->filePath,
                 'user_id' => $this->userId,
-                'request_id' => $this->requestId
+                'request_id' => $this->requestId,
+                'processing_time' => $processingTime
             ]);
 
         } catch (Exception $e) {

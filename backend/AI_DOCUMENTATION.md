@@ -8,7 +8,17 @@ Este documento describe la implementación de las funcionalidades de Inteligenci
 - **Análisis inteligente de contenido** usando Google Gemini
 - **Generación automática de correos electrónicos**
 - **Clasificación automática de documentos**
+- **Procesamiento automático** integrado en el flujo de trabajo existente
 - **Procesamiento en segundo plano** con Jobs de Laravel
+- **Auto-población de datos** basada en análisis de IA
+
+## Arquitectura de Integración
+
+La IA está integrada directamente en los flujos de trabajo existentes, **NO como endpoints públicos independientes**. El procesamiento ocurre automáticamente cuando:
+
+1. **Se sube un archivo de imagen** a través del endpoint existente `POST /api/v1/certificate-request/{id}/files`
+2. **Se ejecutan comandos de consola** para procesar archivos históricos
+3. **Se programan tareas automáticas** para procesamiento en lote
 
 ## Configuración Inicial
 
@@ -48,102 +58,36 @@ AI_REQUEST_TIMEOUT=30
 2. Crea una nueva API key
 3. Añádela a tu `.env` como `GEMINI_API_KEY`
 
-## Endpoints Disponibles
+## Funcionamiento Automático
 
-Todos los endpoints están bajo el prefijo `/api/v1/ai/` y requieren autenticación.
+### Flujo Automático de Procesamiento
 
-### 1. Procesar Certificado Completo
-```
-POST /api/v1/ai/process-certificate
-```
+**Cuando se sube un archivo de imagen:**
 
-**Descripción:** Procesa una imagen de certificado usando OCR y análisis de IA.
+1. **Usuario sube archivo** → `POST /api/v1/certificate-request/{id}/files`
+2. **Sistema detecta** → Formato de imagen soportado (JPG, PNG, PDF)
+3. **Dispara Job automáticamente** → `ProcessCertificateJob` en segundo plano
+4. **Procesa con IA** → OCR + Análisis + Clasificación
+5. **Auto-población** → Llena campos vacíos automáticamente
+6. **Notifica completación** → Event + Listener + Logs
 
-**Parámetros:**
-- `image` (archivo): Imagen del certificado (JPG, PNG, PDF)
+### Comandos Disponibles
 
-**Respuesta de éxito:**
-```json
-{
-    "success": true,
-    "message": "Certificate processed successfully",
-    "data": {
-        "ocr_results": {
-            "full_text": "Texto extraído del certificado...",
-            "confidence": 0.95,
-            "word_count": 250,
-            "detected_language": "es"
-        },
-        "ai_analysis": {
-            "nombre_completo": "Juan Pérez García",
-            "titulo_certificado": "Curso de Laravel Avanzado",
-            "institucion": "Universidad Tecnológica",
-            "fecha_emision": "2024-03-15",
-            "duracion_horas": 40
-        },
-        "classification": {
-            "document_type": "CERTIFICADO_CURSO",
-            "confidence": 0.9
-        }
-    }
-}
+#### 1. Procesar Certificados Existentes
+```bash
+php artisan certificates:process-with-ai --limit=50 --days=30
 ```
 
-### 2. Extraer Solo Texto (OCR)
+**Opciones:**
+- `--limit=N`: Procesar máximo N archivos
+- `--days=N`: Procesar archivos de los últimos N días  
+- `--force`: Forzar procesamiento aunque ya se haya procesado
+
+#### 2. Ver estado de la cola
+```bash
+php artisan queue:work
+php artisan queue:status
 ```
-POST /api/v1/ai/extract-text
-```
-
-**Descripción:** Extrae únicamente el texto de una imagen.
-
-**Parámetros:**
-- `image` (archivo): Imagen a procesar
-
-### 3. Generar Contenido de Email
-```
-POST /api/v1/ai/generate-email
-```
-
-**Descripción:** Genera contenido personalizado para correos electrónicos.
-
-**Parámetros:**
-```json
-{
-    "certificate_data": {
-        "nombre_completo": "Juan Pérez",
-        "titulo_certificado": "Curso de Laravel",
-        "institucion": "Universidad Tech"
-    },
-    "recipient_name": "Juan Pérez",
-    "email_type": "notification"
-}
-```
-
-**Tipos de email disponibles:**
-- `notification`: Notificación de registro exitoso
-- `reminder`: Recordatorio de expiración
-- `congratulations`: Felicitaciones por obtener el certificado
-
-### 4. Clasificar Documento
-```
-POST /api/v1/ai/classify-document
-```
-
-**Descripción:** Clasifica el tipo de documento basado en su contenido.
-
-**Parámetros:**
-```json
-{
-    "text": "Texto del documento a clasificar"
-}
-```
-
-### 5. Estado de los Servicios
-```
-GET /api/v1/ai/status
-```
-
-**Descripción:** Obtiene el estado de configuración de los servicios de IA.
 
 ## Procesamiento en Segundo Plano
 

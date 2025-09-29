@@ -10,14 +10,21 @@
 - `app/Services/OcrService.php` - Servicio para Google Cloud Vision (OCR)
 - `app/Services/AiContentService.php` - Servicio para Google Gemini (Análisis IA)
 
-### ✅ Controlador
-- `app/Http/Controllers/AiController.php` - Controlador con endpoints de IA
+### ✅ Integración en Controladores Existentes
+- `app/Services/CertificateRequestFilesService.php` - Integración automática de IA al subir archivos
 
 ### ✅ Job para Procesamiento en Segundo Plano
 - `app/Jobs/ProcessCertificateJob.php` - Job para procesar certificados de forma asíncrona
 
-### ✅ Rutas API
-- `routes/api.php` - Nuevas rutas bajo `/api/v1/ai/`
+### ✅ Sistema de Eventos
+- `app/Events/CertificateProcessedWithAI.php` - Evento disparado al completar procesamiento
+- `app/Listeners/HandleCertificateAIProcessing.php` - Listener para auto-población de datos
+
+### ✅ Comandos de Consola
+- `app/Console/Commands/ProcessExistingCertificatesCommand.php` - Comando para procesar archivos históricos
+
+### ✅ Middleware y Logging
+- `app/Http/Middleware/AiActivityLogger.php` - Middleware para logging de actividades de IA
 
 ### ✅ Documentación
 - `IA_INTEGRATION_PLAN.md` - Plan de integración y mejores prácticas
@@ -41,12 +48,11 @@
 - ✅ Generación de contenido para correos electrónicos
 - ✅ Respuestas en formato JSON estructurado
 
-### 3. Endpoints API RESTful
-- ✅ `POST /api/v1/ai/process-certificate` - Procesamiento completo
-- ✅ `POST /api/v1/ai/extract-text` - Solo OCR
-- ✅ `POST /api/v1/ai/classify-document` - Clasificación
-- ✅ `POST /api/v1/ai/generate-email` - Generación de emails
-- ✅ `GET /api/v1/ai/status` - Estado de servicios
+### 3. Integración Automática en Flujos Existentes
+- ✅ Procesamiento automático al subir archivos de imagen
+- ✅ Auto-población de datos basada en análisis de IA
+- ✅ Sistema de eventos para notificaciones
+- ✅ Comandos de consola para procesamiento en lote
 
 ### 4. Procesamiento Asíncrono
 - ✅ Job para procesamiento en segundo plano

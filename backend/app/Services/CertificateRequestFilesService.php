@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Common\HttpResponseMessages;
 use App\Common\MessageExceptionResponse;
+use App\Jobs\ProcessCertificateJob;
 use App\Models\CertificateRequest;
 use App\Models\FileManager;
 use App\Modules\Company\CompanyQueries;
@@ -11,6 +12,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class CertificateRequestFilesService
@@ -109,6 +111,10 @@ class CertificateRequestFilesService
                     $disk->deleteDirectory("{$basePath}/zip");
                 }
             }
+            
+            // Process image files with AI if they are supported formats
+            $this->processFileWithAI($file, $certificateRequestId);
+            
             DB::commit();
             return HttpResponseMessages::getResponse([
                 'message' => 'Archivo creado correctamente.',
@@ -142,6 +148,101 @@ class CertificateRequestFilesService
             ]);
         } catch (Exception $e) {
             return MessageExceptionResponse::response($e);
+        }
+    }
+
+    /**
+     * Process uploaded file with AI if it's a supported image format
+     *
+     * @param FileManager $file
+     * @param int $certificateRequestId
+     * @return void
+     */
+    private function processFileWithAI(FileManager $file, int $certificateRequestId): void
+    {
+        try {
+            // Get supported formats from configuration
+            $supportedFormats = config('ai.processing.supported_formats', ['jpg', 'jpeg', 'png', 'pdf']);
+            $extension = strtolower($file->extension_file);
+
+            // Only process supported image formats
+            if (!in_array($extension, $supportedFormats)) {
+                Log::info("File extension '{$extension}' not supported for AI processing", [
+                    'file_id' => $file->id,
+                    'certificate_request_id' => $certificateRequestId
+                ]);
+                return;
+            }
+
+            // Check if AI services are properly configured
+            if (empty(config('ai.google_vision.project_id')) || empty(config('ai.gemini.api_key'))) {
+                Log::warning("AI services not properly configured, skipping AI processing", [
+                    'file_id' => $file->id,
+                    'certificate_request_id' => $certificateRequestId
+                ]);
+                return;
+            }
+
+            // Get the full path to the file
+            $disk = Storage::disk('attachment');
+            $fullPath = $disk->path($file->file_path);
+
+            // Check if file exists before processing
+            if (!$disk->exists($file->file_path)) {
+                Log::error("File not found for AI processing", [
+                    'file_id' => $file->id,
+                    'file_path' => $file->file_path,
+                    'certificate_request_id' => $certificateRequestId
+                ]);
+                return;
+            }
+
+            // Dispatch the AI processing job in the background
+            ProcessCertificateJob::dispatch(
+                $file->file_path,
+                auth()->id(),
+                $certificateRequestId,
+                [
+                    'file_id' => $file->id,
+                    'generate_email' => false, // Set to true if you want to generate emails automatically
+                    'email_type' => 'notification',
+                    'recipient_name' => $this->getRecipientName($certificateRequestId),
+                    'auto_populate_data' => true // Flag to indicate we want to auto-populate extracted data
+                ]
+            );
+
+            Log::info("AI processing job dispatched successfully", [
+                'file_id' => $file->id,
+                'certificate_request_id' => $certificateRequestId,
+                'file_path' => $file->file_path
+            ]);
+
+        } catch (Exception $e) {
+            Log::error("Error dispatching AI processing job", [
+                'error' => $e->getMessage(),
+                'file_id' => $file->id,
+                'certificate_request_id' => $certificateRequestId
+            ]);
+        }
+    }
+
+    /**
+     * Get recipient name for email generation
+     *
+     * @param int $certificateRequestId
+     * @return string
+     */
+    private function getRecipientName(int $certificateRequestId): string
+    {
+        try {
+            $certificateRequest = CertificateRequest::find($certificateRequestId);
+            return $certificateRequest ? $certificateRequest->legal_representative : 'Estimado usuario';
+        } catch (Exception $e) {
+            Log::error("Error getting recipient name", [
+                'error' => $e->getMessage(),
+                'certificate_request_id' => $certificateRequestId
+            ]);
+            return 'Estimado usuario';
         }
     }
 }
