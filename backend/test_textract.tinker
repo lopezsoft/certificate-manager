@@ -1,0 +1,74 @@
+// Verificar estado de servicios AWS Textract
+$ocrService = new App\Services\UnifiedOcrService();
+echo "🔍 Estado de servicios:\n";
+$status = $ocrService->getServicesStatus();
+foreach ($status as $key => $value) {
+    $icon = $value ? '✅' : '❌';
+    echo "   {$key}: {$icon}\n";
+}
+
+echo "\n🇨🇴 PROBANDO EXTRACCIÓN DE DOCUMENTOS COLOMBIANOS\n";
+echo str_repeat("=", 50) . "\n";
+
+// Probar extracción de RUT
+echo "\n📄 Procesando: Registro Único Tributario (RUT)\n";
+echo str_repeat("-", 40) . "\n";
+
+try {
+    $mockFilePath = storage_path("app/test-documents/rut_ejemplo.jpg");
+    $result = $ocrService->extractColombianDocument($mockFilePath, 'rut');
+    
+    if ($result['success']) {
+        echo "✅ Extracción exitosa\n";
+        echo "📊 Confianza: {$result['data']['confidence']}%\n";
+        echo "⏱️  Tiempo: {$result['data']['extraction_time']}s\n";
+        echo "🔧 Servicio: {$result['data']['service']}\n";
+        
+        if (isset($result['data']['colombian_fields'])) {
+            echo "\n🎯 Campos extraídos:\n";
+            $fields = $result['data']['colombian_fields'];
+            foreach ($fields as $fieldName => $fieldValue) {
+                if (is_array($fieldValue)) {
+                    echo "   {$fieldName}: {$fieldValue['value']} (confianza: {$fieldValue['confidence']}%)\n";
+                } else {
+                    echo "   {$fieldName}: {$fieldValue}\n";
+                }
+            }
+        }
+        
+        $text = substr($result['data']['text'], 0, 200);
+        echo "\n📝 Texto extraído (muestra):\n   " . str_replace("\n", "\n   ", $text) . "...\n";
+    } else {
+        echo "❌ Error: {$result['error']}\n";
+    }
+} catch (Exception $e) {
+    echo "❌ Excepción: {$e->getMessage()}\n";
+}
+
+echo "\n🏆 PROBANDO PROCESAMIENTO COMPLETO\n";
+echo str_repeat("=", 50) . "\n";
+
+try {
+    $processingService = new App\Services\CertificateProcessingService();
+    echo "📊 Obteniendo estadísticas...\n";
+    $stats = $processingService->getStatistics();
+    
+    if ($stats['success']) {
+        $data = $stats['data'];
+        echo "   Certificados totales: {$data['total_certificates']}\n";
+        echo "   Certificados analizados: {$data['analyzed_certificates']}\n";
+        echo "   Eficiencia: {$data['processing_efficiency']}%\n";
+        echo "   Tasa de éxito: {$data['success_rate']}%\n";
+    }
+    
+    echo "\n🚀 Sistema listo para procesar certificados con AWS Textract!\n";
+    
+} catch (Exception $e) {
+    echo "❌ Error: {$e->getMessage()}\n";
+}
+
+echo "\n💡 PRÓXIMOS PASOS:\n";
+echo "1. Configurar credenciales AWS reales en .env\n";
+echo "2. Subir documentos reales a storage/app/test-documents/\n";
+echo "3. Integrar en tu flujo de trabajo\n";
+echo "\n🎉 PRUEBA COMPLETADA\n";

@@ -11,7 +11,7 @@
         "ext-simplexml": "*",
         "ext-zip": "*",
         "aws/aws-php-sns-message-validator": "^1.9",
-        "aws/aws-sdk-php": "^3.285",
+        "aws/aws-sdk-php": "^3.356",
         "darkaonline/l5-swagger": "^8.5",
         "free2one/laravel-php-accessor": "~0.4.0",
         "gemini-api-php/client": "^1.7",

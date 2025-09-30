@@ -3,6 +3,30 @@
 return [
     /*
     |--------------------------------------------------------------------------
+    | OCR Service Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Choose your preferred OCR service: 'textract' or 'vision'
+    |
+    */
+    'ocr_service' => env('OCR_SERVICE', 'textract'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | AWS Textract Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for AWS Textract OCR service
+    | Better for forms and structured documents
+    |
+    */
+    'aws_textract' => [
+        'region' => env('AWS_TEXTRACT_REGION', 'us-east-1'),
+        'version' => 'latest',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Google Cloud Vision Configuration
     |--------------------------------------------------------------------------
     |
