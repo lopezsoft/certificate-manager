@@ -459,6 +459,10 @@ class CertificateRequestService
                         ->orWhere('document_number', 'LIKE', "%{$search}%")
                         ->orWhere('legal_representative', 'LIKE', "%{$search}%");
                 });
+                // Add search by company name
+                $certificate->orWhereHas('company', function ($q) use ($search) {
+                    $q->where('company_name', 'LIKE', "%{$search}%");
+                });
             }
             if ($startDate && $endDate) {
                 $startDate = str_replace('/', '-', $startDate);

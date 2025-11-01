@@ -7,7 +7,6 @@ use App\Common\MessageExceptionResponse;
 use App\Modules\Company\CompanyQueries;
 use Exception;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class ConsumeService
 {
@@ -18,7 +17,8 @@ class ConsumeService
             $company        = CompanyQueries::getCompany();
             $companyId      = $company->id;
             $query          = DB::table('certificate_requests_years_view')
-                                ->where('nyear', $year);
+                                ->where('nyear', $year)
+                                ->whereIn('request_status', ['PROCESSED', 'PROCESSING']);
             if($user->type_id !== 1){
                 $query->where('company_id', $companyId);
             };
@@ -38,7 +38,8 @@ class ConsumeService
             $company        = CompanyQueries::getCompany();
             $companyId      = $company->id;
             $query          = DB::table('certificate_requests_months_view')
-                                ->where('nyear', $year);
+                                ->where('nyear', $year)
+                                ->whereIn('request_status', ['PROCESSED', 'PROCESSING']);
             if($month > 0){
                 $query->where('nmonth', $month);
             }
