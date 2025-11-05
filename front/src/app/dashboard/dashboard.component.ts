@@ -1,21 +1,46 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import {SettingsService} from "../services/settings.service";
 import TokenService from "../utils/token.service";
 import {DashboardService} from "../services/dashboard.service";
 import {FormatsService} from "../services/formats.service";
-import {DocumentStatusDescription} from "../common/enums/DocumentStatus";
+import {DocumentStatusDescription, DocumentStatusEnum} from "../common/enums/DocumentStatus";
+import {ChartDataTransformerService, MonthlyTrendData} from "./services/chart-data-transformer.service";
+import {DashboardMetricsService, DashboardKPIs} from "./services/dashboard-metrics.service";
+import {DataExportService} from "./services/data-export.service";
+import {ChartConfigurationService} from "./services/chart-configuration.service";
+import {DashboardFilterService, FilterOptions} from "./services/dashboard-filter.service";
+import {TemporalComparisonService, YearComparison, CompanyComparison} from "./services/temporal-comparison.service";
+import {AutoRefreshService, RefreshConfig} from "./services/auto-refresh.service";
+import {ConsumeByYear} from "../models/dashboard-model";
+import {Subject} from "rxjs";
+import {takeUntil} from "rxjs/operators";
 
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   toggle: boolean = false;
   protected selectedYear = new Date().getFullYear();
   protected years: number[] = [];
   protected selectedMonth = new Date().getMonth() + 1;
   protected readonly documentStatusDescription = DocumentStatusDescription;
+  protected readonly documentStatusEnum = DocumentStatusEnum;
+  
+  // Nuevas propiedades para funcionalidades v1.4.0
+  private destroy$ = new Subject<void>();
+  protected yearlyKPIs: DashboardKPIs | null = null;
+  protected monthlyKPIs: DashboardKPIs | null = null;
+  protected filters: FilterOptions = { searchText: '', status: 'all' };
+  protected filteredYearlyData: ConsumeByYear[] = [];
+  protected trendChartOptions: any = null;
+  protected yearComparison: YearComparison | null = null;
+  protected companyComparison: CompanyComparison | null = null;
+  protected previousYearData: ConsumeByYear[] = [];
+  protected refreshConfig: RefreshConfig = { enabled: false, intervalSeconds: 300 };
+  protected countdown: string = '0:00';
+  
   protected months = [
     {
       name: 'todos',
@@ -74,7 +99,14 @@ export class DashboardComponent implements OnInit {
     public _settings: SettingsService,
     public _token: TokenService,
     public dbs: DashboardService,
-    public ft: FormatsService
+    public ft: FormatsService,
+    private chartTransformer: ChartDataTransformerService,
+    private metricsService: DashboardMetricsService,
+    private exportService: DataExportService,
+    private chartConfig: ChartConfigurationService,
+    private filterService: DashboardFilterService,
+    private comparisonService: TemporalComparisonService,
+    private autoRefresh: AutoRefreshService
   ) { }
 
   ngOnInit(): void {
@@ -89,13 +121,35 @@ export class DashboardComponent implements OnInit {
     if (this._token.isAuthenticated()){
       const year = new Date().getFullYear();
       this.getConsumeDocuments(year, this.selectedMonth);
+      this.loadPreviousYearData(year - 1);
     }
+
+    // Suscribirse al auto-refresh
+    this.autoRefresh.getRefreshTrigger$()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.refreshDashboardData());
+
+    this.autoRefresh.getConfig$()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(config => {
+        this.refreshConfig = config;
+        if (config.enabled) {
+          this.countdown = this.autoRefresh.formatCountdown();
+        }
+      });
   }
 
 
   protected getConsumeDocuments(year: number, month: number) {
       this.dbs.getByYear(year);
       this.dbs.getByYearAndMonth(year, month);
+      
+      // Activar cálculos después de cargar datos
+      setTimeout(() => {
+        this.calculateYearlyKPIs();
+        this.calculateMonthlyKPIs();
+        this.applyFilters();
+      }, 500);
   }
 
   protected getTotalByYearAndMonth() {
@@ -110,5 +164,150 @@ export class DashboardComponent implements OnInit {
     return this.dbs.consumeByYear.reduce((acc, curr) => {
       return acc + curr.total;
     }, 0);
+  }
+
+  // Nuevos métodos para funcionalidades v1.4.0
+
+  protected loadPreviousYearData(year: number): void {
+    // El servicio ya maneja la suscripción internamente
+    // Esperamos a que se carguen los datos y luego calculamos comparaciones
+    this.dbs.getByYear(year);
+    
+    // Usamos setTimeout para permitir que la data se cargue
+    setTimeout(() => {
+      if (this.dbs.consumeByYear && this.dbs.consumeByYear.length > 0) {
+        this.previousYearData = [...this.dbs.consumeByYear];
+        this.calculateComparisons();
+      }
+    }, 1000);
+  }
+
+  protected calculateYearlyKPIs(): void {
+    if (this.dbs.consumeByYear && this.dbs.consumeByYear.length > 0) {
+      this.yearlyKPIs = this.metricsService.calculateKPIs(this.dbs.consumeByYear);
+      this.updateTrendChart();
+    }
+  }
+
+  protected calculateMonthlyKPIs(): void {
+    if (this.dbs.consumeByYearAndMonth && this.dbs.consumeByYearAndMonth.length > 0) {
+      this.monthlyKPIs = this.metricsService.calculateKPIs(this.dbs.consumeByYearAndMonth);
+    }
+  }
+
+  protected applyFilters(): void {
+    if (this.dbs.consumeByYear) {
+      this.filteredYearlyData = this.filterService.filterYearlyData(
+        this.dbs.consumeByYear, 
+        this.filters
+      );
+      this.calculateYearlyKPIs();
+    }
+  }
+
+  protected clearFilters(): void {
+    this.filters = this.filterService.resetFilters();
+    this.applyFilters();
+  }
+
+  protected hasActiveFilters(): boolean {
+    return this.filterService.hasActiveFilters(this.filters);
+  }
+
+  protected calculateComparisons(): void {
+    if (this.dbs.consumeByYear && this.previousYearData.length > 0) {
+      this.yearComparison = this.comparisonService.compareYears(
+        this.dbs.consumeByYear,
+        this.previousYearData,
+        this.selectedYear
+      );
+
+      this.companyComparison = this.comparisonService.compareActiveCompanies(
+        this.dbs.consumeByYear,
+        this.previousYearData
+      );
+    }
+  }
+
+  protected updateTrendChart(): void {
+    if (this.dbs.consumeByYearAndMonth && this.dbs.consumeByYearAndMonth.length > 0) {
+      const trendData = this.chartTransformer.groupByMonth(this.dbs.consumeByYearAndMonth);
+      
+      const months = trendData.map(d => d.month);
+      const processed = trendData.map(d => d.processed);
+      const processing = trendData.map(d => d.processing);
+      
+      if (!this.trendChartOptions) {
+        this.trendChartOptions = this.chartConfig.getTrendLineChartConfig();
+      }
+      
+      this.trendChartOptions = this.chartConfig.updateLineChartData(
+        this.trendChartOptions,
+        months,
+        [
+          { name: 'Certificados Procesados', data: processed },
+          { name: 'En Proceso', data: processing }
+        ]
+      );
+    }
+  }
+
+  protected toggleAutoRefresh(): void {
+    this.autoRefresh.toggle();
+  }
+
+  protected changeRefreshInterval(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    const seconds = parseInt(target.value, 10);
+    this.autoRefresh.changeInterval(seconds);
+  }
+
+  protected refreshDashboardData(): void {
+    this.getConsumeDocuments(this.selectedYear, this.selectedMonth);
+    this.loadPreviousYearData(this.selectedYear - 1);
+  }
+
+  protected exportYearlyData(format: 'csv' | 'json' | 'excel'): void {
+    const data = this.filteredYearlyData.length > 0 
+      ? this.filteredYearlyData 
+      : this.dbs.consumeByYear;
+
+    const columns = [
+      { key: 'company_name', label: 'Empresa' },
+      { key: 'total', label: 'Total Certificados' },
+      { key: 'request_status', label: 'Estado' }
+    ];
+
+    const filename = `certificados-${this.selectedYear}`;
+
+    switch (format) {
+      case 'csv':
+        this.exportService.exportToCSV(data, columns, { filename });
+        break;
+      case 'json':
+        this.exportService.exportToJSON(data, filename);
+        break;
+      case 'excel':
+        this.exportService.exportToExcel(data, columns, { filename });
+        break;
+    }
+  }
+
+  protected getTrendClass(trend: string): string {
+    return this.comparisonService.getTrendClass(trend as any);
+  }
+
+  protected getTrendIcon(trend: string): string {
+    return this.comparisonService.getTrendIcon(trend as any);
+  }
+
+  protected formatVariation(value: number): string {
+    return this.comparisonService.formatVariation(value);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.autoRefresh.stop();
   }
 }

@@ -25,6 +25,45 @@ export class AppVersionsComponent implements OnInit {
     this.versiones = [
       {
         isShow: true,
+        number: "1.4.0",
+        date: "05-NOV-2025",
+        changes: [
+          {
+            type: "caracteristica",
+            description: "Nuevos indicadores visuales en el tablero para ver rápidamente totales y estadísticas clave"
+          },
+          {
+            type: "caracteristica",
+            description: "Gráficas mensuales para visualizar tendencias de certificados a lo largo del año"
+          },
+          {
+            type: "caracteristica",
+            description: "Comparación automática entre año actual y anterior para análisis de crecimiento"
+          },
+          {
+            type: "caracteristica",
+            description: "Filtros de búsqueda por empresa y estado de solicitud"
+          },
+          {
+            type: "caracteristica",
+            description: "Actualización automática de datos a intervalos configurables (1, 5, 10 minutos)"
+          },
+          {
+            type: "caracteristica",
+            description: "Exportación de datos en formatos CSV, Excel y JSON"
+          },
+          {
+            type: "mejora",
+            description: "Diseño completamente adaptable a dispositivos móviles y tablets"
+          },
+          {
+            type: "mejora",
+            description: "Optimización del código siguiendo principios SOLID para mejor mantenimiento"
+          }
+        ]
+      },
+      {
+        isShow: true,
         number: "1.3.0",
         date: "27-JUN-2025",
         changes: [

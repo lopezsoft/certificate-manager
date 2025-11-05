@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { NgApexchartsModule } from 'ng-apexcharts';
 
 import { DashboardRoutingModule } from './dashboard-routing.module';
 import { CoreModule } from '../@core/core.module';
@@ -17,7 +18,8 @@ import { DashboardComponent } from './dashboard.component';
     FormsModule,
     CommonModule,
     CoreModule,
-    DashboardRoutingModule
+    DashboardRoutingModule,
+    NgApexchartsModule
   ]
 })
 export class DashboardModule { }
