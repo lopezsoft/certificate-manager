@@ -156,35 +156,35 @@ export class DashboardComponent implements OnInit, OnDestroy {
           }
         });
 
-      // Cargar datos de TODOS los meses del año para el gráfico de tendencias
-      this.dbs.http.get(`/consume/${year}/0`)
+      // Cargar datos del mes (para la tabla)
+      this.dbs.http.get(`/consume/${year}/${month}`)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (response: any) => {
             this.dbs.consumeByYearAndMonth = response.data || [];
-            this.updateTrendChart();
+            if (month > 0) {
+              this.calculateMonthlyKPIsFromData(this.dbs.consumeByYearAndMonth);
+            } else {
+              this.monthlyKPIs = null;
+            }
           },
           error: (error) => {
             console.error('Error cargando datos mensuales:', error);
           }
         });
 
-      // Si se seleccionó un mes específico, cargar datos de ese mes para KPIs mensuales
-      if (month > 0) {
-        this.dbs.http.get(`/consume/${year}/${month}`)
-          .pipe(takeUntil(this.destroy$))
-          .subscribe({
-            next: (response: any) => {
-              const monthlyData = response.data || [];
-              this.calculateMonthlyKPIsFromData(monthlyData);
-            },
-            error: (error) => {
-              console.error('Error cargando datos del mes específico:', error);
-            }
-          });
-      } else {
-        this.monthlyKPIs = null;
-      }
+      // Cargar datos de TODOS los meses para el gráfico de tendencias
+      this.dbs.http.get(`/consume/${year}/0`)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response: any) => {
+            const allMonthsData = response.data || [];
+            this.updateTrendChart(allMonthsData);
+          },
+          error: (error) => {
+            console.error('Error cargando datos para gráfico:', error);
+          }
+        });
   }
 
   protected getTotalByYearAndMonth() {
@@ -269,9 +269,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  protected updateTrendChart(): void {
-    if (this.dbs.consumeByYearAndMonth && this.dbs.consumeByYearAndMonth.length > 0) {
-      const trendData = this.chartTransformer.groupByMonth(this.dbs.consumeByYearAndMonth);
+  protected updateTrendChart(data?: any[]): void {
+    const chartData = data || this.dbs.consumeByYearAndMonth;
+    if (chartData && chartData.length > 0) {
+      const trendData = this.chartTransformer.groupByMonth(chartData);
       
       const months = trendData.map(d => d.month);
       const processed = trendData.map(d => d.processed);
