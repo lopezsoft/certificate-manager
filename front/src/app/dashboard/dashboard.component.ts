@@ -142,16 +142,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
 
   protected getConsumeDocuments(year: number, month: number) {
-      console.log('Cargando datos para año:', year, 'mes:', month);
-      
       // Cargar datos del año
       this.dbs.http.get(`/consume/${year}`)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (response: any) => {
-            console.log('Respuesta API año:', response);
             this.dbs.consumeByYear = response.data || [];
-            console.log('Datos anuales cargados:', this.dbs.consumeByYear.length, 'registros');
             this.calculateYearlyKPIs();
             this.applyFilters();
           },
@@ -165,9 +161,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (response: any) => {
-            console.log('Respuesta API mes:', response);
             this.dbs.consumeByYearAndMonth = response.data || [];
-            console.log('Datos mensuales cargados:', this.dbs.consumeByYearAndMonth.length, 'registros');
             this.calculateMonthlyKPIs();
             this.updateTrendChart();
           },
@@ -207,21 +201,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   protected calculateYearlyKPIs(): void {
     if (this.dbs.consumeByYear && this.dbs.consumeByYear.length > 0) {
-      console.log('Calculando KPIs anuales con', this.dbs.consumeByYear.length, 'registros');
       this.yearlyKPIs = this.metricsService.calculateKPIs(this.dbs.consumeByYear);
-      console.log('KPIs calculados:', this.yearlyKPIs);
-    } else {
-      console.warn('No hay datos anuales para calcular KPIs');
     }
   }
 
   protected calculateMonthlyKPIs(): void {
     if (this.dbs.consumeByYearAndMonth && this.dbs.consumeByYearAndMonth.length > 0) {
-      console.log('Calculando KPIs mensuales con', this.dbs.consumeByYearAndMonth.length, 'registros');
       this.monthlyKPIs = this.metricsService.calculateKPIs(this.dbs.consumeByYearAndMonth);
-      console.log('KPIs mensuales calculados:', this.monthlyKPIs);
-    } else {
-      console.warn('No hay datos mensuales para calcular KPIs');
     }
   }
 
@@ -265,9 +251,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   protected updateTrendChart(): void {
     if (this.dbs.consumeByYearAndMonth && this.dbs.consumeByYearAndMonth.length > 0) {
-      console.log('Actualizando gráfica con', this.dbs.consumeByYearAndMonth.length, 'registros');
       const trendData = this.chartTransformer.groupByMonth(this.dbs.consumeByYearAndMonth);
-      console.log('Datos transformados para gráfica:', trendData);
       
       const months = trendData.map(d => d.month);
       const processed = trendData.map(d => d.processed);
@@ -285,9 +269,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
           { name: 'En Proceso', data: processing }
         ]
       );
-      console.log('Gráfica actualizada:', this.trendChartOptions);
-    } else {
-      console.warn('No hay datos mensuales para actualizar la gráfica');
     }
   }
 
