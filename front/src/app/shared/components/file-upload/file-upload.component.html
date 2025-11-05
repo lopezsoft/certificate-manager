@@ -1,0 +1,134 @@
+<div class="file-upload-wrapper">
+  <!-- Label y ayuda -->
+  <div class="mb-2">
+    <label class="form-label" [for]="config.id">
+      <i [class]="config.icon || 'fas fa-cloud-upload-alt'"></i>
+      {{ config.label }}
+      <span *ngIf="config.required" class="text-danger">*</span>
+    </label>
+    
+    <div *ngIf="config.helpText" class="help-text">
+      <small class="text-info">
+        <i class="fas fa-info-circle"></i>
+        <span [innerHTML]="config.helpText"></span>
+      </small>
+    </div>
+
+    <!-- Indicador de tamaño SIEMPRE VISIBLE -->
+    <div class="size-indicator mt-2 p-2 bg-light border rounded">
+      <small class="d-flex align-items-center justify-content-between">
+        <span>
+          <i class="fas fa-database text-primary"></i>
+          <strong>Espacio usado:</strong> {{ currentTotalSizeMB }} MB / {{ maxTotalSizeMB }} MB
+        </span>
+        <span class="text-success">
+          <i class="fas fa-check-circle"></i>
+          {{ remainingSizeMB }} MB disponibles
+        </span>
+      </small>
+      <div class="progress mt-1" style="height: 6px;">
+        <div class="progress-bar bg-primary" 
+             role="progressbar" 
+             [style.width.%]="(totalUploadedSize / (config.maxTotalSize || 10485760)) * 100"
+             [attr.aria-valuenow]="totalUploadedSize"
+             aria-valuemin="0"
+             [attr.aria-valuemax]="config.maxTotalSize || 10485760">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drop Zone -->
+  <div class="file-drop-zone"
+       [class.file-drop-over]="isDragOver"
+       [class.disabled]="!config.enableDragDrop"
+       (click)="onFileClick()"
+       (dragover)="onDragOver($event)"
+       (dragleave)="onDragLeave($event)"
+       (drop)="onDrop($event)">
+    
+    <div class="dropzone-content">
+      <i [class]="config.icon || 'fas fa-cloud-upload-alt'" class="dropzone-icon"></i>
+      <p class="dropzone-text mb-1">
+        {{ config.dropzoneText || 'Haz clic o arrastra un archivo aquí' }}
+      </p>
+      <small class="text-muted">
+        Formatos permitidos: <strong>{{ config.acceptedFormats.join(', ').toUpperCase() }}</strong>
+      </small>
+    </div>
+
+    <!-- Hidden file input -->
+    <input
+      type="file"
+      #fileInput
+      [id]="config.id"
+      [name]="config.name"
+      [accept]="acceptAttribute"
+      [required]="config.required"
+      [multiple]="config.multiple"
+      (change)="onFileChange($event)"
+      class="file-input-hidden"
+    />
+  </div>
+
+  <!-- Preview de archivos seleccionados -->
+  <div *ngIf="config.showPreview && currentFiles.length > 0" class="files-preview mt-3">
+    <div class="preview-header mb-2">
+      <small class="text-muted">
+        <i class="fas fa-list"></i>
+        Archivos seleccionados ({{ currentFiles.length }})
+      </small>
+    </div>
+
+    <div class="file-item" *ngFor="let fileData of currentFiles" 
+         [@fadeInOut]>
+      <div class="file-item-content">
+        <!-- Icono o thumbnail -->
+        <div class="file-icon-wrapper">
+          <img *ngIf="fileData.preview" 
+               [src]="fileData.preview" 
+               alt="Preview" 
+               class="file-thumbnail">
+          <i *ngIf="!fileData.preview" 
+             [class]="getFileIcon(fileData.data)" 
+             class="file-icon-large"></i>
+        </div>
+
+        <!-- Info del archivo -->
+        <div class="file-info">
+          <div class="file-name" [title]="fileData.data.name">
+            {{ fileData.data.name }}
+          </div>
+          <div class="file-size text-muted">
+            <small>{{ formatFileSize(fileData.data.size) }}</small>
+          </div>
+        </div>
+
+        <!-- Botón de eliminar -->
+        <button type="button"
+                class="btn btn-sm btn-icon btn-danger"
+                (click)="removeFile(fileData.data.name)"
+                [attr.aria-label]="'Eliminar ' + fileData.data.name">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+
+      <!-- Progress bar (si está en progreso) -->
+      <div *ngIf="fileData.inProgress" class="progress mt-2" style="height: 4px;">
+        <div class="progress-bar progress-bar-striped progress-bar-animated"
+             role="progressbar"
+             [style.width.%]="fileData.progress"
+             [attr.aria-valuenow]="fileData.progress"
+             aria-valuemin="0"
+             aria-valuemax="100">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensaje de formato adicional -->
+  <small class="text-muted font-small-2 d-block mt-2">
+    <i class="fas fa-exclamation-triangle text-warning"></i>
+    Procura no cerrar ni actualizar la página durante el proceso de carga.
+  </small>
+</div>
