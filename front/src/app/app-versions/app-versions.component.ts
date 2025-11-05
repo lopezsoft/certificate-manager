@@ -55,10 +55,6 @@ export class AppVersionsComponent implements OnInit {
           {
             type: "mejora",
             description: "Diseño completamente adaptable a dispositivos móviles y tablets"
-          },
-          {
-            type: "mejora",
-            description: "Optimización del código siguiendo principios SOLID para mejor mantenimiento"
           }
         ]
       },
