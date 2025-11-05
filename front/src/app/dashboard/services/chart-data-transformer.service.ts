@@ -3,6 +3,7 @@ import { ConsumeByYear, ConsumeByYearAndMonth } from '../../models/dashboard-mod
 
 export interface MonthlyTrendData {
   month: string;
+  monthNumber: number;
   processed: number;
   processing: number;
 }
@@ -20,15 +21,17 @@ export class ChartDataTransformerService {
   constructor() { }
 
   groupByMonth(data: ConsumeByYearAndMonth[]): MonthlyTrendData[] {
-    const monthMap = new Map<string, { processed: number; processing: number }>();
+    const monthMap = new Map<number, { month: string; processed: number; processing: number }>();
 
     data.forEach(item => {
-      const month = item.monthname;
-      if (!monthMap.has(month)) {
-        monthMap.set(month, { processed: 0, processing: 0 });
+      const monthNumber = item.nmonth;
+      const monthName = item.monthname;
+      
+      if (!monthMap.has(monthNumber)) {
+        monthMap.set(monthNumber, { month: monthName, processed: 0, processing: 0 });
       }
 
-      const stats = monthMap.get(month)!;
+      const stats = monthMap.get(monthNumber)!;
 
       if (item.request_status === 'PROCESSED') {
         stats.processed += item.total || 0;
@@ -37,11 +40,15 @@ export class ChartDataTransformerService {
       }
     });
 
-    return Array.from(monthMap.entries()).map(([month, stats]) => ({
-      month,
-      processed: stats.processed,
-      processing: stats.processing
-    }));
+    // Ordenar por número de mes (1-12) y retornar
+    return Array.from(monthMap.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([monthNumber, stats]) => ({
+        month: stats.month,
+        monthNumber,
+        processed: stats.processed,
+        processing: stats.processing
+      }));
   }
 
   getTopCompanies(data: ConsumeByYear[], limit: number = 10): CompanyTotal[] {
