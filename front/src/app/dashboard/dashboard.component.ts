@@ -158,7 +158,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
         .subscribe({
           next: (response: any) => {
             this.dbs.consumeByYear = response.data || [];
-            this.calculateYearlyKPIs();
             this.applyFilters();
           },
           error: (error) => {
@@ -204,7 +203,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   protected getTotalByYear() {
-    return this.dbs.consumeByYear.reduce((acc, curr) => {
+    const data = this.hasActiveFilters() ? this.filteredYearlyData : this.dbs.consumeByYear;
+    return data.reduce((acc, curr) => {
       return acc + curr.total;
     }, 0);
   }
@@ -251,7 +251,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
       // Actualizar vigencias disponibles
       this.availableLifespans = this.filterService.getUniqueLifespans(this.dbs.consumeByYear);
       
-      this.calculateYearlyKPIs();
+      // Recalcular KPIs con datos filtrados
+      if (this.filteredYearlyData.length > 0) {
+        this.yearlyKPIs = this.metricsService.calculateKPIs(this.filteredYearlyData);
+      } else {
+        this.yearlyKPIs = this.metricsService.calculateKPIs(this.dbs.consumeByYear);
+      }
     }
   }
 

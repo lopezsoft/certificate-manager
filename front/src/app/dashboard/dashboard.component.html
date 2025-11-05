@@ -240,7 +240,7 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                <tr *ngFor="let item of dbs.consumeByYear || []">
+                                <tr *ngFor="let item of (hasActiveFilters() ? filteredYearlyData : dbs.consumeByYear) || []">
                                     <td>{{ item.company_name }}</td>
                                     <td class="text-end">{{ item.nyear }}</td>
                                     <td class="text-end">{{ item.total }}</td>
