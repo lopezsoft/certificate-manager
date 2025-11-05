@@ -307,9 +307,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.autoRefresh.toggle();
   }
 
-  protected changeRefreshInterval(event: Event): void {
-    const target = event.target as HTMLSelectElement;
-    const seconds = parseInt(target.value, 10);
+  protected changeRefreshInterval(seconds: number): void {
     this.autoRefresh.changeInterval(seconds);
   }
 
