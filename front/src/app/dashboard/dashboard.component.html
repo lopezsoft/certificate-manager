@@ -1,68 +1,172 @@
 <div class="content-wrapper" *ngIf="_token.isAuthenticated()">
     <div class="content-body">
-        
+
+        <!-- Selectores de Año y Mes -->
+        <div class="card w-100 mb-2">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Selección de Período</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12 col-md-6">
+                        <div class="form-group">
+                            <label for="nyear" class="form-label">
+                                <strong>SELECCIONAR AÑO</strong>
+                            </label>
+                            <select class="form-select" id="nyear" [(ngModel)]="selectedYear" (change)="getConsumeDocuments(selectedYear, 0)">
+                                <option *ngFor="let year of years" [value]="year">{{ year }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="form-group">
+                            <label for="nmonth" class="form-label">
+                                <strong>SELECCIONAR MES</strong>
+                            </label>
+                            <select class="form-select" id="nmonth" [(ngModel)]="selectedMonth" (change)="getConsumeDocuments(selectedYear, selectedMonth)">
+                                <option *ngFor="let month of months" [value]="month.value">{{ month.name }}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros de Búsqueda -->
+        <div class="card w-100 mb-2">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Filtros de Búsqueda</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12 col-md-3">
+                        <div class="form-group">
+                            <label for="searchText" class="form-label">Buscar por Empresa</label>
+                            <input type="text" class="form-control" id="searchText" 
+                                   [(ngModel)]="filters.searchText" 
+                                   (ngModelChange)="applyFilters()" 
+                                   placeholder="Nombre de la empresa...">
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <div class="form-group">
+                            <label for="filterStatus" class="form-label">Estado</label>
+                            <select class="form-select" id="filterStatus" 
+                                    [(ngModel)]="filters.status" 
+                                    (change)="applyFilters()">
+                                <option value="all">Todos los estados</option>
+                                <option [value]="documentStatusEnum.PROCESSED">Procesados</option>
+                                <option [value]="documentStatusEnum.PROCESSING">En Proceso</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <div class="form-group">
+                            <label for="filterLifespan" class="form-label">Vigencia (años)</label>
+                            <select class="form-select" id="filterLifespan" 
+                                    [(ngModel)]="filters.lifespan" 
+                                    (change)="applyFilters()">
+                                <option value="all">Todas las vigencias</option>
+                                <option *ngFor="let lifespan of availableLifespans" [value]="lifespan">
+                                    {{ lifespan }} {{ lifespan === 1 ? 'año' : 'años' }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3 d-flex align-items-end">
+                        <button class="btn btn-outline-secondary w-100" 
+                                *ngIf="hasActiveFilters()" 
+                                (click)="clearFilters()">
+                            <i data-feather="x-circle" class="me-50"></i>
+                            Limpiar Filtros
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auto-Refresh -->
+        <div class="card w-100 mb-2">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Actualización Automática</h5>
+                <span class="badge" [class.bg-success]="refreshConfig.enabled" [class.bg-secondary]="!refreshConfig.enabled">
+                    {{ refreshConfig.enabled ? 'Activado' : 'Desactivado' }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-12 col-md-4">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="autoRefreshToggle" 
+                                   [checked]="refreshConfig.enabled" 
+                                   (change)="toggleAutoRefresh()">
+                            <label class="form-check-label" for="autoRefreshToggle">
+                                {{ refreshConfig.enabled ? 'Desactivar' : 'Activar' }} actualización automática
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4" *ngIf="refreshConfig.enabled">
+                        <label class="form-label">Intervalo</label>
+                        <select class="form-select" 
+                                [value]="refreshConfig.intervalSeconds" 
+                                (change)="changeRefreshInterval($event)">
+                            <option [value]="60">Cada 1 minuto</option>
+                            <option [value]="300">Cada 5 minutos</option>
+                            <option [value]="600">Cada 10 minutos</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-4 text-end" *ngIf="refreshConfig.enabled">
+                        <small class="text-muted">
+                            <i data-feather="clock" class="me-50"></i>
+                            Próxima actualización: {{ countdown }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- KPIs Dashboard v1.4.0 -->
         <section id="dashboard-kpis" class="mb-2" *ngIf="yearlyKPIs">
             <div class="row">
                 <div class="col-12 col-md-4 mb-1">
                     <div class="card text-center">
                         <div class="card-body">
-                            <div class="avatar bg-light-primary p-50 mb-1">
+                            <div class="avatar bg-light-primary p-50 mb-1 mx-auto">
                                 <div class="avatar-content">
                                     <i data-feather="file-text" class="font-large-2"></i>
                                 </div>
                             </div>
-                            <h2 class="fw-bolder">{{ yearlyKPIs.totalCertificates }}</h2>
-                            <p class="card-text">Total Certificados {{ selectedYear }}</p>
+                            <h2 class="fw-bolder mb-0">{{ yearlyKPIs.totalCertificates }}</h2>
+                            <p class="card-text mb-0"><strong>Total Certificados (Año)</strong></p>
+                            <small class="text-muted">Procesados en {{ selectedYear }}</small>
                         </div>
                     </div>
                 </div>
                 <div class="col-12 col-md-4 mb-1">
                     <div class="card text-center">
                         <div class="card-body">
-                            <div class="avatar bg-light-success p-50 mb-1">
+                            <div class="avatar bg-light-success p-50 mb-1 mx-auto">
                                 <div class="avatar-content">
                                     <i data-feather="briefcase" class="font-large-2"></i>
                                 </div>
                             </div>
-                            <h2 class="fw-bolder">{{ yearlyKPIs.activeCompanies }}</h2>
-                            <p class="card-text">Empresas Activas</p>
+                            <h2 class="fw-bolder mb-0">{{ yearlyKPIs.activeCompanies }}</h2>
+                            <p class="card-text mb-0"><strong>Empresas Activas</strong></p>
+                            <small class="text-muted">Con certificados emitidos</small>
                         </div>
                     </div>
                 </div>
                 <div class="col-12 col-md-4 mb-1">
                     <div class="card text-center">
                         <div class="card-body">
-                            <div class="avatar bg-light-warning p-50 mb-1">
+                            <div class="avatar bg-light-warning p-50 mb-1 mx-auto">
                                 <div class="avatar-content">
                                     <i data-feather="clock" class="font-large-2"></i>
                                 </div>
                             </div>
-                            <h2 class="fw-bolder">{{ yearlyKPIs.processingRequests }}</h2>
-                            <p class="card-text">Solicitudes en Proceso</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Comparación Temporal v1.4.0 -->
-        <section id="year-comparison" class="mb-2" *ngIf="yearComparison">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Comparación {{ yearComparison.previousYear }} vs {{ yearComparison.currentYear }}</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>Total {{ yearComparison.currentYear }}:</strong> {{ yearComparison.currentTotal }}</p>
-                            <p><strong>Total {{ yearComparison.previousYear }}:</strong> {{ yearComparison.previousTotal }}</p>
-                        </div>
-                        <div class="col-md-6 text-end">
-                            <p [class]="getTrendClass(yearComparison.trend)">
-                                <i [attr.data-feather]="getTrendIcon(yearComparison.trend)" class="me-1"></i>
-                                {{ formatVariation(yearComparison.percentageChange) }}
-                            </p>
+                            <h2 class="fw-bolder mb-0">{{ yearlyKPIs.processingRequests }}</h2>
+                            <p class="card-text mb-0"><strong>En Proceso</strong></p>
+                            <small class="text-muted">Solicitudes pendientes</small>
                         </div>
                     </div>
                 </div>
@@ -73,7 +177,10 @@
         <section id="trend-chart" class="mb-2" *ngIf="trendChartOptions">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="card-title">Tendencia Mensual {{ selectedYear }}</h4>
+                    <h4 class="card-title mb-0">
+                        <i data-feather="trending-up" class="me-50"></i>
+                        Tendencia de Emisión de Certificados {{ selectedYear }}
+                    </h4>
                 </div>
                 <div class="card-body">
                     <apx-chart
@@ -92,134 +199,74 @@
             </div>
         </section>
 
-        <!-- Controles de Filtrado y Auto-Refresh v1.4.0 -->
-        <div class="card w-100">
-            <div class="card-body">
-                <div class="row align-items-end">
-                    <div class="col-12 col-md-6">
-                        <div class="form-group">
-                            <label for="nyear" class="form-label">
-                                <span><strong>{{ 'SELECCIONAR AÑO' | uppercase }}</strong></span>
-                            </label>
-                            <select class="form-select" id="nyear" [(ngModel)]="selectedYear" (change)="getConsumeDocuments(selectedYear, 0)">
-                                <option *ngFor="let year of years" [value]="year">{{ year }}</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <div class="form-group">
-                            <label for="nmonth" class="form-label">
-                                <span><strong>{{ 'SELECCIONAR MES' | uppercase }}</strong></span>
-                            </label>
-                            <select class="form-select" id="nmonth" [(ngModel)]="selectedMonth" (change)="getConsumeDocuments(selectedYear, selectedMonth)">
-                                <option *ngFor="let month of months" [value]="month.value">{{ month.name }}</option>
-                            </select>
-                        </div>
-                    </div>
+        <!-- Comparación Temporal v1.4.0 -->
+        <section id="year-comparison" class="mb-2" *ngIf="yearComparison">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Comparación {{ yearComparison.previousYear }} vs {{ yearComparison.currentYear }}</h4>
                 </div>
-                
-                <!-- Filtros v1.4.0 -->
-                <div class="row mt-2">
-                    <div class="col-12 col-md-4">
-                        <div class="form-group">
-                            <label for="searchText" class="form-label">Buscar Empresa</label>
-                            <input type="text" class="form-control" id="searchText" 
-                                   [(ngModel)]="filters.searchText" 
-                                   (ngModelChange)="applyFilters()" 
-                                   placeholder="Nombre de empresa...">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Total {{ yearComparison.currentYear }}:</strong> {{ yearComparison.currentTotal }}</p>
+                            <p class="mb-1"><strong>Total {{ yearComparison.previousYear }}:</strong> {{ yearComparison.previousTotal }}</p>
                         </div>
-                    </div>
-                    <div class="col-12 col-md-4">
-                        <div class="form-group">
-                            <label for="filterStatus" class="form-label">Estado</label>
-                            <select class="form-select" id="filterStatus" 
-                                    [(ngModel)]="filters.status" 
-                                    (change)="applyFilters()">
-                                <option value="all">Todos</option>
-                                <option [value]="documentStatusEnum.PROCESSED">Procesados</option>
-                                <option [value]="documentStatusEnum.PROCESSING">En Proceso</option>
-                            </select>
+                        <div class="col-md-6 text-end">
+                            <p class="mb-0" [class]="getTrendClass(yearComparison.trend)">
+                                <i [attr.data-feather]="getTrendIcon(yearComparison.trend)" class="me-1"></i>
+                                {{ formatVariation(yearComparison.percentageChange) }}
+                            </p>
                         </div>
-                    </div>
-                    <div class="col-12 col-md-4 d-flex align-items-end">
-                        <button class="btn btn-outline-secondary w-100" 
-                                *ngIf="hasActiveFilters()" 
-                                (click)="clearFilters()">
-                            Limpiar Filtros
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Auto-Refresh v1.4.0 -->
-                <div class="row mt-2">
-                    <div class="col-12 col-md-4">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="autoRefreshToggle" 
-                                   [checked]="refreshConfig.enabled" 
-                                   (change)="toggleAutoRefresh()">
-                            <label class="form-check-label" for="autoRefreshToggle">
-                                Auto-actualizar
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-4" *ngIf="refreshConfig.enabled">
-                        <select class="form-select form-select-sm" 
-                                [value]="refreshConfig.intervalSeconds" 
-                                (change)="changeRefreshInterval($event)">
-                            <option [value]="60">Cada 1 minuto</option>
-                            <option [value]="300">Cada 5 minutos</option>
-                            <option [value]="600">Cada 10 minutos</option>
-                        </select>
-                    </div>
-                    <div class="col-12 col-md-4 text-end" *ngIf="refreshConfig.enabled">
-                        <small class="text-muted">Próxima actualización: {{ countdown }}</small>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
         
         <section id="minimal-statistics">
             <div class="row gx-1">
-                <div class="col-md-5">
-                    <div class="card">
+                <div class="col-12 col-lg-5 mb-2">
+                    <div class="card h-100">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <label>
-                                <span><strong>{{ 'CONSUMO DE SOLICITUDES AÑO' | uppercase }}</strong></span>
-                            </label>
+                            <h5 class="mb-0">
+                                <strong>CONSUMO DE SOLICITUDES AÑO</strong>
+                            </h5>
                             <!-- Botones de Exportación v1.4.0 -->
                             <div class="btn-group btn-group-sm">
-                                <button class="btn btn-outline-primary" (click)="exportYearlyData('csv')" title="Exportar CSV">
-                                    <i data-feather="download"></i> CSV
+                                <button class="btn btn-outline-primary btn-sm" (click)="exportYearlyData('csv')" title="Exportar CSV">
+                                    <i data-feather="download" class="font-small-2"></i>
                                 </button>
-                                <button class="btn btn-outline-success" (click)="exportYearlyData('excel')" title="Exportar Excel">
-                                    <i data-feather="download"></i> Excel
+                                <button class="btn btn-outline-success btn-sm" (click)="exportYearlyData('excel')" title="Exportar Excel">
+                                    <i data-feather="file-text" class="font-small-2"></i>
                                 </button>
-                                <button class="btn btn-outline-info" (click)="exportYearlyData('json')" title="Exportar JSON">
-                                    <i data-feather="download"></i> JSON
+                                <button class="btn btn-outline-info btn-sm" (click)="exportYearlyData('json')" title="Exportar JSON">
+                                    <i data-feather="code" class="font-small-2"></i>
                                 </button>
                             </div>
                         </div>
                         <div class="card-body table-responsive">
-                            <table class="table table-striped table-bordered table-layout-content shadow">
-                                <caption>
-                                    TOTAL DE SOLICITUDES POR AÑO
+                            <table class="table table-striped table-bordered table-sm">
+                                <caption class="caption-top text-center">
+                                    <strong>TOTAL DE SOLICITUDES POR AÑO</strong>
                                 </caption>
                                 <thead>
                                 <tr>
                                     <th>Empresa</th>
                                     <th>Año</th>
                                     <th>Total</th>
+                                    <th>Vigencia (años)</th>
                                     <th>Estado de la solicitud</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 <tr *ngFor="let item of dbs.consumeByYear || []">
                                     <td>{{ item.company_name }}</td>
-                                    <td class="text-right">{{ item.nyear }}</td>
-                                    <td class="text-right">{{ item.total }}</td>
+                                    <td class="text-end">{{ item.nyear }}</td>
+                                    <td class="text-end">{{ item.total }}</td>
+                                    <td class="text-center">{{ item.life || '-' }}</td>
                                     <td>
                                         <div class="card-text d-grid">
-                                          <span class="w-100 text-center" [class]="'document-status-'+item.request_status">
+                                          <span class="w-100 text-center py-25 px-50 rounded" 
+                                                [class]="'document-status-'+item.request_status">
                                             {{ documentStatusDescription[item.request_status] | uppercase }}
                                           </span>
                                         </div>
@@ -227,50 +274,51 @@
                                 </tr>
                                 </tbody>
                                 <tfoot>
-                                <tr>
-                                    <td colspan="2" class="text-right"><strong>Total</strong></td>
-                                    <td class="text-right">
-                                        <strong>
-                                            {{ getTotalByYear() }}
-                                        </strong>
+                                <tr class="table-active">
+                                    <td colspan="2" class="text-end"><strong>Total</strong></td>
+                                    <td class="text-end">
+                                        <strong>{{ getTotalByYear() }}</strong>
                                     </td>
-                                    <td></td>
+                                    <td colspan="2"></td>
                                 </tr>
                                 </tfoot>
                             </table>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-7">
-                    <div class="card">
+                <div class="col-12 col-lg-7 mb-2">
+                    <div class="card h-100">
                         <div class="card-header">
-                            <label>
-                                <span><strong>{{ 'CONSUMO DE SOLICITUDES X MES Y AÑO' | uppercase }}</strong></span>
-                            </label>
+                            <h5 class="mb-0">
+                                <strong>CONSUMO DE SOLICITUDES X MES Y AÑO</strong>
+                            </h5>
                         </div>
                         <div class="card-body table-responsive">
-                            <table class="table table-striped table-bordered table-layout-content shadow">
-                                <caption>
-                                    TOTAL DE SOLICITUDES POR MES Y AÑO
+                            <table class="table table-striped table-bordered table-sm">
+                                <caption class="caption-top text-center">
+                                    <strong>TOTAL DE SOLICITUDES POR MES Y AÑO</strong>
                                 </caption>
                                 <thead>
                                 <tr>
-                                    <th class="text-left">Empresa</th>
-                                    <th class="text-right">Año</th>
-                                    <th class="text-right">Mes</th>
+                                    <th>Empresa</th>
+                                    <th>Año</th>
+                                    <th>Mes</th>
                                     <th>Total</th>
+                                    <th>Vigencia (años)</th>
                                     <th>Estado de la solicitud</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 <tr *ngFor="let item of dbs.consumeByYearAndMonth || []">
                                     <td>{{ item.company_name }}</td>
-                                    <td class="text-right">{{ item.nyear }}</td>
-                                    <td class="text-right">{{ item.monthname | uppercase }}</td>
-                                    <td class="text-right">{{ item.total }}</td>
+                                    <td class="text-end">{{ item.nyear }}</td>
+                                    <td class="text-uppercase">{{ item.monthname }}</td>
+                                    <td class="text-end">{{ item.total }}</td>
+                                    <td class="text-center">{{ item.life || '-' }}</td>
                                     <td>
                                         <div class="card-text d-grid">
-                                          <span class="w-100 text-center" [class]="'document-status-'+item.request_status">
+                                          <span class="w-100 text-center py-25 px-50 rounded" 
+                                                [class]="'document-status-'+item.request_status">
                                             {{ documentStatusDescription[item.request_status] | uppercase }}
                                           </span>
                                         </div>
@@ -278,14 +326,12 @@
                                 </tr>
                                 </tbody>
                                 <tfoot>
-                                <tr>
-                                    <td colspan="3" class="text-right"><strong>Total</strong></td>
-                                    <td class="text-right">
-                                        <strong>
-                                            {{ getTotalByYearAndMonth() }}
-                                        </strong>
+                                <tr class="table-active">
+                                    <td colspan="3" class="text-end"><strong>Total</strong></td>
+                                    <td class="text-end">
+                                        <strong>{{ getTotalByYearAndMonth() }}</strong>
                                     </td>
-                                    <td></td>
+                                    <td colspan="2"></td>
                                 </tr>
                                 </tfoot>
                             </table>

@@ -6,6 +6,7 @@ export interface ConsumeByYear {
     total: string;
     nyear: number;
     request_status: DocumentStatusEnum;
+    life?: number; // Años de vigencia del certificado
 }
 
 export interface ConsumeByYearAndMonth extends ConsumeByYear {

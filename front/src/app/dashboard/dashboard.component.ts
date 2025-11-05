@@ -32,7 +32,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   protected yearlyKPIs: DashboardKPIs | null = null;
   protected monthlyKPIs: DashboardKPIs | null = null;
-  protected filters: FilterOptions = { searchText: '', status: 'all' };
+  protected filters: FilterOptions = { searchText: '', status: 'all', lifespan: 'all' };
   protected filteredYearlyData: ConsumeByYear[] = [];
   protected trendChartOptions: any = null;
   protected yearComparison: YearComparison | null = null;
@@ -40,6 +40,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   protected previousYearData: ConsumeByYear[] = [];
   protected refreshConfig: RefreshConfig = { enabled: false, intervalSeconds: 300 };
   protected countdown: string = '0:00';
+  protected availableLifespans: number[] = [];
   
   protected months = [
     {
@@ -230,6 +231,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.dbs.consumeByYear, 
         this.filters
       );
+      
+      // Actualizar vigencias disponibles
+      this.availableLifespans = this.filterService.getUniqueLifespans(this.dbs.consumeByYear);
+      
       this.calculateYearlyKPIs();
     }
   }
