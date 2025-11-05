@@ -29,12 +29,11 @@ export class ChartDataTransformerService {
       }
 
       const stats = monthMap.get(month)!;
-      const total = typeof item.total === 'string' ? parseInt(item.total, 10) : item.total;
 
       if (item.request_status === 'PROCESSED') {
-        stats.processed += total;
+        stats.processed += item.total || 0;
       } else if (item.request_status === 'PROCESSING') {
-        stats.processing += total;
+        stats.processing += item.total || 0;
       }
     });
 
@@ -49,7 +48,7 @@ export class ChartDataTransformerService {
     return data
       .map(item => ({
         company: item.company_name,
-        total: typeof item.total === 'string' ? parseInt(item.total, 10) : item.total
+        total: item.total || 0
       }))
       .sort((a, b) => b.total - a.total)
       .slice(0, limit);
@@ -58,8 +57,7 @@ export class ChartDataTransformerService {
   getMonthlyTotal(data: ConsumeByYearAndMonth[]): number {
     let sum = 0;
     for (const item of data) {
-      const total = typeof item.total === 'string' ? parseInt(item.total, 10) : item.total;
-      sum += isNaN(total) ? 0 : total;
+      sum += item.total || 0;
     }
     return sum;
   }

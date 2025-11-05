@@ -28,8 +28,7 @@ export class DashboardMetricsService {
     
     let sum = 0;
     for (const item of data) {
-      const total = typeof item.total === 'string' ? parseInt(item.total, 10) : item.total;
-      sum += isNaN(total) ? 0 : total;
+      sum += item.total || 0;
     }
     return sum;
   }
@@ -79,18 +78,17 @@ export class DashboardMetricsService {
 
   public getMonthlyStats(data: ConsumeByYearAndMonth[]): MonthlyStats {
     const total = this.calculateTotalCertificates(data);
-    const processed = data
-      .filter(item => item.request_status === 'PROCESSED')
-      .reduce((sum, item) => {
-        const val = typeof item.total === 'string' ? parseInt(item.total, 10) : item.total;
-        return sum + (isNaN(val) ? 0 : val);
-      }, 0);
-    const processing = data
-      .filter(item => item.request_status === 'PROCESSING')
-      .reduce((sum, item) => {
-        const val = typeof item.total === 'string' ? parseInt(item.total, 10) : item.total;
-        return sum + (isNaN(val) ? 0 : val);
-      }, 0);
+    
+    let processed = 0;
+    let processing = 0;
+    
+    for (const item of data) {
+      if (item.request_status === 'PROCESSED') {
+        processed += item.total || 0;
+      } else if (item.request_status === 'PROCESSING') {
+        processing += item.total || 0;
+      }
+    }
 
     return {
       total,

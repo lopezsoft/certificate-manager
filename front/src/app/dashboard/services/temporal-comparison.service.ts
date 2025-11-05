@@ -41,11 +41,11 @@ export class TemporalComparisonService {
     currentYear: number
   ): YearComparison {
     const currentTotal = currentYearData.reduce((sum, item) => 
-      sum + parseInt(item.total || '0', 10), 0
+      sum + (item.total || 0), 0
     );
 
     const previousTotal = previousYearData.reduce((sum, item) => 
-      sum + parseInt(item.total || '0', 10), 0
+      sum + (item.total || 0), 0
     );
 
     const difference = currentTotal - previousTotal;

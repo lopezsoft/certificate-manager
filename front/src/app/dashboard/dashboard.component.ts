@@ -172,14 +172,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   protected getTotalByYearAndMonth() {
-    // @ts-ignore
     return this.dbs.consumeByYearAndMonth.reduce((acc, curr) => {
       return acc + curr.total;
     }, 0);
   }
 
   protected getTotalByYear() {
-    // @ts-ignore
     return this.dbs.consumeByYear.reduce((acc, curr) => {
       return acc + curr.total;
     }, 0);
