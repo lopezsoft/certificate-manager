@@ -156,19 +156,35 @@ export class DashboardComponent implements OnInit, OnDestroy {
           }
         });
 
-      // Cargar datos del mes
-      this.dbs.http.get(`/consume/${year}/${month}`)
+      // Cargar datos de TODOS los meses del año para el gráfico de tendencias
+      this.dbs.http.get(`/consume/${year}/0`)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (response: any) => {
             this.dbs.consumeByYearAndMonth = response.data || [];
-            this.calculateMonthlyKPIs();
             this.updateTrendChart();
           },
           error: (error) => {
             console.error('Error cargando datos mensuales:', error);
           }
         });
+
+      // Si se seleccionó un mes específico, cargar datos de ese mes para KPIs mensuales
+      if (month > 0) {
+        this.dbs.http.get(`/consume/${year}/${month}`)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: (response: any) => {
+              const monthlyData = response.data || [];
+              this.calculateMonthlyKPIsFromData(monthlyData);
+            },
+            error: (error) => {
+              console.error('Error cargando datos del mes específico:', error);
+            }
+          });
+      } else {
+        this.monthlyKPIs = null;
+      }
   }
 
   protected getTotalByYearAndMonth() {
@@ -206,6 +222,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   protected calculateMonthlyKPIs(): void {
     if (this.dbs.consumeByYearAndMonth && this.dbs.consumeByYearAndMonth.length > 0) {
       this.monthlyKPIs = this.metricsService.calculateKPIs(this.dbs.consumeByYearAndMonth);
+    }
+  }
+
+  protected calculateMonthlyKPIsFromData(data: any[]): void {
+    if (data && data.length > 0) {
+      this.monthlyKPIs = this.metricsService.calculateKPIs(data);
     }
   }
 
