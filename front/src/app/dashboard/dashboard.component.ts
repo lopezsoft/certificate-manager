@@ -134,8 +134,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(config => {
         this.refreshConfig = config;
-        if (config.enabled) {
-          this.countdown = this.autoRefresh.formatCountdown();
+      });
+
+    // Suscribirse al countdown
+    this.autoRefresh.getCountdown$()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(countdown => {
+        if (this.refreshConfig.enabled && countdown > 0) {
+          const minutes = Math.floor(countdown / 60);
+          const seconds = countdown % 60;
+          this.countdown = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        } else {
+          this.countdown = '0:00';
         }
       });
   }

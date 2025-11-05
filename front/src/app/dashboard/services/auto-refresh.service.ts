@@ -20,9 +20,9 @@ export class AutoRefreshService implements OnDestroy {
     enabled: false,
     intervalSeconds: 300 // 5 minutos por defecto
   });
+  private countdown$ = new BehaviorSubject<number>(0);
 
   private intervalSubscription: any;
-  private countdownValue = 0;
 
   constructor() { }
 
@@ -35,15 +35,15 @@ export class AutoRefreshService implements OnDestroy {
       lastRefresh: new Date()
     });
 
-    this.countdownValue = intervalSeconds;
+    this.countdown$.next(intervalSeconds);
 
     this.intervalSubscription = interval(1000)
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
-        this.countdownValue--;
+        const currentCountdown = this.countdown$.value - 1;
 
-        if (this.countdownValue <= 0) {
-          this.countdownValue = intervalSeconds;
+        if (currentCountdown <= 0) {
+          this.countdown$.next(intervalSeconds);
           const now = new Date();
           this.config$.next({
             ...this.config$.value,
@@ -51,6 +51,8 @@ export class AutoRefreshService implements OnDestroy {
             nextRefresh: new Date(now.getTime() + (intervalSeconds * 1000))
           });
           this.refreshTrigger$.next();
+        } else {
+          this.countdown$.next(currentCountdown);
         }
       });
   }
@@ -61,6 +63,8 @@ export class AutoRefreshService implements OnDestroy {
       this.intervalSubscription = null;
     }
 
+    this.countdown$.next(0);
+    
     this.config$.next({
       ...this.config$.value,
       enabled: false,
@@ -102,13 +106,18 @@ export class AutoRefreshService implements OnDestroy {
     return this.refreshTrigger$.asObservable();
   }
 
+  getCountdown$(): Observable<number> {
+    return this.countdown$.asObservable();
+  }
+
   getCountdown(): number {
-    return this.countdownValue;
+    return this.countdown$.value;
   }
 
   formatCountdown(): string {
-    const minutes = Math.floor(this.countdownValue / 60);
-    const seconds = this.countdownValue % 60;
+    const countdownValue = this.countdown$.value;
+    const minutes = Math.floor(countdownValue / 60);
+    const seconds = countdownValue % 60;
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   }
 
