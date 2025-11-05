@@ -334,6 +334,36 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
+  protected exportMonthlyData(format: 'csv' | 'json' | 'excel'): void {
+    const data = this.dbs.consumeByYearAndMonth;
+
+    const columns = [
+      { key: 'company_name', label: 'Empresa' },
+      { key: 'nyear', label: 'Año' },
+      { key: 'monthname', label: 'Mes' },
+      { key: 'total', label: 'Total Certificados' },
+      { key: 'life', label: 'Vigencia (años)' },
+      { key: 'request_status', label: 'Estado' }
+    ];
+
+    const monthName = this.selectedMonth > 0 
+      ? this.months.find(m => m.value === this.selectedMonth)?.name || 'todos'
+      : 'todos';
+    const filename = `certificados-${this.selectedYear}-${monthName}`;
+
+    switch (format) {
+      case 'csv':
+        this.exportService.exportToCSV(data, columns, { filename });
+        break;
+      case 'json':
+        this.exportService.exportToJSON(data, filename);
+        break;
+      case 'excel':
+        this.exportService.exportToExcel(data, columns, { filename });
+        break;
+    }
+  }
+
   protected getTrendClass(trend: string): string {
     return this.comparisonService.getTrendClass(trend as any);
   }

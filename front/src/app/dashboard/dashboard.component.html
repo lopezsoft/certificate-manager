@@ -218,13 +218,13 @@
                             <!-- Botones de Exportación v1.4.0 -->
                             <div class="btn-group btn-group-sm">
                                 <button class="btn btn-outline-primary btn-sm" (click)="exportYearlyData('csv')" title="Exportar CSV">
-                                    <i data-feather="download" class="font-small-2"></i>
+                                    <i class="fa fa-download"></i>
                                 </button>
                                 <button class="btn btn-outline-success btn-sm" (click)="exportYearlyData('excel')" title="Exportar Excel">
-                                    <i data-feather="file-text" class="font-small-2"></i>
+                                    <i class="fa fa-file-excel"></i>
                                 </button>
                                 <button class="btn btn-outline-info btn-sm" (click)="exportYearlyData('json')" title="Exportar JSON">
-                                    <i data-feather="code" class="font-small-2"></i>
+                                    <i class="fa fa-code"></i>
                                 </button>
                             </div>
                         </div>
@@ -270,10 +270,22 @@
                 </div>
                 <div class="col-12 col-lg-7 mb-2">
                     <div class="card h-100">
-                        <div class="card-header">
+                        <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">
                                 <strong>CONSUMO DE SOLICITUDES X MES Y AÑO</strong>
                             </h5>
+                            <!-- Botones de Exportación v1.4.0 -->
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary btn-sm" (click)="exportMonthlyData('csv')" title="Exportar CSV">
+                                    <i class="fa fa-download"></i>
+                                </button>
+                                <button class="btn btn-outline-success btn-sm" (click)="exportMonthlyData('excel')" title="Exportar Excel">
+                                    <i class="fa fa-file-excel"></i>
+                                </button>
+                                <button class="btn btn-outline-info btn-sm" (click)="exportMonthlyData('json')" title="Exportar JSON">
+                                    <i class="fa fa-code"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="card-body table-responsive">
                             <table class="table table-striped table-bordered table-sm">
