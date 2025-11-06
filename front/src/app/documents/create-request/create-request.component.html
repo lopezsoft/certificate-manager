@@ -175,9 +175,16 @@
             </form>
             <div class="card-footer mt-2 d-flex justify-content-between align-items-center">
                 <div>
-                    <small *ngIf="!canSaveForm && !canEdit" class="text-warning">
+                    <small *ngIf="!canSaveForm && !canEdit" 
+                           [class.text-danger]="files.length > maxFilesAllowed"
+                           [class.text-warning]="files.length < maxFilesAllowed || files.length === 0"
+                           class="fw-bold">
                         <i class="fas fa-exclamation-triangle"></i>
-                        Debe cargar al menos 2 archivos para guardar
+                        {{ documentValidationMessage }}
+                    </small>
+                    <small *ngIf="canSaveForm && !canEdit" class="text-success fw-bold">
+                        <i class="fas fa-check-circle"></i>
+                        {{ documentValidationMessage }} ✓
                     </small>
                 </div>
                 <div class="d-flex gap-2">

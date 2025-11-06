@@ -74,6 +74,16 @@ export class FileUploadComponent {
     return (remaining / (1024 * 1024)).toFixed(2);
   }
 
+  /**
+   * Verifica si se ha alcanzado el límite máximo de archivos
+   */
+  get isMaxFilesReached(): boolean {
+    if (this.config.maxFiles && this.currentFiles.length >= this.config.maxFiles) {
+      return true;
+    }
+    return false;
+  }
+
   onFileClick(): void {
     this.fileInput.nativeElement.click();
   }

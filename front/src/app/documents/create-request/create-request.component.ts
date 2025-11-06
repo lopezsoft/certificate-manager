@@ -32,9 +32,6 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
   files = [];
   formData: FormData;
   canEdit: boolean = false;
-  hasCc: boolean = false;
-  hasRut: boolean = false;
-  hastCamera: boolean = false;
   buttonText: string = 'Crear solicitud';
   
   // Límite total de archivos: 10MB
@@ -46,26 +43,96 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
   get canSaveForm(): boolean {
     // Si está editando, siempre puede guardar
     if (this.canEdit) return true;
-    // Si está creando, necesita al menos 2 archivos
-    return this.files.length >= 2;
+    
+    // Determinar si es persona jurídica o natural
+    const isPersonaJuridica = !this.isNaturelPerson();
+    
+    if (isPersonaJuridica) {
+      // Persona Jurídica: REQUIERE 3 archivos (Cédula, RUT y Cámara)
+      return this.files.length === 3;
+    } else {
+      // Persona Natural: REQUIERE 2 archivos (Cédula y RUT)
+      return this.files.length === 2;
+    }
   }
 
-  // Configuración ÚNICA para todos los archivos
-  uploadConfig: FileUploadConfig = {
-    id: 'filesUpload',
-    name: 'filesUpload',
-    label: 'Documentos Requeridos',
-    helpText: 'Sube los siguientes archivos:<br>1. <strong>Certificado de Cámara de Comercio</strong> (PDF) - No mayor a 30 días<br>2. <strong>RUT Actualizado</strong> (PDF)<br>3. <strong>Cédula del Representante Legal</strong> (PDF, JPG o PNG)',
-    acceptedFormats: ['pdf', 'jpg', 'jpeg', 'png'],
-    maxTotalSize: this.MAX_TOTAL_SIZE,
-    multiple: true,
-    maxFiles: 3,
-    required: true,
-    showPreview: true,
-    enableDragDrop: true,
-    icon: 'fas fa-upload',
-    dropzoneText: 'Arrastra hasta 3 archivos aquí o haz clic para seleccionar'
-  };
+  /**
+   * Obtiene el mensaje de validación según el tipo de persona
+   */
+  get documentValidationMessage(): string {
+    const isPersonaJuridica = !this.isNaturelPerson();
+    const requiredCount = isPersonaJuridica ? 3 : 2;
+    const currentCount = this.files.length;
+    
+    if (currentCount === 0) {
+      if (isPersonaJuridica) {
+        return 'Debe subir 3 archivos: Cédula, RUT y Cámara de Comercio';
+      } else {
+        return 'Debe subir 2 archivos: Cédula y RUT';
+      }
+    }
+    
+    if (currentCount < requiredCount) {
+      const missing = requiredCount - currentCount;
+      return `Faltan ${missing} archivo(s). Total requerido: ${requiredCount}`;
+    }
+    
+    if (currentCount > requiredCount) {
+      const extra = currentCount - requiredCount;
+      return `Tiene ${extra} archivo(s) de más. Total permitido: ${requiredCount}`;
+    }
+    
+    return 'Documentos completos';
+  }
+
+  /**
+   * Obtiene el texto de ayuda dinámico según el tipo de persona
+   */
+  get dynamicHelpText(): string {
+    const isPersonaJuridica = !this.isNaturelPerson();
+    
+    if (isPersonaJuridica) {
+      return 'Sube <strong>EXACTAMENTE 3 archivos</strong>:<br>' +
+             '1. <strong>Cédula del Representante Legal</strong> (PDF, JPG o PNG)<br>' +
+             '2. <strong>RUT Actualizado</strong> (PDF)<br>' +
+             '3. <strong>Certificado de Cámara de Comercio</strong> (PDF)';
+    } else {
+      return 'Sube <strong>EXACTAMENTE 2 archivos</strong>:<br>' +
+             '1. <strong>Cédula de Ciudadanía</strong> (PDF, JPG o PNG)<br>' +
+             '2. <strong>RUT Actualizado</strong> (PDF)';
+    }
+  }
+
+  /**
+   * Obtiene el número máximo de archivos según el tipo de persona
+   */
+  get maxFilesAllowed(): number {
+    const isPersonaJuridica = !this.isNaturelPerson();
+    return isPersonaJuridica ? 3 : 2;
+  }
+
+  // Configuración ÚNICA para todos los archivos (se actualiza dinámicamente)
+  get uploadConfig(): FileUploadConfig {
+    const isPersonaJuridica = !this.isNaturelPerson();
+    const maxFiles = isPersonaJuridica ? 3 : 2;
+    const label = isPersonaJuridica ? 'Documentos Requeridos (3 archivos)' : 'Documentos Requeridos (2 archivos)';
+    
+    return {
+      id: 'filesUpload',
+      name: 'filesUpload',
+      label: label,
+      helpText: this.dynamicHelpText,
+      acceptedFormats: ['pdf', 'jpg', 'jpeg', 'png'],
+      maxTotalSize: this.MAX_TOTAL_SIZE,
+      multiple: true,
+      maxFiles: maxFiles,
+      required: true,
+      showPreview: true,
+      enableDragDrop: true,
+      icon: 'fas fa-upload',
+      dropzoneText: `Arrastra hasta ${maxFiles} archivos aquí o haz clic para seleccionar`
+    };
+  }
   
   constructor(private fb: FormBuilder,
               private _http: HttpResponsesService,
@@ -169,19 +236,19 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
         throw new Error('Por favor llene la información de cada campo');
       }
       
-      // Validar archivos mínimos requeridos
+      // Validar cantidad de archivos requeridos según tipo de persona
       if (!ts.canEdit) {
-        if (ts.files.length < 2) {
-          throw new Error('Debe cargar al menos 2 archivos para poder guardar la solicitud.');
+        const isPersonaJuridica = !ts.isNaturelPerson();
+        const requiredFiles = isPersonaJuridica ? 3 : 2;
+        
+        if (ts.files.length < requiredFiles) {
+          const tipo = isPersonaJuridica ? 'Persona Jurídica' : 'Persona Natural';
+          throw new Error(`Debe cargar exactamente ${requiredFiles} archivos para ${tipo}.`);
         }
-        if (!ts.hasRut) {
-          throw new Error('Por favor suba el RUT.');
-        }
-        if (!ts.hasCc) {
-          throw new Error('Por favor suba la cédula del representante legal.');
-        }
-        if (!ts.hastCamera && !ts.isNaturelPerson()) {
-          throw new Error('Por favor suba el certificado de Cámara de Comercio.');
+        
+        if (ts.files.length > requiredFiles) {
+          const tipo = isPersonaJuridica ? 'Persona Jurídica' : 'Persona Natural';
+          throw new Error(`Ha excedido el límite. Solo se permiten ${requiredFiles} archivos para ${tipo}.`);
         }
       }
       
@@ -261,7 +328,18 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     return res
   }
   protected onChangeTypeOrganization($event: any) {
-    console.log($event);
+    const isPersonaJuridica = !this.isNaturelPerson();
+    const maxFiles = isPersonaJuridica ? 3 : 2;
+    
+    // Si cambia de tipo y tiene más archivos de los permitidos, advertir al usuario
+    if (this.files.length > maxFiles) {
+      this._msg.toastMessage(
+        'Atención', 
+        `Ha cambiado a ${isPersonaJuridica ? 'Persona Jurídica' : 'Persona Natural'}. ` +
+        `Solo se permiten ${maxFiles} archivos. Por favor, ajuste los documentos.`,
+        4
+      );
+    }
   }
 
   /**
@@ -290,7 +368,6 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     }
     
     this.files.push(fileData);
-    this.updateFileFlags();
   }
 
   /**
@@ -300,28 +377,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     const index = this.files.findIndex((f: any) => f.data.name === fileName);
     if (index !== -1) {
       this.files.splice(index, 1);
-      this.updateFileFlags();
     }
-  }
-
-  /**
-   * Actualiza los flags de archivos según lo que se ha subido
-   */
-  private updateFileFlags(): void {
-    this.hastCamera = this.files.some((f: any) => 
-      f.data.name.toLowerCase().includes('camara') || 
-      f.data.name.toLowerCase().includes('comercio')
-    );
-    
-    this.hasRut = this.files.some((f: any) => 
-      f.data.name.toLowerCase().includes('rut')
-    );
-    
-    this.hasCc = this.files.some((f: any) => 
-      f.data.name.toLowerCase().includes('cedula') || 
-      f.data.name.toLowerCase().includes('cédula') ||
-      f.data.name.toLowerCase().includes('cc')
-    );
   }
 
   /**

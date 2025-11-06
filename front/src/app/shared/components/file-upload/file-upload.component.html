@@ -40,6 +40,7 @@
 
   <!-- Drop Zone -->
   <div class="file-drop-zone"
+       *ngIf="!isMaxFilesReached"
        [class.file-drop-over]="isDragOver"
        [class.disabled]="!config.enableDragDrop"
        (click)="onFileClick()"
@@ -69,6 +70,14 @@
       (change)="onFileChange($event)"
       class="file-input-hidden"
     />
+  </div>
+
+  <!-- Mensaje cuando se alcanza el límite de archivos -->
+  <div *ngIf="isMaxFilesReached" class="alert alert-info mt-3" role="alert">
+    <i class="fas fa-check-circle"></i>
+    <strong>Límite alcanzado:</strong> Has subido el máximo de {{ config.maxFiles }} archivo(s) permitido(s).
+    <br>
+    <small>Para agregar más archivos, elimina alguno de los existentes.</small>
   </div>
 
   <!-- Preview de archivos seleccionados -->
