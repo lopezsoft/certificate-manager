@@ -55,28 +55,41 @@ class CertificateRequestService
             'life'          => ['required', 'integer'],
         ], $messagesValidate);
         try {
+            // Obtener configuración dinámica de límites de archivos
+            $maxFileSize    = config('certificate.file_upload.max_file_size', 7); // MB
+            $maxTotalSize   = config('certificate.file_upload.max_total_size', 10); // MB
+            $maxFiles       = config('certificate.file_upload.max_files', 3);
+            $minFiles       = config('certificate.file_upload.min_files', 2);
+            
+            // Convertir MB a bytes para comparaciones
+            $maxFileSizeBytes   = $maxFileSize * 1024 * 1024;
+            $maxTotalSizeBytes  = $maxTotalSize * 1024 * 1024;
+            
             $size       = 0;
             $filesList  = $request->files ?? [];
-            if (count($filesList) > 3) {
-                throw new Exception('El número de archivos adjuntos supera los 3 soportados.', 400);
+            
+            // Validar número de archivos
+            if (count($filesList) > $maxFiles) {
+                throw new Exception("El número de archivos adjuntos supera los {$maxFiles} soportados.", 400);
             }
-            if(count($filesList) < 2) {
-                throw new Exception('No se ha enviado la información de los archivos adjuntos.', 400);
+            if(count($filesList) < $minFiles) {
+                throw new Exception("Debe enviar al menos {$minFiles} archivos adjuntos.", 400);
             }
+            
+            // Validar tamaño individual de cada archivo
             foreach ($filesList as $file) {
-                if ($file->getSize() > 2 * 1024 * 1024) { // 6 MB
-                    throw new Exception('El tamaño del adjunto supera los 2 MB soportados.', 400);
+                $fileSize = $file->getSize();
+                if ($fileSize > $maxFileSizeBytes) {
+                    $fileSizeMB = round($fileSize / 1024 / 1024, 2);
+                    throw new Exception("El archivo '{$file->getClientOriginalName()}' supera el tamaño máximo permitido de {$maxFileSize} MB (tamaño: {$fileSizeMB} MB).", 400);
                 }
-            }
-            foreach ($filesList as $file) {
-                $size   += $file->getSize();
+                $size += $fileSize;
             }
 
-            if ($size > 0) {
-                $size   = round((($size / 1024) / 1024), 2);
-                if ($size > 6.05) { // 6 MB
-                    throw new Exception("El tamaño de los archivos adjuntos supera los 2 MB soportados. Tamaño adjunto: {$size} MB", 400);
-                }
+            // Validar tamaño total de todos los archivos
+            if ($size > $maxTotalSizeBytes) {
+                $totalSizeMB = round($size / 1024 / 1024, 2);
+                throw new Exception("El tamaño total de los archivos adjuntos supera los {$maxTotalSize} MB permitidos. Tamaño total: {$totalSizeMB} MB", 400);
             }
 
             $company        = CompanyQueries::getCompany();

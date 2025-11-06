@@ -153,4 +153,27 @@ return [
         'send_on_last_day' => env('CERTIFICATE_MONTHLY_REPORTS_LAST_DAY', true),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | File Upload Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuración de límites para la carga de archivos adjuntos en las
+    | solicitudes de certificados.
+    |
+    */
+    'file_upload' => [
+        // Tamaño máximo por archivo individual en MB
+        'max_file_size' => env('CERTIFICATE_MAX_FILE_SIZE', 7),
+        
+        // Tamaño máximo total de todos los archivos en MB
+        'max_total_size' => env('CERTIFICATE_MAX_TOTAL_SIZE', 10),
+        
+        // Número máximo de archivos permitidos
+        'max_files' => env('CERTIFICATE_MAX_FILES', 3),
+        
+        // Número mínimo de archivos requeridos
+        'min_files' => env('CERTIFICATE_MIN_FILES', 2),
+    ],
+
 ];
