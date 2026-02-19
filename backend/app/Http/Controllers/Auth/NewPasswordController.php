@@ -15,6 +15,25 @@ use Illuminate\Validation\ValidationException;
 class NewPasswordController extends Controller
 {
     /**
+     * @OA\Post(
+     *     path="/reset-password",
+     *     tags={"Autenticación"},
+     *     summary="Restablecer contraseña",
+     *     description="Restablece la contraseña del usuario usando el token recibido por correo electrónico.",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"token","email","password","password_confirmation"},
+     *             @OA\Property(property="token", type="string", example="a1b2c3d4e5f6..."),
+     *             @OA\Property(property="email", type="string", format="email", example="usuario@empresa.com"),
+     *             @OA\Property(property="password", type="string", format="password", example="nuevaContraseña123"),
+     *             @OA\Property(property="password_confirmation", type="string", format="password", example="nuevaContraseña123")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Contraseña restablecida exitosamente", @OA\JsonContent(ref="#/components/schemas/ApiSuccessResponse")),
+     *     @OA\Response(response=422, description="Token inválido o expirado", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse"))
+     * )
+     *
      * Handle an incoming new password request.
      *
      * @throws \Illuminate\Validation\ValidationException

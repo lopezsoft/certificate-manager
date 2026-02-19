@@ -33,6 +33,8 @@ namespace App\Http\Controllers;
  * @OA\Tag(name="Perfil", description="Gestión del perfil de usuario")
  * @OA\Tag(name="Consumo", description="Estadísticas y reportes de consumo")
  * @OA\Tag(name="Webhooks", description="Gestión de endpoints externos para notificaciones en tiempo real")
+ * @OA\Tag(name="Datos Maestros", description="Datos de referencia públicos: países, departamentos, ciudades, tipos de documento y organización")
+ * @OA\Tag(name="Configuración", description="Configuración de encabezados de reportes")
  *
  * ─── Schemas reutilizables ────────────────────────────────────────────────────
  *
