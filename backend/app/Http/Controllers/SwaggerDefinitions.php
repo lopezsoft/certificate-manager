@@ -32,6 +32,7 @@ namespace App\Http\Controllers;
  * @OA\Tag(name="Empresa", description="Configuración y perfil de la empresa")
  * @OA\Tag(name="Perfil", description="Gestión del perfil de usuario")
  * @OA\Tag(name="Consumo", description="Estadísticas y reportes de consumo")
+ * @OA\Tag(name="Tokens", description="Gestión de Personal Access Tokens (PAT) para integraciones externas")
  * @OA\Tag(name="Webhooks", description="Gestión de endpoints externos para notificaciones en tiempo real")
  * @OA\Tag(name="Datos Maestros", description="Datos de referencia públicos: países, departamentos, ciudades, tipos de documento y organización")
  * @OA\Tag(name="Configuración", description="Configuración de encabezados de reportes")
@@ -91,6 +92,16 @@ namespace App\Http\Controllers;
  *     @OA\Property(property="file_size", type="string", example="102400"),
  *     @OA\Property(property="document_type", type="string", enum={"ATTACHED","GENERATED"}, example="ATTACHED"),
  *     @OA\Property(property="status", type="string", example="COMPLETED")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="PersonalAccessToken",
+ *     @OA\Property(property="id", type="string", readOnly=true, example="9d471f3b-8c6e-4a2d-b9f0-1234567890ab", description="UUID del token"),
+ *     @OA\Property(property="name", type="string", example="Token ERP Producción"),
+ *     @OA\Property(property="scopes", type="array", @OA\Items(type="string"), example={"*"}),
+ *     @OA\Property(property="revoked", type="boolean", example=false),
+ *     @OA\Property(property="expires_at", type="string", format="date-time", nullable=true, example="2026-05-19 10:00:00"),
+ *     @OA\Property(property="created_at", type="string", format="date-time", readOnly=true, example="2026-02-19 10:00:00")
  * )
  *
  * @OA\Schema(

@@ -16,6 +16,382 @@
         }
     ],
     "paths": {
+        "/tokens": {
+            "get": {
+                "tags": [
+                    "Tokens"
+                ],
+                "summary": "Listar tokens activos del usuario",
+                "description": "Retorna todos los Personal Access Tokens activos y no expirados del usuario autenticado.",
+                "operationId": "62a533924bf4cedeb69ca2274ef20d02",
+                "responses": {
+                    "200": {
+                        "description": "Lista de tokens",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/PersonalAccessToken"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tokens"
+                ],
+                "summary": "Crear Personal Access Token",
+                "description": "Genera un nuevo PAT de larga duración. El valor del token solo se expone en esta respuesta — guardarlo de inmediato. Límite: 10 tokens por día.",
+                "operationId": "d5f431358f9ce7e8bc4bf81b18877fe0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Token ERP Producción"
+                                    },
+                                    "expires_in_days": {
+                                        "description": "Días de validez (default: 90, máximo: 365)",
+                                        "type": "integer",
+                                        "maximum": 365,
+                                        "minimum": 1,
+                                        "example": 90
+                                    },
+                                    "abilities": {
+                                        "description": "Permisos del token. Usar ['*'] para acceso completo.",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "*"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token creado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "example": "9d471f3b-8c6e-4a2d-b9f0-1234567890ab"
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Token ERP Producción"
+                                                },
+                                                "token": {
+                                                    "type": "string",
+                                                    "example": "1|aB3cD4eF5gH6iJ7kL8mN9oP0qR1sT2uV"
+                                                },
+                                                "expires_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-05-19 10:00:00"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-02-19 10:00:00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token creado. Guárdelo ahora, no se mostrará de nuevo."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validación fallida",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Límite diario de creación alcanzado"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/tokens/{id}": {
+            "get": {
+                "tags": [
+                    "Tokens"
+                ],
+                "summary": "Detalle de un token",
+                "description": "Retorna los metadatos de un PAT específico. El valor del token no está disponible.",
+                "operationId": "7ed6e4450f398a190fcd3b8e473e7257",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID UUID del token",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalle del token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/PersonalAccessToken"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Token no encontrado"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Tokens"
+                ],
+                "summary": "Revocar un token",
+                "description": "Revoca e invalida inmediatamente el token indicado.",
+                "operationId": "c09d4a9dc2326f0d5c540f20fc5c36bd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID UUID del token",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Token revocado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Token no encontrado"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/tokens/revoke-all": {
+            "post": {
+                "tags": [
+                    "Tokens"
+                ],
+                "summary": "Revocar todos los tokens",
+                "description": "Revoca e invalida todos los tokens activos del usuario. Útil cuando las credenciales se ven comprometidas.",
+                "operationId": "33f4acb9260c75036718c2b143ce63f6",
+                "responses": {
+                    "200": {
+                        "description": "Todos los tokens revocados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "3 token(s) revocado(s) exitosamente."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/tokens/{id}/renew": {
+            "post": {
+                "tags": [
+                    "Tokens"
+                ],
+                "summary": "Renovar un token",
+                "description": "Crea un nuevo token con el mismo nombre y permisos, revoca el anterior. El nuevo valor solo se expone en esta respuesta.",
+                "operationId": "71456938b349396a0d0b0fc3566ff761",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID UUID del token a renovar",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Token renovado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "example": "a1b2c3d4-..."
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Token ERP Producción (renovado)"
+                                                },
+                                                "token": {
+                                                    "type": "string",
+                                                    "example": "2|xY9zA0bC1dE2fG3h..."
+                                                },
+                                                "expires_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token renovado. Guárdelo ahora, no se mostrará de nuevo."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Token no encontrado"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/profile/types": {
             "get": {
                 "tags": [
@@ -2375,6 +2751,46 @@
                 },
                 "type": "object"
             },
+            "PersonalAccessToken": {
+                "properties": {
+                    "id": {
+                        "description": "UUID del token",
+                        "type": "string",
+                        "readOnly": true,
+                        "example": "9d471f3b-8c6e-4a2d-b9f0-1234567890ab"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Token ERP Producción"
+                    },
+                    "scopes": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "*"
+                        ]
+                    },
+                    "revoked": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-05-19 10:00:00",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "example": "2026-02-19 10:00:00"
+                    }
+                },
+                "type": "object"
+            },
             "WebhookEndpoint": {
                 "properties": {
                     "id": {
@@ -2506,6 +2922,10 @@
         {
             "name": "Perfil",
             "description": "Gestión del perfil de usuario"
+        },
+        {
+            "name": "Tokens",
+            "description": "Gestión de Personal Access Tokens (PAT) para integraciones externas"
         },
         {
             "name": "Webhooks",

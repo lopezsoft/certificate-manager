@@ -40,6 +40,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        Passport::tokensExpireIn(now()->addDays(config('tokens.expiration_days', 90)));
+        Passport::refreshTokensExpireIn(now()->addDays(config('tokens.expiration_days', 90)));
+        Passport::personalAccessTokensExpireIn(now()->addDays(config('tokens.expiration_days', 90)));
     }
 }

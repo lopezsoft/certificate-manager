@@ -97,5 +97,18 @@ class RouteServiceProvider extends ServiceProvider
                     ], 429);
                 });
         });
+
+        // Creación de Personal Access Tokens: máximo PAT_MAX_PER_DAY por día por usuario
+        RateLimiter::for('token-create', function (Request $request) {
+            $maxPerDay = config('tokens.max_per_day', 10);
+            return Limit::perDay($maxPerDay)
+                ->by(optional($request->user())->id ?: $request->ip())
+                ->response(function () use ($maxPerDay) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Límite de creación de tokens alcanzado. Máximo {$maxPerDay} por día.",
+                    ], 429);
+                });
+        });
     }
 }

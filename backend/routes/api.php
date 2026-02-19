@@ -79,6 +79,18 @@ Route::group(['prefix' => 'v1'], function () {
             });
         });
 
+        // Personal Access Tokens (PAT)
+        Route::group(['prefix' => 'tokens'], function () {
+            Route::controller(\App\Http\Controllers\Api\TokenController::class)->group(function () {
+                Route::get('/', 'index');
+                Route::post('/', 'store')->middleware('throttle:token-create');
+                Route::post('/revoke-all', 'revokeAll');
+                Route::get('/{id}', 'show');
+                Route::delete('/{id}', 'destroy');
+                Route::post('/{id}/renew', 'renew');
+            });
+        });
+
         // Webhooks
         Route::group(['prefix' => 'webhooks'], function () {
             Route::get('/events', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'availableEvents']);
