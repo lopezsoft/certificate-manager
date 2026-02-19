@@ -1,0 +1,691 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Certificate Manager API",
+        "description": "API REST para la gestión de solicitudes de certificados digitales. Requiere autenticación OAuth 2.0 con Laravel Passport.",
+        "contact": {
+            "name": "Soporte Matias",
+            "email": "soporte@matias.com.co"
+        },
+        "version": "1.5.0"
+    },
+    "servers": [
+        {
+            "url": "/api/v1",
+            "description": "API v1"
+        }
+    ],
+    "paths": {
+        "/certificate-request": {
+            "get": {
+                "tags": [
+                    "Solicitudes de Certificado"
+                ],
+                "summary": "Listar mis solicitudes",
+                "description": "Retorna las solicitudes de la empresa autenticada. Estados: DRAFT|SENT|PENDING|ACCEPTED|PROCESSING|PROCESSED|REJECTED",
+                "operationId": "c42bb2f191e46810104726026a014fd3",
+                "parameters": [
+                    {
+                        "name": "request_status",
+                        "in": "query",
+                        "description": "Filtrar por estado del certificado",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "description": "Búsqueda por razón social, NIT, documento o representante",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Fecha inicio filtro (Y-m-d)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "Fecha fin filtro (Y-m-d)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Registros por página (default: 15)",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de solicitudes"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Solicitudes de Certificado"
+                ],
+                "summary": "Crear solicitud de certificado",
+                "description": "Crea una nueva solicitud de certificado digital. Requiere adjuntar entre 2 y 3 archivos (PDF/imagen). Límite: 10 solicitudes/minuto.",
+                "operationId": "8cbf351b63af3d2435b0538bb7f08d59",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "schema": "CreateCertificateRequestBody",
+                                "required": [
+                                    "city_id",
+                                    "identity_document_id",
+                                    "type_organization_id",
+                                    "document_number",
+                                    "address",
+                                    "legal_representative",
+                                    "company_name",
+                                    "dni",
+                                    "life"
+                                ],
+                                "properties": {
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 149
+                                    },
+                                    "identity_document_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "type_organization_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "document_number": {
+                                        "type": "string",
+                                        "example": "1234567890"
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "Calle 123 # 45-67"
+                                    },
+                                    "legal_representative": {
+                                        "type": "string",
+                                        "example": "JUAN PÉREZ"
+                                    },
+                                    "company_name": {
+                                        "type": "string",
+                                        "example": "MI EMPRESA S.A.S."
+                                    },
+                                    "dni": {
+                                        "type": "string",
+                                        "example": "900455420"
+                                    },
+                                    "life": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "info": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Solicitud creada exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validación fallida o solicitud duplicada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Demasiadas solicitudes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/certificate-request/all": {
+            "get": {
+                "tags": [
+                    "Solicitudes de Certificado"
+                ],
+                "summary": "Listar todas las solicitudes (administrador)",
+                "description": "Retorna todas las solicitudes activas de todas las empresas.",
+                "operationId": "d50f6fd514d32f7a6a7039386a6198b2",
+                "parameters": [
+                    {
+                        "name": "request_status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de solicitudes"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/certificate-request/{id}": {
+            "get": {
+                "tags": [
+                    "Solicitudes de Certificado"
+                ],
+                "summary": "Obtener detalle de una solicitud",
+                "operationId": "228b2949890edab1ec3739bb48158350",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalle de la solicitud",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CertificateRequest"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Solicitudes de Certificado"
+                ],
+                "summary": "Actualizar solicitud de certificado",
+                "operationId": "53a34b911dac0c039f52f0ab50f626d1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CertificateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Solicitud actualizada"
+                    },
+                    "422": {
+                        "description": "Validación fallida"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Solicitudes de Certificado"
+                ],
+                "summary": "Eliminar solicitud de certificado",
+                "operationId": "afd6293e280fa0aaa201cab99575d534",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Solicitud eliminada"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/certificate-request/{id}/status": {
+            "put": {
+                "tags": [
+                    "Solicitudes de Certificado"
+                ],
+                "summary": "Actualizar estado de una solicitud",
+                "operationId": "cb94ebbccac485c4db438c3e3b934a7e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "schema": "UpdateStatusBody",
+                                "required": [
+                                    "request_status"
+                                ],
+                                "properties": {
+                                    "request_status": {
+                                        "description": "DRAFT|SENT|PENDING|ACCEPTED|PROCESSING|PROCESSED|REJECTED",
+                                        "type": "string",
+                                        "example": "PROCESSING"
+                                    },
+                                    "comments": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "user_of_change": {
+                                        "description": "USER|MANAGER",
+                                        "type": "string",
+                                        "example": "MANAGER"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Estado actualizado"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/certificate-request/{id}/send-mail": {
+            "post": {
+                "tags": [
+                    "Solicitudes de Certificado"
+                ],
+                "summary": "Enviar solicitud por correo electrónico",
+                "description": "Envía la solicitud al proveedor y actualiza el estado a PROCESSING. Límite: 5 envíos/minuto.",
+                "operationId": "cfdbe84f97ecc081eec49168bdb0cc75",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "schema": "SendMailBody",
+                                "properties": {
+                                    "comments": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Correo enviado exitosamente"
+                    },
+                    "400": {
+                        "description": "Solicitud no encontrada o sin archivos adjuntos"
+                    },
+                    "429": {
+                        "description": "Demasiados envíos"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ApiSuccessResponse": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Operación exitosa"
+                    }
+                },
+                "type": "object"
+            },
+            "ApiErrorResponse": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Descripción del error"
+                    }
+                },
+                "type": "object"
+            },
+            "PaginationMeta": {
+                "properties": {
+                    "current_page": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "last_page": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "example": 15
+                    },
+                    "total": {
+                        "type": "integer",
+                        "example": 75
+                    }
+                },
+                "type": "object"
+            },
+            "CertificateRequest": {
+                "required": [
+                    "city_id",
+                    "identity_document_id",
+                    "type_organization_id",
+                    "document_number",
+                    "address",
+                    "legal_representative",
+                    "company_name",
+                    "dni",
+                    "life"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 1
+                    },
+                    "uuid": {
+                        "type": "string",
+                        "readOnly": true,
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                    },
+                    "company_id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 1
+                    },
+                    "city_id": {
+                        "type": "integer",
+                        "example": 149
+                    },
+                    "identity_document_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "type_organization_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "document_number": {
+                        "type": "string",
+                        "maxLength": 30,
+                        "example": "1234567890"
+                    },
+                    "address": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Calle 123 # 45-67"
+                    },
+                    "legal_representative": {
+                        "type": "string",
+                        "maxLength": 120,
+                        "example": "JUAN PÉREZ GÓMEZ"
+                    },
+                    "company_name": {
+                        "type": "string",
+                        "maxLength": 120,
+                        "example": "MI EMPRESA S.A.S."
+                    },
+                    "dni": {
+                        "type": "string",
+                        "maxLength": 30,
+                        "example": "900455420"
+                    },
+                    "dv": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 8
+                    },
+                    "life": {
+                        "description": "Vigencia en años",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "info": {
+                        "type": "string",
+                        "example": "Información adicional",
+                        "nullable": true
+                    },
+                    "request_status": {
+                        "type": "string",
+                        "enum": [
+                            "DRAFT",
+                            "SENT",
+                            "PENDING",
+                            "ACCEPTED",
+                            "PROCESSING",
+                            "PROCESSED",
+                            "REJECTED"
+                        ],
+                        "readOnly": true,
+                        "example": "DRAFT"
+                    },
+                    "expiration_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "type": "object"
+            },
+            "FileManager": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 1
+                    },
+                    "certificate_request_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "file_name": {
+                        "type": "string",
+                        "example": "RUT-empresa.pdf"
+                    },
+                    "file_path": {
+                        "type": "string",
+                        "example": "companies/1/2024/01/9004554208/RUT-empresa.pdf"
+                    },
+                    "extension_file": {
+                        "type": "string",
+                        "example": "pdf"
+                    },
+                    "mime_type": {
+                        "type": "string",
+                        "example": "application/pdf"
+                    },
+                    "file_size": {
+                        "type": "string",
+                        "example": "102400"
+                    },
+                    "document_type": {
+                        "type": "string",
+                        "enum": [
+                            "ATTACHED",
+                            "GENERATED"
+                        ],
+                        "example": "ATTACHED"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "COMPLETED"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "description": "Token de acceso OAuth 2.0 obtenido desde /authentication/login",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Solicitudes de Certificado",
+            "description": "Gestión completa de solicitudes de certificados digitales"
+        }
+    ]
+}

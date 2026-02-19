@@ -37,18 +37,17 @@ Route::group(['prefix' => 'v1'], function () {
         // SENT DOCUMENTS
         Route::group(['prefix' => 'certificate-request'], function () {
             Route::controller('CertificateRequestController')->group(function () {
-                Route::post('/', 'createCertificateRequest');
-                Route::post('/{id}/send-mail', 'sendMail');
+                Route::post('/', 'createCertificateRequest')->middleware(['throttle:certificate-create', 'validate.mime']);
+                Route::post('/{id}/send-mail', 'sendMail')->middleware('throttle:send-mail');
                 Route::get('/', 'getCertificateRequest');
                 Route::get('/all', 'getAllCertificateRequest');
                 Route::get('/{id}', 'getCertificateRequestById');
                 Route::put('/{id}', 'updateCertificateRequest');
                 Route::put('/{id}/status', 'updateCertificateRequestStatus');
                 Route::delete('/{id}', 'deleteCertificateRequest');
-                // Files
             });
             Route::controller('CertificateRequestFilesController')->group(function () {
-                Route::post('/{id}/files', 'createFile');
+                Route::post('/{id}/files', 'createFile')->middleware(['throttle:file-upload', 'validate.mime']);
                 Route::delete('/{id}/files/{fileId}', 'deleteFile');
             });
         });

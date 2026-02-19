@@ -1,0 +1,97 @@
+<?php
+
+namespace App\Http\Controllers;
+
+/**
+ * @OA\Info(
+ *     version="1.5.0",
+ *     title="Certificate Manager API",
+ *     description="API REST para la gestión de solicitudes de certificados digitales. Requiere autenticación OAuth 2.0 con Laravel Passport.",
+ *     @OA\Contact(
+ *         email="soporte@matias.com.co",
+ *         name="Soporte Matias"
+ *     )
+ * )
+ *
+ * @OA\Server(
+ *     url="/api/v1",
+ *     description="API v1"
+ * )
+ *
+ * @OA\SecurityScheme(
+ *     securityScheme="bearerAuth",
+ *     type="http",
+ *     scheme="bearer",
+ *     bearerFormat="JWT",
+ *     description="Token de acceso OAuth 2.0 obtenido desde /authentication/login"
+ * )
+ *
+ * @OA\Tag(name="Autenticación", description="Endpoints de login y registro")
+ * @OA\Tag(name="Solicitudes de Certificado", description="Gestión completa de solicitudes de certificados digitales")
+ * @OA\Tag(name="Archivos", description="Carga y eliminación de archivos adjuntos")
+ * @OA\Tag(name="Empresa", description="Configuración y perfil de la empresa")
+ * @OA\Tag(name="Perfil", description="Gestión del perfil de usuario")
+ * @OA\Tag(name="Consumo", description="Estadísticas y reportes de consumo")
+ *
+ * ─── Schemas reutilizables ────────────────────────────────────────────────────
+ *
+ * @OA\Schema(
+ *     schema="ApiSuccessResponse",
+ *     @OA\Property(property="success", type="boolean", example=true),
+ *     @OA\Property(property="message", type="string", example="Operación exitosa")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="ApiErrorResponse",
+ *     @OA\Property(property="success", type="boolean", example=false),
+ *     @OA\Property(property="message", type="string", example="Descripción del error")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="PaginationMeta",
+ *     @OA\Property(property="current_page", type="integer", example=1),
+ *     @OA\Property(property="last_page", type="integer", example=5),
+ *     @OA\Property(property="per_page", type="integer", example=15),
+ *     @OA\Property(property="total", type="integer", example=75)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="CertificateRequest",
+ *     required={"city_id","identity_document_id","type_organization_id","document_number","address","legal_representative","company_name","dni","life"},
+ *     @OA\Property(property="id", type="integer", readOnly=true, example=1),
+ *     @OA\Property(property="uuid", type="string", readOnly=true, example="550e8400-e29b-41d4-a716-446655440000"),
+ *     @OA\Property(property="company_id", type="integer", readOnly=true, example=1),
+ *     @OA\Property(property="city_id", type="integer", example=149),
+ *     @OA\Property(property="identity_document_id", type="integer", example=1),
+ *     @OA\Property(property="type_organization_id", type="integer", example=1),
+ *     @OA\Property(property="document_number", type="string", maxLength=30, example="1234567890"),
+ *     @OA\Property(property="address", type="string", maxLength=255, example="Calle 123 # 45-67"),
+ *     @OA\Property(property="legal_representative", type="string", maxLength=120, example="JUAN PÉREZ GÓMEZ"),
+ *     @OA\Property(property="company_name", type="string", maxLength=120, example="MI EMPRESA S.A.S."),
+ *     @OA\Property(property="dni", type="string", maxLength=30, example="900455420"),
+ *     @OA\Property(property="dv", type="integer", readOnly=true, example=8),
+ *     @OA\Property(property="life", type="integer", example=1, description="Vigencia en años"),
+ *     @OA\Property(property="info", type="string", nullable=true, example="Información adicional"),
+ *     @OA\Property(property="request_status", type="string", readOnly=true, enum={"DRAFT","SENT","PENDING","ACCEPTED","PROCESSING","PROCESSED","REJECTED"}, example="DRAFT"),
+ *     @OA\Property(property="expiration_date", type="string", format="date-time", nullable=true, readOnly=true),
+ *     @OA\Property(property="created_at", type="string", format="date-time", readOnly=true)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="FileManager",
+ *     @OA\Property(property="id", type="integer", readOnly=true, example=1),
+ *     @OA\Property(property="certificate_request_id", type="integer", example=1),
+ *     @OA\Property(property="file_name", type="string", example="RUT-empresa.pdf"),
+ *     @OA\Property(property="file_path", type="string", example="companies/1/2024/01/9004554208/RUT-empresa.pdf"),
+ *     @OA\Property(property="extension_file", type="string", example="pdf"),
+ *     @OA\Property(property="mime_type", type="string", example="application/pdf"),
+ *     @OA\Property(property="file_size", type="string", example="102400"),
+ *     @OA\Property(property="document_type", type="string", enum={"ATTACHED","GENERATED"}, example="ATTACHED"),
+ *     @OA\Property(property="status", type="string", example="COMPLETED")
+ * )
+ */
+class SwaggerDefinitions
+{
+    // Este archivo solo contiene anotaciones OpenAPI.
+    // No tiene lógica de aplicación.
+}
