@@ -5,6 +5,52 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.6.0] - 2026-02-19
+
+### Añadido
+
+- **Sistema de Webhooks Salientes** (backend):
+  - Endpoints REST completos: `GET/POST /webhooks`, `GET/PUT/DELETE /webhooks/{id}`, `POST /webhooks/{id}/rotate-secret`, `GET /webhooks/{id}/deliveries`
+  - 6 tipos de evento: `certificate_request.created`, `certificate_request.status_changed`, `certificate_request.ai_processed`, `certificate_request.file_uploaded`, `certificate_request.deleted`, `certificate.expiring`
+  - Firma HMAC-SHA256 en formato Stripe (`t={timestamp},v1={hmac}`) para verificación de autenticidad
+  - Cola dedicada (`webhooks`) con 3 reintentos y backoff exponencial (60s / 300s / 900s)
+  - Auto-desactivación de endpoints tras 10 fallos consecutivos
+  - Historial paginado de entregas con estado (delivered / failed / pending)
+  - Comandos Artisan: `webhook:cleanup` y `webhook:retry`
+  - Máximo de 5 webhooks por empresa
+  - Tablas: `webhook_endpoints` y `webhook_deliveries`
+  - Guía de integración SPA en `docs/webhooks-frontend.md`
+
+- **Testing (backend)**:
+  - 45 tests unitarios sin base de datos (PHPUnit)
+  - Cobertura: `HttpResponseMessages`, `MessageExceptionResponse`, `VerificationDigit`, `ValidateFileMimeType`, `CertificateValidatorService`, `ZipExtractorService`
+
+- **Documentación Swagger / OpenAPI completa**:
+  - Todos los endpoints de la API documentados con anotaciones `@OA`
+  - Tags organizados: Autenticación, Perfil, Datos Maestros, Configuración, Solicitudes de Certificado, Webhooks
+  - Schemas: `ApiSuccessResponse`, `ApiErrorResponse`, `WebhookEndpoint`, `WebhookDelivery`, `PaginationMeta`
+
+### Cambiado
+
+- **Seguridad**:
+  - Validación MIME real contra extensión declarada (previene spoofing)
+  - Headers de seguridad HTTP añadidos (X-Frame-Options, X-Content-Type-Options, Strict-Transport-Security)
+  - Rate limiting configurado para carga de archivos y envío de correos
+  - Validación de certificados PKCS12 antes de procesamiento
+
+- **Arquitectura backend**:
+  - Desacoplamiento completo via eventos de dominio Laravel (dominio no conoce webhooks)
+  - Patrón Repository para webhooks (`WebhookRepositoryContract`)
+  - Patrón Builder para payloads de webhooks (`WebhookPayloadBuilderContract`)
+
+### Técnico
+
+- **PHP**: 8.1+
+- **Laravel**: 10.x
+- **Nuevas tablas DB**: `webhook_endpoints`, `webhook_deliveries`
+- **Nuevas colas**: `webhooks`, `notifications`, `reports`
+- **Variables .env nuevas**: `WEBHOOK_QUEUE`, `WEBHOOK_TIMEOUT`, `WEBHOOK_MAX_FAILURES`, `WEBHOOK_MAX_ENDPOINTS`, `WEBHOOK_LOG_RETENTION`
+
 ## [1.5.0] - 2025-11-05
 
 ### Añadido

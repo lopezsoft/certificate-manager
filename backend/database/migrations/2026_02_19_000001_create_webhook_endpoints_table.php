@@ -10,7 +10,8 @@ return new class extends Migration
     {
         Schema::create('webhook_endpoints', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('company_id')->constrained('companies')->cascadeOnDelete();
+            $table->bigInteger('company_id');
+            $table->foreign('company_id')->references('id')->on('companies')->cascadeOnDelete();
             $table->string('url');
             $table->string('secret', 64);
             $table->json('events');

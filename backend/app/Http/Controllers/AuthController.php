@@ -120,8 +120,7 @@ class AuthController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             @OA\Property(property="records", type="string", description="JSON serializado con los campos a actualizar",
-     *                 example="{\"first_name\":\"Juan\",\"last_name\":\"Pérez\"}")
+     *             @OA\Property(property="records", type="string", description="JSON serializado con los campos a actualizar. Ejemplo: {first_name: Juan, last_name: Perez}")
      *         )
      *     ),
      *     @OA\Response(response=200, description="Perfil actualizado exitosamente"),
