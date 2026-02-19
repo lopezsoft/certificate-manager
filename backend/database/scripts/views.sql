@@ -3,11 +3,12 @@
   view name: certificate_requests_years_view
  */
 
-SELECT CONCAT(UPPER(b.company_name),' NIT: ',b.dni) AS company_name, a.life, COUNT(a.id) total, a.company_id,
+SELECT CONCAT(UPPER(b.company_name),' NIT: ',b.dni) AS company_name, a.life, 
+COUNT(a.id) total, a.company_id,
        YEAR(a.updated_at) AS nyear, a.request_status
 FROM certificate_requests AS a
          JOIN companies AS b ON b.id = a.company_id
-GROUP BY a.company_id, a.request_status, a.life
+GROUP BY YEAR(a.updated_at), a.company_id, a.request_status, a.life
 ORDER BY b.company_name ASC, YEAR(a.updated_at) DESC;
 
 /**
@@ -15,7 +16,8 @@ ORDER BY b.company_name ASC, YEAR(a.updated_at) DESC;
   view name: certificate_requests_months_view
  */
 
-SELECT CONCAT(UPPER(b.company_name),' NIT: ',b.dni) AS company_name, a.life, COUNT(a.id) total, a.company_id, YEAR(a.updated_at) AS nyear,
+SELECT CONCAT(UPPER(b.company_name),' NIT: ',b.dni) AS company_name, a.life, 
+COUNT(a.id) total, a.company_id, YEAR(a.updated_at) AS nyear,
        MONTH(a.updated_at) AS nmonth, monthname(a.updated_at) AS monthname, a.request_status
 FROM certificate_requests AS a
 JOIN companies AS b ON b.id = a.company_id
