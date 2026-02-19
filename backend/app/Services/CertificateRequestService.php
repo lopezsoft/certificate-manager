@@ -6,6 +6,9 @@ use App\Common\HttpResponseMessages;
 use App\Common\MessageExceptionResponse;
 use App\Common\VerificationDigit;
 use App\Enums\DocumentStatusEnum;
+use App\Events\CertificateRequestCreated;
+use App\Events\CertificateRequestDeleted;
+use App\Events\CertificateStatusChanged;
 use App\Models\CertificateRequest;
 use App\Models\ChangeHistory;
 use App\Models\FileManager;
@@ -211,6 +214,8 @@ class CertificateRequestService
             }
             DB::commit();
 
+            event(new CertificateRequestCreated($certificate));
+
             Notification::route('mail', env('MAIL_SUPPORT_ADDRESS','soporte@matias.com.co'))
                 ->notify(new CertificateRequestCreateNotification($certificate));
 
@@ -372,7 +377,15 @@ class CertificateRequestService
                 ->where('company_id', $company->id)
                 ->where('id', $id)
                 ->first();
+            $deletedId      = $certificate->id;
+            $deletedCompany = $certificate->company_id;
+            $deletedDni     = $certificate->dni;
+            $deletedName    = $certificate->company_name;
+
             $certificate->delete();
+
+            event(new CertificateRequestDeleted($deletedId, $deletedCompany, $deletedDni, $deletedName));
+
             return HttpResponseMessages::getResponse([
                 'message'   => 'Solicitud de certificado eliminada exitosamente',
             ]);
@@ -388,6 +401,7 @@ class CertificateRequestService
             $certificate = CertificateRequest::query()
                 ->where('id', $id)
                 ->first();
+            $previousStatus = $certificate->request_status;
             DB::beginTransaction();
             $certificate->update([
                 'request_status' => $request->request_status,
@@ -436,6 +450,16 @@ class CertificateRequestService
                     ->notify(new CertificateRequestStatusNotification($messageData));
             }
             DB::commit();
+
+            event(new CertificateStatusChanged(
+                certificateRequestId: $certificate->id,
+                companyId: $certificate->company_id,
+                previousStatus: $previousStatus,
+                newStatus: $request->request_status,
+                userId: auth()->user()->id,
+                comment: $request->comments,
+            ));
+
             return HttpResponseMessages::getResponse([
                 'message'   => 'El estado de la solicitud se ha actualizada exitosamente',
                 'data'      => $certificate,

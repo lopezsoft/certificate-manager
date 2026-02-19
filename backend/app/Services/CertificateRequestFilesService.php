@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Common\HttpResponseMessages;
 use App\Common\MessageExceptionResponse;
+use App\Events\CertificateFileUploaded;
 use App\Jobs\ProcessCertificateJob;
 use App\Models\CertificateRequest;
 use App\Models\FileManager;
@@ -112,6 +113,14 @@ class CertificateRequestFilesService
                 }
             }
             
+            event(new CertificateFileUploaded(
+                certificateRequestId: $certificateRequestId,
+                companyId: $certificateRequest->company_id,
+                fileId: $file->id,
+                fileName: $file->file_name,
+                documentType: $file->document_type,
+            ));
+
             // Process image files with AI if they are supported formats
             $this->processFileWithAI($file, $certificateRequestId);
             

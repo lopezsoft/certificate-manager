@@ -78,5 +78,17 @@ Route::group(['prefix' => 'v1'], function () {
                 });
             });
         });
+
+        // Webhooks
+        Route::group(['prefix' => 'webhooks'], function () {
+            Route::get('/events', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'availableEvents']);
+            Route::get('/', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'index']);
+            Route::post('/', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'store']);
+            Route::get('/{id}', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'show']);
+            Route::put('/{id}', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'update']);
+            Route::delete('/{id}', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'destroy']);
+            Route::post('/{id}/rotate-secret', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'rotateSecret']);
+            Route::get('/{id}/deliveries', [\App\Webhooks\Http\Controllers\WebhookDeliveryController::class, 'index']);
+        });
     });
 });
