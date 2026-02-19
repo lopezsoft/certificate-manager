@@ -5,6 +5,34 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.0] - 2026-02-19
+
+### Añadido
+
+- **Sistema de Personal Access Tokens (PAT)** (backend):
+  - Endpoints REST: `GET /tokens`, `POST /tokens`, `GET /tokens/{id}`, `DELETE /tokens/{id}`, `POST /tokens/revoke-all`, `POST /tokens/{id}/renew`
+  - Tokens de larga duración para integraciones externas (ERP, scripts, CLIs, webhooks)
+  - Expiración configurable: 90 días por defecto, máximo 365 días
+  - Rate limiting de creación: 10 tokens/día por usuario
+  - Renovación atómica: crea nuevo token y revoca el anterior en una sola operación
+  - El valor del token solo se expone al crear o renovar — nunca recuperable después
+  - Guía de integración SPA en `docs/pat-integration.md`
+
+- **Configuración de expiración Passport**:
+  - `Passport::tokensExpireIn()` configurado globalmente (antes los tokens nunca expiraban)
+  - Variables: `PAT_EXPIRATION_DAYS`, `PAT_MAX_EXPIRATION_DAYS`, `PAT_MAX_PER_DAY`, `PAT_MAX_ACTIVE`
+
+- **Documentación Swagger actualizada**:
+  - Tag `Tokens` con 6 endpoints documentados
+  - Schema `PersonalAccessToken`
+  - Versión API: 1.7.0
+
+### Técnico
+
+- **Nuevos archivos**: `config/tokens.php`, `app/Http/Controllers/Api/TokenController.php`, `app/Http/Requests/CreateTokenRequest.php`
+- **Rate limiter**: `token-create` (10/día) en `RouteServiceProvider`
+- **Sin cambios en DB**: usa las tablas `oauth_access_tokens` ya existentes de Passport
+
 ## [1.6.0] - 2026-02-19
 
 ### Añadido

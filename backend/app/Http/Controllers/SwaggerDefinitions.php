@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 /**
  * @OA\Info(
- *     version="1.5.0",
+ *     version="1.7.0",
  *     title="Certificate Manager API",
  *     description="API REST para la gestión de solicitudes de certificados digitales. Requiere autenticación OAuth 2.0 con Laravel Passport.",
  *     @OA\Contact(
