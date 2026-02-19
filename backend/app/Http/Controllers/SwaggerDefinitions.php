@@ -32,6 +32,7 @@ namespace App\Http\Controllers;
  * @OA\Tag(name="Empresa", description="Configuración y perfil de la empresa")
  * @OA\Tag(name="Perfil", description="Gestión del perfil de usuario")
  * @OA\Tag(name="Consumo", description="Estadísticas y reportes de consumo")
+ * @OA\Tag(name="Webhooks", description="Gestión de endpoints externos para notificaciones en tiempo real")
  *
  * ─── Schemas reutilizables ────────────────────────────────────────────────────
  *
@@ -88,6 +89,32 @@ namespace App\Http\Controllers;
  *     @OA\Property(property="file_size", type="string", example="102400"),
  *     @OA\Property(property="document_type", type="string", enum={"ATTACHED","GENERATED"}, example="ATTACHED"),
  *     @OA\Property(property="status", type="string", example="COMPLETED")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="WebhookEndpoint",
+ *     @OA\Property(property="id", type="integer", readOnly=true, example=1),
+ *     @OA\Property(property="company_id", type="integer", readOnly=true, example=7),
+ *     @OA\Property(property="url", type="string", format="uri", example="https://mi-erp.com/webhook"),
+ *     @OA\Property(property="events", type="array", @OA\Items(type="string"), example={"certificate_request.created","certificate_request.status_changed"}),
+ *     @OA\Property(property="is_active", type="boolean", example=true),
+ *     @OA\Property(property="description", type="string", nullable=true, example="Notificaciones al ERP"),
+ *     @OA\Property(property="failure_count", type="integer", readOnly=true, example=0),
+ *     @OA\Property(property="last_triggered_at", type="string", format="date-time", nullable=true, readOnly=true),
+ *     @OA\Property(property="created_at", type="string", format="date-time", readOnly=true)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="WebhookDelivery",
+ *     @OA\Property(property="id", type="integer", readOnly=true, example=42),
+ *     @OA\Property(property="webhook_endpoint_id", type="integer", example=1),
+ *     @OA\Property(property="event_type", type="string", example="certificate_request.status_changed"),
+ *     @OA\Property(property="payload", type="object", description="Payload JSON enviado al endpoint"),
+ *     @OA\Property(property="http_status", type="integer", nullable=true, example=200),
+ *     @OA\Property(property="status", type="string", enum={"pending","delivered","failed"}, example="delivered"),
+ *     @OA\Property(property="attempt", type="integer", example=1),
+ *     @OA\Property(property="delivered_at", type="string", format="date-time", nullable=true),
+ *     @OA\Property(property="created_at", type="string", format="date-time", readOnly=true)
  * )
  */
 class SwaggerDefinitions
