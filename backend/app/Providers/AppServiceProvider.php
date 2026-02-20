@@ -7,6 +7,10 @@ use Laravel\Passport\Passport;
 use App\Services\CertificateRequestService;
 use App\Services\CertificateRequestMailService;
 use App\Services\CertificateRequestFilesService;
+use App\Handlers\Certificate\CreateCertificateRequestHandler;
+use App\Handlers\Certificate\UpdateCertificateRequestHandler;
+use App\Handlers\Certificate\UpdateCertificateStatusHandler;
+use App\Handlers\Certificate\DeleteCertificateRequestHandler;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +27,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(CertificateRequestService::class);
         $this->app->singleton(CertificateRequestMailService::class);
         $this->app->singleton(CertificateRequestFilesService::class);
+        $this->app->singleton(CreateCertificateRequestHandler::class);
+        $this->app->singleton(UpdateCertificateRequestHandler::class);
+        $this->app->singleton(UpdateCertificateStatusHandler::class);
+        $this->app->singleton(DeleteCertificateRequestHandler::class);
 
         $this->app->bind(
             \App\Webhooks\Contracts\WebhookRepositoryContract::class,
