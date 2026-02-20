@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
+use App\Services\CertificateRequestService;
+use App\Services\CertificateRequestMailService;
+use App\Services\CertificateRequestFilesService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -16,6 +19,10 @@ class AppServiceProvider extends ServiceProvider
     {
         // app()->usePublicPath(__DIR__.'/public'); // TODO: Enable this line when you are ready to deploy to production
         Passport::ignoreRoutes();
+
+        $this->app->singleton(CertificateRequestService::class);
+        $this->app->singleton(CertificateRequestMailService::class);
+        $this->app->singleton(CertificateRequestFilesService::class);
 
         $this->app->bind(
             \App\Webhooks\Contracts\WebhookRepositoryContract::class,

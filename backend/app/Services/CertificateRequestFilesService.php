@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class CertificateRequestFilesService
 {
@@ -41,6 +42,19 @@ class CertificateRequestFilesService
             $fileSize = $file->getSize();
             if ($fileSize > 2 * 1024 * 1024) {
                 throw new Exception("El tamaño del archivo no puede superar los 2MB.", 400);
+            }
+
+            // Validar tipo MIME real del archivo (no solo la extensión)
+            $mimeValidator = Validator::make(
+                ['file' => $file],
+                ['file' => [
+                    'required',
+                    'mimetypes:application/pdf,image/jpeg,image/png,image/gif,application/zip,application/x-zip-compressed',
+                ]],
+                ['file.mimetypes' => 'Tipo de archivo no permitido. Solo se aceptan PDF, imágenes (JPG, PNG, GIF) y archivos ZIP.']
+            );
+            if ($mimeValidator->fails()) {
+                throw new Exception($mimeValidator->errors()->first('file'), 422);
             }
             $company        = CompanyQueries::getCompany();
             $pin            = $request->input('pin');

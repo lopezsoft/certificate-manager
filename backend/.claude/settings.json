@@ -2,7 +2,28 @@
   "permissions": {
     "allow": [
       "Bash(composer show:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(powershell -Command \"Set-Location ''d:\\\\wamp64\\\\www\\\\certificate-manager\\\\backend''; git diff HEAD~5..HEAD~4 -- ''*.md'' --name-only 2>&1\")",
+      "Bash(powershell -Command \"Set-Location ''d:\\\\wamp64\\\\www\\\\certificate-manager\\\\backend''; git log --all --name-only --format=''%H %s'' 2>&1 | Select-String -Pattern ''CHANGELOG|changelog'' | Select-Object -First 10\")",
+      "Read(//d/wamp64/www/certificate-manager/front/**)",
+      "Bash(powershell -Command:*)",
+      "Bash(find:*)",
+      "Read(//d/wamp64/www/certificate-manager//**)",
+      "Read(//d/wamp64/www//**)",
+      "Bash(ls:*)",
+      "Bash(dir:*)",
+      "Bash(git -C \"d:/wamp64/www/certificate-manager/backend\" log --oneline -6)",
+      "Bash(git -C \"d:/wamp64/www/certificate-manager/backend\" show 435d2b5 --stat)",
+      "Bash(git -C 'd:\\\\wamp64\\\\www\\\\certificate-manager\\\\backend' log --oneline -3)",
+      "Bash(git -C 'd:\\\\wamp64\\\\www\\\\certificate-manager\\\\backend' diff --stat HEAD)",
+      "Bash(git -C 'd:\\\\wamp64\\\\www\\\\certificate-manager\\\\backend' add app/Console/Kernel.php app/Console/Commands/NotifyExpiringCertificatesCommand.php app/Console/Commands/SendCertificatesAdminReportCommand.php app/Console/Commands/SendCertificatesMonthlyReportCommand.php app/Http/Controllers/NotificationController.php app/Http/Controllers/SwaggerDefinitions.php app/Jobs/SendExpiringCertificatesNotificationsJob.php app/Notifications/CertificateExpiringNotification.php routes/api.php CHANGELOG.md docs/SCHEDULED_TASKS_CERTIFICATES.md docs/2026-02-19-INFORME-SISTEMA-NOTIFICACIONES-VENCIMIENTOS.md docs/2026-01-27-10-30-GUIA-USO-API-TOKENS-DESARROLLADORES.md docs/2026-01-27-13-30-REFRESH-TOKENS-EN-SISTEMAS-PAT.md docs/ANALYTICS-TOKEN-PROTECTION.md)",
+      "Bash(git -C 'd:\\\\wamp64\\\\www\\\\certificate-manager\\\\backend' status --short)",
+      "Bash(git -C 'd:\\\\wamp64\\\\www\\\\certificate-manager\\\\backend' add storage/api-docs/api-docs.json)",
+      "Bash(git -C:*)"
+    ],
+    "additionalDirectories": [
+      "d:\\wamp64\\www\\certificate-manager\\front"
     ]
   }
 }

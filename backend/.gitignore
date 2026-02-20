@@ -18,3 +18,13 @@ yarn-error.log
 Thumbs.db
 *.log
 /storage/debugbar
+*.vscode
+*.claude
+*.log
+*.cache
+*.bak
+*.tmp
+*.swp
+*.swo
+*settings.json
+*tmp

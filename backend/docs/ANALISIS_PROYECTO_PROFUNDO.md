@@ -376,14 +376,7 @@ stdout_logfile=/var/www/html/backend/storage/logs/worker.log
 * * * * * cd /var/www/html/backend && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-#### 5.3 MySQL en Modo No Estricto
-
-```php
-// config/database.php — cambiar:
-'strict' => false  →  'strict' => true
-```
-
-#### 5.4 `APP_VERSION` Desactualizada en `.env`
+#### 5.3 `APP_VERSION` Desactualizada en `.env`
 
 ```dotenv
 # Actual (incorrecto)
@@ -457,7 +450,6 @@ APP_VERSION="1.8.0"
 | T-17 | Resolver consultas N+1 con eager loading (`with([...])`) | Media |
 | T-18 | Configurar Supervisor para queue workers en producción | Baja |
 | T-19 | Configurar Cron para scheduled tasks en producción | Baja |
-| T-20 | Habilitar `strict` mode en MySQL (`config/database.php`) | Baja |
 | T-21 | Crear `docs/DEPLOYMENT.md` — guía completa de puesta en producción | Baja |
 | T-22 | Configurar GitHub Actions con PHPUnit para CI/CD | Media |
 | T-23 | Corregir `APP_VERSION` en `.env` de `1.1.0` a `1.8.0` | Trivial |

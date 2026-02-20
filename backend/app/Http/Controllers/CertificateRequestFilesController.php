@@ -8,6 +8,10 @@ use Illuminate\Http\Request;
 
 class CertificateRequestFilesController extends Controller
 {
+    public function __construct(
+        private readonly CertificateRequestFilesService $filesService
+    ) {}
+
     /**
      * @OA\Post(
      *     path="/certificate-request/{id}/files",
@@ -36,7 +40,7 @@ class CertificateRequestFilesController extends Controller
      */
     public function createFile(Request $request, $certificateRequestId): JsonResponse
     {
-        return (new CertificateRequestFilesService())->createFile($request, $certificateRequestId);
+        return $this->filesService->createFile($request, $certificateRequestId);
     }
 
     /**
@@ -54,6 +58,6 @@ class CertificateRequestFilesController extends Controller
      */
     public function deleteFile($id, $fileId): JsonResponse
     {
-        return (new CertificateRequestFilesService())->deleteFile($id, $fileId);
+        return $this->filesService->deleteFile($id, $fileId);
     }
 }

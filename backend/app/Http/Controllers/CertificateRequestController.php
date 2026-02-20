@@ -9,6 +9,11 @@ use Illuminate\Http\Request;
 
 class CertificateRequestController extends Controller
 {
+    public function __construct(
+        private readonly CertificateRequestService $service,
+        private readonly CertificateRequestMailService $mailService
+    ) {}
+
     /**
      * @OA\Post(
      *     path="/certificate-request",
@@ -44,7 +49,7 @@ class CertificateRequestController extends Controller
      */
     public function createCertificateRequest(Request $request): JsonResponse
     {
-        return (new CertificateRequestService())->createCertificateRequest($request);
+        return $this->service->createCertificateRequest($request);
     }
 
     /**
@@ -65,7 +70,7 @@ class CertificateRequestController extends Controller
      */
     public function getCertificateRequest(Request $request): JsonResponse
     {
-        return (new CertificateRequestService())->getCertificateRequest($request);
+        return $this->service->getCertificateRequest($request);
     }
 
     /**
@@ -84,7 +89,7 @@ class CertificateRequestController extends Controller
      */
     public function getAllCertificateRequest(Request $request): JsonResponse
     {
-        return (new CertificateRequestService())->getAllCertificateRequest($request);
+        return $this->service->getAllCertificateRequest($request);
     }
 
     /**
@@ -100,7 +105,7 @@ class CertificateRequestController extends Controller
      */
     public function getCertificateRequestById($id): JsonResponse
     {
-        return (new CertificateRequestService())->getCertificateRequestById($id);
+        return $this->service->getCertificateRequestById($id);
     }
 
     /**
@@ -118,7 +123,7 @@ class CertificateRequestController extends Controller
      */
     public function updateCertificateRequest(Request $request, $id): JsonResponse
     {
-        return (new CertificateRequestService())->updateCertificateRequest($request, $id);
+        return $this->service->updateCertificateRequest($request, $id);
     }
 
     /**
@@ -144,7 +149,7 @@ class CertificateRequestController extends Controller
      */
     public function updateCertificateRequestStatus(Request $request, $id): JsonResponse
     {
-        return (new CertificateRequestService())->updateCertificateRequestStatus($request, $id);
+        return $this->service->updateCertificateRequestStatus($request, $id);
     }
 
     /**
@@ -160,7 +165,7 @@ class CertificateRequestController extends Controller
      */
     public function deleteCertificateRequest($id): JsonResponse
     {
-        return (new CertificateRequestService())->deleteCertificateRequest($id);
+        return $this->service->deleteCertificateRequest($id);
     }
 
     /**
@@ -185,6 +190,6 @@ class CertificateRequestController extends Controller
      */
     public function sendMail(Request $request, $id): JsonResponse
     {
-        return (new CertificateRequestMailService())->sendMail($request, $id);
+        return $this->mailService->sendMail($request, $id);
     }
 }
