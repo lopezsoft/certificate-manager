@@ -152,21 +152,37 @@ Contiene toda la configuración centralizada del sistema de certificados.
 
 ## 🔧 Comandos de Gestión
 
-### Ejecutar Manualmente
+### Ejecutar Manualmente (Comandos Artisan)
 
-Para testing o ejecución manual:
+Desde v1.8.0 hay comandos Artisan dedicados:
 
 ```bash
-# Ejecutar notificaciones a empresas
-php artisan tinker
->>> dispatch(new \App\Jobs\SendExpiringCertificatesNotificationsJob());
+# Previsualizar qué se notificaría sin enviar emails
+php artisan certificates:notify-expiring --dry-run
+php artisan certificates:notify-expiring --dry-run --days=15
 
-# Ejecutar reporte diario admin
->>> dispatch(new \App\Jobs\SendAdminExpiringCertificatesReportJob(false));
+# Disparar notificaciones a empresas
+php artisan certificates:notify-expiring
+php artisan certificates:notify-expiring --days=15
 
-# Ejecutar reporte semanal admin
->>> dispatch(new \App\Jobs\SendAdminExpiringCertificatesReportJob(true));
+# Reporte diario al administrador
+php artisan certificates:admin-report
+
+# Reporte semanal al administrador
+php artisan certificates:admin-report --weekly
+
+# Reportes mensuales (empresas + admin)
+php artisan certificates:monthly-report
+
+# Solo reporte mensual al admin
+php artisan certificates:monthly-report --admin-only
+
+# Reporte mensual a una empresa específica
+php artisan certificates:monthly-report --company-id=5
 ```
+
+> **API (endpoint manual para admins):**
+> `POST /api/v1/admin/certificates/notify-now`
 
 ### Ver Jobs en Cola
 

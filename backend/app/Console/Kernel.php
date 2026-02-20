@@ -4,7 +4,6 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
-use Carbon\Carbon;
 
 class Kernel extends ConsoleKernel
 {
@@ -94,7 +93,7 @@ class Kernel extends ConsoleKernel
          * Queue: reports
          */
         $schedule->job(new \App\Jobs\SendMonthlyCompanyCertificatesReportJob())
-            ->monthlyOn(Carbon::now()->endOfMonth()->day, '22:00')
+            ->lastDayOfMonth('22:00')
             ->timezone('America/Bogota')
             ->name('certificates:monthly-company-reports')
             ->withoutOverlapping(60)
@@ -104,14 +103,14 @@ class Kernel extends ConsoleKernel
 
         /**
          * Job 5: Enviar informe mensual consolidado al administrador
-         * 
+         *
          * Frecuencia: Mensual - Último día del mes a las 23:00 (11:00 PM)
          * Función: Envía al administrador un reporte consolidado de TODOS los certificados
          *          emitidos durante el mes, agrupados por empresa, estado y vigencia
          * Queue: reports
          */
         $schedule->job(new \App\Jobs\SendMonthlyAdminCertificatesReportJob())
-            ->monthlyOn(Carbon::now()->endOfMonth()->day, '23:00')
+            ->lastDayOfMonth('23:00')
             ->timezone('America/Bogota')
             ->name('certificates:monthly-admin-report')
             ->withoutOverlapping(60)

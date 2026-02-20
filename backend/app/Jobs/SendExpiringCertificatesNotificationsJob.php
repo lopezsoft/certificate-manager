@@ -166,6 +166,7 @@ class SendExpiringCertificatesNotificationsJob implements ShouldQueue
     {
         return CertificateRequest::with(['company'])
             ->whereNotNull('expiration_date')
+            ->where('request_status', 'PROCESSED') // Solo certificados emitidos
             ->where('expiration_date', '>', now()) // No vencidos aún
             ->where('expiration_date', '<=', $expirationThreshold) // Dentro del rango
             ->whereHas('company', function ($query) {

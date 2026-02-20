@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 /**
  * @OA\Info(
- *     version="1.7.0",
+ *     version="1.8.0",
  *     title="Certificate Manager API",
  *     description="API REST para la gestión de solicitudes de certificados digitales. Requiere autenticación OAuth 2.0 con Laravel Passport.",
  *     @OA\Contact(
@@ -34,6 +34,7 @@ namespace App\Http\Controllers;
  * @OA\Tag(name="Consumo", description="Estadísticas y reportes de consumo")
  * @OA\Tag(name="Tokens", description="Gestión de Personal Access Tokens (PAT) para integraciones externas")
  * @OA\Tag(name="Webhooks", description="Gestión de endpoints externos para notificaciones en tiempo real")
+ * @OA\Tag(name="Notificaciones", description="Alertas de vencimiento de certificados: listado, marcado de lectura y disparo manual")
  * @OA\Tag(name="Datos Maestros", description="Datos de referencia públicos: países, departamentos, ciudades, tipos de documento y organización")
  * @OA\Tag(name="Configuración", description="Configuración de encabezados de reportes")
  *
@@ -127,6 +128,39 @@ namespace App\Http\Controllers;
  *     @OA\Property(property="status", type="string", enum={"pending","delivered","failed"}, example="delivered"),
  *     @OA\Property(property="attempt", type="integer", example=1),
  *     @OA\Property(property="delivered_at", type="string", format="date-time", nullable=true),
+ *     @OA\Property(property="created_at", type="string", format="date-time", readOnly=true)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="ExpiringCertificate",
+ *     description="Certificado próximo a vencer (status PROCESSED)",
+ *     @OA\Property(property="id", type="integer", readOnly=true, example=12),
+ *     @OA\Property(property="company_name", type="string", example="MI EMPRESA S.A.S."),
+ *     @OA\Property(property="dni", type="string", example="900455420"),
+ *     @OA\Property(property="dv", type="integer", example=8),
+ *     @OA\Property(property="email", type="string", format="email", nullable=true, example="empresa@correo.com"),
+ *     @OA\Property(property="phone", type="string", nullable=true, example="3001234567"),
+ *     @OA\Property(property="expiration_date", type="string", format="date-time", example="2026-03-15 00:00:00"),
+ *     @OA\Property(property="expiration_date_formatted", type="string", example="15-03-2026 12:00:00 am"),
+ *     @OA\Property(property="days_remaining", type="integer", example=24),
+ *     @OA\Property(property="urgency_level", type="string", enum={"critical","high","medium","low"}, example="medium"),
+ *     @OA\Property(property="city", type="string", nullable=true, example="Bogotá D.C."),
+ *     @OA\Property(property="legal_representative", type="string", example="JUAN PÉREZ")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="NotificationItem",
+ *     description="Notificación persistida en base de datos (canal database de Laravel)",
+ *     @OA\Property(property="id", type="string", format="uuid", readOnly=true, example="550e8400-e29b-41d4-a716-446655440000"),
+ *     @OA\Property(property="type", type="string", readOnly=true, example="App\\Notifications\\CertificateExpiringNotification"),
+ *     @OA\Property(property="data", type="object", description="Datos serializados de la notificación",
+ *         @OA\Property(property="certificate_id", type="integer", example=12),
+ *         @OA\Property(property="company_name", type="string", example="MI EMPRESA S.A.S."),
+ *         @OA\Property(property="expiration_date", type="string", example="2026-03-15"),
+ *         @OA\Property(property="days_remaining", type="integer", example=24),
+ *         @OA\Property(property="urgency_level", type="string", example="medium")
+ *     ),
+ *     @OA\Property(property="read_at", type="string", format="date-time", nullable=true, example=null),
  *     @OA\Property(property="created_at", type="string", format="date-time", readOnly=true)
  * )
  */

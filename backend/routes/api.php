@@ -91,6 +91,21 @@ Route::group(['prefix' => 'v1'], function () {
             });
         });
 
+        // Notificaciones de vencimiento de certificados
+        Route::group(['prefix' => 'certificates'], function () {
+            Route::get('/expiring', [\App\Http\Controllers\NotificationController::class, 'expiring']);
+        });
+
+        Route::group(['prefix' => 'notifications'], function () {
+            Route::get('/', [\App\Http\Controllers\NotificationController::class, 'index']);
+            Route::post('/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead']);
+            Route::post('/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead']);
+        });
+
+        Route::group(['prefix' => 'admin'], function () {
+            Route::post('/certificates/notify-now', [\App\Http\Controllers\NotificationController::class, 'triggerNow']);
+        });
+
         // Webhooks
         Route::group(['prefix' => 'webhooks'], function () {
             Route::get('/events', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'availableEvents']);

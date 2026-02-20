@@ -7,7 +7,7 @@
             "name": "Soporte Matias",
             "email": "soporte@matias.com.co"
         },
-        "version": "1.7.0"
+        "version": "1.8.0"
     },
     "servers": [
         {
@@ -1989,6 +1989,164 @@
                 }
             }
         },
+        "/certificates/expiring": {
+            "get": {
+                "tags": [
+                    "Notificaciones"
+                ],
+                "summary": "Certificados próximos a vencer",
+                "description": "Retorna los certificados PROCESSED que vencen dentro del umbral configurado.\r\n     *                  Empresas ven solo los suyos; administradores ven todos.",
+                "operationId": "b32bbb4c709f16d8b2ac3c41ac16701a",
+                "parameters": [
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "description": "Días de antelación (default: 30)",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de certificados próximos a vencer"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/notifications": {
+            "get": {
+                "tags": [
+                    "Notificaciones"
+                ],
+                "summary": "Listar notificaciones del usuario autenticado",
+                "description": "Retorna las notificaciones persistidas en base de datos para el usuario actual.",
+                "operationId": "0f031f66cd8c52bf73e89fb2d050ad83",
+                "parameters": [
+                    {
+                        "name": "unread_only",
+                        "in": "query",
+                        "description": "Solo no leídas (true/false)",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Registros por página (default: 20)",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de notificaciones"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/notifications/{id}/read": {
+            "post": {
+                "tags": [
+                    "Notificaciones"
+                ],
+                "summary": "Marcar notificación como leída",
+                "operationId": "e8ec77e64be528452b6b9ee62d832d70",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notificación marcada como leída"
+                    },
+                    "404": {
+                        "description": "Notificación no encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/notifications/read-all": {
+            "post": {
+                "tags": [
+                    "Notificaciones"
+                ],
+                "summary": "Marcar todas las notificaciones como leídas",
+                "operationId": "e873443612632a319ae0f88db368dd7a",
+                "responses": {
+                    "200": {
+                        "description": "Todas las notificaciones marcadas como leídas"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/certificates/notify-now": {
+            "post": {
+                "tags": [
+                    "Notificaciones"
+                ],
+                "summary": "Disparar notificaciones de vencimiento manualmente (solo admin)",
+                "description": "Despacha los jobs de notificación y reporte al administrador de forma inmediata.",
+                "operationId": "dea6660ae34aba37b8d24ba53b2a1c19",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "include_admin_report": {
+                                        "description": "Incluir reporte al admin (default: true)",
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Jobs despachados correctamente"
+                    },
+                    "403": {
+                        "description": "Sin permisos de administrador"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/settings/reports": {
             "get": {
                 "tags": [
@@ -2895,6 +3053,126 @@
                     }
                 },
                 "type": "object"
+            },
+            "ExpiringCertificate": {
+                "description": "Certificado próximo a vencer (status PROCESSED)",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 12
+                    },
+                    "company_name": {
+                        "type": "string",
+                        "example": "MI EMPRESA S.A.S."
+                    },
+                    "dni": {
+                        "type": "string",
+                        "example": "900455420"
+                    },
+                    "dv": {
+                        "type": "integer",
+                        "example": 8
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "empresa@correo.com",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "3001234567",
+                        "nullable": true
+                    },
+                    "expiration_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-03-15 00:00:00"
+                    },
+                    "expiration_date_formatted": {
+                        "type": "string",
+                        "example": "15-03-2026 12:00:00 am"
+                    },
+                    "days_remaining": {
+                        "type": "integer",
+                        "example": 24
+                    },
+                    "urgency_level": {
+                        "type": "string",
+                        "enum": [
+                            "critical",
+                            "high",
+                            "medium",
+                            "low"
+                        ],
+                        "example": "medium"
+                    },
+                    "city": {
+                        "type": "string",
+                        "example": "Bogotá D.C.",
+                        "nullable": true
+                    },
+                    "legal_representative": {
+                        "type": "string",
+                        "example": "JUAN PÉREZ"
+                    }
+                },
+                "type": "object"
+            },
+            "NotificationItem": {
+                "description": "Notificación persistida en base de datos (canal database de Laravel)",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true,
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                    },
+                    "type": {
+                        "type": "string",
+                        "readOnly": true,
+                        "example": "App\\\\Notifications\\\\CertificateExpiringNotification"
+                    },
+                    "data": {
+                        "description": "Datos serializados de la notificación",
+                        "properties": {
+                            "certificate_id": {
+                                "type": "integer",
+                                "example": 12
+                            },
+                            "company_name": {
+                                "type": "string",
+                                "example": "MI EMPRESA S.A.S."
+                            },
+                            "expiration_date": {
+                                "type": "string",
+                                "example": "2026-03-15"
+                            },
+                            "days_remaining": {
+                                "type": "integer",
+                                "example": 24
+                            },
+                            "urgency_level": {
+                                "type": "string",
+                                "example": "medium"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "read_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -2930,6 +3208,10 @@
         {
             "name": "Webhooks",
             "description": "Gestión de endpoints externos para notificaciones en tiempo real"
+        },
+        {
+            "name": "Notificaciones",
+            "description": "Alertas de vencimiento de certificados: listado, marcado de lectura y disparo manual"
         },
         {
             "name": "Datos Maestros",
