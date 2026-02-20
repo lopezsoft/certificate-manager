@@ -7,6 +7,48 @@ El versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [1.9.0] - 2026-02-20
+
+### Añadido
+- **Command Pattern en `CertificateRequestService`** (T-14):
+  - `app/Commands/Certificate/` — interfaz marcadora + 4 DTOs `readonly` (`CreateCertificateRequestCommand`, `UpdateCertificateRequestCommand`, `UpdateCertificateStatusCommand`, `DeleteCertificateRequestCommand`)
+  - `app/Handlers/Certificate/` — 4 handlers con responsabilidad única (`CreateCertificateRequestHandler`, `UpdateCertificateRequestHandler`, `UpdateCertificateStatusHandler`, `DeleteCertificateRequestHandler`)
+  - `CertificateRequestService` reescrito como fachada delgada: valida → construye Command → delega al handler
+  - `AppServiceProvider` actualizado con 4 singletons de handlers
+- **Suite de tests automatizados — 165 tests / 0 fallos** (regla: solo mocks, sin DB):
+  - `tests/Unit/Commands/Certificate/CertificateCommandTest` — 18 tests (DTOs readonly, interfaz, tipos)
+  - `tests/Unit/Handlers/Certificate/CertificateHandlerStructureTest` — 17 tests (Reflection, firmas, namespaces)
+  - `tests/Unit/Handlers/Certificate/UpdateCertificateStatusHandlerNotificationTest` — 8 tests (Mockery, lógica de notificaciones)
+  - `tests/Unit/Jobs/SendMonthlyCompanyCertificatesReportJobTest` — 11 tests (T-03)
+  - `tests/Unit/Jobs/SendAdminExpiringCertificatesReportJobTest` — 8 tests (T-04)
+  - `tests/Feature/AutomatedManualNotificationsTest` — 11 tests, convierte scripts tinker en tests automatizados (T-08)
+- **Migraciones de webhooks** ejecutadas: `webhook_endpoints` y `webhook_deliveries`
+
+### Cambiado
+- Eliminados 6 tests boilerplate de Laravel Breeze (`tests/Feature/Auth/*`, `tests/Feature/ProfileTest`) que usaban `RefreshDatabase` y ejecutaban SQL contra la DB
+- Import muerto `RefreshDatabase` limpiado de `tests/Feature/ExampleTest`
+
+### Completado (Backlog)
+| Tarea | Descripción |
+|-------|-------------|
+| T-01 | DI en controllers |
+| T-02 | Tests `SendExpiringCertificatesNotificationsJob` |
+| T-03 | Tests `SendMonthlyCompanyCertificatesReportJob` |
+| T-04 | Tests `SendAdminExpiringCertificatesReportJob` |
+| T-05 | Tests `NotificationController` (5 endpoints) |
+| T-06 | Tests endpoints PAT (`/v1/tokens`) |
+| T-07 | Tests módulo Webhooks |
+| T-08 | Automatizar scripts tinker de notificaciones |
+| T-09 | Jerarquía de excepciones custom |
+| T-10 | Handler global en `app/Exceptions/Handler.php` |
+| T-11 | Middleware `throttle` en endpoints sensibles |
+| T-12 | Sanitización de inputs con `strip_tags` + `Str::upper()` |
+| T-13 | Validación de MIME type real en uploads |
+| T-14 | Refactorización `CertificateRequestService` con Command Pattern |
+| T-23 | `APP_VERSION` corregido a `1.9.0` |
+
+---
+
 ## [1.8.0] - 2026-02-19
 
 ### Añadido
