@@ -1,0 +1,49 @@
+// ─── Webhooks — estilos globales ────────────────────────────────────────────
+
+// Badges de estado de salud del webhook
+.badge-webhook {
+  &-healthy  { background-color: #4CAF50; color: #fff; }
+  &-degraded { background-color: #FF9800; color: #fff; }
+  &-failing  { background-color: #F44336; color: #fff; }
+  &-unknown  { background-color: #9E9E9E; color: #fff; }
+}
+
+// Badges de estado de entrega
+.badge-delivery {
+  &-success  { background-color: #4CAF50; color: #fff; }
+  &-failed   { background-color: #F44336; color: #fff; }
+  &-pending  { background-color: #2196F3; color: #fff; }
+  &-retrying { background-color: #FF9800; color: #fff; }
+}
+
+// URL larga en tabla
+.webhook-url {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+// Panel payload con scroll
+.webhook-payload {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 0.75rem;
+  font-family: monospace;
+  font-size: 0.8125rem;
+  max-height: 320px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+// Icono de estado activo/inactivo
+.webhook-toggle {
+  cursor: pointer;
+  transition: opacity .2s;
+
+  &.inactive { opacity: .5; }
+}

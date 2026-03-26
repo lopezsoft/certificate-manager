@@ -1,8 +1,8 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import {ReportsHeaderComponent} from './index';
+import { ReportsHeaderComponent } from './index';
 import { SettingsContainerComponent } from './settings-container.component';
-import {GeneralSettingsComponent} from "./general-settings/general-settings.component";
+import { GeneralSettingsComponent } from "./general-settings/general-settings.component";
 
 const routes: Routes = [
   {
@@ -16,6 +16,10 @@ const routes: Routes = [
   {
     path: 'general',
     component: GeneralSettingsComponent,
+  },
+  {
+    path: 'webhooks',
+    loadChildren: () => import('./webhooks/webhooks.module').then((m) => m.WebhooksModule),
   }
 ];
 

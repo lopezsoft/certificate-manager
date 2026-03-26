@@ -1,0 +1,89 @@
+<div class="content-wrapper">
+  <div class="content-body">
+    <div class="card">
+      <div class="card-header border-bottom">
+        <h4 class="card-title mb-0">{{ editing ? 'Editar' : 'Nuevo' }} {{ title
+          }}</h4>
+      </div>
+
+      <div class="card-body pt-2">
+        <form [formGroup]="customForm" (ngSubmit)="onSubmit()" novalidate>
+
+          <!-- URL -->
+          <div class="mb-1">
+            <label class="form-label" for="url">URL del endpoint <span
+                class="text-danger">*</span></label>
+            <input
+              id="url"
+              type="url"
+              class="form-control"
+              formControlName="url"
+              placeholder="https://tu-servidor.com/webhook"
+              [class.is-invalid]="customForm.get('url')?.invalid && customForm.get('url')?.touched" />
+            <div class="invalid-feedback">
+              Ingresa una URL válida (debe comenzar con http:// o https://).
+            </div>
+          </div>
+
+          <!-- Descripción -->
+          <div class="mb-1">
+            <label class="form-label" for="description">Descripción</label>
+            <input
+              id="description"
+              type="text"
+              class="form-control"
+              formControlName="description"
+              placeholder="Descripción opcional para identificar este webhook" />
+          </div>
+
+          <!-- Secreto (solo en creación) -->
+          <div class="mb-1" *ngIf="!editing">
+            <label class="form-label" for="secret">Secreto compartido</label>
+            <input
+              id="secret"
+              type="text"
+              class="form-control"
+              formControlName="secret"
+              placeholder="Deja en blanco para generar automáticamente" />
+            <small class="text-muted">
+              Se usará para firmar las peticiones con HMAC-SHA256.
+              Podrás rotarlo desde la lista en cualquier momento.
+            </small>
+          </div>
+
+          <!-- Eventos -->
+          <div class="mb-2">
+            <label class="form-label">Eventos <span
+                class="text-danger">*</span></label>
+            <ng-select
+              formControlName="events"
+              [items]="eventTypes"
+              [multiple]="true"
+              [closeOnSelect]="false"
+              placeholder="Selecciona uno o más eventos"
+              [class.is-invalid]="customForm.get('events')?.invalid && customForm.get('events')?.touched"></ng-select>
+            <div
+              class="text-danger small mt-25"
+              *ngIf="customForm.get('events')?.invalid && customForm.get('events')?.touched">
+              Selecciona al menos un evento.
+            </div>
+          </div>
+
+          <!-- Botones -->
+          <div class="d-flex gap-1 mt-2">
+            <button type="submit" class="btn btn-primary" [disabled]="loading">
+              <span *ngIf="loading"
+                class="spinner-border spinner-border-sm me-1"></span>
+              {{ editing ? 'Actualizar' : 'Crear webhook' }}
+            </button>
+            <button type="button" class="btn btn-outline-secondary"
+              (click)="cancel()">
+              Cancelar
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
