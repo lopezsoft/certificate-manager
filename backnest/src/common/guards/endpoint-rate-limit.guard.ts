@@ -37,7 +37,7 @@ export class EndpointRateLimitGuard implements CanActivate {
     const request = http.getRequest<FastifyRequest>();
     const reply = http.getResponse<FastifyReply>();
 
-    const routePath = `${request.method}:${request.routerPath ?? request.url.split('?')[0]}`;
+    const routePath = `${request.method}:${request.routeOptions?.url ?? request.url.split('?')[0]}`;
     const identifier = this.getIdentifier(request);
     const key = `${routePath}:${identifier}`;
 

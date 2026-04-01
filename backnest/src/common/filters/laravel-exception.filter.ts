@@ -39,7 +39,7 @@ export class LaravelExceptionFilter implements ExceptionFilter {
           message: 'Los datos enviados no son válidos.',
           errors,
         };
-        reply.status(422).send(body);
+        reply.code(422).send(body);
         return;
       }
 
@@ -49,13 +49,13 @@ export class LaravelExceptionFilter implements ExceptionFilter {
           : (exceptionResponse as { message?: string }).message ??
           exception.message;
 
-      reply.status(status).send({ success: false, message });
+      reply.code(status).send({ success: false, message });
       return;
     }
 
     // Error de base de datos (unique constraint, etc.)
     if (exception instanceof QueryFailedError) {
-      reply.status(HttpStatus.UNPROCESSABLE_ENTITY).send({
+      reply.code(HttpStatus.UNPROCESSABLE_ENTITY).send({
         success: false,
         message: 'Error en la base de datos.',
         errors: {},
@@ -67,7 +67,7 @@ export class LaravelExceptionFilter implements ExceptionFilter {
     const message =
       exception instanceof Error ? exception.message : 'Error interno del servidor.';
 
-    reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
+    reply.code(HttpStatus.INTERNAL_SERVER_ERROR).send({
       success: false,
       message,
     });
