@@ -55,20 +55,16 @@ export const ALL_ENTITIES = [
 
 export const databaseConfig: TypeOrmModuleAsyncOptions = {
   inject: [ConfigService],
-  useFactory: (configService: ConfigService): DataSourceOptions => {
-    const dbType = (configService.get<string>('database.type') ?? 'postgres') as DataSourceOptions['type'];
-
-    return {
-      type: dbType,
-      host: configService.get<string>('database.host'),
-      port: configService.get<number>('database.port'),
-      username: configService.get<string>('database.username'),
-      password: configService.get<string>('database.password'),
-      database: configService.get<string>('database.database'),
-      entities: ALL_ENTITIES,
-      synchronize: configService.get<boolean>('database.synchronize') ?? false,
-      logging: configService.get<boolean>('database.logging') ?? false,
-      extra: dbType === 'postgres' ? { options: "-c TimeZone='America/Bogota'" } : undefined,
-    };
-  },
+  useFactory: (configService: ConfigService): DataSourceOptions => ({
+    type: 'mariadb',
+    host: configService.get<string>('database.host'),
+    port: configService.get<number>('database.port'),
+    username: configService.get<string>('database.username'),
+    password: configService.get<string>('database.password'),
+    database: configService.get<string>('database.database'),
+    entities: ALL_ENTITIES,
+    synchronize: configService.get<boolean>('database.synchronize') ?? false,
+    logging: configService.get<boolean>('database.logging') ?? false,
+    timezone: 'America/Bogota',
+  }),
 };

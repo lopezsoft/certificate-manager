@@ -5,12 +5,12 @@ import { join } from 'path';
 config(); // Load .env
 
 export default new DataSource({
-  type: (process.env.DB_TYPE as any) || 'postgres',
+  type: 'mariadb',
   host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432', 10),
+  port: parseInt(process.env.DB_PORT || '3306', 10),
   username: process.env.DB_USERNAME || 'root',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_DATABASE || 'cm_test',
+  database: process.env.DB_DATABASE || 'certificate_manager',
   entities: [join(__dirname, 'src/database/entities/**/*.entity.{ts,js}')],
   migrations: [join(__dirname, 'src/database/migrations/**/*.{ts,js}')],
   synchronize: false,
