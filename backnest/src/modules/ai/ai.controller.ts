@@ -7,7 +7,14 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
@@ -41,6 +48,8 @@ export class AiController {
    */
   @Get('results/:certificateRequestId')
   @ApiOperation({ summary: 'Resultados de análisis de documentos' })
+  @ApiParam({ name: 'certificateRequestId', type: Number })
+  @ApiOkResponse({ description: 'Resultados del análisis de documentos' })
   async results(
     @Param('certificateRequestId', ParseIntPipe) id: number,
   ) {
@@ -53,6 +62,8 @@ export class AiController {
    */
   @Post('analyze')
   @ApiOperation({ summary: 'Analizar documento con OCR/IA' })
+  @ApiBody({ type: AnalyzeDocumentDto })
+  @ApiOkResponse({ description: 'Documento analizado con OCR/IA' })
   async analyze(@Body() dto: AnalyzeDocumentDto) {
     const data = await this.aiService.analyzeDocument(
       dto.file_manager_id,

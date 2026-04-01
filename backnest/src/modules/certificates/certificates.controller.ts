@@ -12,9 +12,21 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTooManyRequestsResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
+import { EndpointRateLimit } from '@common/decorators/rate-limit.decorator';
+import { EndpointRateLimitGuard } from '@common/guards/endpoint-rate-limit.guard';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 import { User } from '@database/entities/user.entity';
 import { CertificatesService } from './certificates.service';
@@ -43,6 +55,13 @@ export class CertificatesController {
    */
   @Get()
   @ApiOperation({ summary: 'Listar solicitudes de certificado (paginado)' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'query', required: false, type: String })
+  @ApiQuery({ name: 'request_status', required: false, type: String })
+  @ApiQuery({ name: 'start_date', required: false, type: String })
+  @ApiQuery({ name: 'end_date', required: false, type: String })
+  @ApiOkResponse({ description: 'Listado paginado de solicitudes' })
   async index(@Query() query: CertFilterQuery, @CurrentUser() user: User) {
     const companyId = (user as any).companyId;
     return this.certificatesService.findAll(companyId, query);
@@ -54,6 +73,9 @@ export class CertificatesController {
    */
   @Get('all')
   @ApiOperation({ summary: 'Listar todas las solicitudes (admin)' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiOkResponse({ description: 'Listado global paginado de solicitudes' })
   async all(@Query() query: CertFilterQuery) {
     return this.certificatesService.findAllGlobal(query);
   }
@@ -63,6 +85,8 @@ export class CertificatesController {
    */
   @Get(':id')
   @ApiOperation({ summary: 'Obtener solicitud por ID' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiOkResponse({ description: 'Detalle de solicitud' })
   async show(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: User,
@@ -76,7 +100,12 @@ export class CertificatesController {
     * POST /api/v1/certificate-request
    */
   @Post()
+  @UseGuards(JwtAuthGuard, EndpointRateLimitGuard)
+  @EndpointRateLimit({ max: 10, windowMs: 60_000 })
   @ApiOperation({ summary: 'Crear solicitud de certificado' })
+  @ApiBody({ type: CreateCertificateRequestDto })
+  @ApiCreatedResponse({ description: 'Solicitud creada' })
+  @ApiTooManyRequestsResponse({ description: 'Demasiadas solicitudes' })
   async store(
     @Body() dto: CreateCertificateRequestDto,
     @CurrentUser() user: User,
@@ -90,6 +119,9 @@ export class CertificatesController {
    */
   @Put(':id')
   @ApiOperation({ summary: 'Actualizar solicitud de certificado' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiBody({ type: UpdateCertificateRequestDto })
+  @ApiOkResponse({ description: 'Solicitud actualizada' })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateCertificateRequestDto,
@@ -105,6 +137,9 @@ export class CertificatesController {
    */
   @Put(':id/status')
   @ApiOperation({ summary: 'Cambiar estado de la solicitud' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiBody({ type: UpdateCertificateStatusDto })
+  @ApiOkResponse({ description: 'Estado actualizado' })
   async updateStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateCertificateStatusDto,
@@ -126,6 +161,8 @@ export class CertificatesController {
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Eliminar solicitud de certificado' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiOkResponse({ description: 'Solicitud eliminada' })
   async destroy(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: User,
@@ -139,8 +176,13 @@ export class CertificatesController {
    * POST /api/v1/certificate-request/:id/send-mail
    */
   @Post(':id/send-mail')
+  @UseGuards(JwtAuthGuard, EndpointRateLimitGuard)
+  @EndpointRateLimit({ max: 10, windowMs: 60_000 })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Enviar correo asociado a la solicitud' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiOkResponse({ description: 'Correo enviado' })
+  @ApiTooManyRequestsResponse({ description: 'Demasiadas solicitudes' })
   async sendMail(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: User,

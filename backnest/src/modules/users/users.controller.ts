@@ -12,7 +12,16 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 import { UsersService } from './users.service';
@@ -28,12 +37,18 @@ export class UsersController {
 
   @Get()
   @ApiOperation({ summary: 'Listar usuarios (paginado)' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'query', required: false, type: String })
+  @ApiOkResponse({ description: 'Listado paginado de usuarios' })
   async index(@Query() query: PaginationQueryDto) {
     return this.usersService.findAll(query);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Obtener usuario por ID' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiOkResponse({ description: 'Detalle de usuario' })
   async show(@Param('id', ParseIntPipe) id: number) {
     const data = await this.usersService.findOne(id);
     return { dataRecords: { data } };
@@ -41,6 +56,8 @@ export class UsersController {
 
   @Post()
   @ApiOperation({ summary: 'Crear usuario' })
+  @ApiBody({ type: CreateUserDto })
+  @ApiCreatedResponse({ description: 'Usuario creado' })
   async store(@Body() dto: CreateUserDto) {
     const data = await this.usersService.create(dto);
     return { message: 'Recurso creado exitosamente.', dataRecords: { data } };
@@ -48,6 +65,9 @@ export class UsersController {
 
   @Put(':id')
   @ApiOperation({ summary: 'Actualizar usuario' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiBody({ type: UpdateUserDto })
+  @ApiOkResponse({ description: 'Usuario actualizado' })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateUserDto,
@@ -59,6 +79,8 @@ export class UsersController {
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Eliminar usuario' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiOkResponse({ description: 'Usuario eliminado' })
   async destroy(@Param('id', ParseIntPipe) id: number) {
     await this.usersService.remove(id);
     return { message: 'Recurso eliminado exitosamente.' };

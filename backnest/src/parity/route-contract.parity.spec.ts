@@ -46,6 +46,15 @@ function toLaravelPath(path: string): string {
   return `/api/v1/${normalizePath(path)}`;
 }
 
+function isAuthGuard(guard: unknown): boolean {
+  if (!guard || typeof guard !== 'function') {
+    return false;
+  }
+
+  const guardName = (guard as { name?: string }).name ?? '';
+  return guardName === 'JwtAuthGuard' || guardName.includes('AuthGuard');
+}
+
 function extractRoutes(controller: Type<unknown>): RouteInfo[] {
   const basePathRaw = Reflect.getMetadata(PATH_METADATA, controller) ?? '';
   const basePath = normalizePath(String(basePathRaw));
@@ -68,7 +77,8 @@ function extractRoutes(controller: Type<unknown>): RouteInfo[] {
     }
 
     const methodGuards = Reflect.getMetadata(GUARDS_METADATA, handler) ?? [];
-    const guarded = classGuards.length > 0 || methodGuards.length > 0;
+    const guards = [...classGuards, ...methodGuards];
+    const guarded = guards.some((g) => isAuthGuard(g));
 
     const method = VERB_MAP[methodMeta] ?? `UNKNOWN_${String(methodMeta)}`;
     const methodPaths = Array.isArray(routePathMeta) ? routePathMeta : [routePathMeta];

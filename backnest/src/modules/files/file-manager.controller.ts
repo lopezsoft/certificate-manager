@@ -10,10 +10,21 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTooManyRequestsResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { FastifyRequest } from 'fastify';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { FileManagerService } from './file-manager.service';
+import { EndpointRateLimit } from '@common/decorators/rate-limit.decorator';
+import { EndpointRateLimitGuard } from '@common/guards/endpoint-rate-limit.guard';
 
 @ApiTags('Files')
 @ApiBearerAuth()
@@ -27,6 +38,8 @@ export class FileManagerController {
    */
   @Get(':certificateRequestId/files')
   @ApiOperation({ summary: 'Archivos de una solicitud de certificado' })
+  @ApiParam({ name: 'certificateRequestId', type: Number })
+  @ApiOkResponse({ description: 'Listado de archivos de la solicitud' })
   async getByCertificate(
     @Param('certificateRequestId', ParseIntPipe) id: number,
   ) {
@@ -39,8 +52,24 @@ export class FileManagerController {
    * Multipart file upload (Fastify handles multipart via @fastify/multipart)
    */
   @Post(':certificateRequestId/files')
+  @UseGuards(JwtAuthGuard, EndpointRateLimitGuard)
+  @EndpointRateLimit({ max: 20, windowMs: 60_000 })
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Subir archivo a una solicitud' })
+  @ApiParam({ name: 'certificateRequestId', type: Number })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        category: { type: 'string' },
+        description: { type: 'string' },
+      },
+      required: ['file'],
+    },
+  })
+  @ApiOkResponse({ description: 'Archivo subido exitosamente' })
+  @ApiTooManyRequestsResponse({ description: 'Demasiadas solicitudes' })
   async upload(
     @Param('certificateRequestId', ParseIntPipe) certificateRequestId: number,
     @Req() req: FastifyRequest,
@@ -79,6 +108,9 @@ export class FileManagerController {
   @Delete(':certificateRequestId/files/:fileId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Eliminar archivo' })
+  @ApiParam({ name: 'certificateRequestId', type: Number })
+  @ApiParam({ name: 'fileId', type: Number })
+  @ApiOkResponse({ description: 'Archivo eliminado' })
   async destroy(@Param('fileId', ParseIntPipe) fileId: number) {
     await this.fileManagerService.deleteFile(fileId);
     return { message: 'Archivo eliminado exitosamente.' };

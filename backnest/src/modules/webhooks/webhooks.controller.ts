@@ -11,7 +11,15 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { User } from '@database/entities/user.entity';
@@ -29,6 +37,7 @@ export class WebhooksController {
   /** GET /api/v1/webhooks/events */
   @Get('events')
   @ApiOperation({ summary: 'Eventos disponibles para suscribir webhooks' })
+  @ApiOkResponse({ description: 'Listado de eventos disponibles' })
   async availableEvents() {
     const data = this.webhooksService.getAvailableEvents();
     return { dataRecords: { data } };
@@ -37,6 +46,7 @@ export class WebhooksController {
   /** GET /api/v1/webhooks */
   @Get()
   @ApiOperation({ summary: 'Listar webhook endpoints de la empresa' })
+  @ApiOkResponse({ description: 'Listado de webhooks de la empresa' })
   async index(@CurrentUser() user: User) {
     const companyId = (user as any).companyId;
     const data = await this.webhooksService.findAll(companyId);
@@ -46,6 +56,8 @@ export class WebhooksController {
   /** GET /api/v1/webhooks/:id */
   @Get(':id')
   @ApiOperation({ summary: 'Obtener endpoint por ID' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiOkResponse({ description: 'Detalle de endpoint webhook' })
   async show(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: User,
@@ -58,6 +70,8 @@ export class WebhooksController {
   /** POST /api/v1/webhooks */
   @Post()
   @ApiOperation({ summary: 'Crear webhook endpoint' })
+  @ApiBody({ type: CreateWebhookEndpointDto })
+  @ApiCreatedResponse({ description: 'Webhook endpoint creado' })
   async store(
     @Body() dto: CreateWebhookEndpointDto,
     @CurrentUser() user: User,
@@ -70,6 +84,9 @@ export class WebhooksController {
   /** PUT /api/v1/webhooks/:id */
   @Put(':id')
   @ApiOperation({ summary: 'Actualizar webhook endpoint' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiBody({ type: UpdateWebhookEndpointDto })
+  @ApiOkResponse({ description: 'Webhook endpoint actualizado' })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateWebhookEndpointDto,
@@ -84,6 +101,8 @@ export class WebhooksController {
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Eliminar webhook endpoint (soft delete)' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiOkResponse({ description: 'Webhook endpoint eliminado' })
   async destroy(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: User,
@@ -96,6 +115,8 @@ export class WebhooksController {
   /** GET /api/v1/webhooks/:id/deliveries */
   @Get(':id/deliveries')
   @ApiOperation({ summary: 'Historial de entregas de un endpoint' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiOkResponse({ description: 'Historial de entregas del endpoint' })
   async deliveries(@Param('id', ParseIntPipe) id: number) {
     const data = await this.webhooksService.getDeliveries(id);
     return { dataRecords: { data } };
@@ -104,6 +125,8 @@ export class WebhooksController {
   /** POST /api/v1/webhooks/:id/rotate-secret */
   @Post(':id/rotate-secret')
   @ApiOperation({ summary: 'Rotar secreto de firma del webhook endpoint' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiOkResponse({ description: 'Secreto rotado exitosamente' })
   async rotateSecret(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: User,
