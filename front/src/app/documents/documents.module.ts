@@ -12,6 +12,7 @@ import {CreateRequestComponent} from "./create-request/create-request.component"
 import {CertificateRequestComponent} from "./certificate-request.component";
 import {RequestInProcessComponent} from "./request-in-process/request-in-process.component";
 import {RequestInProcessViewComponent} from "./request-in-process-view/request-in-process-view.component";
+import {SharedModule} from "../shared/shared.module";
 
 @NgModule({
   declarations: [
@@ -28,7 +29,8 @@ import {RequestInProcessViewComponent} from "./request-in-process-view/request-i
     DocumentsRoutingModule,
     CoreModule,
     ExodoGridModule,
-    CommonComponentsModule
+    CommonComponentsModule,
+    SharedModule
   ],
   exports: [
       DocumentsComponent,

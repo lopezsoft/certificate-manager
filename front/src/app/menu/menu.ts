@@ -18,7 +18,7 @@ export const menu: CoreMenu[] = [
     icon: 'file',
     url: 'requests'
   },
- {
+  {
     id: 'customers',
     title: 'Clientes',
     // translate: 'MENU.DOCUMENTS',
@@ -34,7 +34,7 @@ export const menu: CoreMenu[] = [
     type: 'item',
     icon: 'file',
     url: 'profile'
-  },{
+  }, {
     id: 'settings',
     title: 'Ajustes',
     // translate: 'MENU.DOCUMENTS',
@@ -42,8 +42,13 @@ export const menu: CoreMenu[] = [
     icon: 'file',
     url: 'settings',
     role: [Role.Admin]
-  },
-  {
+  }, {
+    id: 'webhooks',
+    title: 'Webhooks',
+    type: 'item',
+    icon: 'link',
+    url: 'settings/webhooks',
+  }, {
     id: 'changes-history',
     title: 'Historial de cambios',
     type: 'item',

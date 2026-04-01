@@ -1,0 +1,127 @@
+<div class="content-wrapper">
+  <div class="content-body">
+
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h4 class="mb-0">Webhooks</h4>
+      <button class="btn btn-primary" (click)="newWebhook()">
+        <i data-feather="plus-circle" class="me-1"></i> Nuevo webhook
+      </button>
+    </div>
+
+    <!-- Spinner -->
+    <div *ngIf="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+    </div>
+
+    <!-- Sin resultados -->
+    <div *ngIf="!loading && webhooks.length === 0" class="card">
+      <div class="card-body text-center py-5 text-muted">
+        <i data-feather="link" class="mb-2"
+          style="width:48px;height:48px;opacity:.3"></i>
+        <p class="mb-0">No hay webhooks configurados aún.</p>
+        <button class="btn btn-outline-primary btn-sm mt-3"
+          (click)="newWebhook()">
+          Crear primer webhook
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="card" *ngIf="!loading && webhooks.length > 0">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>URL</th>
+                <th>Descripción</th>
+                <th>Eventos</th>
+                <th>Estado</th>
+                <th>Salud</th>
+                <th>Última entrega</th>
+                <th class="text-end">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let wh of webhooks">
+                <!-- URL -->
+                <td>
+                  <span class="webhook-url" [title]="wh.url">{{ wh.url }}</span>
+                </td>
+
+                <!-- Descripción -->
+                <td>{{ wh.description || '—' }}</td>
+
+                <!-- Eventos -->
+                <td>
+                  <span *ngFor="let ev of wh.events"
+                    class="badge bg-light text-dark me-1 mb-1">
+                    {{ ev }}
+                  </span>
+                </td>
+
+                <!-- Activo / Inactivo (toggle) -->
+                <td>
+                  <span
+                    class="badge webhook-toggle"
+                    [class.bg-success]="wh.is_active"
+                    [class.bg-secondary]="!wh.is_active"
+                    [class.inactive]="!wh.is_active"
+                    (click)="toggleActive(wh)"
+                    [title]="wh.is_active ? 'Click para desactivar' : 'Click para activar'">
+                    {{ wh.is_active ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+
+                <!-- Salud -->
+                <td>
+                  <span
+                    class="badge rounded-pill"
+                    [class]="'badge rounded-pill badge-webhook-' + wh.health_status">
+                    {{ wh.health_status | webhookHealth }}
+                  </span>
+                </td>
+
+                <!-- Última entrega -->
+                <td>
+                  {{ wh.last_delivery_at ? (wh.last_delivery_at |
+                  date:'dd/MM/yyyy HH:mm') : '—' }}
+                </td>
+
+                <!-- Acciones -->
+                <td class="text-end text-nowrap">
+                  <button
+                    class="btn btn-icon btn-sm btn-flat-info me-1"
+                    title="Ver entregas"
+                    (click)="viewDeliveries(wh.id)">
+                    <i data-feather="list"></i>
+                  </button>
+                  <button
+                    class="btn btn-icon btn-sm btn-flat-warning me-1"
+                    title="Editar"
+                    (click)="editWebhook(wh.id)">
+                    <i data-feather="edit"></i>
+                  </button>
+                  <button
+                    class="btn btn-icon btn-sm btn-flat-secondary me-1"
+                    title="Rotar secreto"
+                    (click)="rotateSecret(wh)">
+                    <i data-feather="refresh-cw"></i>
+                  </button>
+                  <button
+                    class="btn btn-icon btn-sm btn-flat-danger"
+                    title="Eliminar"
+                    (click)="deleteWebhook(wh)">
+                    <i data-feather="trash-2"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

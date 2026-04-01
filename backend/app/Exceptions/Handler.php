@@ -4,6 +4,7 @@ namespace App\Exceptions;
 
 use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -15,7 +16,7 @@ class Handler extends ExceptionHandler
      * @var array
      */
     protected $dontReport = [
-        //
+        CertificateException::class,
     ];
 
     /**
@@ -36,6 +37,13 @@ class Handler extends ExceptionHandler
      */
     public function register()
     {
+        $this->renderable(function (CertificateException $e): JsonResponse {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], $e->getCode() ?: 400);
+        });
+
         $this->reportable(function (Throwable $e) {
             //
         });
@@ -55,3 +63,4 @@ class Handler extends ExceptionHandler
         parent::report($e);
     }
 }
+

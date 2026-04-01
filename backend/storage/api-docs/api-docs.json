@@ -1,0 +1,3225 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Certificate Manager API",
+        "description": "API REST para la gestión de solicitudes de certificados digitales. Requiere autenticación OAuth 2.0 con Laravel Passport.",
+        "contact": {
+            "name": "Soporte Matias",
+            "email": "soporte@matias.com.co"
+        },
+        "version": "1.8.0"
+    },
+    "servers": [
+        {
+            "url": "/api/v1",
+            "description": "API v1"
+        }
+    ],
+    "paths": {
+        "/tokens": {
+            "get": {
+                "tags": [
+                    "Tokens"
+                ],
+                "summary": "Listar tokens activos del usuario",
+                "description": "Retorna todos los Personal Access Tokens activos y no expirados del usuario autenticado.",
+                "operationId": "62a533924bf4cedeb69ca2274ef20d02",
+                "responses": {
+                    "200": {
+                        "description": "Lista de tokens",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/PersonalAccessToken"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tokens"
+                ],
+                "summary": "Crear Personal Access Token",
+                "description": "Genera un nuevo PAT de larga duración. El valor del token solo se expone en esta respuesta — guardarlo de inmediato. Límite: 10 tokens por día.",
+                "operationId": "d5f431358f9ce7e8bc4bf81b18877fe0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Token ERP Producción"
+                                    },
+                                    "expires_in_days": {
+                                        "description": "Días de validez (default: 90, máximo: 365)",
+                                        "type": "integer",
+                                        "maximum": 365,
+                                        "minimum": 1,
+                                        "example": 90
+                                    },
+                                    "abilities": {
+                                        "description": "Permisos del token. Usar ['*'] para acceso completo.",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "*"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token creado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "example": "9d471f3b-8c6e-4a2d-b9f0-1234567890ab"
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Token ERP Producción"
+                                                },
+                                                "token": {
+                                                    "type": "string",
+                                                    "example": "1|aB3cD4eF5gH6iJ7kL8mN9oP0qR1sT2uV"
+                                                },
+                                                "expires_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-05-19 10:00:00"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-02-19 10:00:00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token creado. Guárdelo ahora, no se mostrará de nuevo."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validación fallida",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Límite diario de creación alcanzado"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/tokens/{id}": {
+            "get": {
+                "tags": [
+                    "Tokens"
+                ],
+                "summary": "Detalle de un token",
+                "description": "Retorna los metadatos de un PAT específico. El valor del token no está disponible.",
+                "operationId": "7ed6e4450f398a190fcd3b8e473e7257",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID UUID del token",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalle del token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/PersonalAccessToken"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Token no encontrado"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Tokens"
+                ],
+                "summary": "Revocar un token",
+                "description": "Revoca e invalida inmediatamente el token indicado.",
+                "operationId": "c09d4a9dc2326f0d5c540f20fc5c36bd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID UUID del token",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Token revocado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Token no encontrado"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/tokens/revoke-all": {
+            "post": {
+                "tags": [
+                    "Tokens"
+                ],
+                "summary": "Revocar todos los tokens",
+                "description": "Revoca e invalida todos los tokens activos del usuario. Útil cuando las credenciales se ven comprometidas.",
+                "operationId": "33f4acb9260c75036718c2b143ce63f6",
+                "responses": {
+                    "200": {
+                        "description": "Todos los tokens revocados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "3 token(s) revocado(s) exitosamente."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/tokens/{id}/renew": {
+            "post": {
+                "tags": [
+                    "Tokens"
+                ],
+                "summary": "Renovar un token",
+                "description": "Crea un nuevo token con el mismo nombre y permisos, revoca el anterior. El nuevo valor solo se expone en esta respuesta.",
+                "operationId": "71456938b349396a0d0b0fc3566ff761",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID UUID del token a renovar",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Token renovado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "example": "a1b2c3d4-..."
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Token ERP Producción (renovado)"
+                                                },
+                                                "token": {
+                                                    "type": "string",
+                                                    "example": "2|xY9zA0bC1dE2fG3h..."
+                                                },
+                                                "expires_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token renovado. Guárdelo ahora, no se mostrará de nuevo."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Token no encontrado"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/profile/types": {
+            "get": {
+                "tags": [
+                    "Perfil"
+                ],
+                "summary": "Listar tipos de usuario",
+                "description": "Retorna los tipos de usuario disponibles en el sistema.",
+                "operationId": "86d0d014fbad3663eca93f68165e089e",
+                "responses": {
+                    "200": {
+                        "description": "Lista de tipos de usuario"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Iniciar sesión",
+                "description": "Autentica al usuario y retorna el token Bearer de acceso OAuth 2.0.",
+                "operationId": "8cb7742ae98d0990acb2907c4e00bf24",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "usuario@empresa.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "contraseña123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login exitoso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "token": {
+                                            "type": "string",
+                                            "example": "eyJ0eXAiOiJKV1Qi..."
+                                        },
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "Bearer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Credenciales incorrectas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "get": {
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Cerrar sesión",
+                "description": "Revoca el token Bearer activo del usuario autenticado.",
+                "operationId": "b0190b67ea8c4b1e0ee19077f390c4ab",
+                "responses": {
+                    "200": {
+                        "description": "Sesión cerrada exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/profile": {
+            "get": {
+                "tags": [
+                    "Perfil"
+                ],
+                "summary": "Obtener perfil del usuario autenticado",
+                "operationId": "98ad4aedd40e987b1f14429cc045edfc",
+                "responses": {
+                    "200": {
+                        "description": "Datos del usuario autenticado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "first_name": {
+                                                                "type": "string",
+                                                                "example": "Juan"
+                                                            },
+                                                            "last_name": {
+                                                                "type": "string",
+                                                                "example": "Pérez"
+                                                            },
+                                                            "email": {
+                                                                "type": "string",
+                                                                "example": "juan@empresa.com"
+                                                            },
+                                                            "company_id": {
+                                                                "type": "integer",
+                                                                "example": 7
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/profile/{id}": {
+            "put": {
+                "tags": [
+                    "Perfil"
+                ],
+                "summary": "Actualizar perfil de usuario",
+                "description": "Actualiza los datos del perfil. Los campos a modificar se envían como JSON serializado en 'records'. Permite subir avatar en base64 dentro del JSON.",
+                "operationId": "803c746d569f96949d024b52f2764373",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del usuario",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "records": {
+                                        "description": "JSON serializado con los campos a actualizar. Ejemplo: {first_name: Juan, last_name: Perez}",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Perfil actualizado exitosamente"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/reset-password": {
+            "post": {
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Restablecer contraseña",
+                "description": "Restablece la contraseña del usuario usando el token recibido por correo electrónico.",
+                "operationId": "24b1c68468bf984b8806908f211f3827",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token",
+                                    "email",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "type": "string",
+                                        "example": "a1b2c3d4e5f6..."
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "usuario@empresa.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "nuevaContraseña123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "nuevaContraseña123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Contraseña restablecida exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Token inválido o expirado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/forgot-password": {
+            "post": {
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Solicitar restablecimiento de contraseña",
+                "description": "Envía un enlace de restablecimiento de contraseña al correo electrónico indicado.",
+                "operationId": "888e4aa5b202b170b9fe831da90048c6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "usuario@empresa.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Enlace enviado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Email no registrado o inválido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/register": {
+            "post": {
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Registrar nueva empresa y usuario",
+                "description": "Crea una cuenta de empresa junto con el usuario administrador. Envía un correo de verificación al email registrado.",
+                "operationId": "573de1fed352c1205a32c4d1b9877375",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "city_id",
+                                    "first_name",
+                                    "last_name",
+                                    "company_name",
+                                    "email",
+                                    "password",
+                                    "password_confirmation",
+                                    "dni"
+                                ],
+                                "properties": {
+                                    "city_id": {
+                                        "description": "ID de la ciudad (ver /cities)",
+                                        "type": "integer",
+                                        "example": 149
+                                    },
+                                    "first_name": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "Juan"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "Pérez"
+                                    },
+                                    "company_name": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "Mi Empresa S.A.S."
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "juan@empresa.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "contraseña123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "contraseña123"
+                                    },
+                                    "dni": {
+                                        "description": "NIT de la empresa (único)",
+                                        "type": "string",
+                                        "maxLength": 30,
+                                        "example": "900455420"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Empresa registrada. Verifique el correo electrónico.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validación fallida (email o NIT duplicado)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/certificate-request": {
+            "get": {
+                "tags": [
+                    "Solicitudes de Certificado"
+                ],
+                "summary": "Listar mis solicitudes",
+                "description": "Retorna las solicitudes de la empresa autenticada. Estados: DRAFT|SENT|PENDING|ACCEPTED|PROCESSING|PROCESSED|REJECTED",
+                "operationId": "c42bb2f191e46810104726026a014fd3",
+                "parameters": [
+                    {
+                        "name": "request_status",
+                        "in": "query",
+                        "description": "Filtrar por estado del certificado",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "description": "Búsqueda por razón social, NIT, documento o representante",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Fecha inicio filtro (Y-m-d)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "Fecha fin filtro (Y-m-d)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Registros por página (default: 15)",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de solicitudes"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Solicitudes de Certificado"
+                ],
+                "summary": "Crear solicitud de certificado",
+                "description": "Crea una nueva solicitud de certificado digital. Requiere adjuntar entre 2 y 3 archivos (PDF/imagen). Límite: 10 solicitudes/minuto.",
+                "operationId": "8cbf351b63af3d2435b0538bb7f08d59",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "schema": "CreateCertificateRequestBody",
+                                "required": [
+                                    "city_id",
+                                    "identity_document_id",
+                                    "type_organization_id",
+                                    "document_number",
+                                    "address",
+                                    "legal_representative",
+                                    "company_name",
+                                    "dni",
+                                    "life"
+                                ],
+                                "properties": {
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 149
+                                    },
+                                    "identity_document_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "type_organization_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "document_number": {
+                                        "type": "string",
+                                        "example": "1234567890"
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "Calle 123 # 45-67"
+                                    },
+                                    "legal_representative": {
+                                        "type": "string",
+                                        "example": "JUAN PÉREZ"
+                                    },
+                                    "company_name": {
+                                        "type": "string",
+                                        "example": "MI EMPRESA S.A.S."
+                                    },
+                                    "dni": {
+                                        "type": "string",
+                                        "example": "900455420"
+                                    },
+                                    "life": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "info": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Solicitud creada exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validación fallida o solicitud duplicada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Demasiadas solicitudes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/certificate-request/all": {
+            "get": {
+                "tags": [
+                    "Solicitudes de Certificado"
+                ],
+                "summary": "Listar todas las solicitudes (administrador)",
+                "description": "Retorna todas las solicitudes activas de todas las empresas.",
+                "operationId": "d50f6fd514d32f7a6a7039386a6198b2",
+                "parameters": [
+                    {
+                        "name": "request_status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de solicitudes"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/certificate-request/{id}": {
+            "get": {
+                "tags": [
+                    "Solicitudes de Certificado"
+                ],
+                "summary": "Obtener detalle de una solicitud",
+                "operationId": "228b2949890edab1ec3739bb48158350",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalle de la solicitud",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CertificateRequest"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Solicitudes de Certificado"
+                ],
+                "summary": "Actualizar solicitud de certificado",
+                "operationId": "53a34b911dac0c039f52f0ab50f626d1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CertificateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Solicitud actualizada"
+                    },
+                    "422": {
+                        "description": "Validación fallida"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Solicitudes de Certificado"
+                ],
+                "summary": "Eliminar solicitud de certificado",
+                "operationId": "afd6293e280fa0aaa201cab99575d534",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Solicitud eliminada"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/certificate-request/{id}/status": {
+            "put": {
+                "tags": [
+                    "Solicitudes de Certificado"
+                ],
+                "summary": "Actualizar estado de una solicitud",
+                "operationId": "cb94ebbccac485c4db438c3e3b934a7e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "schema": "UpdateStatusBody",
+                                "required": [
+                                    "request_status"
+                                ],
+                                "properties": {
+                                    "request_status": {
+                                        "description": "DRAFT|SENT|PENDING|ACCEPTED|PROCESSING|PROCESSED|REJECTED",
+                                        "type": "string",
+                                        "example": "PROCESSING"
+                                    },
+                                    "comments": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "user_of_change": {
+                                        "description": "USER|MANAGER",
+                                        "type": "string",
+                                        "example": "MANAGER"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Estado actualizado"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/certificate-request/{id}/send-mail": {
+            "post": {
+                "tags": [
+                    "Solicitudes de Certificado"
+                ],
+                "summary": "Enviar solicitud por correo electrónico",
+                "description": "Envía la solicitud al proveedor y actualiza el estado a PROCESSING. Límite: 5 envíos/minuto.",
+                "operationId": "cfdbe84f97ecc081eec49168bdb0cc75",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "schema": "SendMailBody",
+                                "properties": {
+                                    "comments": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Correo enviado exitosamente"
+                    },
+                    "400": {
+                        "description": "Solicitud no encontrada o sin archivos adjuntos"
+                    },
+                    "429": {
+                        "description": "Demasiados envíos"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/certificate-request/{id}/files": {
+            "post": {
+                "tags": [
+                    "Archivos"
+                ],
+                "summary": "Subir archivo a una solicitud",
+                "description": "Adjunta un archivo (PDF, imagen o ZIP con certificado P12/PFX) a una solicitud existente. Máximo 6 archivos por solicitud. Límite de tamaño: 2 MB por archivo. Límite: 10 cargas/minuto.",
+                "operationId": "9d78f7cf6056dc9c37cb23eeb7326183",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la solicitud de certificado",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "file"
+                                ],
+                                "properties": {
+                                    "file": {
+                                        "description": "Archivo a adjuntar (PDF, JPG, PNG, ZIP)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "document_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ATTACHED"
+                                        ],
+                                        "example": "ATTACHED"
+                                    },
+                                    "pin": {
+                                        "description": "PIN del certificado (solo para archivos ZIP con P12/PFX)",
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Archivo subido correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FileManager"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Solicitud no encontrada, límite de archivos alcanzado o archivo demasiado grande",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Demasiadas cargas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/certificate-request/{id}/files/{fileId}": {
+            "delete": {
+                "tags": [
+                    "Archivos"
+                ],
+                "summary": "Eliminar un archivo de una solicitud",
+                "operationId": "32e3e6ee01a113e14046f93f54886fb9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la solicitud de certificado",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "fileId",
+                        "in": "path",
+                        "description": "ID del archivo a eliminar",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Archivo eliminado correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Archivo no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/company/settings": {
+            "get": {
+                "tags": [
+                    "Configuración"
+                ],
+                "summary": "Obtener configuración general de la empresa",
+                "description": "Retorna la configuración general de la empresa autenticada. Si no existe, la crea automáticamente.",
+                "operationId": "16e387654c453d9bb4a444c16dc6e2c6",
+                "responses": {
+                    "200": {
+                        "description": "Configuración de la empresa",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "settings": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Configuración"
+                ],
+                "summary": "Actualizar configuración general de la empresa",
+                "description": "Actualiza los parámetros de configuración general de la empresa autenticada.",
+                "operationId": "2fe7642020a8a5b42df33d05ce8355c2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "records": {
+                                        "description": "JSON serializado con los campos a actualizar",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Configuración actualizada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/company": {
+            "get": {
+                "tags": [
+                    "Configuración"
+                ],
+                "summary": "Obtener datos de la empresa autenticada",
+                "description": "Retorna la información completa de la empresa del usuario autenticado.",
+                "operationId": "4fe8a45ab813253de6aed421549d5b34",
+                "responses": {
+                    "200": {
+                        "description": "Datos de la empresa",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/consume/{year}": {
+            "get": {
+                "tags": [
+                    "Configuración"
+                ],
+                "summary": "Consumo de documentos por año",
+                "description": "Retorna el resumen de documentos procesados para la empresa autenticada durante el año indicado.",
+                "operationId": "81d3b16e1da6414d758af81faaecbd75",
+                "parameters": [
+                    {
+                        "name": "year",
+                        "in": "path",
+                        "description": "Año de consulta",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2025
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Resumen de consumo anual",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/consume/{year}/{month}": {
+            "get": {
+                "tags": [
+                    "Configuración"
+                ],
+                "summary": "Consumo de documentos por mes",
+                "description": "Retorna el detalle de documentos procesados para la empresa autenticada en el mes y año indicados.",
+                "operationId": "e791eaf6526c1d248f43c735ada1edad",
+                "parameters": [
+                    {
+                        "name": "year",
+                        "in": "path",
+                        "description": "Año de consulta",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2025
+                        }
+                    },
+                    {
+                        "name": "month",
+                        "in": "path",
+                        "description": "Mes de consulta (1-12)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 6
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalle de consumo mensual",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/countries": {
+            "get": {
+                "tags": [
+                    "Datos Maestros"
+                ],
+                "summary": "Listar países activos",
+                "description": "Retorna todos los países activos disponibles en el sistema.",
+                "operationId": "45d1df8f6092542949f73b6779b2fec2",
+                "responses": {
+                    "200": {
+                        "description": "Lista de países",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Colombia"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/departments": {
+            "get": {
+                "tags": [
+                    "Datos Maestros"
+                ],
+                "summary": "Listar departamentos",
+                "description": "Retorna todos los departamentos disponibles en el sistema.",
+                "operationId": "013162ba202815ff66de50a16dbfd33c",
+                "responses": {
+                    "200": {
+                        "description": "Lista de departamentos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 5
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Antioquia"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/cities": {
+            "get": {
+                "tags": [
+                    "Datos Maestros"
+                ],
+                "summary": "Listar ciudades",
+                "description": "Retorna ciudades con sus códigos postales. Soporta búsqueda por nombre o código de ciudad.",
+                "operationId": "3e06ade7a07821d5c7bbd6d3a207f24e",
+                "parameters": [
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "description": "Búsqueda por nombre o código de ciudad",
+                        "schema": {
+                            "type": "string",
+                            "example": "Medellín"
+                        }
+                    },
+                    {
+                        "name": "code",
+                        "in": "query",
+                        "description": "Filtrar por código de ciudad exacto",
+                        "schema": {
+                            "type": "string",
+                            "example": "05001"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de ciudades",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 149
+                                                            },
+                                                            "name_city": {
+                                                                "type": "string",
+                                                                "example": "Medellín"
+                                                            },
+                                                            "city_code": {
+                                                                "type": "string",
+                                                                "example": "05001"
+                                                            },
+                                                            "postalCode": {
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/organization-type": {
+            "get": {
+                "tags": [
+                    "Datos Maestros"
+                ],
+                "summary": "Listar tipos de organización",
+                "description": "Retorna todos los tipos de organización disponibles para el registro de empresas.",
+                "operationId": "b2d86cd20d022c242e11a6f8203574c0",
+                "responses": {
+                    "200": {
+                        "description": "Lista de tipos de organización",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Sociedad por Acciones Simplificada"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/identity-documents": {
+            "get": {
+                "tags": [
+                    "Datos Maestros"
+                ],
+                "summary": "Listar tipos de documento de identidad",
+                "description": "Retorna los tipos de documento de identidad soportados (Cédula, NIT, RUT, etc.).",
+                "operationId": "d2e7ea265c7edf33fa13a8b55a0b989d",
+                "responses": {
+                    "200": {
+                        "description": "Lista de tipos de documento",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "code": {
+                                                                "type": "string",
+                                                                "example": "CC"
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Cédula de Ciudadanía"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/certificates/expiring": {
+            "get": {
+                "tags": [
+                    "Notificaciones"
+                ],
+                "summary": "Certificados próximos a vencer",
+                "description": "Retorna los certificados PROCESSED que vencen dentro del umbral configurado.\r\n     *                  Empresas ven solo los suyos; administradores ven todos.",
+                "operationId": "b32bbb4c709f16d8b2ac3c41ac16701a",
+                "parameters": [
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "description": "Días de antelación (default: 30)",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de certificados próximos a vencer"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/notifications": {
+            "get": {
+                "tags": [
+                    "Notificaciones"
+                ],
+                "summary": "Listar notificaciones del usuario autenticado",
+                "description": "Retorna las notificaciones persistidas en base de datos para el usuario actual.",
+                "operationId": "0f031f66cd8c52bf73e89fb2d050ad83",
+                "parameters": [
+                    {
+                        "name": "unread_only",
+                        "in": "query",
+                        "description": "Solo no leídas (true/false)",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Registros por página (default: 20)",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de notificaciones"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/notifications/{id}/read": {
+            "post": {
+                "tags": [
+                    "Notificaciones"
+                ],
+                "summary": "Marcar notificación como leída",
+                "operationId": "e8ec77e64be528452b6b9ee62d832d70",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notificación marcada como leída"
+                    },
+                    "404": {
+                        "description": "Notificación no encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/notifications/read-all": {
+            "post": {
+                "tags": [
+                    "Notificaciones"
+                ],
+                "summary": "Marcar todas las notificaciones como leídas",
+                "operationId": "e873443612632a319ae0f88db368dd7a",
+                "responses": {
+                    "200": {
+                        "description": "Todas las notificaciones marcadas como leídas"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/certificates/notify-now": {
+            "post": {
+                "tags": [
+                    "Notificaciones"
+                ],
+                "summary": "Disparar notificaciones de vencimiento manualmente (solo admin)",
+                "description": "Despacha los jobs de notificación y reporte al administrador de forma inmediata.",
+                "operationId": "dea6660ae34aba37b8d24ba53b2a1c19",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "include_admin_report": {
+                                        "description": "Incluir reporte al admin (default: true)",
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Jobs despachados correctamente"
+                    },
+                    "403": {
+                        "description": "Sin permisos de administrador"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/settings/reports": {
+            "get": {
+                "tags": [
+                    "Configuración"
+                ],
+                "summary": "Obtener configuración de encabezados de reportes",
+                "description": "Retorna los parámetros de encabezado utilizados en la generación de reportes y certificados.",
+                "operationId": "bd87b570c00c250f303d4a1041f53daf",
+                "responses": {
+                    "200": {
+                        "description": "Configuración de encabezados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/settings/reports/{id}": {
+            "put": {
+                "tags": [
+                    "Configuración"
+                ],
+                "summary": "Actualizar encabezado de reporte",
+                "description": "Actualiza un registro de configuración de encabezado de reporte por su ID.",
+                "operationId": "5d30e0f4e8b8e4b9a55e40faaa7dacbb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del encabezado a actualizar",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "records": {
+                                        "description": "JSON serializado con los campos a actualizar",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Encabezado actualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/webhooks/{id}/deliveries": {
+            "get": {
+                "tags": [
+                    "Webhooks"
+                ],
+                "summary": "Historial de entregas de un webhook",
+                "description": "Retorna el historial paginado de todos los intentos de entrega para un endpoint webhook específico. Incluye el estado (delivered/failed/pending), el código HTTP de respuesta y el payload enviado.",
+                "operationId": "067461ae7dcfcd0c9c6057f0bcea014d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del webhook endpoint",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Registros por página (default: 20)",
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Historial paginado de entregas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/WebhookDelivery"
+                                                    }
+                                                },
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/PaginationMeta"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Webhook no encontrado"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/webhooks/events": {
+            "get": {
+                "tags": [
+                    "Webhooks"
+                ],
+                "summary": "Listar tipos de evento disponibles",
+                "description": "Retorna todos los tipos de evento que pueden suscribirse en un webhook.",
+                "operationId": "74ed8a16eacdbe9f4c00a76602881090",
+                "responses": {
+                    "200": {
+                        "description": "Lista de tipos de evento",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            },
+                                            "example": [
+                                                "certificate_request.created",
+                                                "certificate_request.status_changed",
+                                                "certificate_request.ai_processed",
+                                                "certificate_request.file_uploaded",
+                                                "certificate_request.deleted",
+                                                "certificate.expiring"
+                                            ]
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/webhooks": {
+            "get": {
+                "tags": [
+                    "Webhooks"
+                ],
+                "summary": "Listar webhooks de la compañía",
+                "description": "Retorna todos los endpoints webhook configurados por la compañía autenticada.",
+                "operationId": "9c13b981583be96b1e7bcc059ceef6f2",
+                "responses": {
+                    "200": {
+                        "description": "Lista de webhooks",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/WebhookEndpoint"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Webhooks"
+                ],
+                "summary": "Crear webhook",
+                "description": "Registra un nuevo endpoint webhook para la compañía. Máximo 5 webhooks por compañía. El secret se genera automáticamente y solo se muestra en rotate-secret.",
+                "operationId": "963e4c34b6e774ed3dffb0339ae491c7",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "url",
+                                    "events"
+                                ],
+                                "properties": {
+                                    "url": {
+                                        "type": "string",
+                                        "format": "uri",
+                                        "example": "https://mi-erp.com/webhook"
+                                    },
+                                    "events": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "certificate_request.created",
+                                            "certificate_request.status_changed"
+                                        ]
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Notificaciones al ERP",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Webhook creado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WebhookEndpoint"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validación fallida (URL inválida, evento desconocido, límite alcanzado)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/webhooks/{id}": {
+            "get": {
+                "tags": [
+                    "Webhooks"
+                ],
+                "summary": "Obtener detalle de un webhook",
+                "operationId": "27c1cbf2e30b1c933380347a2eb4ebb8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalle del webhook",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WebhookEndpoint"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No encontrado"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Webhooks"
+                ],
+                "summary": "Actualizar webhook",
+                "description": "Actualiza la URL, los eventos suscritos, el estado activo/inactivo o la descripción. Todos los campos son opcionales.",
+                "operationId": "a2309314e5fb571e00563f03f6e92227",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "url": {
+                                        "type": "string",
+                                        "format": "uri",
+                                        "example": "https://mi-erp.com/nuevo-webhook"
+                                    },
+                                    "events": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "certificate_request.created"
+                                        ]
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Descripción actualizada",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Webhook actualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WebhookEndpoint"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validación fallida",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No encontrado"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Webhooks"
+                ],
+                "summary": "Eliminar webhook",
+                "operationId": "e286120dfa8a7cdb29aea0092f21fc89",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Webhook eliminado"
+                    },
+                    "404": {
+                        "description": "No encontrado"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/webhooks/{id}/rotate-secret": {
+            "post": {
+                "tags": [
+                    "Webhooks"
+                ],
+                "summary": "Rotar secret del webhook",
+                "description": "Genera un nuevo secret HMAC para el webhook. El secret solo se expone en esta respuesta — única oportunidad de guardarlo. El anterior secret queda invalidado de inmediato.",
+                "operationId": "7840e524f031f846c3d3a74e43bc9ed1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Nuevo secret generado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WebhookEndpoint"
+                                        },
+                                        "secret": {
+                                            "type": "string",
+                                            "example": "xK9mP2qL7nR4tY1uI8oP3aS6dF0gH5jK"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No encontrado"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ApiSuccessResponse": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Operación exitosa"
+                    }
+                },
+                "type": "object"
+            },
+            "ApiErrorResponse": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Descripción del error"
+                    }
+                },
+                "type": "object"
+            },
+            "PaginationMeta": {
+                "properties": {
+                    "current_page": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "last_page": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "example": 15
+                    },
+                    "total": {
+                        "type": "integer",
+                        "example": 75
+                    }
+                },
+                "type": "object"
+            },
+            "CertificateRequest": {
+                "required": [
+                    "city_id",
+                    "identity_document_id",
+                    "type_organization_id",
+                    "document_number",
+                    "address",
+                    "legal_representative",
+                    "company_name",
+                    "dni",
+                    "life"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 1
+                    },
+                    "uuid": {
+                        "type": "string",
+                        "readOnly": true,
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                    },
+                    "company_id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 1
+                    },
+                    "city_id": {
+                        "type": "integer",
+                        "example": 149
+                    },
+                    "identity_document_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "type_organization_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "document_number": {
+                        "type": "string",
+                        "maxLength": 30,
+                        "example": "1234567890"
+                    },
+                    "address": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Calle 123 # 45-67"
+                    },
+                    "legal_representative": {
+                        "type": "string",
+                        "maxLength": 120,
+                        "example": "JUAN PÉREZ GÓMEZ"
+                    },
+                    "company_name": {
+                        "type": "string",
+                        "maxLength": 120,
+                        "example": "MI EMPRESA S.A.S."
+                    },
+                    "dni": {
+                        "type": "string",
+                        "maxLength": 30,
+                        "example": "900455420"
+                    },
+                    "dv": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 8
+                    },
+                    "life": {
+                        "description": "Vigencia en años",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "info": {
+                        "type": "string",
+                        "example": "Información adicional",
+                        "nullable": true
+                    },
+                    "request_status": {
+                        "type": "string",
+                        "enum": [
+                            "DRAFT",
+                            "SENT",
+                            "PENDING",
+                            "ACCEPTED",
+                            "PROCESSING",
+                            "PROCESSED",
+                            "REJECTED"
+                        ],
+                        "readOnly": true,
+                        "example": "DRAFT"
+                    },
+                    "expiration_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "type": "object"
+            },
+            "FileManager": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 1
+                    },
+                    "certificate_request_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "file_name": {
+                        "type": "string",
+                        "example": "RUT-empresa.pdf"
+                    },
+                    "file_path": {
+                        "type": "string",
+                        "example": "companies/1/2024/01/9004554208/RUT-empresa.pdf"
+                    },
+                    "extension_file": {
+                        "type": "string",
+                        "example": "pdf"
+                    },
+                    "mime_type": {
+                        "type": "string",
+                        "example": "application/pdf"
+                    },
+                    "file_size": {
+                        "type": "string",
+                        "example": "102400"
+                    },
+                    "document_type": {
+                        "type": "string",
+                        "enum": [
+                            "ATTACHED",
+                            "GENERATED"
+                        ],
+                        "example": "ATTACHED"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "COMPLETED"
+                    }
+                },
+                "type": "object"
+            },
+            "PersonalAccessToken": {
+                "properties": {
+                    "id": {
+                        "description": "UUID del token",
+                        "type": "string",
+                        "readOnly": true,
+                        "example": "9d471f3b-8c6e-4a2d-b9f0-1234567890ab"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Token ERP Producción"
+                    },
+                    "scopes": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "*"
+                        ]
+                    },
+                    "revoked": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-05-19 10:00:00",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "example": "2026-02-19 10:00:00"
+                    }
+                },
+                "type": "object"
+            },
+            "WebhookEndpoint": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 1
+                    },
+                    "company_id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 7
+                    },
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "example": "https://mi-erp.com/webhook"
+                    },
+                    "events": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "certificate_request.created",
+                            "certificate_request.status_changed"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Notificaciones al ERP",
+                        "nullable": true
+                    },
+                    "failure_count": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 0
+                    },
+                    "last_triggered_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "type": "object"
+            },
+            "WebhookDelivery": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 42
+                    },
+                    "webhook_endpoint_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "event_type": {
+                        "type": "string",
+                        "example": "certificate_request.status_changed"
+                    },
+                    "payload": {
+                        "description": "Payload JSON enviado al endpoint",
+                        "type": "object"
+                    },
+                    "http_status": {
+                        "type": "integer",
+                        "example": 200,
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "delivered",
+                            "failed"
+                        ],
+                        "example": "delivered"
+                    },
+                    "attempt": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "delivered_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "type": "object"
+            },
+            "ExpiringCertificate": {
+                "description": "Certificado próximo a vencer (status PROCESSED)",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 12
+                    },
+                    "company_name": {
+                        "type": "string",
+                        "example": "MI EMPRESA S.A.S."
+                    },
+                    "dni": {
+                        "type": "string",
+                        "example": "900455420"
+                    },
+                    "dv": {
+                        "type": "integer",
+                        "example": 8
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "empresa@correo.com",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "3001234567",
+                        "nullable": true
+                    },
+                    "expiration_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-03-15 00:00:00"
+                    },
+                    "expiration_date_formatted": {
+                        "type": "string",
+                        "example": "15-03-2026 12:00:00 am"
+                    },
+                    "days_remaining": {
+                        "type": "integer",
+                        "example": 24
+                    },
+                    "urgency_level": {
+                        "type": "string",
+                        "enum": [
+                            "critical",
+                            "high",
+                            "medium",
+                            "low"
+                        ],
+                        "example": "medium"
+                    },
+                    "city": {
+                        "type": "string",
+                        "example": "Bogotá D.C.",
+                        "nullable": true
+                    },
+                    "legal_representative": {
+                        "type": "string",
+                        "example": "JUAN PÉREZ"
+                    }
+                },
+                "type": "object"
+            },
+            "NotificationItem": {
+                "description": "Notificación persistida en base de datos (canal database de Laravel)",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true,
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                    },
+                    "type": {
+                        "type": "string",
+                        "readOnly": true,
+                        "example": "App\\\\Notifications\\\\CertificateExpiringNotification"
+                    },
+                    "data": {
+                        "description": "Datos serializados de la notificación",
+                        "properties": {
+                            "certificate_id": {
+                                "type": "integer",
+                                "example": 12
+                            },
+                            "company_name": {
+                                "type": "string",
+                                "example": "MI EMPRESA S.A.S."
+                            },
+                            "expiration_date": {
+                                "type": "string",
+                                "example": "2026-03-15"
+                            },
+                            "days_remaining": {
+                                "type": "integer",
+                                "example": 24
+                            },
+                            "urgency_level": {
+                                "type": "string",
+                                "example": "medium"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "read_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "description": "Token de acceso OAuth 2.0 obtenido desde /authentication/login",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Autenticación",
+            "description": "Endpoints de login y registro"
+        },
+        {
+            "name": "Solicitudes de Certificado",
+            "description": "Gestión completa de solicitudes de certificados digitales"
+        },
+        {
+            "name": "Archivos",
+            "description": "Carga y eliminación de archivos adjuntos"
+        },
+        {
+            "name": "Perfil",
+            "description": "Gestión del perfil de usuario"
+        },
+        {
+            "name": "Tokens",
+            "description": "Gestión de Personal Access Tokens (PAT) para integraciones externas"
+        },
+        {
+            "name": "Webhooks",
+            "description": "Gestión de endpoints externos para notificaciones en tiempo real"
+        },
+        {
+            "name": "Notificaciones",
+            "description": "Alertas de vencimiento de certificados: listado, marcado de lectura y disparo manual"
+        },
+        {
+            "name": "Datos Maestros",
+            "description": "Datos de referencia públicos: países, departamentos, ciudades, tipos de documento y organización"
+        },
+        {
+            "name": "Configuración",
+            "description": "Configuración de encabezados de reportes"
+        }
+    ]
+}

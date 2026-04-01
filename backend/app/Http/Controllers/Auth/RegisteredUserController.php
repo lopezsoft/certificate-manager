@@ -20,8 +20,30 @@ use Illuminate\Validation\Rules;
 class RegisteredUserController extends Controller
 {
     /**
-     * Handle an incoming registration request.
+     * @OA\Post(
+     *     path="/register",
+     *     tags={"Autenticación"},
+     *     summary="Registrar nueva empresa y usuario",
+     *     description="Crea una cuenta de empresa junto con el usuario administrador. Envía un correo de verificación al email registrado.",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"city_id","first_name","last_name","company_name","email","password","password_confirmation","dni"},
+     *             @OA\Property(property="city_id", type="integer", example=149, description="ID de la ciudad (ver /cities)"),
+     *             @OA\Property(property="first_name", type="string", maxLength=100, example="Juan"),
+     *             @OA\Property(property="last_name", type="string", maxLength=100, example="Pérez"),
+     *             @OA\Property(property="company_name", type="string", maxLength=100, example="Mi Empresa S.A.S."),
+     *             @OA\Property(property="email", type="string", format="email", example="juan@empresa.com"),
+     *             @OA\Property(property="password", type="string", format="password", example="contraseña123"),
+     *             @OA\Property(property="password_confirmation", type="string", format="password", example="contraseña123"),
+     *             @OA\Property(property="dni", type="string", maxLength=30, example="900455420", description="NIT de la empresa (único)")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Empresa registrada. Verifique el correo electrónico.", @OA\JsonContent(ref="#/components/schemas/ApiSuccessResponse")),
+     *     @OA\Response(response=422, description="Validación fallida (email o NIT duplicado)", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse"))
+     * )
      *
+     * Handle an incoming registration request.
      */
     public function store(Request $request): JsonResponse
     {

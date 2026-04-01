@@ -7,6 +7,8 @@ import {CompanyService} from "../../services/companies";
 import {CitiesService, DocumentsService} from "../../services/general";
 import {LoadMaskService} from "../../services/load-mask.service";
 import TokenService from "../../utils/token.service";
+import {FileUploadConfig} from "../../shared/components/file-upload/file-upload-config.interface";
+import {FileUploadData} from "../../shared/components/file-upload/file-upload.component";
 
 @Component({
   selector: 'app-create-request',
@@ -15,9 +17,6 @@ import TokenService from "../../utils/token.service";
 })
 export class CreateRequestComponent implements OnInit, AfterViewInit {
 
-  @ViewChild('fileUpload', { static: false}) fileUpload: ElementRef;
-  @ViewChild('fileUploadRut', { static: false}) fileUploadRut: ElementRef;
-  @ViewChild('fileUploadCc', { static: false}) fileUploadCc: ElementRef;
   @ViewChild('dniInput', { static: false}) dniInput: ElementRef;
   @ViewChild('documentInput', { static: false}) documentInput: ElementRef;
   organizations !: TypeOrganzation[];
@@ -33,10 +32,108 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
   files = [];
   formData: FormData;
   canEdit: boolean = false;
-  hasCc: boolean = false;
-  hasRut: boolean = false;
-  hastCamera: boolean = false;
   buttonText: string = 'Crear solicitud';
+  
+  // Límite total de archivos: 10MB
+  private readonly MAX_TOTAL_SIZE = 10 * 1024 * 1024; // 10MB
+
+  /**
+   * Verifica si se puede guardar el formulario
+   */
+  get canSaveForm(): boolean {
+    // Si está editando, siempre puede guardar
+    if (this.canEdit) return true;
+    
+    // Determinar si es persona jurídica o natural
+    const isPersonaJuridica = !this.isNaturelPerson();
+    
+    if (isPersonaJuridica) {
+      // Persona Jurídica: REQUIERE 3 archivos (Cédula, RUT y Cámara)
+      return this.files.length === 3;
+    } else {
+      // Persona Natural: REQUIERE 2 archivos (Cédula y RUT)
+      return this.files.length === 2;
+    }
+  }
+
+  /**
+   * Obtiene el mensaje de validación según el tipo de persona
+   */
+  get documentValidationMessage(): string {
+    const isPersonaJuridica = !this.isNaturelPerson();
+    const requiredCount = isPersonaJuridica ? 3 : 2;
+    const currentCount = this.files.length;
+    
+    if (currentCount === 0) {
+      if (isPersonaJuridica) {
+        return 'Debe subir 3 archivos: Cédula, RUT y Cámara de Comercio';
+      } else {
+        return 'Debe subir 2 archivos: Cédula y RUT';
+      }
+    }
+    
+    if (currentCount < requiredCount) {
+      const missing = requiredCount - currentCount;
+      return `Faltan ${missing} archivo(s). Total requerido: ${requiredCount}`;
+    }
+    
+    if (currentCount > requiredCount) {
+      const extra = currentCount - requiredCount;
+      return `Tiene ${extra} archivo(s) de más. Total permitido: ${requiredCount}`;
+    }
+    
+    return 'Documentos completos';
+  }
+
+  /**
+   * Obtiene el texto de ayuda dinámico según el tipo de persona
+   */
+  get dynamicHelpText(): string {
+    const isPersonaJuridica = !this.isNaturelPerson();
+    
+    if (isPersonaJuridica) {
+      return 'Sube <strong>EXACTAMENTE 3 archivos</strong>:<br>' +
+             '1. <strong>Cédula del Representante Legal</strong> (PDF, JPG o PNG)<br>' +
+             '2. <strong>RUT Actualizado</strong> (PDF)<br>' +
+             '3. <strong>Certificado de Cámara de Comercio</strong> (PDF)';
+    } else {
+      return 'Sube <strong>EXACTAMENTE 2 archivos</strong>:<br>' +
+             '1. <strong>Cédula de Ciudadanía</strong> (PDF, JPG o PNG)<br>' +
+             '2. <strong>RUT Actualizado</strong> (PDF)';
+    }
+  }
+
+  /**
+   * Obtiene el número máximo de archivos según el tipo de persona
+   */
+  get maxFilesAllowed(): number {
+    const isPersonaJuridica = !this.isNaturelPerson();
+    return isPersonaJuridica ? 3 : 2;
+  }
+
+  // Configuración ÚNICA para todos los archivos (se actualiza dinámicamente)
+  get uploadConfig(): FileUploadConfig {
+    const isPersonaJuridica = !this.isNaturelPerson();
+    const maxFiles = isPersonaJuridica ? 3 : 2;
+    const label = isPersonaJuridica ? 'Documentos Requeridos (3 archivos)' : 'Documentos Requeridos (2 archivos)';
+    
+    return {
+      id: 'filesUpload',
+      name: 'filesUpload',
+      label: label,
+      helpText: this.dynamicHelpText,
+      acceptedFormats: ['pdf', 'jpg', 'jpeg', 'png'],
+      maxTotalSize: this.MAX_TOTAL_SIZE,
+      multiple: true,
+      maxFiles: maxFiles,
+      required: true,
+      showPreview: true,
+      enableDragDrop: true,
+      icon: 'fas fa-upload',
+      dropzoneText: `Arrastra hasta ${maxFiles} archivos aquí o haz clic para seleccionar`
+    };
+  }
+  
   constructor(private fb: FormBuilder,
               private _http: HttpResponsesService,
               private _msg: MessagesService,
@@ -138,23 +235,29 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       if(frm.invalid) {
         throw new Error('Por favor llene la información de cada campo');
       }
-      if (ts.files.length < 2 && !ts.canEdit ) {
-        throw new Error('Por favor suba los documentos requeridos.');
+      
+      // Validar cantidad de archivos requeridos según tipo de persona
+      if (!ts.canEdit) {
+        const isPersonaJuridica = !ts.isNaturelPerson();
+        const requiredFiles = isPersonaJuridica ? 3 : 2;
+        
+        if (ts.files.length < requiredFiles) {
+          const tipo = isPersonaJuridica ? 'Persona Jurídica' : 'Persona Natural';
+          throw new Error(`Debe cargar exactamente ${requiredFiles} archivos para ${tipo}.`);
+        }
+        
+        if (ts.files.length > requiredFiles) {
+          const tipo = isPersonaJuridica ? 'Persona Jurídica' : 'Persona Natural';
+          throw new Error(`Ha excedido el límite. Solo se permiten ${requiredFiles} archivos para ${tipo}.`);
+        }
       }
+      
       let params            =  frm.getRawValue();
       params.dni            = params.dni.replace(/[^0-9]/g, '');
       params.document_number= params.document_number.replace(/[^0-9]/g, '');
       ts.loading            = true;
+      
       if (!ts.canEdit) {
-        if (!ts.hasRut) {
-          throw new Error('Por favor suba el RUT.');
-        }
-        if (!ts.hasCc) {
-          throw new Error('Por favor suba la cédula del representante legal.');
-        }
-        if (!ts.hastCamera && !ts.isNaturelPerson()) {
-          throw new Error('Por favor suba la cámara de comercio.');
-        }
         ts.formData = new FormData();
         // Append all files to formData
         ts.files.forEach((file: any, index) => {
@@ -225,72 +328,63 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     return res
   }
   protected onChangeTypeOrganization($event: any) {
-    console.log($event);
-  }
-
-  onUploadPDF() {
-    const fileUpload = this.fileUpload.nativeElement;
-    const file = fileUpload.files[0];
-    this.hastCamera = false;
-    // Check file size and type 1000kb = 75000
-    if (file.size > 1000000) { // 1000kb
-      this.fileUpload.nativeElement.value = '';
-      const size = (file.size / 1024).toFixed(2); // Convert to KB
-      this._msg.errorMessage('',`El archivo no debe ser mayor a 1000kb. Tamaño del archivo ${size}kb.`);
-    } else if (file.type !== 'application/pdf') {
-      this.fileUpload.nativeElement.value = '';
-      this._msg.errorMessage('', 'Formato de archivo incorrecto');
-    } else {
-      // Check if exists file in array and remove it
-      const index = this.files.findIndex((f: any) => f.data.name === file.name);
-      if (index !== -1) {
-        this.files.splice(index, 1);
-      }
-      this.files.push({ data: file, inProgress: false, progress: 0});
-      this.hastCamera = true;
+    const isPersonaJuridica = !this.isNaturelPerson();
+    const maxFiles = isPersonaJuridica ? 3 : 2;
+    
+    // Si cambia de tipo y tiene más archivos de los permitidos, advertir al usuario
+    if (this.files.length > maxFiles) {
+      this._msg.toastMessage(
+        'Atención', 
+        `Ha cambiado a ${isPersonaJuridica ? 'Persona Jurídica' : 'Persona Natural'}. ` +
+        `Solo se permiten ${maxFiles} archivos. Por favor, ajuste los documentos.`,
+        4
+      );
     }
   }
 
-  onUploadRUT() {
-    const fileUpload = this.fileUploadRut.nativeElement;
-    const file = fileUpload.files[0];
-    this.hasRut = false;
-    if (file.size > 1000000) { // 1000kb
-      this.fileUploadRut.nativeElement.value = '';
-      const size = (file.size / 1024).toFixed(2); // Convert to KB
-      this._msg.errorMessage('',`El archivo no debe ser mayor a 1000kb. Tamaño del archivo ${size}kb.`);
-    } else if (file.type !== 'application/pdf') {
-      this.fileUploadRut.nativeElement.value = '';
-      this._msg.errorMessage('', 'Formato de archivo incorrecto');
-    } else {
-      // Check if exists file in array and remove it
-      const index = this.files.findIndex((f: any) => f.data.name === file.name);
-      if (index !== -1) {
-        this.files.splice(index, 1);
-      }
-      this.files.push({ data: file, inProgress: false, progress: 0});
-      this.hasRut = true;
+  /**
+   * Calcula el tamaño total de todos los archivos cargados
+   */
+  getTotalUploadedSize(): number {
+    return this.files.reduce((sum, f) => sum + f.data.size, 0);
+  }
+
+  /**
+   * Maneja la selección de archivos
+   */
+  onFileSelected(fileData: FileUploadData): void {
+    // Verificar que no se excedan 3 archivos
+    if (this.files.length >= 3) {
+      this._msg.errorMessage('Límite de archivos alcanzado', 'Solo se permiten 3 archivos como máximo. Si necesitas reemplazar uno, elimínalo primero y luego sube el nuevo.');
+      return;
+    }
+    
+    // Verificar que no exista un archivo con el mismo nombre
+    const index = this.files.findIndex((f: any) => f.data.name === fileData.data.name);
+    if (index !== -1) {
+      // Reemplazar archivo existente
+      this._msg.toastMessage('Archivo reemplazado', `El archivo "${fileData.data.name}" fue reemplazado correctamente.`);
+      this.files.splice(index, 1);
+    }
+    
+    this.files.push(fileData);
+  }
+
+  /**
+   * Maneja la eliminación de archivos
+   */
+  onFileRemoved(fileName: string): void {
+    const index = this.files.findIndex((f: any) => f.data.name === fileName);
+    if (index !== -1) {
+      this.files.splice(index, 1);
     }
   }
 
-  onUploadCC() {
-    const fileUpload = this.fileUploadCc.nativeElement;
-    const file = fileUpload.files[0];
-    this.hasCc = false;
-    // Check file size and type 1000kb = 1000000
-    if (file.size > 1000000) { // 1000kb
-      this.fileUploadCc.nativeElement.value = '';
-      const size = (file.size / 1024).toFixed(2); // Convert to KB
-      this._msg.errorMessage('',`El archivo no debe ser mayor a 1000kb. Tamaño del archivo ${size}kb.`);
-    } else {
-      // Check if exists file in array and remove it
-      const index = this.files.findIndex((f: any) => f.data.name === file.name);
-      if (index !== -1) {
-        this.files.splice(index, 1);
-      }
-      this.files.push({ data: file, inProgress: false, progress: 0});
-      this.hasCc = true;
-    }
+  /**
+   * Maneja errores de validación
+   */
+  onFileValidationError(error: string): void {
+    console.warn('File validation error:', error);
   }
 
   protected onChangeDni($event: Event) {

@@ -37,18 +37,17 @@ Route::group(['prefix' => 'v1'], function () {
         // SENT DOCUMENTS
         Route::group(['prefix' => 'certificate-request'], function () {
             Route::controller('CertificateRequestController')->group(function () {
-                Route::post('/', 'createCertificateRequest');
-                Route::post('/{id}/send-mail', 'sendMail');
+                Route::post('/', 'createCertificateRequest')->middleware(['throttle:certificate-create', 'validate.mime']);
+                Route::post('/{id}/send-mail', 'sendMail')->middleware('throttle:send-mail');
                 Route::get('/', 'getCertificateRequest');
                 Route::get('/all', 'getAllCertificateRequest');
                 Route::get('/{id}', 'getCertificateRequestById');
                 Route::put('/{id}', 'updateCertificateRequest');
                 Route::put('/{id}/status', 'updateCertificateRequestStatus');
                 Route::delete('/{id}', 'deleteCertificateRequest');
-                // Files
             });
             Route::controller('CertificateRequestFilesController')->group(function () {
-                Route::post('/{id}/files', 'createFile');
+                Route::post('/{id}/files', 'createFile')->middleware(['throttle:file-upload', 'validate.mime']);
                 Route::delete('/{id}/files/{fileId}', 'deleteFile');
             });
         });
@@ -78,6 +77,45 @@ Route::group(['prefix' => 'v1'], function () {
                     Route::put('/{id}', 'update');
                 });
             });
+        });
+
+        // Personal Access Tokens (PAT)
+        Route::group(['prefix' => 'tokens'], function () {
+            Route::controller(\App\Http\Controllers\Api\TokenController::class)->group(function () {
+                Route::get('/', 'index');
+                Route::post('/', 'store')->middleware('throttle:token-create');
+                Route::post('/revoke-all', 'revokeAll');
+                Route::get('/{id}', 'show');
+                Route::delete('/{id}', 'destroy');
+                Route::post('/{id}/renew', 'renew');
+            });
+        });
+
+        // Notificaciones de vencimiento de certificados
+        Route::group(['prefix' => 'certificates'], function () {
+            Route::get('/expiring', [\App\Http\Controllers\NotificationController::class, 'expiring']);
+        });
+
+        Route::group(['prefix' => 'notifications'], function () {
+            Route::get('/', [\App\Http\Controllers\NotificationController::class, 'index']);
+            Route::post('/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead']);
+            Route::post('/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead']);
+        });
+
+        Route::group(['prefix' => 'admin'], function () {
+            Route::post('/certificates/notify-now', [\App\Http\Controllers\NotificationController::class, 'triggerNow']);
+        });
+
+        // Webhooks
+        Route::group(['prefix' => 'webhooks'], function () {
+            Route::get('/events', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'availableEvents']);
+            Route::get('/', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'index']);
+            Route::post('/', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'store']);
+            Route::get('/{id}', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'show']);
+            Route::put('/{id}', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'update']);
+            Route::delete('/{id}', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'destroy']);
+            Route::post('/{id}/rotate-secret', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'rotateSecret']);
+            Route::get('/{id}/deliveries', [\App\Webhooks\Http\Controllers\WebhookDeliveryController::class, 'index']);
         });
     });
 });

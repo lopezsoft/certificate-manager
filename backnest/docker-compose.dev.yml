@@ -1,0 +1,79 @@
+version: '3.9'
+
+# Override for local development (hot-reload, sync deps, debug ports)
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: backnest-api-dev
+    command: npm run start:dev
+    ports:
+      - '3000:3000'
+      - '9229:9229' # Node debugger
+    environment:
+      - NODE_ENV=development
+      - APP_PORT=3000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE:-certificate_manager}
+      - DB_USERNAME=${DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-secret}
+      - DB_SYNCHRONIZE=true
+      - DB_LOGGING=true
+      - JWT_SECRET=${JWT_SECRET:-super_secret_dev_key}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-1d}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MAIL_HOST=${MAIL_HOST:-mailpit}
+      - MAIL_PORT=${MAIL_PORT:-1025}
+      - MAIL_USERNAME=${MAIL_USERNAME:-}
+      - MAIL_PASSWORD=${MAIL_PASSWORD:-}
+      - MAIL_FROM_NAME=${MAIL_FROM_NAME:-Certificate Manager}
+      - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS:-noreply@example.com}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - uploads_dev:/app/public/attachments
+      - pdf_dev:/app/public/pdf
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: backnest-postgres-dev
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-certificate_manager}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USERNAME:-postgres}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: backnest-redis-dev
+    ports:
+      - '6379:6379'
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: backnest-mailpit
+    ports:
+      - '1025:1025' # SMTP
+      - '8025:8025' # Web UI
+
+volumes:
+  postgres_dev_data:
+  uploads_dev:
+  pdf_dev:

@@ -1,0 +1,179 @@
+<?php
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Certificate Management Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuración específica para el sistema de gestión de certificados
+    | digitales, incluyendo notificaciones automáticas y reportes.
+    |
+    */
+
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Email
+    |--------------------------------------------------------------------------
+    |
+    | Correo electrónico del administrador que recibirá los reportes
+    | consolidados de certificados próximos a vencer.
+    |
+    */
+    'admin_email' => env('CERTIFICATE_ADMIN_EMAIL', env('MAIL_SUPPORT_ADDRESS', 'soporte@matias.com.co')),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Notification Days
+    |--------------------------------------------------------------------------
+    |
+    | Número de días de antelación para enviar notificaciones de vencimiento.
+    | Por defecto: 30 días
+    |
+    */
+    'notification_days' => env('CERTIFICATE_NOTIFICATION_DAYS', 30),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Daily Notifications
+    |--------------------------------------------------------------------------
+    |
+    | Habilitar o deshabilitar las notificaciones diarias automáticas.
+    |
+    */
+    'daily_notifications_enabled' => env('CERTIFICATE_DAILY_NOTIFICATIONS', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Weekly Report
+    |--------------------------------------------------------------------------
+    |
+    | Habilitar o deshabilitar el reporte semanal consolidado.
+    |
+    */
+    'weekly_report_enabled' => env('CERTIFICATE_WEEKLY_REPORT', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Notification Schedule
+    |--------------------------------------------------------------------------
+    |
+    | Configuración de horarios para las notificaciones y reportes.
+    |
+    */
+    'schedule' => [
+        'notifications_time' => env('CERTIFICATE_NOTIFICATIONS_TIME', '08:00'),
+        'daily_report_time' => env('CERTIFICATE_DAILY_REPORT_TIME', '07:00'),
+        'weekly_report_day' => env('CERTIFICATE_WEEKLY_REPORT_DAY', 'monday'),
+        'weekly_report_time' => env('CERTIFICATE_WEEKLY_REPORT_TIME', '09:00'),
+        'timezone' => env('APP_TIMEZONE', 'America/Bogota'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Urgency Levels
+    |--------------------------------------------------------------------------
+    |
+    | Definición de los niveles de urgencia según los días restantes.
+    |
+    */
+    'urgency_levels' => [
+        'critical' => 7,   // 1-7 días
+        'high' => 15,      // 8-15 días
+        'medium' => 30,    // 16-30 días
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Queue Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuración de las colas para procesar notificaciones y reportes.
+    |
+    */
+    'queues' => [
+        'notifications' => env('CERTIFICATE_QUEUE_NOTIFICATIONS', 'notifications'),
+        'reports' => env('CERTIFICATE_QUEUE_REPORTS', 'reports'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Retry Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuración de reintentos para jobs fallidos.
+    |
+    */
+    'retry' => [
+        'max_attempts' => env('CERTIFICATE_RETRY_MAX_ATTEMPTS', 3),
+        'backoff' => [60, 120, 300], // En segundos
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cache Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuración de caché para evitar envíos duplicados.
+    |
+    */
+    'cache' => [
+        'notification_ttl' => 86400, // 24 horas en segundos
+        'prefix' => 'cert_notification_',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Logging
+    |--------------------------------------------------------------------------
+    |
+    | Configuración de logging para el sistema de certificados.
+    |
+    */
+    'logging' => [
+        'enabled' => env('CERTIFICATE_LOGGING_ENABLED', true),
+        'level' => env('CERTIFICATE_LOGGING_LEVEL', 'info'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Monthly Reports
+    |--------------------------------------------------------------------------
+    |
+    | Configuración para los informes mensuales de certificados emitidos.
+    |
+    */
+    'monthly_reports' => [
+        'enabled' => env('CERTIFICATE_MONTHLY_REPORTS_ENABLED', true),
+        'company_reports_enabled' => env('CERTIFICATE_MONTHLY_COMPANY_REPORTS_ENABLED', true),
+        'admin_report_enabled' => env('CERTIFICATE_MONTHLY_ADMIN_REPORT_ENABLED', true),
+        'company_reports_time' => env('CERTIFICATE_MONTHLY_COMPANY_REPORTS_TIME', '22:00'),
+        'admin_report_time' => env('CERTIFICATE_MONTHLY_ADMIN_REPORT_TIME', '23:00'),
+        'send_on_last_day' => env('CERTIFICATE_MONTHLY_REPORTS_LAST_DAY', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | File Upload Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuración de límites para la carga de archivos adjuntos en las
+    | solicitudes de certificados.
+    |
+    */
+    'file_upload' => [
+        // Tamaño máximo por archivo individual en MB
+        'max_file_size' => env('CERTIFICATE_MAX_FILE_SIZE', 7),
+        
+        // Tamaño máximo total de todos los archivos en MB
+        'max_total_size' => env('CERTIFICATE_MAX_TOTAL_SIZE', 10),
+        
+        // Número máximo de archivos permitidos
+        'max_files' => env('CERTIFICATE_MAX_FILES', 3),
+        
+        // Número mínimo de archivos requeridos
+        'min_files' => env('CERTIFICATE_MIN_FILES', 2),
+    ],
+
+];

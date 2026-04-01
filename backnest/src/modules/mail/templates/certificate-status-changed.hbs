@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>Cambio de estado</title></head>
+<body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
+  <h2>Actualización de solicitud de certificado</h2>
+  <p>Hola <strong>{{name}}</strong>,</p>
+  <p>La solicitud <strong>#{{certificateId}}</strong> de la empresa <strong>{{companyName}}</strong> ha cambiado de estado:</p>
+  <p><strong>{{previousStatus}}</strong> → <strong>{{newStatus}}</strong></p>
+  {{#if comments}}<p>Comentarios: {{comments}}</p>{{/if}}
+  <hr>
+  <p style="font-size:12px;color:#999">Este es un mensaje automático, por favor no responder.</p>
+</body>
+</html>

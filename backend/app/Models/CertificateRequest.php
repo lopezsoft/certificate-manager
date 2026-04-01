@@ -7,6 +7,7 @@ use App\Models\Location\Cities;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 
 class CertificateRequest extends CoreModel
@@ -125,5 +126,21 @@ class CertificateRequest extends CoreModel
     public function history(): HasMany
     {
         return $this->hasMany(ChangeHistory::class, 'certificate_request_id')->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Get the document analysis results for this certificate request.
+     */
+    public function documentAnalysisResults(): HasMany
+    {
+        return $this->hasMany(DocumentAnalysisResult::class, 'certificate_request_id');
+    }
+
+    /**
+     * Get the latest document analysis result.
+     */
+    public function latestDocumentAnalysis()
+    {
+        return $this->hasOne(DocumentAnalysisResult::class, 'certificate_request_id')->latest();
     }
 }

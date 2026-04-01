@@ -121,4 +121,12 @@ class Company extends CoreModel
     {
         return $this->belongsTo(Cities::class);
     }
+
+    /**
+     * Get the certificate requests for the company.
+     */
+    public function certificateRequests(): HasMany
+    {
+        return $this->hasMany(CertificateRequest::class, 'company_id');
+    }
 }

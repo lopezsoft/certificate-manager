@@ -25,6 +25,92 @@ export class AppVersionsComponent implements OnInit {
     this.versiones = [
       {
         isShow: true,
+        number: "1.5.0",
+        date: "20-ENE-2025",
+        changes: [
+          {
+            type: "caracteristica",
+            description: "Nuevo componente de carga de archivos con arrastrar y soltar (drag & drop)"
+          },
+          {
+            type: "caracteristica",
+            description: "Vista previa de archivos subidos con miniaturas para imágenes"
+          },
+          {
+            type: "caracteristica",
+            description: "Validación dinámica de archivos según tipo de persona (Jurídica: 3 archivos, Natural: 2 archivos)"
+          },
+          {
+            type: "caracteristica",
+            description: "Indicador visual de tamaño de archivos con barra de progreso (límite 10MB total)"
+          },
+          {
+            type: "caracteristica",
+            description: "Auto-ocultamiento de zona de carga al alcanzar el límite de archivos"
+          },
+          {
+            type: "caracteristica",
+            description: "Mensajes contextuales de ayuda según el tipo de organización seleccionada"
+          },
+          {
+            type: "mejora",
+            description: "Interfaz unificada para carga de documentos en solicitudes de certificados"
+          },
+          {
+            type: "mejora",
+            description: "Lógica de reemplazo inteligente de archivos que no afecta el cálculo de tamaño total"
+          },
+          {
+            type: "mejora",
+            description: "Advertencias al cambiar tipo de organización cuando ya hay archivos cargados"
+          },
+          {
+            type: "bug",
+            description: "Corrección en validación de límite de archivos permitidos"
+          },
+          {
+            type: "bug",
+            description: "Corrección en cálculo de tamaño total excluyendo archivos reemplazados"
+          }
+        ]
+      },
+      {
+        isShow: true,
+        number: "1.4.0",
+        date: "05-NOV-2025",
+        changes: [
+          {
+            type: "caracteristica",
+            description: "Nuevos indicadores visuales en el tablero para ver rápidamente totales y estadísticas clave"
+          },
+          {
+            type: "caracteristica",
+            description: "Gráficas mensuales para visualizar tendencias de certificados a lo largo del año"
+          },
+          {
+            type: "caracteristica",
+            description: "Comparación automática entre año actual y anterior para análisis de crecimiento"
+          },
+          {
+            type: "caracteristica",
+            description: "Filtros de búsqueda por empresa y estado de solicitud"
+          },
+          {
+            type: "caracteristica",
+            description: "Actualización automática de datos a intervalos configurables (1, 5, 10 minutos)"
+          },
+          {
+            type: "caracteristica",
+            description: "Exportación de datos en formatos CSV, Excel y JSON"
+          },
+          {
+            type: "mejora",
+            description: "Diseño completamente adaptable a dispositivos móviles y tablets"
+          }
+        ]
+      },
+      {
+        isShow: true,
         number: "1.3.0",
         date: "27-JUN-2025",
         changes: [
