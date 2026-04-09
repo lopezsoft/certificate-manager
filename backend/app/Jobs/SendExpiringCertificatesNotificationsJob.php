@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\CertificateRequestStatusEnum;
 use App\Models\CertificateRequest;
 use App\Notifications\CertificateExpiringNotification;
 use Illuminate\Bus\Queueable;
@@ -17,15 +18,15 @@ use Exception;
 
 /**
  * Job para enviar notificaciones a empresas sobre certificados próximos a vencer
- * 
+ *
  * Este Job se ejecuta diariamente y notifica a las empresas que tienen certificados
  * que vencerán en los próximos 30 días.
- * 
+ *
  * Principios aplicados:
  * - Single Responsibility: Solo se encarga de procesar y enviar notificaciones a empresas
  * - Dependency Injection: Utiliza los servicios de Laravel de manera inyectada
  * - Error Handling: Manejo robusto de errores con logging detallado
- * 
+ *
  * @package App\Jobs
  */
 class SendExpiringCertificatesNotificationsJob implements ShouldQueue
@@ -52,7 +53,7 @@ class SendExpiringCertificatesNotificationsJob implements ShouldQueue
     public function handle(): void
     {
         $startTime = microtime(true);
-        
+
         try {
             Log::info('[CertificateExpiration] Iniciando proceso de notificaciones de certificados próximos a vencer');
 
@@ -100,10 +101,10 @@ class SendExpiringCertificatesNotificationsJob implements ShouldQueue
 
                     // Enviar notificación
                     $this->sendNotification($certificate);
-                    
+
                     // Marcar como notificado
                     $this->markAsNotified($certificate);
-                    
+
                     $successCount++;
 
                     Log::info('[CertificateExpiration] Notificación enviada exitosamente', [
@@ -166,7 +167,7 @@ class SendExpiringCertificatesNotificationsJob implements ShouldQueue
     {
         return CertificateRequest::with(['company'])
             ->whereNotNull('expiration_date')
-            ->where('request_status', 'PROCESSED') // Solo certificados emitidos
+            ->where('request_status', CertificateRequestStatusEnum::PROCESSED->value) // Solo certificados emitidos
             ->where('expiration_date', '>', now()) // No vencidos aún
             ->where('expiration_date', '<=', $expirationThreshold) // Dentro del rango
             ->whereHas('company', function ($query) {
@@ -260,7 +261,7 @@ class SendExpiringCertificatesNotificationsJob implements ShouldQueue
     {
         try {
             $adminEmail = config('certificate.admin_email', config('mail.support_address'));
-            
+
             if (!$adminEmail) {
                 Log::warning('[CertificateExpiration] No se pudo notificar al admin: email no configurado');
                 return;
@@ -304,7 +305,7 @@ class SendExpiringCertificatesNotificationsJob implements ShouldQueue
         // Notificar al administrador del fallo crítico
         try {
             $adminEmail = config('certificate.admin_email', config('mail.support_address'));
-            
+
             if ($adminEmail) {
                 $message = "ALERTA CRÍTICA: El Job de notificaciones de certificados próximos a vencer ha fallado permanentemente.\n\n";
                 $message .= "Error: {$exception->getMessage()}\n";

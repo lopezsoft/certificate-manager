@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\CertificateRequestStatusEnum;
 use App\Jobs\SendExpiringCertificatesNotificationsJob;
 use Illuminate\Console\Command;
 
@@ -61,7 +62,7 @@ class NotifyExpiringCertificatesCommand extends Command
 
         $certificates = \App\Models\CertificateRequest::with(['company'])
             ->whereNotNull('expiration_date')
-            ->where('request_status', 'PROCESSED')
+            ->where('request_status', CertificateRequestStatusEnum::PROCESSED->value)
             ->where('expiration_date', '>', now())
             ->where('expiration_date', '<=', $threshold)
             ->whereHas('company', fn($q) => $q->whereNotNull('email')->where('email', '!=', ''))

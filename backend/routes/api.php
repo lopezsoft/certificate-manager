@@ -102,8 +102,9 @@ Route::group(['prefix' => 'v1'], function () {
             Route::post('/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead']);
         });
 
-        Route::group(['prefix' => 'admin'], function () {
-            Route::post('/certificates/notify-now', [\App\Http\Controllers\NotificationController::class, 'triggerNow']);
+        Route::group(['prefix' => 'admin', 'middleware' => 'admin'], function () {
+            Route::post('/certificates/notify-now', [\App\Http\Controllers\NotificationController::class, 'triggerNow'])
+                ->middleware('throttle:1,5');
         });
 
         // Webhooks

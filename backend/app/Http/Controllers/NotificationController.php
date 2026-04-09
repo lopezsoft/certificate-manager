@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Common\HttpResponseMessages;
+use App\Enums\CertificateRequestStatusEnum;
 use App\Jobs\SendAdminExpiringCertificatesReportJob;
 use App\Jobs\SendExpiringCertificatesNotificationsJob;
 use App\Models\CertificateRequest;
@@ -35,7 +36,7 @@ class NotificationController extends Controller
 
             $query = CertificateRequest::with(['company', 'city'])
                 ->whereNotNull('expiration_date')
-                ->where('request_status', 'PROCESSED')
+                ->where('request_status', CertificateRequestStatusEnum::PROCESSED->value)
                 ->where('expiration_date', '>', now())
                 ->where('expiration_date', '<=', $threshold)
                 ->orderBy('expiration_date', 'asc');
@@ -181,11 +182,6 @@ class NotificationController extends Controller
     public function triggerNow(Request $request): JsonResponse
     {
         try {
-            $user = Auth::user();
-
-            if (!$user->is_admin) {
-                return HttpResponseMessages::getResponse403(['message' => 'Se requieren permisos de administrador']);
-            }
 
             SendExpiringCertificatesNotificationsJob::dispatch();
 

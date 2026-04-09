@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Common\HttpResponseMessages;
 use App\Common\MessageExceptionResponse;
+use App\Enums\CertificateRequestStatusEnum;
 use App\Mail\SendMail;
 use App\Models\CertificateRequest;
 use App\Models\ChangeHistory;
@@ -21,6 +22,7 @@ class CertificateRequestMailService
         try {
             $company    = CompanyQueries::getCompany();
             $query      = CertificateRequest::query()
+                ->with(['files'])
                 ->whereHas("files", function ($query) {
                     $query->where('document_type', 'ATTACHED');
                 })->where('id', $id)
@@ -38,12 +40,12 @@ class CertificateRequestMailService
             ];
             DB::beginTransaction();
             $query->update([
-                'request_status' => 'PROCESSING'
+                'request_status' => CertificateRequestStatusEnum::PROCESSING->value,
             ]);
             // Change history status
             ChangeHistory::create([
                 'certificate_request_id'=>  $query->id,
-                'status'                =>  'PROCESSING',
+                'status'                =>  CertificateRequestStatusEnum::PROCESSING->value,
                 'comments'              =>  $request->comments,
                 'user_id'               =>  auth()->user()->id,
                 'user_of_change'        =>  'MANAGER',

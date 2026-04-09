@@ -5,7 +5,7 @@ namespace App\Handlers\Certificate;
 use App\Commands\Certificate\UpdateCertificateStatusCommand;
 use App\Common\HttpResponseMessages;
 use App\Common\MessageExceptionResponse;
-use App\Enums\DocumentStatusEnum;
+use App\Enums\CertificateRequestStatusEnum;
 use App\Events\CertificateStatusChanged;
 use App\Models\CertificateRequest;
 use App\Models\ChangeHistory;
@@ -28,6 +28,7 @@ class UpdateCertificateStatusHandler
     {
         try {
             $certificate    = CertificateRequest::query()
+                ->with(['company'])
                 ->where('id', $command->certificateId)
                 ->firstOrFail();
 
@@ -76,8 +77,8 @@ class UpdateCertificateStatusHandler
             return;
         }
 
-        $isRejected  = $command->requestStatus === DocumentStatusEnum::getRejected();
-        $isProcessed = $command->requestStatus === DocumentStatusEnum::getProcessed();
+        $isRejected  = $command->requestStatus === CertificateRequestStatusEnum::REJECTED->value;
+        $isProcessed = $command->requestStatus === CertificateRequestStatusEnum::PROCESSED->value;
 
         if (!$isRejected && !$isProcessed) {
             return;

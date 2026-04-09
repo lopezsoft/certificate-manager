@@ -8,6 +8,7 @@ use App\Commands\Certificate\UpdateCertificateRequestCommand;
 use App\Commands\Certificate\UpdateCertificateStatusCommand;
 use App\Common\HttpResponseMessages;
 use App\Common\MessageExceptionResponse;
+use App\Enums\CertificateRequestStatusEnum;
 use App\Handlers\Certificate\CreateCertificateRequestHandler;
 use App\Handlers\Certificate\DeleteCertificateRequestHandler;
 use App\Handlers\Certificate\UpdateCertificateRequestHandler;
@@ -31,32 +32,6 @@ class CertificateRequestService
 
     public function createCertificateRequest(Request $request): JsonResponse
     {
-        $request->validate([
-            'city_id'               => ['required', 'integer', 'exists:cities,id'],
-            'identity_document_id'  => ['required', 'integer', 'exists:identity_documents,id'],
-            'type_organization_id'  => ['required', 'integer', 'exists:type_organization,id'],
-            'document_number'       => ['required', 'string', 'max:30'],
-            'address'               => ['required', 'string', 'max:255'],
-            'legal_representative'  => ['required', 'string', 'max:120'],
-            'company_name'          => ['required', 'string', 'max:120'],
-            'dni'                   => ['required', 'string', 'max:30'],
-            'life'                  => ['required', 'integer'],
-        ], [
-            'city_id.required'              => 'La ciudad es requerida',
-            'city_id.exists'                => 'La ciudad no existe',
-            'identity_document_id.required' => 'El tipo de documento es requerido',
-            'identity_document_id.exists'   => 'El tipo de documento no existe',
-            'type_organization_id.required' => 'El tipo de organización es requerido',
-            'type_organization_id.exists'   => 'El tipo de organización no existe',
-            'dni.required'                  => 'El NIT es requerido',
-            'document_number.required'      => 'El número de documento del representante legal es requerido',
-            'company_name.required'         => 'La razón social es requerida',
-            'address.required'              => 'La dirección es requerida',
-            'legal_representative.required' => 'El nombre del representante legal es requerido',
-            'life.required'                 => 'La vigencia del certificado es requerida',
-            'life.integer'                  => 'La vigencia del certificado debe ser un número entero',
-        ]);
-
         $company = CompanyQueries::getCompany();
 
         return $this->createHandler->handle(new CreateCertificateRequestCommand(
@@ -78,32 +53,6 @@ class CertificateRequestService
 
     public function updateCertificateRequest(Request $request, $id): JsonResponse
     {
-        $request->validate([
-            'city_id'               => ['required', 'integer', 'exists:cities,id'],
-            'identity_document_id'  => ['required', 'integer', 'exists:identity_documents,id'],
-            'type_organization_id'  => ['required', 'integer', 'exists:type_organization,id'],
-            'document_number'       => ['required', 'string', 'max:30'],
-            'address'               => ['required', 'string', 'max:255'],
-            'legal_representative'  => ['required', 'string', 'max:120'],
-            'company_name'          => ['required', 'string', 'max:120'],
-            'dni'                   => ['required', 'string', 'max:30'],
-            'life'                  => ['required', 'integer'],
-            'info'                  => ['string', 'max:255', 'nullable'],
-        ], [
-            'city_id.required'              => 'La ciudad es requerida',
-            'city_id.exists'                => 'La ciudad no existe',
-            'identity_document_id.required' => 'El tipo de documento es requerido',
-            'identity_document_id.exists'   => 'El tipo de documento no existe',
-            'type_organization_id.required' => 'El tipo de organización es requerido',
-            'type_organization_id.exists'   => 'El tipo de organización no existe',
-            'dni.required'                  => 'El NIT es requerido',
-            'document_number.required'      => 'El número de documento del representante legal es requerido',
-            'company_name.required'         => 'La razón social es requerida',
-            'address.required'              => 'La dirección es requerida',
-            'legal_representative.required' => 'El nombre del representante legal es requerido',
-            'life.required'                 => 'La vigencia del certificado es requerida',
-        ]);
-
         $company = CompanyQueries::getCompany();
 
         return $this->updateHandler->handle(new UpdateCertificateRequestCommand(
@@ -267,7 +216,7 @@ class CertificateRequestService
             if (!empty($status)) {
                 $query->where('request_status', $status);
             } else {
-                $query->whereIn('request_status', ['SENT', 'PENDING', 'PROCESSING', 'ACCEPTED']);
+                $query->whereIn('request_status', CertificateRequestStatusEnum::adminDefaultStatuses());
             }
 
             return HttpResponseMessages::getResponse([

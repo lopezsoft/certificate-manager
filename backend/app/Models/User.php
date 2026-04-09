@@ -54,8 +54,20 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
 
     protected $appends = [
         'name',
-        'avatarUrl'
+        'avatarUrl',
+        'is_admin',
     ];
+
+    /**
+     * Determinar si el usuario es administrador.
+     *
+     * Se basa en `type_id` de la tabla `user_types`:
+     *   type_id = 1 → Administrador.
+     */
+    public function getIsAdminAttribute(): bool
+    {
+        return (int) $this->type_id === 1;
+    }
 
     public function getAvatarUrlAttribute(): ?string
     {

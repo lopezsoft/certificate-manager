@@ -21,9 +21,10 @@ class CertificateRequest extends CoreModel
     public $table    = 'certificate_requests';
     public $timestamps = true;
 
-    protected $with = [
-        'identity', 'organization', 'city', 'files', 'history'
-    ];
+    /**
+     * Se eliminó $with global para evitar carga N+1 innecesaria.
+     * Cada query debe usar ->with([...]) explícito según sus necesidades.
+     */
 
     /**
      * The attributes that are mass assignable.
@@ -75,9 +76,11 @@ class CertificateRequest extends CoreModel
      * @return string
      */
 
-    public function getExpirationDateFormattedAttribute(): string
+    public function getExpirationDateFormattedAttribute(): ?string
     {
-        return Carbon::parse($this->expiration_date,'America/Bogota')->format('d-m-Y h:i:s a');
+        return $this->expiration_date
+            ? Carbon::parse($this->expiration_date, 'America/Bogota')->format('d-m-Y h:i:s a')
+            : null;
     }
 
     /**

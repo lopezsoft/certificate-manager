@@ -46,15 +46,14 @@ class NotificationControllerTest extends TestCase
         $response->assertStatus(401);
     }
 
-    // ── triggerNow — requiere is_admin ───────────────────────────────────────
+    // ── triggerNow — requiere is_admin (middleware 'admin') ─────────────────
 
     public function test_triggerNow_devuelve_403_si_usuario_no_es_admin(): void
     {
         Queue::fake();
 
         /** @var User $user */
-        $user = User::make(['id' => 1, 'email' => 'user@test.com']);
-        $user->is_admin = false;
+        $user = User::make(['id' => 1, 'email' => 'user@test.com', 'type_id' => 2]);
 
         $response = $this->actingAs($user, 'api')
             ->postJson('/api/v1/admin/certificates/notify-now');
@@ -68,8 +67,7 @@ class NotificationControllerTest extends TestCase
         Queue::fake();
 
         /** @var User $user */
-        $user = User::make(['id' => 99, 'email' => 'admin@test.com']);
-        $user->is_admin = true;
+        $user = User::make(['id' => 99, 'email' => 'admin@test.com', 'type_id' => 1]);
 
         $response = $this->actingAs($user, 'api')
             ->postJson('/api/v1/admin/certificates/notify-now', [
@@ -86,8 +84,7 @@ class NotificationControllerTest extends TestCase
         Queue::fake();
 
         /** @var User $user */
-        $user = User::make(['id' => 99, 'email' => 'admin@test.com']);
-        $user->is_admin = true;
+        $user = User::make(['id' => 99, 'email' => 'admin@test.com', 'type_id' => 1]);
 
         $response = $this->actingAs($user, 'api')
             ->postJson('/api/v1/admin/certificates/notify-now', [

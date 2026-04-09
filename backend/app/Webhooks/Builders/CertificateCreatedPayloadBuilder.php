@@ -2,6 +2,7 @@
 
 namespace App\Webhooks\Builders;
 
+use App\Enums\CertificateRequestStatusEnum;
 use App\Webhooks\Contracts\WebhookEventContract;
 use App\Webhooks\Contracts\WebhookPayloadBuilderContract;
 use App\Webhooks\Enums\WebhookEventType;
@@ -28,7 +29,7 @@ class CertificateCreatedPayloadBuilder implements WebhookPayloadBuilderContract
                 'company_name'           => $data['company_name'] ?? null,
                 'dni'                    => $data['dni'] ?? null,
                 'dv'                     => $data['dv'] ?? null,
-                'request_status'         => $data['request_status'] ?? 'DRAFT',
+                'request_status'         => $data['request_status'] ?? CertificateRequestStatusEnum::DRAFT->value,
                 'legal_representative'   => $data['legal_representative'] ?? null,
             ],
         ];

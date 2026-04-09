@@ -2,10 +2,12 @@
 
 namespace App\Exceptions;
 
-use Exception;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -37,6 +39,7 @@ class Handler extends ExceptionHandler
      */
     public function register()
     {
+        // Excepciones de negocio propias (CertificateException e hijas)
         $this->renderable(function (CertificateException $e): JsonResponse {
             return response()->json([
                 'success' => false,
@@ -44,23 +47,34 @@ class Handler extends ExceptionHandler
             ], $e->getCode() ?: 400);
         });
 
+        // Modelo no encontrado (Laravel convierte ModelNotFoundException a NotFoundHttpException)
+        $this->renderable(function (NotFoundHttpException $e): JsonResponse {
+            return response()->json([
+                'success' => false,
+                'message' => 'Recurso no encontrado.',
+            ], 404);
+        });
+
+        // Autenticación
+        $this->renderable(function (AuthenticationException $e): JsonResponse {
+            return response()->json([
+                'success' => false,
+                'message' => 'No autenticado.',
+            ], 401);
+        });
+
+        // Validación
+        $this->renderable(function (ValidationException $e): JsonResponse {
+            return response()->json([
+                'success' => false,
+                'message' => 'Los datos proporcionados no son válidos.',
+                'errors'  => $e->errors(),
+            ], 422);
+        });
+
         $this->reportable(function (Throwable $e) {
             //
         });
-    }
-
-     /**
-     * Report or log an exception.
-     *
-     * @param  Exception|Throwable  $e
-     * @return void
-     *
-     * @throws Exception|Throwable
-     */
-    public function report(Exception|Throwable $e): void
-    {
-        Log::error($e);
-        parent::report($e);
     }
 }
 

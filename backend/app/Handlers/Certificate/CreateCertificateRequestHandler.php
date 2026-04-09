@@ -6,6 +6,7 @@ use App\Commands\Certificate\CreateCertificateRequestCommand;
 use App\Common\HttpResponseMessages;
 use App\Common\MessageExceptionResponse;
 use App\Common\VerificationDigit;
+use App\Enums\CertificateRequestStatusEnum;
 use App\Events\CertificateRequestCreated;
 use App\Models\CertificateRequest;
 use App\Models\ChangeHistory;
@@ -64,16 +65,22 @@ class CreateCertificateRequestHandler
 
             ChangeHistory::create([
                 'certificate_request_id' => $certificate->id,
-                'status'                 => 'DRAFT',
+                'status'                 => CertificateRequestStatusEnum::DRAFT->value,
                 'comments'               => 'Solicitud de certificado creada',
                 'user_of_change'         => 'USER',
                 'user_id'                => $command->userId,
             ]);
 
+            // Cargar relaciones necesarias para fillAndStoreExcel
+            $certificate->load(['city', 'identity']);
+
             $this->fillAndStoreExcel($activeSheet, $certificate, $command->dni, $dv, $folderName, $disk);
             $this->storeUploadedFiles($command->files, $folderName, $disk, $certificate->id);
 
             DB::commit();
+
+            // Cargar relaciones para la respuesta y el evento
+            $certificate->load(['files']);
 
             event(new CertificateRequestCreated($certificate));
 
@@ -130,7 +137,7 @@ class CreateCertificateRequestHandler
             ->where('company_id', $companyId)
             ->where('dni', $dni)
             ->where('dv', $dv)
-            ->whereIn('request_status', ['DRAFT', 'SENT', 'PENDING', 'ACCEPTED', 'PROCESSING'])
+            ->whereIn('request_status', CertificateRequestStatusEnum::activeStatuses())
             ->exists();
 
         if ($exists) {

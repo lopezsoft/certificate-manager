@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Common\HttpResponseMessages;
 use App\Common\MessageExceptionResponse;
+use App\Enums\CertificateRequestStatusEnum;
 use App\Modules\Company\CompanyQueries;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +19,7 @@ class ConsumeService
             $companyId      = $company->id;
             $query          = DB::table('certificate_requests_years_view')
                                 ->where('nyear', $year)
-                                ->whereIn('request_status', ['PROCESSED', 'PROCESSING']);
+                                ->whereIn('request_status', CertificateRequestStatusEnum::issuedStatuses());
             if($user->type_id !== 1){
                 $query->where('company_id', $companyId);
             };
@@ -39,7 +40,7 @@ class ConsumeService
             $companyId      = $company->id;
             $query          = DB::table('certificate_requests_months_view')
                                 ->where('nyear', $year)
-                                ->whereIn('request_status', ['PROCESSED', 'PROCESSING']);
+                                ->whereIn('request_status', CertificateRequestStatusEnum::issuedStatuses());
             if($month > 0){
                 $query->where('nmonth', $month);
             }
