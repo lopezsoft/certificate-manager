@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 /**
  * @OA\Info(
- *     version="1.8.0",
+ *     version="1.10.0",
  *     title="Certificate Manager API",
  *     description="API REST para la gestión de solicitudes de certificados digitales. Requiere autenticación OAuth 2.0 con Laravel Passport.",
  *     @OA\Contact(
@@ -26,12 +26,13 @@ namespace App\Http\Controllers;
  *     description="Token de acceso OAuth 2.0 obtenido desde /authentication/login"
  * )
  *
- * @OA\Tag(name="Autenticación", description="Endpoints de login y registro")
+ * @OA\Tag(name="Autenticación", description="Endpoints de login, registro, verificación de email y recuperación de contraseña")
  * @OA\Tag(name="Solicitudes de Certificado", description="Gestión completa de solicitudes de certificados digitales")
  * @OA\Tag(name="Archivos", description="Carga y eliminación de archivos adjuntos")
  * @OA\Tag(name="Empresa", description="Configuración y perfil de la empresa")
  * @OA\Tag(name="Perfil", description="Gestión del perfil de usuario")
  * @OA\Tag(name="Consumo", description="Estadísticas y reportes de consumo")
+ * @OA\Tag(name="CRUD Genérico", description="Operaciones CRUD dinámicas sobre tablas configuradas del sistema")
  * @OA\Tag(name="Tokens", description="Gestión de Personal Access Tokens (PAT) para integraciones externas")
  * @OA\Tag(name="Webhooks", description="Gestión de endpoints externos para notificaciones en tiempo real")
  * @OA\Tag(name="Notificaciones", description="Alertas de vencimiento de certificados: listado, marcado de lectura y disparo manual")

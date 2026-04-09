@@ -12,6 +12,19 @@ use Illuminate\Support\Facades\URL;
 class VerifyEmailController extends Controller
 {
     /**
+     * @OA\Get(
+     *     path="/verify-email/{id}/{hash}",
+     *     tags={"Autenticación"},
+     *     summary="Verificar dirección de correo electrónico",
+     *     description="Verifica el email del usuario mediante el enlace firmado enviado por correo. Redirige al frontend tras la verificación. Requiere firma URL válida.",
+     *     @OA\Parameter(name="id", in="path", required=true, description="ID del usuario", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="hash", in="path", required=true, description="Hash de verificación del email", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="signature", in="query", required=true, description="Firma de la URL", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="expires", in="query", required=true, description="Timestamp de expiración", @OA\Schema(type="integer")),
+     *     @OA\Response(response=302, description="Redirige al frontend (login o reenvío de verificación)"),
+     *     @OA\Response(response=403, description="Firma de URL inválida o expirada")
+     * )
+     *
      * Mark the authenticated user's email address as verified.
      */
     public function verify(Request $request)

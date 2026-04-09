@@ -7,7 +7,7 @@
             "name": "Soporte Matias",
             "email": "soporte@matias.com.co"
         },
-        "version": "1.8.0"
+        "version": "1.10.0"
     },
     "servers": [
         {
@@ -635,6 +635,74 @@
                 ]
             }
         },
+        "/email/verification-notification": {
+            "post": {
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Reenviar correo de verificación de email",
+                "description": "Envía nuevamente el correo de verificación al usuario indicado. Si el email ya fue verificado, retorna error 400.",
+                "operationId": "7c01a354a5960445207bc5d2f17d547e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "usuario@empresa.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Correo de verificación enviado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Se ha enviado un correo electrónico de verificación"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "El correo ya fue verificado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/reset-password": {
             "post": {
                 "tags": [
@@ -847,6 +915,62 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/verify-email/{id}/{hash}": {
+            "get": {
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Verificar dirección de correo electrónico",
+                "description": "Verifica el email del usuario mediante el enlace firmado enviado por correo. Redirige al frontend tras la verificación. Requiere firma URL válida.",
+                "operationId": "bb4b893f5bd606e136b93d41b55b943f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del usuario",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "hash",
+                        "in": "path",
+                        "description": "Hash de verificación del email",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "signature",
+                        "in": "query",
+                        "description": "Firma de la URL",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "expires",
+                        "in": "query",
+                        "description": "Timestamp de expiración",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Redirige al frontend (login o reenvío de verificación)"
+                    },
+                    "403": {
+                        "description": "Firma de URL inválida o expirada"
                     }
                 }
             }
@@ -1588,7 +1712,7 @@
         "/consume/{year}": {
             "get": {
                 "tags": [
-                    "Configuración"
+                    "Consumo"
                 ],
                 "summary": "Consumo de documentos por año",
                 "description": "Retorna el resumen de documentos procesados para la empresa autenticada durante el año indicado.",
@@ -1647,7 +1771,7 @@
         "/consume/{year}/{month}": {
             "get": {
                 "tags": [
-                    "Configuración"
+                    "Consumo"
                 ],
                 "summary": "Consumo de documentos por mes",
                 "description": "Retorna el detalle de documentos procesados para la empresa autenticada en el mes y año indicados.",
@@ -2242,6 +2366,339 @@
                     },
                     "401": {
                         "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/crud": {
+            "get": {
+                "tags": [
+                    "CRUD Genérico"
+                ],
+                "summary": "Listar registros de una tabla",
+                "description": "Retorna registros paginados de la tabla indicada por `tbPrefix`. Solo accede a tablas habilitadas para la empresa autenticada.",
+                "operationId": "d4f8667d43b756645f46f96256ab9249",
+                "parameters": [
+                    {
+                        "name": "tbPrefix",
+                        "in": "query",
+                        "description": "Prefijo identificador de la tabla",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "contacts"
+                        }
+                    },
+                    {
+                        "name": "where",
+                        "in": "query",
+                        "description": "Filtros en formato JSON serializado",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "description": "Ordenamiento en formato JSON serializado",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de registros",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    },
+                    "500": {
+                        "description": "Tabla no permitida o error interno"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "CRUD Genérico"
+                ],
+                "summary": "Crear registro en una tabla",
+                "description": "Inserta un nuevo registro en la tabla indicada por `tbPrefix`. Los datos se envían como JSON serializado en `records`.",
+                "operationId": "539edbefdc3ab3cd9ce11c75c1d01640",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tbPrefix",
+                                    "records"
+                                ],
+                                "properties": {
+                                    "tbPrefix": {
+                                        "description": "Prefijo identificador de la tabla",
+                                        "type": "string",
+                                        "example": "contacts"
+                                    },
+                                    "records": {
+                                        "description": "JSON serializado con los campos del nuevo registro",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Registro creado exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    },
+                    "500": {
+                        "description": "Tabla no permitida o error interno"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/crud/{id}": {
+            "get": {
+                "tags": [
+                    "CRUD Genérico"
+                ],
+                "summary": "Obtener un registro por ID",
+                "description": "Retorna un registro específico de la tabla indicada por `tbPrefix`.",
+                "operationId": "11e79f46c48a0fbe65c697818c3f007b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del registro",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "tbPrefix",
+                        "in": "query",
+                        "description": "Prefijo identificador de la tabla",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "contacts"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalle del registro",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    },
+                    "404": {
+                        "description": "Registro no encontrado"
+                    },
+                    "500": {
+                        "description": "Tabla no permitida o error interno"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "CRUD Genérico"
+                ],
+                "summary": "Actualizar un registro",
+                "description": "Actualiza un registro existente en la tabla indicada por `tbPrefix`.",
+                "operationId": "f2529a26f1e068cfd611caf34953ffaf",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del registro",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tbPrefix",
+                                    "records"
+                                ],
+                                "properties": {
+                                    "tbPrefix": {
+                                        "description": "Prefijo identificador de la tabla",
+                                        "type": "string",
+                                        "example": "contacts"
+                                    },
+                                    "records": {
+                                        "description": "JSON serializado con los campos a actualizar",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Registro actualizado exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    },
+                    "404": {
+                        "description": "Registro no encontrado"
+                    },
+                    "500": {
+                        "description": "Tabla no permitida o error interno"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "CRUD Genérico"
+                ],
+                "summary": "Eliminar un registro",
+                "description": "Elimina un registro de la tabla indicada por `tbPrefix`.",
+                "operationId": "226e10994ccc5c3ef16dd2c1f6e9f889",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del registro",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "tbPrefix",
+                        "in": "query",
+                        "description": "Prefijo identificador de la tabla",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "contacts"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Registro eliminado exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    },
+                    "404": {
+                        "description": "Registro no encontrado"
+                    },
+                    "500": {
+                        "description": "Tabla no permitida o error interno"
                     }
                 },
                 "security": [
@@ -3187,7 +3644,7 @@
     "tags": [
         {
             "name": "Autenticación",
-            "description": "Endpoints de login y registro"
+            "description": "Endpoints de login, registro, verificación de email y recuperación de contraseña"
         },
         {
             "name": "Solicitudes de Certificado",
@@ -3200,6 +3657,14 @@
         {
             "name": "Perfil",
             "description": "Gestión del perfil de usuario"
+        },
+        {
+            "name": "Consumo",
+            "description": "Estadísticas y reportes de consumo"
+        },
+        {
+            "name": "CRUD Genérico",
+            "description": "Operaciones CRUD dinámicas sobre tablas configuradas del sistema"
         },
         {
             "name": "Tokens",

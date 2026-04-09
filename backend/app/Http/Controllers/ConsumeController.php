@@ -9,7 +9,7 @@ class ConsumeController extends Controller
     /**
      * @OA\Get(
      *     path="/consume/{year}",
-     *     tags={"Configuración"},
+     *     tags={"Consumo"},
      *     summary="Consumo de documentos por año",
      *     description="Retorna el resumen de documentos procesados para la empresa autenticada durante el año indicado.",
      *     security={{"bearerAuth":{}}},
@@ -35,7 +35,7 @@ class ConsumeController extends Controller
     /**
      * @OA\Get(
      *     path="/consume/{year}/{month}",
-     *     tags={"Configuración"},
+     *     tags={"Consumo"},
      *     summary="Consumo de documentos por mes",
      *     description="Retorna el detalle de documentos procesados para la empresa autenticada en el mes y año indicados.",
      *     security={{"bearerAuth":{}}},

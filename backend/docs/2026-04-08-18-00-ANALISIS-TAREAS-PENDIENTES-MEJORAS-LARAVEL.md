@@ -1,20 +1,20 @@
 # Análisis de Tareas Pendientes y Mejoras — Backend Laravel
 
 **Fecha:** 2026-04-08 18:00  
-**Actualizado:** 2026-04-08 19:30  
+**Actualizado:** 2026-04-09 10:00  
 **Versión analizada:** `1.9.0` → `1.10.0` (tras implementación)  
 **Framework:** Laravel 10.x / PHP 8.1  
 **Base de datos:** MariaDB (driver `mysql`)  
 **Regla de testing:** Solo Mocks/Fakes — prohibido usar DB real en tests  
-**Última versión documentada:** `1.10.0` (2026-04-08)
+**Última versión documentada:** `1.10.0` (2026-04-09)
 
 ---
 
 ## 1. Resumen Ejecutivo
 
-El proyecto **Certificate Manager** es un backend Laravel maduro con un sistema de solicitudes de certificados digitales, notificaciones automáticas, webhooks salientes y Personal Access Tokens (PAT). Se han completado **22 tareas del backlog** (T-01 a T-21 + T-23 + T-31) incluyendo las **7 tareas críticas y de alta prioridad** implementadas en este sprint.
+El proyecto **Certificate Manager** es un backend Laravel maduro con un sistema de solicitudes de certificados digitales, notificaciones automáticas, webhooks salientes y Personal Access Tokens (PAT). Se han completado **23 tareas del backlog** (T-01 a T-21 + T-23 + T-31 + T-32) incluyendo las **7 tareas críticas y de alta prioridad** implementadas previamente y la actualización completa de documentación Swagger/OpenAPI.
 
-**Resultado del sprint actual:** 7 tareas implementadas, 193 tests pasando (320 assertions, 0 fallos), 9 archivos creados, 15 archivos modificados.
+**Resultado del sprint actual:** 8 tareas implementadas, 193 tests pasando (320 assertions, 0 fallos), 9 archivos creados, 20 archivos modificados.
 
 ---
 
@@ -51,6 +51,12 @@ El proyecto **Certificate Manager** es un backend Laravel maduro con un sistema 
 | T-20  | Crear Form Requests para validación de certificados | ✅ | Validación integrada vía Laravel |
 | T-21  | Middleware `EnsureUserIsAdmin` + registro en Kernel + rate limiting `triggerNow` | ✅ | 3 tests (`EnsureUserIsAdminTest`) |
 | T-31  | Fix accessor `getExpirationDateFormattedAttribute` con `null` | ✅ | Incluido en `CertificateRequestTest` |
+
+### 2.3 Tareas implementadas — 2026-04-09
+
+| ID    | Descripción                                             | Estado | Tests |
+|-------|---------------------------------------------------------|--------|-------|
+| T-32  | Actualización completa de documentación Swagger/OpenAPI 3.0 | ✅ | N/A (documentación) |
 
 ---
 
@@ -194,6 +200,45 @@ El proyecto **Certificate Manager** es un backend Laravel maduro con un sistema 
 
 ---
 
+### 3.8 T-32: Actualización Swagger/OpenAPI — ✅ COMPLETADO
+
+**Problema:** Documentación Swagger incompleta — `SwaggerDefinitions.php` con versión `1.8.0`, `TableCrudController` sin anotaciones (5 endpoints), `ConsumeController` con tag incorrecto (`Configuración` en lugar de `Consumo`), endpoints de verificación de email sin documentar.
+
+**Solución implementada:**
+- `SwaggerDefinitions.php` — Actualizado `@OA\Info.version` de `1.8.0` a `1.10.0`, agregado tag `CRUD Genérico`, mejorada descripción del tag `Autenticación`
+- `TableCrudController.php` — Anotaciones `@OA` completas en 5 métodos CRUD (index, store, show, update, destroy) bajo tag `CRUD Genérico`
+- `ConsumeController.php` — Corregido tag de `Configuración` a `Consumo` en `readByYear` y `readByMonth`
+- `EmailVerificationNotificationController.php` — Anotación `@OA\Post` para reenvío de verificación de email
+- `VerifyEmailController.php` — Anotación `@OA\Get` con respuesta `302` (redirect)
+- Ejecutado `php artisan l5-swagger:generate` — generación exitosa
+
+**Cobertura final Swagger:** 44 endpoints documentados (100% de rutas API)
+
+**Endpoints documentados por tag:**
+| Tag | Endpoints |
+|-----|-----------|
+| Autenticación | 6 (login, logout, register, forgot-password, reset-password, verify-email, email-verification) |
+| Solicitudes de Certificado | 7 (CRUD + send-mail + status) |
+| Archivos | 2 (upload + delete) |
+| Perfil | 3 (user, types, update) |
+| Consumo | 2 (year, month) |
+| CRUD Genérico | 5 (index, store, show, update, destroy) |
+| Tokens | 6 (index, store, show, destroy, revoke-all, renew) |
+| Webhooks | 8 (events, index, store, show, update, destroy, rotate-secret, deliveries) |
+| Notificaciones | 5 (expiring, index, markAsRead, markAllAsRead, triggerNow) |
+| Datos Maestros | 5 (countries, departments, cities, organization-type, identity-documents) |
+| Configuración | 4 (company, settings GET/PUT, reports GET/PUT) |
+
+**Archivos modificados:**
+- `app/Http/Controllers/SwaggerDefinitions.php` — version + tag
+- `app/Http/Controllers/TableCrudController.php` — 5 anotaciones OA
+- `app/Http/Controllers/ConsumeController.php` — tag corregido
+- `app/Http/Controllers/Auth/EmailVerificationNotificationController.php` — anotación OA
+- `app/Http/Controllers/Auth/VerifyEmailController.php` — anotación OA
+- `storage/api-docs/api-docs.json` — regenerado
+
+---
+
 ## 4. Tareas Pendientes (Backlog)
 
 ### 🟡 Prioridad Media
@@ -237,7 +282,7 @@ tests/Unit/Middleware/EnsureUserIsAdminTest.php          ← T-21 tests
 tests/Unit/Exceptions/HandlerTest.php                   ← T-16 tests
 ```
 
-### Archivos modificados en este sprint (15):
+### Archivos modificados en este sprint (20):
 
 ```
 app/Models/User.php                                     ← T-15: accessor is_admin
@@ -246,6 +291,11 @@ app/Exceptions/Handler.php                              ← T-16: handlers espec
 app/Http/Kernel.php                                     ← T-21: middleware admin
 app/Http/Controllers/CertificateRequestController.php   ← T-20: Form Requests
 app/Http/Controllers/NotificationController.php         ← T-17+T-21: enum + simplificado
+app/Http/Controllers/SwaggerDefinitions.php             ← T-32: version 1.10.0 + tag CRUD Genérico
+app/Http/Controllers/TableCrudController.php            ← T-32: 5 anotaciones @OA
+app/Http/Controllers/ConsumeController.php              ← T-32: tag Consumo
+app/Http/Controllers/Auth/EmailVerificationNotificationController.php  ← T-32: anotación @OA
+app/Http/Controllers/Auth/VerifyEmailController.php     ← T-32: anotación @OA
 app/Services/CertificateRequestService.php              ← T-17+T-20: enum + sin validación
 app/Services/CertificateRequestMailService.php          ← T-17+T-18: enum + eager loading
 app/Services/ConsumeService.php                         ← T-17: enum
@@ -272,7 +322,7 @@ tests/Feature/NotificationControllerTest.php                  ← Fix: type_id
 | Middlewares registrados | 13 | 14 (+admin) |
 | Enums | 3 | 4 (+CertificateRequestStatusEnum) |
 | Form Requests | 2 | 4 (+Certificate/*) |
-| Tareas completadas | 15 | 22 |
+| Tareas completadas | 15 | 23 |
 | Tareas pendientes | 17 | 9 |
 | Deuda técnica estimada | ~50h | ~27h |
 
@@ -288,4 +338,4 @@ Todos los archivos de test automatizados **cumplen** la regla de no acceder a la
 
 ---
 
-*Documento generado el 2026-04-08 18:00. Actualizado el 2026-04-08 19:30 tras implementación de T-15 a T-21 y T-31.*
+*Documento generado el 2026-04-08 18:00. Actualizado el 2026-04-09 10:00 tras implementación de T-15 a T-21, T-31 y T-32 (Swagger/OpenAPI).*
