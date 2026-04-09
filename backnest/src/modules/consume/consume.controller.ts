@@ -5,12 +5,14 @@ import {
   ApiOperation,
   ApiParam,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
-import { ConsumeService } from './consume.service';
+import { ConsumeService } from '@modules/consume/consume.service';
 
 @ApiTags('Consume')
 @ApiBearerAuth()
+@ApiUnauthorizedResponse({ description: 'Token inválido o expirado' })
 @UseGuards(JwtAuthGuard)
 @Controller('consume')
 export class ConsumeController {

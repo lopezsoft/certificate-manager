@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { MasterService } from './master.service';
+import { MasterService } from '@modules/master/master.service';
 
 @ApiTags('Master')
 @Controller()

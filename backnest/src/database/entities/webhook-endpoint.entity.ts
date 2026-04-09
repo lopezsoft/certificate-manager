@@ -26,7 +26,7 @@ export class WebhookEndpoint {
   @Column({ length: 255, select: false })
   secret: string;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   events: string[];
 
   @Column({ name: 'is_active', type: 'boolean', default: true })

@@ -23,7 +23,7 @@ export class PersonalAccessToken {
   @Column({ length: 255, nullable: true })
   name: string;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   abilities: string[];
 
   @Column({ name: 'expires_at', type: 'timestamp', nullable: true })

@@ -4,8 +4,8 @@ import { IdentityDocument } from '@database/entities/identity-document.entity';
 import { TypeOrganization } from '@database/entities/type-organization.entity';
 import { UserType } from '@database/entities/user-type.entity';
 import { Language } from '@database/entities/language.entity';
-import { MasterController } from './master.controller';
-import { MasterService } from './master.service';
+import { MasterController } from '@modules/master/master.controller';
+import { MasterService } from '@modules/master/master.service';
 
 @Module({
   imports: [

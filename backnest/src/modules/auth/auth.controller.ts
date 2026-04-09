@@ -8,25 +8,30 @@ import {
   ParseIntPipe,
   Post,
   Put,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
-  ApiBody,
+  ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiBody,
   ApiCreatedResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiProperty,
   ApiTooManyRequestsResponse,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { FastifyRequest } from 'fastify';
+import { AuthService } from '@modules/auth/auth.service';
+import { LoginDto } from '@modules/auth/dto/login.dto';
+import { RegisterDto } from '@modules/auth/dto/register.dto';
+import { ForgotPasswordDto } from '@modules/auth/dto/forgot-password.dto';
+import { ResetPasswordDto } from '@modules/auth/dto/reset-password.dto';
+import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { User } from '@database/entities/user.entity';
 import { IsEmail, IsNotEmpty } from 'class-validator';
@@ -59,24 +64,32 @@ export class AuthController {
 
   /**
    * POST /api/v1/auth/login
+   * Autentica al usuario y retorna token OAuth Bearer (compatible Laravel Passport).
    */
   @Post('auth/login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Iniciar sesión' })
+  @ApiOperation({ summary: 'Iniciar sesión', description: 'Autentica al usuario y retorna un token OAuth Bearer compatible con Laravel Passport.' })
   @ApiBody({ type: LoginDto })
-  @ApiOkResponse({ description: 'Login exitoso con token' })
-  async login(@Body() dto: LoginDto) {
-    const result = await this.authService.login(dto);
-    return { dataRecords: result };
+  @ApiOkResponse({ description: 'Login exitoso con token Bearer' })
+  @ApiBadRequestResponse({ description: 'Datos de entrada inválidos' })
+  @ApiUnauthorizedResponse({ description: 'Credenciales incorrectas' })
+  async login(
+    @Body() dto: LoginDto,
+    @Req() request: FastifyRequest,
+  ) {
+    const clientIp = request.ip;
+    const result = await this.authService.login(dto, clientIp);
+    return result;
   }
 
   /**
    * POST /api/v1/auth/register
    */
   @Post('register')
-  @ApiOperation({ summary: 'Registrar nuevo usuario' })
+  @ApiOperation({ summary: 'Registrar nuevo usuario', description: 'Crea un nuevo usuario en el sistema. Requiere verificación de email posterior.' })
   @ApiBody({ type: RegisterDto })
   @ApiCreatedResponse({ description: 'Usuario registrado exitosamente' })
+  @ApiBadRequestResponse({ description: 'Datos de entrada inválidos o email ya registrado' })
   async register(@Body() dto: RegisterDto) {
     const result = await this.authService.register(dto);
     return { message: result.message };
@@ -87,9 +100,10 @@ export class AuthController {
    */
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Solicitar recuperación de contraseña' })
+  @ApiOperation({ summary: 'Solicitar recuperación de contraseña', description: 'Envía un correo con el enlace de restablecimiento de contraseña al email indicado.' })
   @ApiBody({ type: ForgotPasswordDto })
   @ApiOkResponse({ description: 'Correo de recuperación procesado' })
+  @ApiBadRequestResponse({ description: 'Email inválido o no registrado' })
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     const result = await this.authService.forgotPassword(dto);
     return { message: result.message };
@@ -100,9 +114,10 @@ export class AuthController {
    */
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Restablecer contraseña' })
+  @ApiOperation({ summary: 'Restablecer contraseña', description: 'Restablece la contraseña del usuario utilizando el token enviado por correo.' })
   @ApiBody({ type: ResetPasswordDto })
   @ApiOkResponse({ description: 'Contraseña restablecida' })
+  @ApiBadRequestResponse({ description: 'Token inválido, expirado o datos incorrectos' })
   async resetPassword(@Body() dto: ResetPasswordDto) {
     const result = await this.authService.resetPassword(dto);
     return { message: result.message };
@@ -115,8 +130,9 @@ export class AuthController {
   @Get('auth/user')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Perfil del usuario autenticado' })
+  @ApiOperation({ summary: 'Perfil del usuario autenticado', description: 'Retorna los datos completos del usuario autenticado junto con su empresa y permisos.' })
   @ApiOkResponse({ description: 'Perfil autenticado' })
+  @ApiUnauthorizedResponse({ description: 'Token inválido o expirado' })
   async authUser(@CurrentUser() user: User) {
     const data = await this.authService.getProfile(user.id);
     return { dataRecords: { data } };
@@ -129,44 +145,60 @@ export class AuthController {
   @Get('profile')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Perfil del usuario autenticado (alias profile)' })
+  @ApiOperation({ summary: 'Perfil del usuario autenticado (alias profile)', description: 'Alias compatible con Laravel para obtener el perfil del usuario autenticado.' })
   @ApiOkResponse({ description: 'Perfil autenticado' })
+  @ApiUnauthorizedResponse({ description: 'Token inválido o expirado' })
   async profile(@CurrentUser() user: User) {
     const data = await this.authService.getProfile(user.id);
     return { dataRecords: { data } };
   }
 
   /**
-   * POST /api/v1/auth/logout
-   * Con JWT stateless simplemente se indica al cliente que descarte el token.
+   * GET /api/v1/auth/logout
+   * Revoca el token Bearer activo (compatible Laravel Passport).
    */
   @Get('auth/logout')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Cerrar sesión (GET Laravel)' })
-  @ApiOkResponse({ description: 'Sesión cerrada' })
-  async logoutGet() {
-    return { message: 'Sesión cerrada exitosamente.' };
+  @ApiOperation({ summary: 'Cerrar sesión (GET)', description: 'Revoca el token Bearer activo. Compatible con Laravel Passport.' })
+  @ApiOkResponse({ description: 'Sesión cerrada, token revocado' })
+  @ApiUnauthorizedResponse({ description: 'Token inválido o expirado' })
+  async logoutGet(
+    @CurrentUser() user: User,
+    @Req() request: FastifyRequest,
+  ) {
+    const rawToken = this.authService.extractTokenFromHeader(
+      request.headers.authorization,
+    );
+    return this.authService.logout(rawToken, user, request.ip);
   }
 
   @Post('auth/logout')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Cerrar sesión (POST compat adicional)' })
-  @ApiOkResponse({ description: 'Sesión cerrada' })
-  async logoutPost() {
-    return { message: 'Sesión cerrada exitosamente.' };
+  @ApiOperation({ summary: 'Cerrar sesión (POST)', description: 'Revoca el token Bearer activo. Endpoint POST adicional de compatibilidad.' })
+  @ApiOkResponse({ description: 'Sesión cerrada, token revocado' })
+  @ApiUnauthorizedResponse({ description: 'Token inválido o expirado' })
+  async logoutPost(
+    @CurrentUser() user: User,
+    @Req() request: FastifyRequest,
+  ) {
+    const rawToken = this.authService.extractTokenFromHeader(
+      request.headers.authorization,
+    );
+    return this.authService.logout(rawToken, user, request.ip);
   }
 
   @Get('verify-email/:id/:hash')
   @UseGuards(EndpointRateLimitGuard)
   @EndpointRateLimit({ max: 6, windowMs: 60_000 })
-  @ApiOperation({ summary: 'Verificar email del usuario' })
-  @ApiParam({ name: 'id', type: Number })
-  @ApiParam({ name: 'hash', type: String })
-  @ApiOkResponse({ description: 'Email verificado' })
+  @ApiOperation({ summary: 'Verificar email del usuario', description: 'Verifica la dirección de correo del usuario a partir del enlace enviado por email.' })
+  @ApiParam({ name: 'id', type: Number, description: 'ID del usuario' })
+  @ApiParam({ name: 'hash', type: String, description: 'Hash de verificación' })
+  @ApiOkResponse({ description: 'Email verificado exitosamente' })
+  @ApiNotFoundResponse({ description: 'Usuario no encontrado' })
   @ApiTooManyRequestsResponse({ description: 'Demasiadas solicitudes' })
   async verifyEmail(@Param('id', ParseIntPipe) id: number) {
     return this.authService.verifyEmail(id);
@@ -193,9 +225,11 @@ export class AuthController {
   @Put('profile/:id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Actualizar perfil del usuario autenticado' })
-  @ApiParam({ name: 'id', type: Number })
+  @ApiOperation({ summary: 'Actualizar perfil del usuario autenticado', description: 'Permite actualizar nombre, apellido, email y contraseña del perfil propio.' })
+  @ApiParam({ name: 'id', type: Number, description: 'ID del usuario a actualizar' })
   @ApiOkResponse({ description: 'Perfil actualizado' })
+  @ApiBadRequestResponse({ description: 'Datos inválidos' })
+  @ApiUnauthorizedResponse({ description: 'Token inválido o expirado' })
   async updateProfile(
     @Param('id', ParseIntPipe) id: number,
     @Body()

@@ -21,7 +21,7 @@ export class Notification {
   @Column({ name: 'notifiable_id', type: 'bigint' })
   notifiableId: number;
 
-  @Column({ type: 'jsonb' })
+  @Column({ type: 'json' })
   data: Record<string, any>;
 
   @Column({ name: 'read_at', type: 'timestamp', nullable: true })

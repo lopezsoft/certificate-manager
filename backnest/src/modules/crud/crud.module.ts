@@ -6,8 +6,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { GeneralSetting } from '@database/entities/settings/general-setting.entity';
 import { GeneralSettingCompany } from '@database/entities/settings/general-setting-company.entity';
 import { ReportHeader } from '@database/entities/settings/report-header.entity';
-import { CrudController } from './crud.controller';
-import { CrudService } from './crud.service';
+import { CrudController } from '@modules/crud/crud.controller';
+import { CrudService } from '@modules/crud/crud.service';
 
 @Module({
   imports: [

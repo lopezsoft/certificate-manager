@@ -6,7 +6,7 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { LocationsService } from './locations.service';
+import { LocationsService } from '@modules/locations/locations.service';
 
 @ApiTags('Locations')
 @Controller()

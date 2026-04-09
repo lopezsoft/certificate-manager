@@ -13,8 +13,8 @@ import {
   WebhookDeliveryStatus,
 } from '@database/entities/webhook-delivery.entity';
 import { SmartLoggerService } from '@shared/logger/smart-logger.service';
-import { CreateWebhookEndpointDto } from './dto/create-webhook-endpoint.dto';
-import { UpdateWebhookEndpointDto } from './dto/update-webhook-endpoint.dto';
+import { CreateWebhookEndpointDto } from '@modules/webhooks/dto/create-webhook-endpoint.dto';
+import { UpdateWebhookEndpointDto } from '@modules/webhooks/dto/update-webhook-endpoint.dto';
 
 @Injectable()
 export class WebhooksService {

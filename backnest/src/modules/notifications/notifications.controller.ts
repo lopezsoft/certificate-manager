@@ -13,14 +13,16 @@ import {
   ApiOperation,
   ApiParam,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { User } from '@database/entities/user.entity';
-import { NotificationsService } from './notifications.service';
+import { NotificationsService } from '@modules/notifications/notifications.service';
 
 @ApiTags('Notifications')
 @ApiBearerAuth()
+@ApiUnauthorizedResponse({ description: 'Token inválido o expirado' })
 @UseGuards(JwtAuthGuard)
 @Controller()
 export class NotificationsController {

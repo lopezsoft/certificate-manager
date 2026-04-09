@@ -19,20 +19,22 @@ import {
   ApiOperation,
   ApiParam,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { User } from '@database/entities/user.entity';
-import { WebhooksService } from './webhooks.service';
-import { CreateWebhookEndpointDto } from './dto/create-webhook-endpoint.dto';
-import { UpdateWebhookEndpointDto } from './dto/update-webhook-endpoint.dto';
+import { WebhooksService } from '@modules/webhooks/webhooks.service';
+import { CreateWebhookEndpointDto } from '@modules/webhooks/dto/create-webhook-endpoint.dto';
+import { UpdateWebhookEndpointDto } from '@modules/webhooks/dto/update-webhook-endpoint.dto';
 
 @ApiTags('Webhooks')
 @ApiBearerAuth()
+@ApiUnauthorizedResponse({ description: 'Token inválido o expirado' })
 @UseGuards(JwtAuthGuard)
 @Controller('webhooks')
 export class WebhooksController {
-  constructor(private readonly webhooksService: WebhooksService) { }
+  constructor(private readonly webhooksService: WebhooksService) {}
 
   /** GET /api/v1/webhooks/events */
   @Get('events')
@@ -48,7 +50,7 @@ export class WebhooksController {
   @ApiOperation({ summary: 'Listar webhook endpoints de la empresa' })
   @ApiOkResponse({ description: 'Listado de webhooks de la empresa' })
   async index(@CurrentUser() user: User) {
-    const companyId = (user as any).companyId;
+    const companyId = user.companyId;
     const data = await this.webhooksService.findAll(companyId);
     return { dataRecords: { data } };
   }
@@ -58,11 +60,8 @@ export class WebhooksController {
   @ApiOperation({ summary: 'Obtener endpoint por ID' })
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Detalle de endpoint webhook' })
-  async show(
-    @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() user: User,
-  ) {
-    const companyId = (user as any).companyId;
+  async show(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User) {
+    const companyId = user.companyId;
     const data = await this.webhooksService.findOne(id, companyId);
     return { dataRecords: { data } };
   }
@@ -72,11 +71,8 @@ export class WebhooksController {
   @ApiOperation({ summary: 'Crear webhook endpoint' })
   @ApiBody({ type: CreateWebhookEndpointDto })
   @ApiCreatedResponse({ description: 'Webhook endpoint creado' })
-  async store(
-    @Body() dto: CreateWebhookEndpointDto,
-    @CurrentUser() user: User,
-  ) {
-    const companyId = (user as any).companyId;
+  async store(@Body() dto: CreateWebhookEndpointDto, @CurrentUser() user: User) {
+    const companyId = user.companyId;
     const data = await this.webhooksService.create(companyId, dto);
     return { message: 'Recurso creado exitosamente.', dataRecords: { data } };
   }
@@ -92,7 +88,7 @@ export class WebhooksController {
     @Body() dto: UpdateWebhookEndpointDto,
     @CurrentUser() user: User,
   ) {
-    const companyId = (user as any).companyId;
+    const companyId = user.companyId;
     const data = await this.webhooksService.update(id, companyId, dto);
     return { dataRecords: { data } };
   }
@@ -103,11 +99,8 @@ export class WebhooksController {
   @ApiOperation({ summary: 'Eliminar webhook endpoint (soft delete)' })
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Webhook endpoint eliminado' })
-  async destroy(
-    @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() user: User,
-  ) {
-    const companyId = (user as any).companyId;
+  async destroy(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User) {
+    const companyId = user.companyId;
     await this.webhooksService.remove(id, companyId);
     return { message: 'Recurso eliminado exitosamente.' };
   }
@@ -127,11 +120,8 @@ export class WebhooksController {
   @ApiOperation({ summary: 'Rotar secreto de firma del webhook endpoint' })
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Secreto rotado exitosamente' })
-  async rotateSecret(
-    @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() user: User,
-  ) {
-    const companyId = (user as any).companyId;
+  async rotateSecret(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User) {
+    const companyId = user.companyId;
     const data = await this.webhooksService.rotateSecret(id, companyId);
     return { dataRecords: { data } };
   }

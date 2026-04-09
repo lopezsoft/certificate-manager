@@ -3,8 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CertificateRequest } from '@database/entities/certificate-request.entity';
 import { ChangeHistory } from '@database/entities/change-history.entity';
 import { FileManager } from '@database/entities/file-manager.entity';
-import { CertificatesController } from './certificates.controller';
-import { CertificatesService } from './certificates.service';
+import { CertificatesController } from '@modules/certificates/certificates.controller';
+import { CertificatesService } from '@modules/certificates/certificates.service';
 
 @Module({
   imports: [

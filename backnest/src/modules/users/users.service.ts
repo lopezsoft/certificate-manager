@@ -9,8 +9,8 @@ import { Repository } from 'typeorm';
 import { User } from '@database/entities/user.entity';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 import { SmartLoggerService } from '@shared/logger/smart-logger.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserDto } from '@modules/users/dto/create-user.dto';
+import { UpdateUserDto } from '@modules/users/dto/update-user.dto';
 
 @Injectable()
 export class UsersService {

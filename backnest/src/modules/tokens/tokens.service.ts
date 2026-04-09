@@ -9,7 +9,7 @@ import { LessThan, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { PersonalAccessToken } from '@database/entities/personal-access-token.entity';
 import { SmartLoggerService } from '@shared/logger/smart-logger.service';
-import { CreateTokenDto } from './dto/create-token.dto';
+import { CreateTokenDto } from '@modules/tokens/dto/create-token.dto';
 
 @Injectable()
 export class TokensService {

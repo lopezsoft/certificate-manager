@@ -12,22 +12,26 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBadRequestResponse,
   ApiBody,
   ApiConsumes,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiTooManyRequestsResponse,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { FastifyRequest } from 'fastify';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
-import { FileManagerService } from './file-manager.service';
+import { FileManagerService } from '@modules/files/file-manager.service';
 import { EndpointRateLimit } from '@common/decorators/rate-limit.decorator';
 import { EndpointRateLimitGuard } from '@common/guards/endpoint-rate-limit.guard';
 
 @ApiTags('Files')
 @ApiBearerAuth()
+@ApiUnauthorizedResponse({ description: 'Token inválido o expirado' })
 @UseGuards(JwtAuthGuard)
 @Controller('certificate-request')
 export class FileManagerController {
@@ -111,8 +115,11 @@ export class FileManagerController {
   @ApiParam({ name: 'certificateRequestId', type: Number })
   @ApiParam({ name: 'fileId', type: Number })
   @ApiOkResponse({ description: 'Archivo eliminado' })
-  async destroy(@Param('fileId', ParseIntPipe) fileId: number) {
-    await this.fileManagerService.deleteFile(fileId);
+  async destroy(
+    @Param('certificateRequestId', ParseIntPipe) certificateRequestId: number,
+    @Param('fileId', ParseIntPipe) fileId: number,
+  ) {
+    await this.fileManagerService.deleteFile(fileId, certificateRequestId);
     return { message: 'Archivo eliminado exitosamente.' };
   }
 }

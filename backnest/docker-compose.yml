@@ -1,5 +1,17 @@
 version: '3.9'
 
+# ─── Producción — Certificate Manager NestJS ──────────────────────────────────
+# Uso:
+#   1. Copiar .env.example → .env y llenar las variables
+#   2. docker compose up -d
+#
+# Migración desde Laravel:
+#   1. Importar dump de BD:    docker exec -i backnest-mariadb mariadb -u root -p${DB_PASSWORD} ${DB_DATABASE} < dump.sql
+#   2. Copiar storage Laravel: cp -r /path/to/laravel/storage/app/attachments/* ./storage/app/attachments/
+#                               cp -r /path/to/laravel/storage/app/pdf/*         ./storage/app/pdf/
+#   3. Los archivos se sirven en las mismas rutas: {APP_URL}/attachments/{file_path}
+# ──────────────────────────────────────────────────────────────────────────────
+
 services:
   api:
     build:
@@ -9,45 +21,59 @@ services:
     container_name: backnest-api
     restart: unless-stopped
     ports:
-      - '3000:3000'
+      - '${APP_PORT:-3000}:3000'
     environment:
       - NODE_ENV=production
       - APP_PORT=3000
-      - DB_HOST=postgres
-      - DB_PORT=5432
+      - APP_URL=${APP_URL:-http://localhost:3000}
+      - DB_TYPE=mariadb
+      - DB_HOST=mariadb
+      - DB_PORT=3306
       - DB_DATABASE=${DB_DATABASE}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
+      - DB_SYNCHRONIZE=false
+      - DB_LOGGING=false
       - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-90d}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - MAIL_HOST=${MAIL_HOST}
       - MAIL_PORT=${MAIL_PORT}
-      - MAIL_USERNAME=${MAIL_USERNAME}
-      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_USER=${MAIL_USER}
+      - MAIL_PASS=${MAIL_PASS}
+      - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS:-noreply@certificate-manager.com}
+      - MAIL_FROM_NAME=${MAIL_FROM_NAME:-Certificate Manager}
+      - SWAGGER_ENABLED=false
+      # STORAGE_PATH default: /app/storage/app (correcto con bind mounts)
     depends_on:
-      postgres:
+      mariadb:
         condition: service_healthy
       redis:
         condition: service_started
     volumes:
-      - uploads_data:/app/public/attachments
-      - pdf_data:/app/public/pdf
+      # ── Bind mounts: misma estructura que Laravel storage/app/ ──
+      # Solo copiar los directorios desde Laravel y todo funciona igual.
+      - ./storage/app/attachments:/app/storage/app/attachments
+      - ./storage/app/pdf:/app/storage/app/pdf
 
-  postgres:
-    image: postgres:16-alpine
-    container_name: backnest-postgres
+  mariadb:
+    image: mariadb:11-jammy
+    container_name: backnest-mariadb
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_DATABASE:-certificate_manager}
-      POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+      MARIADB_DATABASE: ${DB_DATABASE}
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
     ports:
-      - '5432:5432'
+      - '${DB_EXPOSED_PORT:-3306}:3306'
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mariadb_data:/var/lib/mysql
+      # ── Importar dump en primer arranque (opcional) ──
+      # Colocar el archivo .sql en ./docker/initdb/ y se ejecutará automáticamente
+      # la primera vez que se cree el volumen mariadb_data.
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${DB_USERNAME:-postgres}']
+      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -56,13 +82,11 @@ services:
     image: redis:7-alpine
     container_name: backnest-redis
     restart: unless-stopped
-    ports:
-      - '6379:6379'
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
+    # No exponer puerto 6379 al host en producción (solo red interna Docker)
 
 volumes:
-  postgres_data:
+  mariadb_data:
   redis_data:
-  uploads_data:
-  pdf_data:

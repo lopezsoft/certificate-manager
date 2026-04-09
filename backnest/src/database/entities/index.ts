@@ -3,6 +3,8 @@ export { User } from './user.entity';
 export { UserType } from './user-type.entity';
 export { PasswordReset } from './password-reset.entity';
 export { AccessUsers } from './access-users.entity';
+export { OAuthAccessToken } from './oauth-access-token.entity';
+export { BusinessUser } from './business-user.entity';
 
 // Company
 export { Company } from './company.entity';

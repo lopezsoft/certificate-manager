@@ -16,7 +16,7 @@ export class FileManager {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'uuid', unique: true, nullable: true })
+  @Column({ type: 'varchar', length: 36, unique: true, nullable: true })
   uuid: string;
 
   @Column({ name: 'certificate_request_id' })

@@ -9,8 +9,8 @@ import { Company } from '@database/entities/company.entity';
 import { GeneralSettingCompany } from '@database/entities/settings/general-setting-company.entity';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 import { SmartLoggerService } from '@shared/logger/smart-logger.service';
-import { CreateCompanyDto } from './dto/create-company.dto';
-import { UpdateCompanyDto } from './dto/update-company.dto';
+import { CreateCompanyDto } from '@modules/companies/dto/create-company.dto';
+import { UpdateCompanyDto } from '@modules/companies/dto/update-company.dto';
 
 @Injectable()
 export class CompaniesService {

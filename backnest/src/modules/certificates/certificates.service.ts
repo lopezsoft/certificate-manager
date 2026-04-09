@@ -9,13 +9,13 @@ import { CertificateRequest } from '@database/entities/certificate-request.entit
 import { ChangeHistory } from '@database/entities/change-history.entity';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 import { SmartLoggerService } from '@shared/logger/smart-logger.service';
-import { CreateCertificateRequestDto } from './dto/create-certificate-request.dto';
+import { CreateCertificateRequestDto } from '@modules/certificates/dto/create-certificate-request.dto';
 import {
   UpdateCertificateRequestDto,
   UpdateCertificateStatusDto,
-} from './dto/update-certificate-request.dto';
-import { CertificateCreatedEvent } from './events/certificate-created.event';
-import { CertificateStatusChangedEvent } from './events/certificate-status-changed.event';
+} from '@modules/certificates/dto/update-certificate-request.dto';
+import { CertificateCreatedEvent } from '@modules/certificates/events/certificate-created.event';
+import { CertificateStatusChangedEvent } from '@modules/certificates/events/certificate-status-changed.event';
 
 @Injectable()
 export class CertificatesService {

@@ -5,24 +5,39 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
-import { MoreThan, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { User } from '@database/entities/user.entity';
 import { UserType } from '@database/entities/user-type.entity';
 import { PasswordReset } from '@database/entities/password-reset.entity';
+import { OAuthAccessToken } from '@database/entities/oauth-access-token.entity';
+import { AccessUsers } from '@database/entities/access-users.entity';
+import { BusinessUser } from '@database/entities/business-user.entity';
+import { Company } from '@database/entities/company.entity';
 import { SmartLoggerService } from '@shared/logger/smart-logger.service';
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
-import { JwtPayload } from './strategies/jwt.strategy';
+import { LoginDto } from '@modules/auth/dto/login.dto';
+import { RegisterDto } from '@modules/auth/dto/register.dto';
+import { ForgotPasswordDto } from '@modules/auth/dto/forgot-password.dto';
+import { ResetPasswordDto } from '@modules/auth/dto/reset-password.dto';
+
+/**
+ * Respuesta de login con estructura idéntica a Laravel Passport.
+ */
+export interface LoginResponse {
+  access_token: string;
+  user: Partial<User>;
+  expires_at: string;
+  message: string;
+}
 
 @Injectable()
 export class AuthService {
   private readonly CONTEXT = 'AuthService';
+  /** Días de expiración para el token OAuth (default: 90 días, como Passport) */
+  private readonly tokenExpirationDays: number;
 
   constructor(
     @InjectRepository(User)
@@ -31,9 +46,20 @@ export class AuthService {
     private readonly userTypeRepo: Repository<UserType>,
     @InjectRepository(PasswordReset)
     private readonly passwordResetRepo: Repository<PasswordReset>,
-    private readonly jwtService: JwtService,
+    @InjectRepository(OAuthAccessToken)
+    private readonly oauthTokenRepo: Repository<OAuthAccessToken>,
+    @InjectRepository(AccessUsers)
+    private readonly accessUsersRepo: Repository<AccessUsers>,
+    @InjectRepository(BusinessUser)
+    private readonly businessUserRepo: Repository<BusinessUser>,
+    @InjectRepository(Company)
+    private readonly companyRepo: Repository<Company>,
+    private readonly configService: ConfigService,
     private readonly logger: SmartLoggerService,
-  ) { }
+  ) {
+    this.tokenExpirationDays =
+      this.configService.get<number>('auth.token.expiresInDays', 90);
+  }
 
   /**
    * Devuelve todos los tipos de usuario activos.
@@ -44,42 +70,161 @@ export class AuthService {
   }
 
   /**
-   * Autentica al usuario y devuelve un JWT.
+   * Autentica al usuario y devuelve un token OAuth Bearer (compatible Laravel Passport).
+   *
+   * Flujo replicado de Laravel Login.php:
+   * 1. Validar credenciales (email + password)
+   * 2. Verificar usuario activo
+   * 3. Verificar email verificado
+   * 4. Buscar empresa asociada via business_users
+   * 5. Verificar empresa activa
+   * 6. Crear token OAuth y almacenar en oauth_access_tokens
+   * 7. Registrar acceso en access_users
+   * 8. Retornar { access_token, user, expires_at, message }
+   *
    * POST /api/v1/auth/login
    */
-  async login(dto: LoginDto): Promise<{
-    token: string;
-    token_type: string;
-    user: Partial<User>;
-  }> {
-    const user = await this.userRepo.findOne({
-      where: { email: dto.email, active: 1 },
-      relations: ['userType'],
-    });
+  async login(dto: LoginDto, clientIp?: string): Promise<LoginResponse> {
+    // 1. Buscar usuario con password (select: false por default)
+    const user = await this.userRepo
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .leftJoinAndSelect('user.userType', 'userType')
+      .where('user.email = :email', { email: dto.email })
+      .getOne();
 
     if (!user) {
-      throw new UnauthorizedException('Credenciales incorrectas.');
+      throw new UnauthorizedException('Credenciales inválidas.');
     }
 
     const passwordMatch = await bcrypt.compare(dto.password, user.password);
     if (!passwordMatch) {
-      throw new UnauthorizedException('Credenciales incorrectas.');
+      throw new UnauthorizedException('Credenciales inválidas.');
     }
 
-    const payload: JwtPayload = {
-      sub: user.id,
-      email: user.email,
-      type: user.userType?.type,
-    };
+    // 2. Verificar usuario activo
+    if (user.active === 0) {
+      throw new UnauthorizedException(
+        'El usuario se encuentra inactivo. Comuníquese con el administrador.',
+      );
+    }
 
-    const token = this.jwtService.sign(payload);
+    // 3. Verificar email verificado
+    if (!user.emailVerifiedAt) {
+      throw new UnauthorizedException(
+        'El correo electrónico no ha sido verificado. Comuníquese con el administrador.',
+      );
+    }
+
+    // 4. Buscar empresa asociada via business_users
+    const businessUser = await this.businessUserRepo.findOne({
+      where: { userId: user.id },
+    });
+
+    if (!businessUser) {
+      throw new UnauthorizedException(
+        'No se ha encontrado la empresa asociada al usuario.',
+      );
+    }
+
+    // 5. Verificar empresa activa
+    const company = await this.companyRepo.findOne({
+      where: { id: businessUser.companyId },
+    });
+
+    if (!company) {
+      throw new UnauthorizedException(
+        'No se ha encontrado la empresa asociada al usuario.',
+      );
+    }
+
+    if ((company as any).active === 0) {
+      throw new UnauthorizedException(
+        'La empresa se encuentra inactiva. Comuníquese con el administrador.',
+      );
+    }
+
+    // 6. Crear token OAuth — genera un ID opaco único
+    const tokenId = randomBytes(40).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + this.tokenExpirationDays);
+
+    const oauthToken = this.oauthTokenRepo.create({
+      id: tokenId,
+      userId: user.id,
+      clientId: 1, // Default Passport client
+      name: user.email,
+      scopes: '[]',
+      revoked: false,
+      expiresAt,
+    });
+
+    await this.oauthTokenRepo.save(oauthToken);
+
+    // 7. Registrar acceso en access_users
+    const accessLog = this.accessUsersRepo.create({
+      userId: user.id,
+      ip: clientIp ?? undefined,
+      active: 1,
+    });
+    await this.accessUsersRepo.save(accessLog);
+
     this.logger.log(`Usuario ${user.email} autenticado`, this.CONTEXT);
 
+    // 8. Retornar respuesta con formato idéntico a Laravel
     return {
-      token,
-      token_type: 'Bearer',
+      access_token: tokenId,
       user: this.sanitizeUser(user),
+      expires_at: this.formatDatetime(expiresAt),
+      message: 'Bienvenido. Su sesión ha sido iniciada con éxito.',
     };
+  }
+
+  /**
+   * Cierra sesión revocando el token OAuth y desactivando el registro de acceso.
+   * Replica el comportamiento de Login::logout() de Laravel.
+   *
+   * GET /api/v1/auth/logout
+   */
+  async logout(
+    rawToken: string | null,
+    user: User,
+    clientIp?: string,
+  ): Promise<{ message: string }> {
+    try {
+      // Revocar token en oauth_access_tokens
+      if (rawToken) {
+        await this.oauthTokenRepo
+          .createQueryBuilder()
+          .update()
+          .set({ revoked: true })
+          .where('id = :id AND user_id = :userId', {
+            id: rawToken,
+            userId: user.id,
+          })
+          .execute();
+      }
+
+      // Desactivar registro en access_users
+      await this.accessUsersRepo
+        .createQueryBuilder()
+        .update()
+        .set({ active: 0 })
+        .where('user_id = :userId', { userId: user.id })
+        .andWhere('ip = :ip', { ip: clientIp ?? '' })
+        .andWhere('active = 1')
+        .execute();
+
+      this.logger.log(`Usuario ${user.email} cerró sesión`, this.CONTEXT);
+      return { message: 'Successfully logged out' };
+    } catch (err) {
+      this.logger.error(
+        `Error al cerrar sesión: ${(err as Error).message}`,
+        (err as Error).stack,
+        this.CONTEXT,
+      );
+      throw err;
+    }
   }
 
   /**
@@ -121,7 +266,8 @@ export class AuthService {
     // Siempre responder igual para no revelar existencia del email
     if (!user) {
       return {
-        message: 'Si el email existe, recibirás las instrucciones de recuperación.',
+        message:
+          'Si el email existe, recibirás las instrucciones de recuperación.',
       };
     }
 
@@ -136,11 +282,15 @@ export class AuthService {
       }),
     );
 
-    this.logger.log(`Token de reset generado para: ${dto.email}`, this.CONTEXT);
+    this.logger.log(
+      `Token de reset generado para: ${dto.email}`,
+      this.CONTEXT,
+    );
 
-    // TODO: emitir evento para envear el correo
+    // TODO: emitir evento para enviar el correo
     return {
-      message: 'Si el email existe, recibirás las instrucciones de recuperación.',
+      message:
+        'Si el email existe, recibirás las instrucciones de recuperación.',
     };
   }
 
@@ -161,7 +311,9 @@ export class AuthService {
       throw new BadRequestException('Token inválido o expirado.');
     }
 
-    const user = await this.userRepo.findOne({ where: { email: dto.email } });
+    const user = await this.userRepo.findOne({
+      where: { email: dto.email },
+    });
     if (!user) {
       throw new NotFoundException('Usuario no encontrado.');
     }
@@ -170,7 +322,10 @@ export class AuthService {
     await this.userRepo.save(user);
     await this.passwordResetRepo.delete({ email: dto.email });
 
-    this.logger.log(`Contraseña reseteada para: ${dto.email}`, this.CONTEXT);
+    this.logger.log(
+      `Contraseña reseteada para: ${dto.email}`,
+      this.CONTEXT,
+    );
 
     return { message: 'Contraseña actualizada exitosamente.' };
   }
@@ -226,7 +381,9 @@ export class AuthService {
     }
 
     if (user.emailVerifiedAt) {
-      throw new BadRequestException('El correo electrónico ya fue verificado.');
+      throw new BadRequestException(
+        'El correo electrónico ya fue verificado.',
+      );
     }
 
     return { message: 'Se ha enviado un correo electrónico de verificación' };
@@ -243,7 +400,9 @@ export class AuthService {
     currentUserId: number,
   ): Promise<Partial<User>> {
     if (id !== currentUserId) {
-      throw new ForbiddenException('No autorizado para actualizar este perfil.');
+      throw new ForbiddenException(
+        'No autorizado para actualizar este perfil.',
+      );
     }
 
     const user = await this.userRepo.findOne({ where: { id } });
@@ -252,7 +411,9 @@ export class AuthService {
     }
 
     if (dto.email && dto.email !== user.email) {
-      const existing = await this.userRepo.findOne({ where: { email: dto.email } });
+      const existing = await this.userRepo.findOne({
+        where: { email: dto.email },
+      });
       if (existing && existing.id !== id) {
         throw new BadRequestException('El email ya está en uso.');
       }
@@ -267,8 +428,41 @@ export class AuthService {
     return this.sanitizeUser(saved);
   }
 
+  /**
+   * Extrae el token Bearer raw del header Authorization.
+   */
+  extractTokenFromHeader(authHeader?: string): string | null {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return null;
+    }
+    return authHeader.substring(7);
+  }
+
+  /**
+   * Sanitiza el objeto usuario removiendo campos sensibles
+   * y añadiendo computed fields como Laravel.
+   */
   private sanitizeUser(user: User): Partial<User> {
-    const { password, ...safe } = user as User & { password: string };
-    return safe;
+    const { password, rememberToken, ...safe } = user as User & {
+      password: string;
+      rememberToken: string;
+    };
+    return {
+      ...safe,
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+    } as Partial<User>;
+  }
+
+  /**
+   * Formatea fecha a string YYYY-MM-DD HH:mm:ss (formato Laravel Carbon).
+   */
+  private formatDatetime(date: Date): string {
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+      date.getDate(),
+    )} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(
+      date.getSeconds(),
+    )}`;
   }
 }

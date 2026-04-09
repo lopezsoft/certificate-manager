@@ -21,15 +21,17 @@ import {
   ApiParam,
   ApiQuery,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
-import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UsersService } from '@modules/users/users.service';
+import { CreateUserDto } from '@modules/users/dto/create-user.dto';
+import { UpdateUserDto } from '@modules/users/dto/update-user.dto';
 
 @ApiTags('Users')
 @ApiBearerAuth()
+@ApiUnauthorizedResponse({ description: 'Token inválido o expirado' })
 @UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UsersController {

@@ -1,0 +1,8 @@
+*
+!app/
+!app/attachments/
+!app/attachments/.gitkeep
+!app/pdf/
+!app/pdf/.gitkeep
+!.gitignore
+

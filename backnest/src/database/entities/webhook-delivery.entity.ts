@@ -25,7 +25,7 @@ export class WebhookDelivery {
   @Column({ name: 'event_type', length: 100 })
   eventType: string;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   payload: Record<string, any>;
 
   @Column({ length: 255, nullable: true })

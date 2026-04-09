@@ -39,16 +39,16 @@ export class DocumentAnalysisResult {
   @Column({ name: 'ocr_provider', nullable: true })
   ocrProvider: string;
 
-  @Column({ name: 'analysis_results', type: 'jsonb', nullable: true })
+  @Column({ name: 'analysis_results', type: 'json', nullable: true })
   analysisResults: Record<string, any>;
 
-  @Column({ name: 'validation_summary', type: 'jsonb', nullable: true })
+  @Column({ name: 'validation_summary', type: 'json', nullable: true })
   validationSummary: Record<string, any>;
 
-  @Column({ name: 'validation_errors', type: 'jsonb', nullable: true })
+  @Column({ name: 'validation_errors', type: 'json', nullable: true })
   validationErrors: Record<string, any>;
 
-  @Column({ name: 'extracted_data', type: 'jsonb', nullable: true })
+  @Column({ name: 'extracted_data', type: 'json', nullable: true })
   extractedData: Record<string, any>;
 
   @Column({ name: 'is_valid', type: 'boolean', default: false })

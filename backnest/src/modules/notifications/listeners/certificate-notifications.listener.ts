@@ -2,7 +2,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { Injectable } from '@nestjs/common';
 import { CertificateCreatedEvent } from '@modules/certificates/events/certificate-created.event';
 import { CertificateStatusChangedEvent } from '@modules/certificates/events/certificate-status-changed.event';
-import { NotificationsService } from '../notifications.service';
+import { NotificationsService } from '@modules/notifications/notifications.service';
 import { SmartLoggerService } from '@shared/logger/smart-logger.service';
 
 @Injectable()

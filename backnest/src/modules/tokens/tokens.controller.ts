@@ -19,17 +19,19 @@ import {
   ApiParam,
   ApiTooManyRequestsResponse,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { User } from '@database/entities/user.entity';
-import { TokensService } from './tokens.service';
-import { CreateTokenDto } from './dto/create-token.dto';
+import { TokensService } from '@modules/tokens/tokens.service';
+import { CreateTokenDto } from '@modules/tokens/dto/create-token.dto';
 import { EndpointRateLimit } from '@common/decorators/rate-limit.decorator';
 import { EndpointRateLimitGuard } from '@common/guards/endpoint-rate-limit.guard';
 
 @ApiTags('Tokens')
 @ApiBearerAuth()
+@ApiUnauthorizedResponse({ description: 'Token inválido o expirado' })
 @UseGuards(JwtAuthGuard)
 @Controller('tokens')
 export class TokensController {
@@ -53,7 +55,7 @@ export class TokensController {
   @ApiCreatedResponse({ description: 'Token creado' })
   @ApiTooManyRequestsResponse({ description: 'Demasiadas solicitudes' })
   async store(@Body() dto: CreateTokenDto, @CurrentUser() user: User) {
-    const companyId = (user as any).companyId;
+    const companyId = user.companyId;
     const result = await this.tokensService.create(user.id, dto, companyId);
     return {
       message:

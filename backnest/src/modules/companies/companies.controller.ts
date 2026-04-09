@@ -21,17 +21,19 @@ import {
   ApiParam,
   ApiQuery,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 import { User } from '@database/entities/user.entity';
-import { CompaniesService } from './companies.service';
-import { CreateCompanyDto } from './dto/create-company.dto';
-import { UpdateCompanyDto } from './dto/update-company.dto';
+import { CompaniesService } from '@modules/companies/companies.service';
+import { CreateCompanyDto } from '@modules/companies/dto/create-company.dto';
+import { UpdateCompanyDto } from '@modules/companies/dto/update-company.dto';
 
 @ApiTags('Companies')
 @ApiBearerAuth()
+@ApiUnauthorizedResponse({ description: 'Token inválido o expirado' })
 @UseGuards(JwtAuthGuard)
 @Controller()
 export class CompaniesController {
@@ -98,7 +100,7 @@ export class CompaniesController {
   @ApiOperation({ summary: 'Empresa asociada al usuario autenticado' })
   @ApiOkResponse({ description: 'Empresa del usuario autenticado' })
   async currentCompany(@CurrentUser() user: User) {
-    const companyId = (user as any).companyId;
+    const companyId = user.companyId;
     const data = await this.companiesService.findOne(companyId);
     return { dataRecords: { data } };
   }
@@ -108,7 +110,7 @@ export class CompaniesController {
   @ApiOperation({ summary: 'Configuraciones de la empresa autenticada' })
   @ApiOkResponse({ description: 'Configuraciones de la empresa' })
   async companySettings(@CurrentUser() user: User) {
-    const companyId = (user as any).companyId;
+    const companyId = user.companyId;
     const data = await this.companiesService.getCompanySettings(companyId);
     return { dataRecords: { data } };
   }
@@ -146,7 +148,7 @@ export class CompaniesController {
     },
     @CurrentUser() user: User,
   ) {
-    const companyId = (user as any).companyId;
+    const companyId = user.companyId;
     const data = await this.companiesService.updateCompanySettings(companyId, payload);
     return { dataRecords: { data } };
   }

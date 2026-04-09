@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PersonalAccessToken } from '@database/entities/personal-access-token.entity';
-import { TokensController } from './tokens.controller';
-import { TokensService } from './tokens.service';
+import { TokensController } from '@modules/tokens/tokens.controller';
+import { TokensService } from '@modules/tokens/tokens.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([PersonalAccessToken])],

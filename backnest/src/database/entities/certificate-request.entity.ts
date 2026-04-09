@@ -22,7 +22,7 @@ export class CertificateRequest {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'uuid', unique: true, nullable: true })
+  @Column({ type: 'varchar', length: 36, unique: true, nullable: true })
   uuid: string;
 
   @Column({ name: 'company_id' })

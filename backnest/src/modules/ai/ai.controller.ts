@@ -9,16 +9,19 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBadRequestResponse,
   ApiBody,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
-import { AiService } from './ai.service';
+import { AiService } from '@modules/ai/ai.service';
 import { PersonType } from '@database/entities/document-analysis-result.entity';
 
 class AnalyzeDocumentDto {
@@ -38,6 +41,7 @@ class AnalyzeDocumentDto {
 
 @ApiTags('AI')
 @ApiBearerAuth()
+@ApiUnauthorizedResponse({ description: 'Token inválido o expirado' })
 @UseGuards(JwtAuthGuard)
 @Controller('ai')
 export class AiController {
@@ -47,9 +51,10 @@ export class AiController {
    * GET /api/v1/ai/results/:certificateRequestId
    */
   @Get('results/:certificateRequestId')
-  @ApiOperation({ summary: 'Resultados de análisis de documentos' })
-  @ApiParam({ name: 'certificateRequestId', type: Number })
+  @ApiOperation({ summary: 'Resultados de análisis de documentos', description: 'Retorna los resultados del análisis OCR/IA para una solicitud de certificado específica.' })
+  @ApiParam({ name: 'certificateRequestId', type: Number, description: 'ID de la solicitud de certificado' })
   @ApiOkResponse({ description: 'Resultados del análisis de documentos' })
+  @ApiNotFoundResponse({ description: 'Solicitud no encontrada' })
   async results(
     @Param('certificateRequestId', ParseIntPipe) id: number,
   ) {
@@ -61,9 +66,10 @@ export class AiController {
    * POST /api/v1/ai/analyze
    */
   @Post('analyze')
-  @ApiOperation({ summary: 'Analizar documento con OCR/IA' })
+  @ApiOperation({ summary: 'Analizar documento con OCR/IA', description: 'Envía un documento a procesamiento OCR (AWS Textract) y extracción de datos mediante IA.' })
   @ApiBody({ type: AnalyzeDocumentDto })
-  @ApiOkResponse({ description: 'Documento analizado con OCR/IA' })
+  @ApiOkResponse({ description: 'Documento analizado exitosamente' })
+  @ApiBadRequestResponse({ description: 'Datos de entrada inválidos o archivo no encontrado' })
   async analyze(@Body() dto: AnalyzeDocumentDto) {
     const data = await this.aiService.analyzeDocument(
       dto.file_manager_id,

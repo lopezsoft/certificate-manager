@@ -26,8 +26,8 @@ COPY --from=builder /app/dist ./dist
 # Copiar templates de email
 COPY --from=builder /app/src/modules/mail/templates ./src/modules/mail/templates
 
-# Directorio para archivos subidos
-RUN mkdir -p public/attachments public/pdf
+# Directorio para archivos subidos (replica storage de Laravel)
+RUN mkdir -p storage/app/attachments storage/app/pdf
 
 EXPOSE 3000
 

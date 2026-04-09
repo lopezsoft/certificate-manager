@@ -20,15 +20,17 @@ import {
   ApiParam,
   ApiQuery,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { User } from '@database/entities/user.entity';
-import { CrudService } from './crud.service';
+import { CrudService } from '@modules/crud/crud.service';
 import { ReportHeader } from '@database/entities/settings/report-header.entity';
 
 @ApiTags('Settings')
 @ApiBearerAuth()
+@ApiUnauthorizedResponse({ description: 'Token inválido o expirado' })
 @UseGuards(JwtAuthGuard)
 @Controller()
 export class CrudController {
@@ -48,7 +50,7 @@ export class CrudController {
   @ApiOperation({ summary: 'Configuraciones de la empresa' })
   @ApiOkResponse({ description: 'Configuraciones de empresa' })
   async companySettings(@CurrentUser() user: User) {
-    const companyId = (user as any).companyId;
+    const companyId = user.companyId;
     const data = await this.crudService.getCompanySettings(companyId);
     return { dataRecords: { data } };
   }
@@ -58,7 +60,7 @@ export class CrudController {
   @ApiOperation({ summary: 'Encabezado de reportes de la empresa (legacy)' })
   @ApiOkResponse({ description: 'Encabezado de reportes (legacy)' })
   async reportHeader(@CurrentUser() user: User) {
-    const companyId = (user as any).companyId;
+    const companyId = user.companyId;
     const data = await this.crudService.getReportHeader(companyId);
     return { dataRecords: { data } };
   }
@@ -68,7 +70,7 @@ export class CrudController {
   @ApiOperation({ summary: 'Encabezado de reportes de la empresa' })
   @ApiOkResponse({ description: 'Encabezado de reportes' })
   async reportsHeader(@CurrentUser() user: User) {
-    const companyId = (user as any).companyId;
+    const companyId = user.companyId;
     const data = await this.crudService.getReportHeader(companyId);
     return { dataRecords: { data } };
   }
@@ -82,7 +84,7 @@ export class CrudController {
     @Body() body: Partial<ReportHeader>,
     @CurrentUser() user: User,
   ) {
-    const companyId = (user as any).companyId;
+    const companyId = user.companyId;
     const data = await this.crudService.upsertReportHeader(companyId, body);
     return { dataRecords: { data } };
   }
@@ -97,7 +99,7 @@ export class CrudController {
     @Body() body: Partial<ReportHeader>,
     @CurrentUser() user: User,
   ) {
-    const companyId = (user as any).companyId;
+    const companyId = user.companyId;
     const data = await this.crudService.upsertReportHeader(companyId, body);
     return { dataRecords: { data } };
   }
@@ -116,7 +118,7 @@ export class CrudController {
     @Query() query: Record<string, any>,
     @CurrentUser() user: User,
   ) {
-    const companyId = (user as any).companyId;
+    const companyId = user.companyId;
     return this.crudService.crudRead(query, null, companyId);
   }
 
@@ -131,7 +133,7 @@ export class CrudController {
     @Body() body: Record<string, any>,
     @CurrentUser() user: User,
   ) {
-    const companyId = (user as any).companyId;
+    const companyId = user.companyId;
     const data = await this.crudService.crudCreate(body, companyId);
     return { message: 'Registro creado correctamente.', dataRecords: { data } };
   }
@@ -149,7 +151,7 @@ export class CrudController {
     @Query() query: Record<string, any>,
     @CurrentUser() user: User,
   ) {
-    const companyId = (user as any).companyId;
+    const companyId = user.companyId;
     return this.crudService.crudRead(query, id, companyId);
   }
 
@@ -166,7 +168,7 @@ export class CrudController {
     @Body() body: Record<string, any>,
     @CurrentUser() user: User,
   ) {
-    const companyId = (user as any).companyId;
+    const companyId = user.companyId;
     await this.crudService.crudUpdate(id, body, companyId);
     return { message: 'Registro actualizado correctamente.' };
   }
@@ -185,7 +187,7 @@ export class CrudController {
     @Query() query: Record<string, any>,
     @CurrentUser() user: User,
   ) {
-    const companyId = (user as any).companyId;
+    const companyId = user.companyId;
     const data = await this.crudService.crudDelete(id, query, companyId);
     return { dataRecords: { data } };
   }

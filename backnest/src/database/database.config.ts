@@ -1,12 +1,14 @@
 import { TypeOrmModuleAsyncOptions } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
-import { DataSourceOptions } from 'typeorm';
+import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOptions';
 
 // Entities
-import { User } from './entities/user.entity';
+import { User } from '@database/entities';
 import { UserType } from './entities/user-type.entity';
 import { PasswordReset } from './entities/password-reset.entity';
 import { AccessUsers } from './entities/access-users.entity';
+import { OAuthAccessToken } from './entities/oauth-access-token.entity';
+import { BusinessUser } from './entities/business-user.entity';
 import { Company } from './entities/company.entity';
 import { CertificateRequest } from './entities/certificate-request.entity';
 import { FileManager } from './entities/file-manager.entity';
@@ -32,6 +34,8 @@ export const ALL_ENTITIES = [
   UserType,
   PasswordReset,
   AccessUsers,
+  OAuthAccessToken,
+  BusinessUser,
   Company,
   CertificateRequest,
   FileManager,
@@ -55,20 +59,17 @@ export const ALL_ENTITIES = [
 
 export const databaseConfig: TypeOrmModuleAsyncOptions = {
   inject: [ConfigService],
-  useFactory: (configService: ConfigService): DataSourceOptions => {
-    const dbType = (configService.get<string>('database.type') ?? 'postgres') as DataSourceOptions['type'];
-
-    return {
-      type: dbType,
-      host: configService.get<string>('database.host'),
-      port: configService.get<number>('database.port'),
-      username: configService.get<string>('database.username'),
-      password: configService.get<string>('database.password'),
-      database: configService.get<string>('database.database'),
-      entities: ALL_ENTITIES,
-      synchronize: configService.get<boolean>('database.synchronize') ?? false,
-      logging: configService.get<boolean>('database.logging') ?? false,
-      extra: dbType === 'postgres' ? { options: "-c TimeZone='America/Bogota'" } : undefined,
-    };
-  },
+  useFactory: (configService: ConfigService): MysqlConnectionOptions => ({
+    type: 'mariadb',
+    host: configService.get<string>('database.host'),
+    port: configService.get<number>('database.port'),
+    username: configService.get<string>('database.username'),
+    password: configService.get<string>('database.password'),
+    database: configService.get<string>('database.database'),
+    entities: ALL_ENTITIES,
+    synchronize: configService.get<boolean>('database.synchronize') ?? false,
+    logging: configService.get<boolean>('database.logging') ?? false,
+    timezone: 'Z',
+    charset: 'utf8mb4',
+  }),
 };

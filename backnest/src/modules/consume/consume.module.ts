@@ -5,8 +5,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CertificateRequest } from '@database/entities/certificate-request.entity';
-import { ConsumeController } from './consume.controller';
-import { ConsumeService } from './consume.service';
+import { ConsumeController } from '@modules/consume/consume.controller';
+import { ConsumeService } from '@modules/consume/consume.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([CertificateRequest])],
