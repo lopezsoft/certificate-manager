@@ -66,7 +66,15 @@ class CertificateRequestController extends Controller
      *     @OA\Parameter(name="start_date", in="query", description="Fecha inicio filtro (Y-m-d)", @OA\Schema(type="string")),
      *     @OA\Parameter(name="end_date", in="query", description="Fecha fin filtro (Y-m-d)", @OA\Schema(type="string")),
      *     @OA\Parameter(name="limit", in="query", description="Registros por página (default: 15)", @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="Lista paginada de solicitudes"),
+     *     @OA\Response(response=200, description="Lista paginada de solicitudes",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="dataRecords", type="object",
+     *                 @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/CertificateRequest")),
+     *                 @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
+     *             )
+     *         )
+     *     ),
      *     @OA\Response(response=401, description="No autenticado")
      * )
      */
@@ -85,7 +93,15 @@ class CertificateRequestController extends Controller
      *     @OA\Parameter(name="request_status", in="query", @OA\Schema(type="string")),
      *     @OA\Parameter(name="query", in="query", @OA\Schema(type="string")),
      *     @OA\Parameter(name="limit", in="query", @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="Lista de solicitudes"),
+     *     @OA\Response(response=200, description="Lista de solicitudes",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="dataRecords", type="object",
+     *                 @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/CertificateRequest")),
+     *                 @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
+     *             )
+     *         )
+     *     ),
      *     @OA\Response(response=401, description="No autenticado")
      * )
      */
@@ -118,7 +134,7 @@ class CertificateRequestController extends Controller
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
      *     @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/CertificateRequest")),
-     *     @OA\Response(response=200, description="Solicitud actualizada"),
+     *     @OA\Response(response=200, description="Solicitud actualizada", @OA\JsonContent(ref="#/components/schemas/ApiSuccessResponse")),
      *     @OA\Response(response=422, description="Validación fallida"),
      *     @OA\Response(response=401, description="No autenticado")
      * )
@@ -145,7 +161,7 @@ class CertificateRequestController extends Controller
      *             @OA\Property(property="user_of_change", type="string", example="MANAGER", description="USER|MANAGER")
      *         )
      *     ),
-     *     @OA\Response(response=200, description="Estado actualizado"),
+     *     @OA\Response(response=200, description="Estado actualizado", @OA\JsonContent(ref="#/components/schemas/ApiSuccessResponse")),
      *     @OA\Response(response=401, description="No autenticado")
      * )
      */
@@ -161,7 +177,7 @@ class CertificateRequestController extends Controller
      *     summary="Eliminar solicitud de certificado",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="Solicitud eliminada"),
+     *     @OA\Response(response=200, description="Solicitud eliminada", @OA\JsonContent(ref="#/components/schemas/ApiSuccessResponse")),
      *     @OA\Response(response=401, description="No autenticado")
      * )
      */
@@ -184,7 +200,7 @@ class CertificateRequestController extends Controller
      *             @OA\Property(property="comments", type="string", nullable=true)
      *         )
      *     ),
-     *     @OA\Response(response=200, description="Correo enviado exitosamente"),
+     *     @OA\Response(response=200, description="Correo enviado exitosamente", @OA\JsonContent(ref="#/components/schemas/ApiSuccessResponse")),
      *     @OA\Response(response=400, description="Solicitud no encontrada o sin archivos adjuntos"),
      *     @OA\Response(response=429, description="Demasiados envíos"),
      *     @OA\Response(response=401, description="No autenticado")

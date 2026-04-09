@@ -19,7 +19,17 @@ class AuthController extends Controller
      *     summary="Listar tipos de usuario",
      *     description="Retorna los tipos de usuario disponibles en el sistema.",
      *     security={{"bearerAuth":{}}},
-     *     @OA\Response(response=200, description="Lista de tipos de usuario"),
+     *     @OA\Response(response=200, description="Lista de tipos de usuario",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="dataRecords", type="object",
+     *                 @OA\Property(property="data", type="array", @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Administrador")
+     *                 ))
+     *             )
+     *         )
+     *     ),
      *     @OA\Response(response=401, description="No autenticado")
      * )
      */
@@ -123,7 +133,17 @@ class AuthController extends Controller
      *             @OA\Property(property="records", type="string", description="JSON serializado con los campos a actualizar. Ejemplo: {first_name: Juan, last_name: Perez}")
      *         )
      *     ),
-     *     @OA\Response(response=200, description="Perfil actualizado exitosamente"),
+     *     @OA\Response(response=200, description="Perfil actualizado exitosamente",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="user", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="first_name", type="string", example="Juan"),
+     *                 @OA\Property(property="last_name", type="string", example="Pérez"),
+     *                 @OA\Property(property="email", type="string", example="juan@empresa.com")
+     *             )
+     *         )
+     *     ),
      *     @OA\Response(response=401, description="No autenticado")
      * )
      */

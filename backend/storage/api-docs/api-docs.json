@@ -402,7 +402,41 @@
                 "operationId": "86d0d014fbad3663eca93f68165e089e",
                 "responses": {
                     "200": {
-                        "description": "Lista de tipos de usuario"
+                        "description": "Lista de tipos de usuario",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Administrador"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "No autenticado"
@@ -622,7 +656,41 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Perfil actualizado exitosamente"
+                        "description": "Perfil actualizado exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "first_name": {
+                                                    "type": "string",
+                                                    "example": "Juan"
+                                                },
+                                                "last_name": {
+                                                    "type": "string",
+                                                    "example": "Pérez"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "juan@empresa.com"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "No autenticado"
@@ -1027,7 +1095,34 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Lista paginada de solicitudes"
+                        "description": "Lista paginada de solicitudes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/CertificateRequest"
+                                                    }
+                                                },
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/PaginationMeta"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "No autenticado"
@@ -1185,7 +1280,34 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Lista de solicitudes"
+                        "description": "Lista de solicitudes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/CertificateRequest"
+                                                    }
+                                                },
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/PaginationMeta"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "No autenticado"
@@ -1264,7 +1386,14 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Solicitud actualizada"
+                        "description": "Solicitud actualizada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
                     },
                     "422": {
                         "description": "Validación fallida"
@@ -1297,7 +1426,14 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Solicitud eliminada"
+                        "description": "Solicitud eliminada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "No autenticado"
@@ -1359,7 +1495,14 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Estado actualizado"
+                        "description": "Estado actualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "No autenticado"
@@ -1408,7 +1551,14 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Correo enviado exitosamente"
+                        "description": "Correo enviado exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
                     },
                     "400": {
                         "description": "Solicitud no encontrada o sin archivos adjuntos"
@@ -2133,7 +2283,34 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Lista de certificados próximos a vencer"
+                        "description": "Lista de certificados próximos a vencer",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Certificados próximos a vencer"
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "dataRecords": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ExpiringCertificate"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -2171,7 +2348,42 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Lista paginada de notificaciones"
+                        "description": "Lista paginada de notificaciones",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notificaciones del usuario"
+                                        },
+                                        "unread_count": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/NotificationItem"
+                                                    }
+                                                },
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/PaginationMeta"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -2201,7 +2413,14 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Notificación marcada como leída"
+                        "description": "Notificación marcada como leída",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
                     },
                     "404": {
                         "description": "Notificación no encontrada"
@@ -2223,7 +2442,14 @@
                 "operationId": "e873443612632a319ae0f88db368dd7a",
                 "responses": {
                     "200": {
-                        "description": "Todas las notificaciones marcadas como leídas"
+                        "description": "Todas las notificaciones marcadas como leídas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -2258,7 +2484,28 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Jobs despachados correctamente"
+                        "description": "Jobs despachados correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Jobs de notificación despachados correctamente"
+                                        },
+                                        "include_admin_report": {
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "403": {
                         "description": "Sin permisos de administrador"

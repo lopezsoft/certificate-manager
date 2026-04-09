@@ -25,7 +25,14 @@ class NotificationController extends Controller
      *                  Empresas ven solo los suyos; administradores ven todos.",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="days", in="query", description="Días de antelación (default: 30)", @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="Lista de certificados próximos a vencer")
+     *     @OA\Response(response=200, description="Lista de certificados próximos a vencer",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Certificados próximos a vencer"),
+     *             @OA\Property(property="total", type="integer", example=5),
+     *             @OA\Property(property="dataRecords", type="array", @OA\Items(ref="#/components/schemas/ExpiringCertificate"))
+     *         )
+     *     )
      * )
      */
     public function expiring(Request $request): JsonResponse
@@ -86,7 +93,17 @@ class NotificationController extends Controller
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="unread_only", in="query", description="Solo no leídas (true/false)", @OA\Schema(type="boolean")),
      *     @OA\Parameter(name="limit", in="query", description="Registros por página (default: 20)", @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="Lista paginada de notificaciones")
+     *     @OA\Response(response=200, description="Lista paginada de notificaciones",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Notificaciones del usuario"),
+     *             @OA\Property(property="unread_count", type="integer", example=3),
+     *             @OA\Property(property="dataRecords", type="object",
+     *                 @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/NotificationItem")),
+     *                 @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
+     *             )
+     *         )
+     *     )
      * )
      */
     public function index(Request $request): JsonResponse
@@ -121,7 +138,7 @@ class NotificationController extends Controller
      *     summary="Marcar notificación como leída",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")),
-     *     @OA\Response(response=200, description="Notificación marcada como leída"),
+     *     @OA\Response(response=200, description="Notificación marcada como leída", @OA\JsonContent(ref="#/components/schemas/ApiSuccessResponse")),
      *     @OA\Response(response=404, description="Notificación no encontrada")
      * )
      */
@@ -149,7 +166,7 @@ class NotificationController extends Controller
      *     tags={"Notificaciones"},
      *     summary="Marcar todas las notificaciones como leídas",
      *     security={{"bearerAuth":{}}},
-     *     @OA\Response(response=200, description="Todas las notificaciones marcadas como leídas")
+     *     @OA\Response(response=200, description="Todas las notificaciones marcadas como leídas", @OA\JsonContent(ref="#/components/schemas/ApiSuccessResponse"))
      * )
      */
     public function markAllAsRead(): JsonResponse
@@ -175,7 +192,13 @@ class NotificationController extends Controller
      *             @OA\Property(property="include_admin_report", type="boolean", description="Incluir reporte al admin (default: true)")
      *         )
      *     ),
-     *     @OA\Response(response=200, description="Jobs despachados correctamente"),
+     *     @OA\Response(response=200, description="Jobs despachados correctamente",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Jobs de notificación despachados correctamente"),
+     *             @OA\Property(property="include_admin_report", type="boolean", example=true)
+     *         )
+     *     ),
      *     @OA\Response(response=403, description="Sin permisos de administrador")
      * )
      */
