@@ -986,13 +986,17 @@ require_once __DIR__ . "/webhooks-external.php";
 - [x] Stubs de controladores V2 (resuelven rutas, retornan 501 hasta su sprint)
 - [ ] Tests: AndesDataMapper, PricingService *(pendiente Sprint 1 — siguiente tarea)*
 
-### Sprint 2: ANDES Identity (Semanas 3-4)
-- [ ] Implementar `AndesTokenManager` con Laravel Cache
-- [ ] Implementar `AndesIdentityService` completo (6 métodos)
-- [ ] Crear DTOs de identidad (Request/Response)
-- [ ] Crear modelo `AndesIdentityValidation`
-- [ ] Implementar `AndesIdentityController` (v2)
-- [ ] Tests con mock de API REST ANDES
+### Sprint 2: ANDES Identity (Semanas 3-4) ✅ COMPLETADO 2026-04-20
+
+- [x] Implementar `AndesTokenManager` con Laravel Cache (singleton, TTL 55min, refresh automático)
+- [x] Implementar `AndesIdentityService` completo (6 métodos + reintento automático en 401)
+- [x] Crear contratos: `AndesIdentityServiceContract`, `AndesPkiServiceContract`
+- [x] Crear `AndesServiceProvider` (bindings IoC) y registrar en `config/app.php`
+- [x] DTOs de identidad ya creados en Sprint 1 ✅
+- [x] Modelo `AndesIdentityValidation` ya creado en Sprint 1 ✅
+- [x] Implementar `AndesIdentityController` V2 (6 endpoints funcionales con persistencia)
+- [x] Crear Eventos: `AndesIdentityValidated`, `AndesCertificateEmitted`
+- [x] Tests con mock de API REST ANDES: `AndesTokenManagerTest` (4), `AndesIdentityServiceTest` (11) — **15 PASS**
 
 ### Sprint 3: ANDES PKI (Semanas 5-6)
 - [ ] Implementar `AndesSoapClientFactory` (WS-Security, PasswordDigest)
