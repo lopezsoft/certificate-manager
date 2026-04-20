@@ -120,3 +120,12 @@ Route::group(['prefix' => 'v1'], function () {
         });
     });
 });
+
+// ── API v2: ANDES SCD + WOMPI + Cupos ────────────────────────────────────
+Route::group(['prefix' => 'v2'], function () {
+    require_once __DIR__ . '/api-v2.php';
+});
+
+// ── Webhooks externos (WOMPI) — sin auth:api, firma HMAC ─────────────────
+require_once __DIR__ . '/webhooks-external.php';
+
