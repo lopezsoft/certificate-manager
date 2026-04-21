@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Andes\Contracts\AndesIdentityServiceContract;
 use App\Andes\Contracts\AndesPkiServiceContract;
+use App\Andes\Services\AndesHealthCheckService;
 use App\Andes\Services\AndesIdentityService;
 use App\Andes\Services\AndesPkiService;
 use App\Andes\Services\AndesSoapClientFactory;
@@ -51,6 +52,14 @@ class AndesServiceProvider extends ServiceProvider
         $this->app->bind(AndesPkiServiceContract::class, function ($app) {
             return new AndesPkiService(
                 soapFactory: $app->make(AndesSoapClientFactory::class),
+            );
+        });
+
+        // AndesHealthCheckService — singleton para evitar spam de health checks
+        $this->app->singleton(AndesHealthCheckService::class, function ($app) {
+            return new AndesHealthCheckService(
+                tokenManager: $app->make(AndesTokenManager::class),
+                pkiWsdlUrl:   config('andes.pki_wsdl_url', ''),
             );
         });
     }

@@ -61,5 +61,9 @@ Route::middleware(['auth:api'])->group(function () {
         Route::get('/{id}',         [\App\Quotas\Http\Controllers\QuotaController::class, 'show'])->name('show');
         Route::get('/company/{id}', [\App\Quotas\Http\Controllers\QuotaController::class, 'byCompany'])->name('by-company');
     });
+
+    // ── Health check (admin) ──
+    Route::get('health', \App\Http\Controllers\V2\HealthCheckController::class)
+        ->name('v2.health');
 });
 
