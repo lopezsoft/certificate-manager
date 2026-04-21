@@ -1009,14 +1009,16 @@ require_once __DIR__ . "/webhooks-external.php";
 - [x] Crear Evento `AndesCertificateEmitted` ✅ (Sprint 2)
 - [x] Tests con mock del cliente SOAP: `AndesPkiServiceTest` (6) — todos PASS
 
-### Sprint 4: WOMPI + Órdenes (Semanas 7-8)
-- [ ] Implementar `WompiPaymentService` (5 métodos)
-- [ ] Implementar `ValidateWompiSignature` middleware (HMAC-SHA256)
-- [ ] Implementar `WompiWebhookController` + `ProcessWompiWebhookJob`
-- [ ] Crear modelos: `CertificateOrder`, `CertificateOrderItem`, `PaymentTransaction`
-- [ ] Implementar `OrderService` + `OrderController`
-- [ ] Implementar `PaymentOrchestrator` (orden → pago → items)
-- [ ] Tests con mock WOMPI API + webhooks
+### Sprint 4: WOMPI + Órdenes (Semanas 7-8) ✅ COMPLETADO 2026-04-20
+- [x] Implementar `WompiPaymentService` (7 métodos completos)
+- [x] Contrato `PaymentGatewayContract`, DTOs (CreateTransactionRequest, TransactionResponse, AcceptanceTokenResponse)
+- [x] Implementar `ValidateWompiSignature` middleware (HMAC-SHA256 completo)
+- [x] Implementar `WompiWebhookController` + `ProcessWompiWebhookJob`
+- [x] Modelos ya creados en Sprint 1 ✅
+- [x] Implementar `OrderService` + `OrderController` (4 endpoints)
+- [x] Implementar `PaymentOrchestrator` (initiatePayment + processWebhookEvent + createItems)
+- [x] Eventos: `PaymentApproved`, `PaymentFailed`
+- [x] 6 tests `WompiPaymentServiceTest` — PASS | Suite total: **56 tests / 124 assertions** ✅
 
 ### Sprint 5: Cupos + Integración E2E (Semanas 9-10)
 - [ ] Implementar `QuotaService` completo
