@@ -11,6 +11,14 @@ class WebhookEventType
     const CERTIFICATE_DELETED        = 'certificate_request.deleted';
     const CERTIFICATE_EXPIRING       = 'certificate.expiring';
 
+    // ANDES SCD events
+    const ANDES_IDENTITY_VALIDATED   = 'andes.identity_validated';
+    const ANDES_CERTIFICATE_EMITTED  = 'andes.certificate_emitted';
+
+    // Payment events
+    const PAYMENT_APPROVED           = 'payment.approved';
+    const PAYMENT_FAILED             = 'payment.failed';
+
     public static function all(): array
     {
         return [
@@ -20,6 +28,10 @@ class WebhookEventType
             self::CERTIFICATE_FILE_UPLOADED,
             self::CERTIFICATE_DELETED,
             self::CERTIFICATE_EXPIRING,
+            self::ANDES_IDENTITY_VALIDATED,
+            self::ANDES_CERTIFICATE_EMITTED,
+            self::PAYMENT_APPROVED,
+            self::PAYMENT_FAILED,
         ];
     }
 }

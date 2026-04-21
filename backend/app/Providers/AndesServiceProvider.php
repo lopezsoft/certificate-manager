@@ -35,7 +35,7 @@ class AndesServiceProvider extends ServiceProvider
         $this->app->bind(AndesIdentityServiceContract::class, function ($app) {
             return new AndesIdentityService(
                 tokenManager: $app->make(AndesTokenManager::class),
-                apiUrl:       config('andes.id_api_url'),
+                apiUrl:       config('andes.id_api_url') ?? '',
             );
         });
 
