@@ -13,7 +13,7 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        //
+        \App\Quotas\Commands\ExpireQuotasCommand::class,
     ];
 
     /**
@@ -29,10 +29,10 @@ class Kernel extends ConsoleKernel
         // ====================================================================
         // NOTIFICACIONES DE CERTIFICADOS PRÓXIMOS A VENCER
         // ====================================================================
-        
+
         /**
          * Job 1: Enviar notificaciones diarias a empresas con certificados próximos a vencer
-         * 
+         *
          * Frecuencia: Diario a las 8:00 AM (hora de Colombia)
          * Función: Notifica a cada empresa cuando su certificado está próximo a vencer
          * Queue: notifications
@@ -48,7 +48,7 @@ class Kernel extends ConsoleKernel
 
         /**
          * Job 2: Enviar reporte diario consolidado al administrador
-         * 
+         *
          * Frecuencia: Diario a las 7:00 AM (hora de Colombia)
          * Función: Genera reporte de TODAS las empresas con certificados próximos a vencer
          * Queue: reports
@@ -64,7 +64,7 @@ class Kernel extends ConsoleKernel
 
         /**
          * Job 3: Enviar reporte semanal consolidado (más detallado)
-         * 
+         *
          * Frecuencia: Semanal - Lunes a las 9:00 AM (hora de Colombia)
          * Función: Reporte semanal completo con análisis y estadísticas
          * Queue: reports
@@ -83,10 +83,10 @@ class Kernel extends ConsoleKernel
         // ====================================================================
         // INFORMES MENSUALES DE CERTIFICADOS EMITIDOS
         // ====================================================================
-        
+
         /**
          * Job 4: Enviar informes mensuales a cada empresa
-         * 
+         *
          * Frecuencia: Mensual - Último día del mes a las 22:00 (10:00 PM)
          * Función: Envía a cada empresa un informe detallado de todos los certificados
          *          emitidos durante el mes, segmentados por estado y vigencia
@@ -117,6 +117,23 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->emailOutputOnFailure(env('MAIL_SUPPORT_ADDRESS', config('mail.from.address')))
             ->appendOutputTo(storage_path('logs/scheduled-certificates-monthly-reports.log'));
+
+        // ====================================================================
+        // CUPOS DE CERTIFICADOS
+        // ====================================================================
+
+        /**
+         * Job 6: Expirar cupos POSTPAID vencidos
+         *
+         * Frecuencia: Diario a las 00:05 AM (hora de Colombia)
+         */
+        $schedule->command('quotas:expire')
+            ->dailyAt('00:05')
+            ->timezone('America/Bogota')
+            ->name('quotas:expire-daily')
+            ->withoutOverlapping(5)
+            ->onOneServer()
+            ->appendOutputTo(storage_path('logs/scheduled-quotas-expire.log'));
     }
 
     /**

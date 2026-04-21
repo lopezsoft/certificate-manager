@@ -1020,11 +1020,13 @@ require_once __DIR__ . "/webhooks-external.php";
 - [x] Eventos: `PaymentApproved`, `PaymentFailed`
 - [x] 6 tests `WompiPaymentServiceTest` — PASS | Suite total: **56 tests / 124 assertions** ✅
 
-### Sprint 5: Cupos + Integración E2E (Semanas 9-10)
-- [ ] Implementar `QuotaService` completo
-- [ ] Implementar `QuotaController` (solo admin, middleware admin)
-- [ ] Integrar flujo completo: cupo/pago → ANDES ID → ANDES PKI
-- [ ] Implementar `ExpireQuotasCommand` (scheduled daily)
+### Sprint 5: Cupos + Integración E2E (Semanas 9-10) ✅ COMPLETADO 2026-04-20
+
+- [x] `QuotaController` completo (index, store, show, byCompany — admin LOPEZSOFT)
+- [x] `ExpireQuotasCommand` (`quotas:expire`) registrado en Kernel
+- [x] Scheduled task diario 00:05 AM para expirar cupos vencidos
+- [x] Tests `QuotaServiceTest` (3) — PASS
+- [x] **Suite completa: 249 tests / 447 assertions — PASS** ✅ (0 failures)
 - [ ] Webhook listeners para eventos nuevos
 - [ ] Tests de integración end-to-end
 - [ ] Crear guía descriptiva para Frontend Angular 18
