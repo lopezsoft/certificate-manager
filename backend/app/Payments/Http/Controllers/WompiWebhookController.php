@@ -15,6 +15,31 @@ use Illuminate\Support\Facades\Log;
  */
 class WompiWebhookController extends Controller
 {
+    /**
+     * @OA\Post(
+     *     path="/webhooks/wompi",
+     *     tags={"v2 - Pagos Externos"},
+     *     summary="Recibir evento de pago de WOMPI",
+     *     description="Endpoint receptor de webhooks de WOMPI. La firma HMAC-SHA256 es validada automáticamente por el middleware ValidateWompiSignature. No requiere autenticación Bearer.",
+     *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *         @OA\Property(property="event", type="string", example="transaction.updated"),
+     *         @OA\Property(property="data", type="object",
+     *             @OA\Property(property="transaction", type="object",
+     *                 @OA\Property(property="id", type="string"),
+     *                 @OA\Property(property="reference", type="string"),
+     *                 @OA\Property(property="status", type="string", enum={"PENDING","APPROVED","DECLINED","VOIDED","ERROR"})
+     *             )
+     *         ),
+     *         @OA\Property(property="timestamp", type="integer", example=1745000000),
+     *         @OA\Property(property="signature", type="object",
+     *             @OA\Property(property="checksum", type="string"),
+     *             @OA\Property(property="properties", type="array", @OA\Items(type="string"))
+     *         )
+     *     )),
+     *     @OA\Response(response=200, description="Evento recibido y encolado"),
+     *     @OA\Response(response=401, description="Firma HMAC inválida")
+     * )
+     */
     public function handle(Request $request): JsonResponse
     {
         $event = $request->all();

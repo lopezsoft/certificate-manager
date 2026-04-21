@@ -22,6 +22,17 @@ class OrderController extends Controller
         private readonly WompiPaymentService $wompi,
     ) {}
 
+    /**
+     * @OA\Get(
+     *     path="/v2/orders",
+     *     tags={"v2 - Órdenes"},
+     *     summary="Listar órdenes de compra de la empresa",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(response=200, description="Lista paginada de órdenes",
+     *         @OA\JsonContent(@OA\Property(property="data", type="object"))
+     *     )
+     * )
+     */
     public function index(Request $request): JsonResponse
     {
         $orders = CertificateOrder::where('company_id', $request->user()->company_id)
@@ -32,6 +43,33 @@ class OrderController extends Controller
         return response()->json(['data' => $orders]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/v2/orders",
+     *     tags={"v2 - Órdenes"},
+     *     summary="Crear orden de compra de certificados",
+     *     description="Crea una orden PENDING y devuelve los datos necesarios para el widget de WOMPI.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *         required={"quantity","vigencia"},
+     *         @OA\Property(property="quantity", type="integer", minimum=1, example=5, description="Cantidad de certificados"),
+     *         @OA\Property(property="vigencia", type="integer", enum={1,2}, example=1, description="Vigencia en años")
+     *     )),
+     *     @OA\Response(response=201, description="Orden creada",
+     *         @OA\JsonContent(@OA\Property(property="data", type="object",
+     *             @OA\Property(property="order_id", type="integer", example=1),
+     *             @OA\Property(property="total_amount", type="integer", example=743750),
+     *             @OA\Property(property="total_in_cents", type="integer", example=74375000),
+     *             @OA\Property(property="wompi_reference", type="string", example="CERT-MGR-1745123456-ABCD"),
+     *             @OA\Property(property="wompi_public_key", type="string", example="pub_test_XXXX"),
+     *             @OA\Property(property="acceptance_token", type="string"),
+     *             @OA\Property(property="acceptance_url", type="string", format="uri"),
+     *             @OA\Property(property="integrity_hash", type="string", description="SHA-256 para integridad del widget")
+     *         ))
+     *     ),
+     *     @OA\Response(response=422, description="Parámetros inválidos")
+     * )
+     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -67,6 +105,19 @@ class OrderController extends Controller
         ], 201);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/v2/orders/{id}",
+     *     tags={"v2 - Órdenes"},
+     *     summary="Ver detalle de una orden",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *     @OA\Response(response=200, description="Detalle de la orden",
+     *         @OA\JsonContent(@OA\Property(property="data", ref="#/components/schemas/CertificateOrder"))
+     *     ),
+     *     @OA\Response(response=404, description="Orden no encontrada")
+     * )
+     */
     public function show(int $id): JsonResponse
     {
         $order = CertificateOrder::where('company_id', request()->user()->company_id)
@@ -76,6 +127,32 @@ class OrderController extends Controller
         return response()->json(['data' => $order]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/v2/orders/{id}/pay",
+     *     tags={"v2 - Órdenes"},
+     *     summary="Ejecutar pago de una orden vía WOMPI",
+     *     description="Crea la transacción en WOMPI. El estado final llega asíncronamente por webhook.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *         required={"payment_source_id","acceptance_token","payment_method"},
+     *         @OA\Property(property="payment_source_id", type="string", example="tok_test_XXXX", description="Token de tarjeta tokenizada en WOMPI"),
+     *         @OA\Property(property="acceptance_token", type="string", description="Token de aceptación de T&C de WOMPI"),
+     *         @OA\Property(property="payment_method", type="string", enum={"CARD","NEQUI","PSE","BANCOLOMBIA_TRANSFER"}, example="CARD"),
+     *         @OA\Property(property="installments", type="integer", nullable=true, minimum=1, maximum=36, example=1, description="Cuotas (solo tarjeta)")
+     *     )),
+     *     @OA\Response(response=200, description="Transacción iniciada",
+     *         @OA\JsonContent(@OA\Property(property="data", type="object",
+     *             @OA\Property(property="transaction_id", type="string", example="12345-abcd"),
+     *             @OA\Property(property="transaction_status", type="string", enum={"PENDING","APPROVED","DECLINED","ERROR"}, example="PENDING"),
+     *             @OA\Property(property="order_status", type="string", example="PENDING")
+     *         ))
+     *     ),
+     *     @OA\Response(response=404, description="Orden no encontrada o no está PENDING"),
+     *     @OA\Response(response=502, description="Error al comunicarse con WOMPI")
+     * )
+     */
     public function pay(Request $request, int $id): JsonResponse
     {
         $data = $request->validate([

@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 /**
  * @OA\Info(
- *     version="1.10.0",
+ *     version="2.0.0",
  *     title="Certificate Manager API",
- *     description="API REST para la gestión de solicitudes de certificados digitales. Requiere autenticación OAuth 2.0 con Laravel Passport.",
+ *     description="API REST para la gestión de solicitudes de certificados digitales. v1=CAMERFIRMA (email), v2=ANDES SCD (API) + WOMPI. Requiere autenticación OAuth 2.0 con Laravel Passport.",
  *     @OA\Contact(
  *         email="soporte@matias.com.co",
  *         name="Soporte Matias"
@@ -15,7 +15,12 @@ namespace App\Http\Controllers;
  *
  * @OA\Server(
  *     url="/api/v1",
- *     description="API v1"
+ *     description="API v1 — CAMERFIRMA (flujo por email)"
+ * )
+ *
+ * @OA\Server(
+ *     url="/api/v2",
+ *     description="API v2 — ANDES SCD + WOMPI (flujo automatizado)"
  * )
  *
  * @OA\SecurityScheme(
@@ -27,7 +32,7 @@ namespace App\Http\Controllers;
  * )
  *
  * @OA\Tag(name="Autenticación", description="Endpoints de login, registro, verificación de email y recuperación de contraseña")
- * @OA\Tag(name="Solicitudes de Certificado", description="Gestión completa de solicitudes de certificados digitales")
+ * @OA\Tag(name="Solicitudes de Certificado", description="Gestión completa de solicitudes de certificados digitales (v1 - CAMERFIRMA)")
  * @OA\Tag(name="Archivos", description="Carga y eliminación de archivos adjuntos")
  * @OA\Tag(name="Empresa", description="Configuración y perfil de la empresa")
  * @OA\Tag(name="Perfil", description="Gestión del perfil de usuario")
@@ -38,6 +43,13 @@ namespace App\Http\Controllers;
  * @OA\Tag(name="Notificaciones", description="Alertas de vencimiento de certificados: listado, marcado de lectura y disparo manual")
  * @OA\Tag(name="Datos Maestros", description="Datos de referencia públicos: países, departamentos, ciudades, tipos de documento y organización")
  * @OA\Tag(name="Configuración", description="Configuración de encabezados de reportes")
+ * @OA\Tag(name="v2 - Solicitudes ANDES", description="[v2] Emisión automatizada de certificados digitales vía ANDES SCD SOAP")
+ * @OA\Tag(name="v2 - Identidad ANDES", description="[v2] Validación de identidad vía ANDES ID REST API (OTP y cuestionario)")
+ * @OA\Tag(name="v2 - Órdenes", description="[v2] Compra de certificados PREPAID: crear orden y ejecutar pago WOMPI")
+ * @OA\Tag(name="v2 - Cupos Admin", description="[v2] Gestión de cupos POSTPAID — solo administradores LOPEZSOFT")
+ * @OA\Tag(name="v2 - Precios", description="[v2] Consulta pública de tarifas por volumen (sin autenticación)")
+ * @OA\Tag(name="v2 - Pagos Externos", description="[v2] Webhooks entrantes de WOMPI (sin autenticación, firmados con HMAC-SHA256)")
+ * @OA\Tag(name="v2 - Sistema", description="[v2] Health check de servicios externos: ANDES ID, ANDES PKI, WOMPI")
  *
  * ─── Schemas reutilizables ────────────────────────────────────────────────────
  *
@@ -163,6 +175,99 @@ namespace App\Http\Controllers;
  *     ),
  *     @OA\Property(property="read_at", type="string", format="date-time", nullable=true, example=null),
  *     @OA\Property(property="created_at", type="string", format="date-time", readOnly=true)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="AndesCertificateRequest",
+ *     description="Solicitud de certificado enviada a ANDES PKI",
+ *     @OA\Property(property="id", type="integer", readOnly=true, example=1),
+ *     @OA\Property(property="certificate_request_id", type="integer", example=42),
+ *     @OA\Property(property="andes_solicitud_id", type="string", nullable=true, example="SOL-2026-001234"),
+ *     @OA\Property(property="tipo_cert", type="integer", description="10=PJ, 11=PN", example=10),
+ *     @OA\Property(property="formato", type="integer", description="2=físico, 3=PKCS10, 4=virtual", example=4),
+ *     @OA\Property(property="vigencia_cert", type="integer", description="3=1año, 4=2años", example=3),
+ *     @OA\Property(property="andes_estado", type="string", nullable=true, example="PROCESADA"),
+ *     @OA\Property(property="andes_message", type="string", nullable=true, example="Solicitud recibida"),
+ *     @OA\Property(property="certificate_serial", type="string", nullable=true, example="CERT-SERIAL-001"),
+ *     @OA\Property(property="is_emitted", type="boolean", readOnly=true, example=false),
+ *     @OA\Property(property="is_revoked", type="boolean", readOnly=true, example=false),
+ *     @OA\Property(property="emitted_at", type="string", format="date-time", nullable=true),
+ *     @OA\Property(property="revoked_at", type="string", format="date-time", nullable=true)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="AndesIdentityValidation",
+ *     description="Sesión de validación de identidad ANDES ID",
+ *     @OA\Property(property="validation_id", type="integer", readOnly=true, example=5),
+ *     @OA\Property(property="validation_type", type="string", enum={"PhoneSelection","ShowExam"}, example="PhoneSelection"),
+ *     @OA\Property(property="estado", type="integer", description="-1=No encontrado, 0=En curso, 1=Validado, 2=Fallido", example=0),
+ *     @OA\Property(property="message", type="string", nullable=true, example="OTP enviado al celular"),
+ *     @OA\Property(property="questions", type="array", nullable=true, @OA\Items(type="object"), description="Solo presente cuando validation_type=ShowExam")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="CertificateOrder",
+ *     description="Orden de compra de certificados PREPAID",
+ *     @OA\Property(property="id", type="integer", readOnly=true, example=1),
+ *     @OA\Property(property="quantity", type="integer", example=5),
+ *     @OA\Property(property="vigencia", type="integer", description="Años: 1 o 2", example=1),
+ *     @OA\Property(property="unit_price", type="integer", description="COP sin IVA", example=125000),
+ *     @OA\Property(property="subtotal", type="integer", example=625000),
+ *     @OA\Property(property="tax_amount", type="integer", description="IVA 19%", example=118750),
+ *     @OA\Property(property="total_amount", type="integer", description="Total con IVA en COP", example=743750),
+ *     @OA\Property(property="total_in_cents", type="integer", description="Total en centavos para WOMPI", example=74375000),
+ *     @OA\Property(property="wompi_reference", type="string", example="CERT-MGR-1745123456-ABCD"),
+ *     @OA\Property(property="status", type="string", enum={"PENDING","PAID","FAILED","REFUNDED"}, example="PENDING"),
+ *     @OA\Property(property="currency", type="string", example="COP")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="CertificateQuota",
+ *     description="Cupo POSTPAID asignado a una empresa por el admin LOPEZSOFT",
+ *     @OA\Property(property="id", type="integer", readOnly=true, example=1),
+ *     @OA\Property(property="company_id", type="integer", example=10),
+ *     @OA\Property(property="allocated_quantity", type="integer", example=50),
+ *     @OA\Property(property="used_quantity", type="integer", readOnly=true, example=12),
+ *     @OA\Property(property="remaining", type="integer", readOnly=true, example=38),
+ *     @OA\Property(property="period_start", type="string", format="date", example="2026-05-01"),
+ *     @OA\Property(property="period_end", type="string", format="date", example="2026-05-31"),
+ *     @OA\Property(property="status", type="string", enum={"ACTIVE","EXHAUSTED","EXPIRED"}, example="ACTIVE"),
+ *     @OA\Property(property="billing_type", type="string", enum={"POSTPAID"}, example="POSTPAID"),
+ *     @OA\Property(property="notes", type="string", nullable=true, example="Cupo mensual mayo 2026")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="PricingResult",
+ *     description="Resultado de cotización de certificados",
+ *     @OA\Property(property="quantity", type="integer", example=5),
+ *     @OA\Property(property="vigencia", type="integer", example=1),
+ *     @OA\Property(property="tier", type="string", enum={"RANGO_1","RANGO_2","RANGO_3"}, example="RANGO_2"),
+ *     @OA\Property(property="unit_price", type="integer", description="Precio unitario COP sin IVA", example=125000),
+ *     @OA\Property(property="subtotal", type="integer", example=625000),
+ *     @OA\Property(property="tax_amount", type="integer", description="IVA 19%", example=118750),
+ *     @OA\Property(property="total_amount", type="integer", description="Total con IVA", example=743750),
+ *     @OA\Property(property="currency", type="string", example="COP")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="HealthStatus",
+ *     description="Estado de salud de los servicios externos",
+ *     @OA\Property(property="status", type="string", enum={"healthy","degraded"}, example="healthy"),
+ *     @OA\Property(property="services", type="object",
+ *         @OA\Property(property="andes_id_api", type="object",
+ *             @OA\Property(property="status", type="string", enum={"ok","error"}, example="ok"),
+ *             @OA\Property(property="message", type="string", example="ANDES ID disponible")
+ *         ),
+ *         @OA\Property(property="andes_pki", type="object",
+ *             @OA\Property(property="status", type="string", enum={"ok","error","warning"}, example="ok"),
+ *             @OA\Property(property="message", type="string", example="WSDL accesible")
+ *         ),
+ *         @OA\Property(property="wompi", type="object",
+ *             @OA\Property(property="status", type="string", enum={"ok","error","warning"}, example="ok"),
+ *             @OA\Property(property="message", type="string", example="WOMPI disponible (LOPEZSOFT)")
+ *         )
+ *     ),
+ *     @OA\Property(property="checked_at", type="string", format="date-time", example="2026-04-20T15:30:00Z")
  * )
  */
 class SwaggerDefinitions

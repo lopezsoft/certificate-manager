@@ -21,6 +21,17 @@ class QuotaController extends Controller
 
     /**
      * GET /v2/admin/quotas — Listar todos los cupos
+     *
+     * @OA\Get(
+     *     path="/v2/admin/quotas",
+     *     tags={"v2 - Cupos Admin"},
+     *     summary="Listar todos los cupos (admin)",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(response=200, description="Lista paginada de cupos",
+     *         @OA\JsonContent(@OA\Property(property="data", type="object"))
+     *     ),
+     *     @OA\Response(response=403, description="No es administrador")
+     * )
      */
     public function index(Request $request): JsonResponse
     {
@@ -33,6 +44,26 @@ class QuotaController extends Controller
 
     /**
      * POST /v2/admin/quotas — Asignar cupo POSTPAID a empresa
+     *
+     * @OA\Post(
+     *     path="/v2/admin/quotas",
+     *     tags={"v2 - Cupos Admin"},
+     *     summary="Asignar cupo POSTPAID a una empresa",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *         required={"company_id","quantity","period_start","period_end"},
+     *         @OA\Property(property="company_id", type="integer", example=10),
+     *         @OA\Property(property="quantity", type="integer", minimum=1, example=50),
+     *         @OA\Property(property="period_start", type="string", format="date", example="2026-05-01"),
+     *         @OA\Property(property="period_end", type="string", format="date", example="2026-05-31"),
+     *         @OA\Property(property="notes", type="string", nullable=true, example="Cupo mensual mayo 2026")
+     *     )),
+     *     @OA\Response(response=201, description="Cupo asignado",
+     *         @OA\JsonContent(@OA\Property(property="data", ref="#/components/schemas/CertificateQuota"))
+     *     ),
+     *     @OA\Response(response=403, description="No es administrador"),
+     *     @OA\Response(response=422, description="Error de validación")
+     * )
      */
     public function store(Request $request): JsonResponse
     {
@@ -58,6 +89,18 @@ class QuotaController extends Controller
 
     /**
      * GET /v2/admin/quotas/{id} — Ver detalle de un cupo
+     *
+     * @OA\Get(
+     *     path="/v2/admin/quotas/{id}",
+     *     tags={"v2 - Cupos Admin"},
+     *     summary="Ver detalle de un cupo",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *     @OA\Response(response=200, description="Detalle del cupo",
+     *         @OA\JsonContent(@OA\Property(property="data", ref="#/components/schemas/CertificateQuota"))
+     *     ),
+     *     @OA\Response(response=404, description="Cupo no encontrado")
+     * )
      */
     public function show(int $id): JsonResponse
     {
@@ -68,6 +111,25 @@ class QuotaController extends Controller
 
     /**
      * GET /v2/admin/quotas/company/{id} — Estado de cupos de una empresa
+     *
+     * @OA\Get(
+     *     path="/v2/admin/quotas/company/{id}",
+     *     tags={"v2 - Cupos Admin"},
+     *     summary="Estado y historial de cupos de una empresa",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, description="ID de la empresa", @OA\Schema(type="integer"), example=10),
+     *     @OA\Response(response=200, description="Estado de cupos",
+     *         @OA\JsonContent(@OA\Property(property="data", type="object",
+     *             @OA\Property(property="status", type="object",
+     *                 @OA\Property(property="allocated", type="integer", example=50),
+     *                 @OA\Property(property="used", type="integer", example=12),
+     *                 @OA\Property(property="remaining", type="integer", example=38),
+     *                 @OA\Property(property="expires_at", type="string", format="date", nullable=true)
+     *             ),
+     *             @OA\Property(property="history", type="array", @OA\Items(ref="#/components/schemas/CertificateQuota"))
+     *         ))
+     *     )
+     * )
      */
     public function byCompany(int $id): JsonResponse
     {

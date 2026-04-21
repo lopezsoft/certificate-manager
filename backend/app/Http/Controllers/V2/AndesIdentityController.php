@@ -24,6 +24,24 @@ class AndesIdentityController extends Controller
         private readonly AndesIdentityServiceContract $identityService,
     ) {}
 
+    /**
+     * @OA\Post(
+     *     path="/v2/andes/identity/start",
+     *     tags={"v2 - Identidad ANDES"},
+     *     summary="Iniciar validación de identidad ANDES",
+     *     description="Envía los datos del titular a ANDES ID y retorna el tipo de validación (OTP o cuestionario).",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *         required={"andes_certificate_request_id","id_expedition_date"},
+     *         @OA\Property(property="andes_certificate_request_id", type="integer", example=1),
+     *         @OA\Property(property="id_expedition_date", type="string", format="date", example="2015-06-10", description="Fecha de expedición del documento (YYYY-MM-DD)")
+     *     )),
+     *     @OA\Response(response=200, description="Validación iniciada",
+     *         @OA\JsonContent(@OA\Property(property="data", ref="#/components/schemas/AndesIdentityValidation"))
+     *     ),
+     *     @OA\Response(response=422, description="Error de validación o de ANDES ID")
+     * )
+     */
     public function start(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -72,6 +90,27 @@ class AndesIdentityController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/v2/andes/identity/verify-otp",
+     *     tags={"v2 - Identidad ANDES"},
+     *     summary="Verificar código OTP",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *         required={"validation_id","otp_code"},
+     *         @OA\Property(property="validation_id", type="integer", example=5),
+     *         @OA\Property(property="otp_code", type="string", example="123456")
+     *     )),
+     *     @OA\Response(response=200, description="Resultado de la verificación OTP",
+     *         @OA\JsonContent(@OA\Property(property="data", type="object",
+     *             @OA\Property(property="estado", type="integer", example=1),
+     *             @OA\Property(property="message", type="string", example="Identidad validada exitosamente"),
+     *             @OA\Property(property="success", type="boolean", example=true)
+     *         ))
+     *     ),
+     *     @OA\Response(response=422, description="OTP inválido o token expirado")
+     * )
+     */
     public function verifyOtp(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -101,6 +140,27 @@ class AndesIdentityController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/v2/andes/identity/verify-questions",
+     *     tags={"v2 - Identidad ANDES"},
+     *     summary="Verificar respuestas del cuestionario de seguridad",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *         required={"validation_id","answers_xml"},
+     *         @OA\Property(property="validation_id", type="integer", example=5),
+     *         @OA\Property(property="answers_xml", type="string", description="XML con respuestas en el formato esperado por ANDES ID")
+     *     )),
+     *     @OA\Response(response=200, description="Resultado de la verificación del cuestionario",
+     *         @OA\JsonContent(@OA\Property(property="data", type="object",
+     *             @OA\Property(property="estado", type="integer", example=1),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="success", type="boolean", example=true)
+     *         ))
+     *     ),
+     *     @OA\Response(response=422, description="Respuestas inválidas o token expirado")
+     * )
+     */
     public function verifyQuestions(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -130,6 +190,21 @@ class AndesIdentityController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/v2/andes/identity/resend-otp",
+     *     tags={"v2 - Identidad ANDES"},
+     *     summary="Reenviar OTP por SMS o voz",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *         required={"validation_id","method"},
+     *         @OA\Property(property="validation_id", type="integer", example=5),
+     *         @OA\Property(property="method", type="string", enum={"SMS","VOICE"}, example="SMS")
+     *     )),
+     *     @OA\Response(response=200, description="OTP reenviado"),
+     *     @OA\Response(response=422, description="Error de reenvío")
+     * )
+     */
     public function resendOtp(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -151,6 +226,25 @@ class AndesIdentityController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/v2/andes/identity/bypass",
+     *     tags={"v2 - Identidad ANDES"},
+     *     summary="Cambiar método de validación de OTP a cuestionario",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *         required={"validation_id"},
+     *         @OA\Property(property="validation_id", type="integer", example=5)
+     *     )),
+     *     @OA\Response(response=200, description="Método cambiado a cuestionario",
+     *         @OA\JsonContent(@OA\Property(property="data", type="object",
+     *             @OA\Property(property="validation_type", type="string", example="ShowExam"),
+     *             @OA\Property(property="questions", type="array", @OA\Items(type="object"))
+     *         ))
+     *     ),
+     *     @OA\Response(response=422, description="No es posible cambiar el método")
+     * )
+     */
     public function bypassToQuestions(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -180,6 +274,24 @@ class AndesIdentityController extends Controller
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/v2/andes/identity/status",
+     *     tags={"v2 - Identidad ANDES"},
+     *     summary="Consultar estado actual del token de validación en ANDES",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="validation_id", in="query", required=true, @OA\Schema(type="integer"), example=5),
+     *     @OA\Response(response=200, description="Estado consultado",
+     *         @OA\JsonContent(@OA\Property(property="data", type="object",
+     *             @OA\Property(property="estado", type="integer", description="-1=No encontrado, 0=En curso, 1=Validado, 2=Fallido", example=1),
+     *             @OA\Property(property="status_label", type="string", example="Validado"),
+     *             @OA\Property(property="validated", type="boolean", example=true),
+     *             @OA\Property(property="is_final", type="boolean", example=true)
+     *         ))
+     *     ),
+     *     @OA\Response(response=422, description="Error al consultar estado")
+     * )
+     */
     public function checkStatus(Request $request): JsonResponse
     {
         $data = $request->validate([

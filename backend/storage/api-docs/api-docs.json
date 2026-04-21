@@ -2,17 +2,21 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Certificate Manager API",
-        "description": "API REST para la gestión de solicitudes de certificados digitales. Requiere autenticación OAuth 2.0 con Laravel Passport.",
+        "description": "API REST para la gestión de solicitudes de certificados digitales. v1=CAMERFIRMA (email), v2=ANDES SCD (API) + WOMPI. Requiere autenticación OAuth 2.0 con Laravel Passport.",
         "contact": {
             "name": "Soporte Matias",
             "email": "soporte@matias.com.co"
         },
-        "version": "1.10.0"
+        "version": "2.0.0"
     },
     "servers": [
         {
             "url": "/api/v1",
-            "description": "API v1"
+            "description": "API v1 — CAMERFIRMA (flujo por email)"
+        },
+        {
+            "url": "/api/v2",
+            "description": "API v2 — ANDES SCD + WOMPI (flujo automatizado)"
         }
     ],
     "paths": {
@@ -2955,6 +2959,1151 @@
                 ]
             }
         },
+        "/v2/andes/identity/start": {
+            "post": {
+                "tags": [
+                    "v2 - Identidad ANDES"
+                ],
+                "summary": "Iniciar validación de identidad ANDES",
+                "description": "Envía los datos del titular a ANDES ID y retorna el tipo de validación (OTP o cuestionario).",
+                "operationId": "d86d903825bfdeea1fa3ce539c35a257",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "andes_certificate_request_id",
+                                    "id_expedition_date"
+                                ],
+                                "properties": {
+                                    "andes_certificate_request_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "id_expedition_date": {
+                                        "description": "Fecha de expedición del documento (YYYY-MM-DD)",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2015-06-10"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Validación iniciada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AndesIdentityValidation"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Error de validación o de ANDES ID"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v2/andes/identity/verify-otp": {
+            "post": {
+                "tags": [
+                    "v2 - Identidad ANDES"
+                ],
+                "summary": "Verificar código OTP",
+                "operationId": "746c9d2299c86dbf878630159d43fc6b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "validation_id",
+                                    "otp_code"
+                                ],
+                                "properties": {
+                                    "validation_id": {
+                                        "type": "integer",
+                                        "example": 5
+                                    },
+                                    "otp_code": {
+                                        "type": "string",
+                                        "example": "123456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Resultado de la verificación OTP",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "estado": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Identidad validada exitosamente"
+                                                },
+                                                "success": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "OTP inválido o token expirado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v2/andes/identity/verify-questions": {
+            "post": {
+                "tags": [
+                    "v2 - Identidad ANDES"
+                ],
+                "summary": "Verificar respuestas del cuestionario de seguridad",
+                "operationId": "5aee7e96ecbb32a937ec9b6bbc3ec5dd",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "validation_id",
+                                    "answers_xml"
+                                ],
+                                "properties": {
+                                    "validation_id": {
+                                        "type": "integer",
+                                        "example": 5
+                                    },
+                                    "answers_xml": {
+                                        "description": "XML con respuestas en el formato esperado por ANDES ID",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Resultado de la verificación del cuestionario",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "estado": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "message": {
+                                                    "type": "string"
+                                                },
+                                                "success": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Respuestas inválidas o token expirado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v2/andes/identity/resend-otp": {
+            "post": {
+                "tags": [
+                    "v2 - Identidad ANDES"
+                ],
+                "summary": "Reenviar OTP por SMS o voz",
+                "operationId": "94c0adb7f298e3f0fc0b43837aa0dfc2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "validation_id",
+                                    "method"
+                                ],
+                                "properties": {
+                                    "validation_id": {
+                                        "type": "integer",
+                                        "example": 5
+                                    },
+                                    "method": {
+                                        "type": "string",
+                                        "enum": [
+                                            "SMS",
+                                            "VOICE"
+                                        ],
+                                        "example": "SMS"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP reenviado"
+                    },
+                    "422": {
+                        "description": "Error de reenvío"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v2/andes/identity/bypass": {
+            "post": {
+                "tags": [
+                    "v2 - Identidad ANDES"
+                ],
+                "summary": "Cambiar método de validación de OTP a cuestionario",
+                "operationId": "32195dbbd0539fabe37c0dc9985c1b24",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "validation_id"
+                                ],
+                                "properties": {
+                                    "validation_id": {
+                                        "type": "integer",
+                                        "example": 5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Método cambiado a cuestionario",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "validation_type": {
+                                                    "type": "string",
+                                                    "example": "ShowExam"
+                                                },
+                                                "questions": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "No es posible cambiar el método"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v2/andes/identity/status": {
+            "get": {
+                "tags": [
+                    "v2 - Identidad ANDES"
+                ],
+                "summary": "Consultar estado actual del token de validación en ANDES",
+                "operationId": "40115e9edfdd5b524795e07e9d8bc816",
+                "parameters": [
+                    {
+                        "name": "validation_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 5
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Estado consultado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "estado": {
+                                                    "description": "-1=No encontrado, 0=En curso, 1=Validado, 2=Fallido",
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "status_label": {
+                                                    "type": "string",
+                                                    "example": "Validado"
+                                                },
+                                                "validated": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_final": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Error al consultar estado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v2/certificate-request": {
+            "post": {
+                "tags": [
+                    "v2 - Solicitudes ANDES"
+                ],
+                "summary": "Crear solicitud de certificado ANDES (Facturación Electrónica)",
+                "operationId": "9f8647fcb845bafc3986e56e0357c18a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "certificate_request_id",
+                                    "formato",
+                                    "vigencia",
+                                    "soporte_base64"
+                                ],
+                                "properties": {
+                                    "certificate_request_id": {
+                                        "type": "integer"
+                                    },
+                                    "formato": {
+                                        "description": "2=Token físico, 3=PKCS10, 4=Virtual",
+                                        "type": "integer",
+                                        "enum": [
+                                            2,
+                                            3,
+                                            4
+                                        ]
+                                    },
+                                    "vigencia": {
+                                        "description": "Años de vigencia",
+                                        "type": "integer",
+                                        "enum": [
+                                            1,
+                                            2
+                                        ]
+                                    },
+                                    "soporte_base64": {
+                                        "description": "ZIP en base64 con documentos de soporte",
+                                        "type": "string"
+                                    },
+                                    "pin": {
+                                        "description": "PIN mínimo 10 chars alfanuméricos",
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Solicitud enviada a ANDES"
+                    },
+                    "402": {
+                        "description": "Sin cupo disponible"
+                    },
+                    "422": {
+                        "description": "Error de validación"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v2/certificate-request/{id}": {
+            "get": {
+                "tags": [
+                    "v2 - Solicitudes ANDES"
+                ],
+                "summary": "Consultar estado de solicitud ANDES",
+                "operationId": "21b44ba3d40ab436066d4a1aa53c554a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Estado de la solicitud"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v2/health": {
+            "get": {
+                "tags": [
+                    "v2 - Sistema"
+                ],
+                "summary": "Estado de salud de los servicios externos",
+                "operationId": "a1970db21e007817539286bdc67ec340",
+                "responses": {
+                    "200": {
+                        "description": "Todos los servicios operativos"
+                    },
+                    "503": {
+                        "description": "Uno o más servicios con problemas"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/webhooks/wompi": {
+            "post": {
+                "tags": [
+                    "v2 - Pagos Externos"
+                ],
+                "summary": "Recibir evento de pago de WOMPI",
+                "description": "Endpoint receptor de webhooks de WOMPI. La firma HMAC-SHA256 es validada automáticamente por el middleware ValidateWompiSignature. No requiere autenticación Bearer.",
+                "operationId": "c8d42e7b0b7081379abe026bee89c703",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "event": {
+                                        "type": "string",
+                                        "example": "transaction.updated"
+                                    },
+                                    "data": {
+                                        "properties": {
+                                            "transaction": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "reference": {
+                                                        "type": "string"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "PENDING",
+                                                            "APPROVED",
+                                                            "DECLINED",
+                                                            "VOIDED",
+                                                            "ERROR"
+                                                        ]
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "timestamp": {
+                                        "type": "integer",
+                                        "example": 1745000000
+                                    },
+                                    "signature": {
+                                        "properties": {
+                                            "checksum": {
+                                                "type": "string"
+                                            },
+                                            "properties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Evento recibido y encolado"
+                    },
+                    "401": {
+                        "description": "Firma HMAC inválida"
+                    }
+                }
+            }
+        },
+        "/v2/orders": {
+            "get": {
+                "tags": [
+                    "v2 - Órdenes"
+                ],
+                "summary": "Listar órdenes de compra de la empresa",
+                "operationId": "5dc59b872d9197ee67d0339208bf00d8",
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de órdenes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "v2 - Órdenes"
+                ],
+                "summary": "Crear orden de compra de certificados",
+                "description": "Crea una orden PENDING y devuelve los datos necesarios para el widget de WOMPI.",
+                "operationId": "36a237f39eb0c68f7a0356773424ca52",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "quantity",
+                                    "vigencia"
+                                ],
+                                "properties": {
+                                    "quantity": {
+                                        "description": "Cantidad de certificados",
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "example": 5
+                                    },
+                                    "vigencia": {
+                                        "description": "Vigencia en años",
+                                        "type": "integer",
+                                        "enum": [
+                                            1,
+                                            2
+                                        ],
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Orden creada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "order_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "total_amount": {
+                                                    "type": "integer",
+                                                    "example": 743750
+                                                },
+                                                "total_in_cents": {
+                                                    "type": "integer",
+                                                    "example": 74375000
+                                                },
+                                                "wompi_reference": {
+                                                    "type": "string",
+                                                    "example": "CERT-MGR-1745123456-ABCD"
+                                                },
+                                                "wompi_public_key": {
+                                                    "type": "string",
+                                                    "example": "pub_test_XXXX"
+                                                },
+                                                "acceptance_token": {
+                                                    "type": "string"
+                                                },
+                                                "acceptance_url": {
+                                                    "type": "string",
+                                                    "format": "uri"
+                                                },
+                                                "integrity_hash": {
+                                                    "description": "SHA-256 para integridad del widget",
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Parámetros inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v2/orders/{id}": {
+            "get": {
+                "tags": [
+                    "v2 - Órdenes"
+                ],
+                "summary": "Ver detalle de una orden",
+                "operationId": "ce912c2e2b57443cde15921a56ec99a0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalle de la orden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CertificateOrder"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Orden no encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v2/orders/{id}/pay": {
+            "post": {
+                "tags": [
+                    "v2 - Órdenes"
+                ],
+                "summary": "Ejecutar pago de una orden vía WOMPI",
+                "description": "Crea la transacción en WOMPI. El estado final llega asíncronamente por webhook.",
+                "operationId": "0c0b671c0527c39750487393e76eec54",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "payment_source_id",
+                                    "acceptance_token",
+                                    "payment_method"
+                                ],
+                                "properties": {
+                                    "payment_source_id": {
+                                        "description": "Token de tarjeta tokenizada en WOMPI",
+                                        "type": "string",
+                                        "example": "tok_test_XXXX"
+                                    },
+                                    "acceptance_token": {
+                                        "description": "Token de aceptación de T&C de WOMPI",
+                                        "type": "string"
+                                    },
+                                    "payment_method": {
+                                        "type": "string",
+                                        "enum": [
+                                            "CARD",
+                                            "NEQUI",
+                                            "PSE",
+                                            "BANCOLOMBIA_TRANSFER"
+                                        ],
+                                        "example": "CARD"
+                                    },
+                                    "installments": {
+                                        "description": "Cuotas (solo tarjeta)",
+                                        "type": "integer",
+                                        "maximum": 36,
+                                        "minimum": 1,
+                                        "example": 1,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Transacción iniciada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "transaction_id": {
+                                                    "type": "string",
+                                                    "example": "12345-abcd"
+                                                },
+                                                "transaction_status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "PENDING",
+                                                        "APPROVED",
+                                                        "DECLINED",
+                                                        "ERROR"
+                                                    ],
+                                                    "example": "PENDING"
+                                                },
+                                                "order_status": {
+                                                    "type": "string",
+                                                    "example": "PENDING"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Orden no encontrada o no está PENDING"
+                    },
+                    "502": {
+                        "description": "Error al comunicarse con WOMPI"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v2/pricing": {
+            "get": {
+                "tags": [
+                    "v2 - Precios"
+                ],
+                "summary": "Consultar tarifas de certificados",
+                "description": "Devuelve los rangos de precios. Si se pasan quantity y vigencia, calcula el precio exacto.",
+                "operationId": "54244511b7fccd5df49ddc8a0127f4eb",
+                "parameters": [
+                    {
+                        "name": "quantity",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "vigencia",
+                        "in": "query",
+                        "description": "Años: 1 o 2",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                1,
+                                2
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tarifas obtenidas"
+                    },
+                    "422": {
+                        "description": "Parámetros inválidos"
+                    }
+                }
+            }
+        },
+        "/v2/admin/quotas": {
+            "get": {
+                "tags": [
+                    "v2 - Cupos Admin"
+                ],
+                "summary": "Listar todos los cupos (admin)",
+                "description": "GET /v2/admin/quotas — Listar todos los cupos",
+                "operationId": "528e26879243d08f87d82240a77f83ed",
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de cupos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No es administrador"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "v2 - Cupos Admin"
+                ],
+                "summary": "Asignar cupo POSTPAID a una empresa",
+                "description": "POST /v2/admin/quotas — Asignar cupo POSTPAID a empresa",
+                "operationId": "a03c34500839e72b8522fb98d0b4663e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "company_id",
+                                    "quantity",
+                                    "period_start",
+                                    "period_end"
+                                ],
+                                "properties": {
+                                    "company_id": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "example": 50
+                                    },
+                                    "period_start": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-05-01"
+                                    },
+                                    "period_end": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-05-31"
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Cupo mensual mayo 2026",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Cupo asignado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CertificateQuota"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No es administrador"
+                    },
+                    "422": {
+                        "description": "Error de validación"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v2/admin/quotas/{id}": {
+            "get": {
+                "tags": [
+                    "v2 - Cupos Admin"
+                ],
+                "summary": "Ver detalle de un cupo",
+                "description": "GET /v2/admin/quotas/{id} — Ver detalle de un cupo",
+                "operationId": "028f30011b832bd12a8d49a462ba743f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalle del cupo",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CertificateQuota"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Cupo no encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v2/admin/quotas/company/{id}": {
+            "get": {
+                "tags": [
+                    "v2 - Cupos Admin"
+                ],
+                "summary": "Estado y historial de cupos de una empresa",
+                "description": "GET /v2/admin/quotas/company/{id} — Estado de cupos de una empresa",
+                "operationId": "1114dd483a065d97e7eac0fff9ca8781",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la empresa",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 10
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Estado de cupos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "properties": {
+                                                        "allocated": {
+                                                            "type": "integer",
+                                                            "example": 50
+                                                        },
+                                                        "used": {
+                                                            "type": "integer",
+                                                            "example": 12
+                                                        },
+                                                        "remaining": {
+                                                            "type": "integer",
+                                                            "example": 38
+                                                        },
+                                                        "expires_at": {
+                                                            "type": "string",
+                                                            "format": "date",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "history": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/CertificateQuota"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/webhooks/{id}/deliveries": {
             "get": {
                 "tags": [
@@ -3877,6 +5026,358 @@
                     }
                 },
                 "type": "object"
+            },
+            "AndesCertificateRequest": {
+                "description": "Solicitud de certificado enviada a ANDES PKI",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 1
+                    },
+                    "certificate_request_id": {
+                        "type": "integer",
+                        "example": 42
+                    },
+                    "andes_solicitud_id": {
+                        "type": "string",
+                        "example": "SOL-2026-001234",
+                        "nullable": true
+                    },
+                    "tipo_cert": {
+                        "description": "10=PJ, 11=PN",
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "formato": {
+                        "description": "2=físico, 3=PKCS10, 4=virtual",
+                        "type": "integer",
+                        "example": 4
+                    },
+                    "vigencia_cert": {
+                        "description": "3=1año, 4=2años",
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "andes_estado": {
+                        "type": "string",
+                        "example": "PROCESADA",
+                        "nullable": true
+                    },
+                    "andes_message": {
+                        "type": "string",
+                        "example": "Solicitud recibida",
+                        "nullable": true
+                    },
+                    "certificate_serial": {
+                        "type": "string",
+                        "example": "CERT-SERIAL-001",
+                        "nullable": true
+                    },
+                    "is_emitted": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "example": false
+                    },
+                    "is_revoked": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "example": false
+                    },
+                    "emitted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "revoked_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "AndesIdentityValidation": {
+                "description": "Sesión de validación de identidad ANDES ID",
+                "properties": {
+                    "validation_id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 5
+                    },
+                    "validation_type": {
+                        "type": "string",
+                        "enum": [
+                            "PhoneSelection",
+                            "ShowExam"
+                        ],
+                        "example": "PhoneSelection"
+                    },
+                    "estado": {
+                        "description": "-1=No encontrado, 0=En curso, 1=Validado, 2=Fallido",
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "OTP enviado al celular",
+                        "nullable": true
+                    },
+                    "questions": {
+                        "description": "Solo presente cuando validation_type=ShowExam",
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        },
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "CertificateOrder": {
+                "description": "Orden de compra de certificados PREPAID",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 1
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "vigencia": {
+                        "description": "Años: 1 o 2",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "unit_price": {
+                        "description": "COP sin IVA",
+                        "type": "integer",
+                        "example": 125000
+                    },
+                    "subtotal": {
+                        "type": "integer",
+                        "example": 625000
+                    },
+                    "tax_amount": {
+                        "description": "IVA 19%",
+                        "type": "integer",
+                        "example": 118750
+                    },
+                    "total_amount": {
+                        "description": "Total con IVA en COP",
+                        "type": "integer",
+                        "example": 743750
+                    },
+                    "total_in_cents": {
+                        "description": "Total en centavos para WOMPI",
+                        "type": "integer",
+                        "example": 74375000
+                    },
+                    "wompi_reference": {
+                        "type": "string",
+                        "example": "CERT-MGR-1745123456-ABCD"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "PENDING",
+                            "PAID",
+                            "FAILED",
+                            "REFUNDED"
+                        ],
+                        "example": "PENDING"
+                    },
+                    "currency": {
+                        "type": "string",
+                        "example": "COP"
+                    }
+                },
+                "type": "object"
+            },
+            "CertificateQuota": {
+                "description": "Cupo POSTPAID asignado a una empresa por el admin LOPEZSOFT",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 1
+                    },
+                    "company_id": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "allocated_quantity": {
+                        "type": "integer",
+                        "example": 50
+                    },
+                    "used_quantity": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 12
+                    },
+                    "remaining": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 38
+                    },
+                    "period_start": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2026-05-01"
+                    },
+                    "period_end": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2026-05-31"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "ACTIVE",
+                            "EXHAUSTED",
+                            "EXPIRED"
+                        ],
+                        "example": "ACTIVE"
+                    },
+                    "billing_type": {
+                        "type": "string",
+                        "enum": [
+                            "POSTPAID"
+                        ],
+                        "example": "POSTPAID"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Cupo mensual mayo 2026",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "PricingResult": {
+                "description": "Resultado de cotización de certificados",
+                "properties": {
+                    "quantity": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "vigencia": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "tier": {
+                        "type": "string",
+                        "enum": [
+                            "RANGO_1",
+                            "RANGO_2",
+                            "RANGO_3"
+                        ],
+                        "example": "RANGO_2"
+                    },
+                    "unit_price": {
+                        "description": "Precio unitario COP sin IVA",
+                        "type": "integer",
+                        "example": 125000
+                    },
+                    "subtotal": {
+                        "type": "integer",
+                        "example": 625000
+                    },
+                    "tax_amount": {
+                        "description": "IVA 19%",
+                        "type": "integer",
+                        "example": 118750
+                    },
+                    "total_amount": {
+                        "description": "Total con IVA",
+                        "type": "integer",
+                        "example": 743750
+                    },
+                    "currency": {
+                        "type": "string",
+                        "example": "COP"
+                    }
+                },
+                "type": "object"
+            },
+            "HealthStatus": {
+                "description": "Estado de salud de los servicios externos",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "healthy",
+                            "degraded"
+                        ],
+                        "example": "healthy"
+                    },
+                    "services": {
+                        "properties": {
+                            "andes_id_api": {
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ok",
+                                            "error"
+                                        ],
+                                        "example": "ok"
+                                    },
+                                    "message": {
+                                        "type": "string",
+                                        "example": "ANDES ID disponible"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "andes_pki": {
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ok",
+                                            "error",
+                                            "warning"
+                                        ],
+                                        "example": "ok"
+                                    },
+                                    "message": {
+                                        "type": "string",
+                                        "example": "WSDL accesible"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "wompi": {
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ok",
+                                            "error",
+                                            "warning"
+                                        ],
+                                        "example": "ok"
+                                    },
+                                    "message": {
+                                        "type": "string",
+                                        "example": "WOMPI disponible (LOPEZSOFT)"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "checked_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-04-20T15:30:00Z"
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -3895,7 +5396,7 @@
         },
         {
             "name": "Solicitudes de Certificado",
-            "description": "Gestión completa de solicitudes de certificados digitales"
+            "description": "Gestión completa de solicitudes de certificados digitales (v1 - CAMERFIRMA)"
         },
         {
             "name": "Archivos",
@@ -3932,6 +5433,34 @@
         {
             "name": "Configuración",
             "description": "Configuración de encabezados de reportes"
+        },
+        {
+            "name": "v2 - Solicitudes ANDES",
+            "description": "[v2] Emisión automatizada de certificados digitales vía ANDES SCD SOAP"
+        },
+        {
+            "name": "v2 - Identidad ANDES",
+            "description": "[v2] Validación de identidad vía ANDES ID REST API (OTP y cuestionario)"
+        },
+        {
+            "name": "v2 - Órdenes",
+            "description": "[v2] Compra de certificados PREPAID: crear orden y ejecutar pago WOMPI"
+        },
+        {
+            "name": "v2 - Cupos Admin",
+            "description": "[v2] Gestión de cupos POSTPAID — solo administradores LOPEZSOFT"
+        },
+        {
+            "name": "v2 - Precios",
+            "description": "[v2] Consulta pública de tarifas por volumen (sin autenticación)"
+        },
+        {
+            "name": "v2 - Pagos Externos",
+            "description": "[v2] Webhooks entrantes de WOMPI (sin autenticación, firmados con HMAC-SHA256)"
+        },
+        {
+            "name": "v2 - Sistema",
+            "description": "[v2] Health check de servicios externos: ANDES ID, ANDES PKI, WOMPI"
         }
     ]
 }
