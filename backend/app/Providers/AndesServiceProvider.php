@@ -6,6 +6,7 @@ use App\Andes\Contracts\AndesIdentityServiceContract;
 use App\Andes\Contracts\AndesPkiServiceContract;
 use App\Andes\Services\AndesIdentityService;
 use App\Andes\Services\AndesPkiService;
+use App\Andes\Services\AndesSoapClientFactory;
 use App\Andes\Services\AndesTokenManager;
 use Illuminate\Support\ServiceProvider;
 
@@ -37,16 +38,24 @@ class AndesServiceProvider extends ServiceProvider
             );
         });
 
-        // AndesPkiService — binding con su contrato
-        $this->app->bind(AndesPkiServiceContract::class, function ($app) {
-            return new AndesPkiService(
+        // AndesSoapClientFactory — singleton (WSDL se cachea internamente)
+        $this->app->singleton(AndesSoapClientFactory::class, function ($app) {
+            return new AndesSoapClientFactory(
                 wsdlUrl:  config('andes.pki_wsdl_url'),
                 username: config('andes.pki_username', ''),
                 password: config('andes.pki_password', ''),
+            );
+        });
+
+        // AndesPkiService — binding con su contrato
+        $this->app->bind(AndesPkiServiceContract::class, function ($app) {
+            return new AndesPkiService(
+                soapFactory: $app->make(AndesSoapClientFactory::class),
             );
         });
     }
 
     public function boot(): void {}
 }
+
 

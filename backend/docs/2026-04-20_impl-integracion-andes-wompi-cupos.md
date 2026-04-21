@@ -998,15 +998,16 @@ require_once __DIR__ . "/webhooks-external.php";
 - [x] Crear Eventos: `AndesIdentityValidated`, `AndesCertificateEmitted`
 - [x] Tests con mock de API REST ANDES: `AndesTokenManagerTest` (4), `AndesIdentityServiceTest` (11) — **15 PASS**
 
-### Sprint 3: ANDES PKI (Semanas 5-6)
-- [ ] Implementar `AndesSoapClientFactory` (WS-Security, PasswordDigest)
-- [ ] Implementar `AndesPkiService` — Emisión FE (tipoCert 10/11 únicamente)
-- [ ] Implementar `AndesPkiService` — Consultas + Revocación
-- [ ] Crear modelo `AndesCertificateRequest`
-- [ ] Implementar `CertificateRequestV2Controller`
-- [ ] Implementar `PollAndesCertificateStatusJob` (polling cada 1h)
-- [ ] Crear Eventos: `AndesCertificateEmitted`
-- [ ] Tests con mock del cliente SOAP
+### Sprint 3: ANDES PKI (Semanas 5-6) ✅ COMPLETADO 2026-04-20
+
+- [x] Implementar `AndesSoapClientFactory` (WS-Security PasswordDigest, OASIS UsernameToken Profile 1.0)
+- [x] Implementar `AndesPkiService` — Emisión FE (tipoCert 10/11), Consulta, Revocación, PEM
+- [x] Actualizar `AndesServiceProvider` con binding de `AndesSoapClientFactory` y `AndesPkiService`
+- [x] Implementar `CertificateRequestV2Controller` (store + show con flujo completo)
+- [x] Implementar `QuotaService` completo (hasAvailableQuota, consumeQuota, releaseQuota, allocateQuota, getQuotaStatus, expireQuotas)
+- [x] Implementar `PollAndesCertificateStatusJob` (polling cada 1h, máx 48 intentos, auto re-encola)
+- [x] Crear Evento `AndesCertificateEmitted` ✅ (Sprint 2)
+- [x] Tests con mock del cliente SOAP: `AndesPkiServiceTest` (6) — todos PASS
 
 ### Sprint 4: WOMPI + Órdenes (Semanas 7-8)
 - [ ] Implementar `WompiPaymentService` (5 métodos)
