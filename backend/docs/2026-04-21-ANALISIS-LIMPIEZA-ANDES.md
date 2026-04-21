@@ -1,7 +1,7 @@
 # Análisis de Limpieza — Remoción Integración ANDES SCD
 **Fecha:** 2026-04-21  
 **Motivo:** Decisión administrativa de no continuar con la integración ANDES SCD.  
-**Estado:** 📋 PENDIENTE DE APROBACIÓN — No se ha modificado ningún archivo.
+**Estado:** ✅ COMPLETADO — Limpieza ejecutada, tests pasando, commit realizado.
 
 ---
 
@@ -247,12 +247,36 @@ Los 40 tests eliminados son exclusivamente de ANDES. Los tests de WOMPI, Cuotas,
 
 1. ✅ Aprobar este análisis
 2. Ejecutar la limpieza de código (archivos + modificaciones)
-3. Confirmar si se hace rollback de migraciones ANDES (requiere decisión sobre datos existentes)
-4. Actualizar guía Frontend Angular 18 removiendo sección ANDES Identity
-5. Generar Swagger actualizado post-limpieza
+3. ~~Generar Swagger actualizado post-limpieza~~ ✅ Hecho — versión 2.1.0 regenerada.
 
 ---
 
-**Commit sugerido post-limpieza:**  
-`refactor(andes): remove ANDES SCD integration — keep WOMPI + Quotas modules`
+## ✅ Resultado Final (2026-04-21)
+
+| Ítem | Resultado |
+|------|-----------|
+| Archivos eliminados | 43 archivos (app/Andes/, providers, controllers, listeners, notifications, events, tests, docs) |
+| Archivos modificados | 8 archivos (config/app.php, EventServiceProvider, api-v2.php, HealthCheckController, WebhookEventType, SwaggerDefinitions, NewEventListenersTest, V2EndpointsTest) |
+| Suite de tests | **224 passed / 403 assertions — 0 failures / 3 skipped** |
+| Swagger | Regenerado — versión 2.1.0 sin tags/schemas ANDES |
+| Commit | `refactor(andes): remove ANDES SCD integration — keep WOMPI + Quotas modules` (0da76c2) |
+| 53 archivos en commit | 276 inserciones / 5.641 eliminaciones |
+
+### ⚠️ Pendiente de decisión manual
+
+Las siguientes **migraciones de BD** crean tablas/columnas ANDES que siguen existiendo en la base de datos. Se requiere tu decisión antes de hacer rollback:
+
+| Migración | Acción al revertir |
+|-----------|--------------------|
+| `2026_04_21_000001` | DROP COLUMN `andes_code` en `identity_documents` |
+| `2026_04_21_000002` | DROP COLUMN `andes_cert_type` en `type_organization` |
+| `2026_04_21_000004` | DROP TABLE `andes_certificate_requests` |
+| `2026_04_21_000005` | DROP TABLE `andes_identity_validations` |
+
+> Si deseas revertirlas: `php artisan migrate:rollback --step=N` o eliminar los archivos de migración si la BD está en estado limpio.
+
+---
+
+**Commit ejecutado:**  
+`refactor(andes): remove ANDES SCD integration — keep WOMPI + Quotas modules` — hash `0da76c2`
 
