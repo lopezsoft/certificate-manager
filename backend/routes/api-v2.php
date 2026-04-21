@@ -30,13 +30,16 @@ Route::middleware(['auth:api'])->group(function () {
     // ── ANDES Identity Validation ──
     Route::prefix('andes/identity')->name('v2.andes.identity.')->group(function () {
         Route::post('start',            [\App\Http\Controllers\V2\AndesIdentityController::class, 'start'])
-            ->name('start');
+            ->name('start')
+            ->middleware([\App\Andes\Http\Middleware\AndesRateLimiterMiddleware::class . ':start']);
         Route::post('verify-otp',       [\App\Http\Controllers\V2\AndesIdentityController::class, 'verifyOtp'])
-            ->name('verify-otp');
+            ->name('verify-otp')
+            ->middleware([\App\Andes\Http\Middleware\AndesRateLimiterMiddleware::class . ':verify-otp']);
         Route::post('verify-questions', [\App\Http\Controllers\V2\AndesIdentityController::class, 'verifyQuestions'])
             ->name('verify-questions');
         Route::post('resend-otp',       [\App\Http\Controllers\V2\AndesIdentityController::class, 'resendOtp'])
-            ->name('resend-otp');
+            ->name('resend-otp')
+            ->middleware([\App\Andes\Http\Middleware\AndesRateLimiterMiddleware::class . ':resend-otp']);
         Route::post('bypass',           [\App\Http\Controllers\V2\AndesIdentityController::class, 'bypassToQuestions'])
             ->name('bypass');
         Route::post('status',           [\App\Http\Controllers\V2\AndesIdentityController::class, 'checkStatus'])
