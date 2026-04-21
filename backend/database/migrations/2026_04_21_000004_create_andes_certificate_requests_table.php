@@ -18,7 +18,7 @@ return new class extends Migration
         Schema::create('andes_certificate_requests', function (Blueprint $table) {
             $table->id();
 
-            $table->unsignedBigInteger('certificate_request_id')
+            $table->bigInteger('certificate_request_id')
                 ->unique()
                 ->comment('FK a certificate_requests.id — relación 1:1');
 

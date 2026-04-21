@@ -21,7 +21,7 @@ return new class extends Migration
             $table->unsignedBigInteger('certificate_order_id')
                 ->comment('FK a certificate_orders.id');
 
-            $table->unsignedBigInteger('certificate_request_id')
+            $table->bigInteger('certificate_request_id')
                 ->nullable()
                 ->comment('FK a certificate_requests.id — null hasta que se usa el item');
 

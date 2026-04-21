@@ -968,10 +968,10 @@ require_once __DIR__ . "/webhooks-external.php";
       → `2026_04_21_000001`, `_000002`, `_000003`
 - [x] Crear 6 archivos de migración CREATE (tablas nuevas)
       → `2026_04_21_000004` a `_000009`
-- [ ] **Ejecutar migraciones individualmente por path** *(pendiente — acción manual)*
-- [ ] Verificar integridad post-migración *(pendiente — acción manual post-migración)*
+- [x] **Migraciones ejecutadas** ✅ 2026-04-20 — Fix FK signed vs unsigned aplicado en mig 4,6,7,8
+- [x] Integridad verificada: 9 tablas creadas, FKs validadas por MySQL InnoDB
 - [x] Crear seeders de homologación: `UpdateIdentityDocumentsAndesCodeSeeder`, `UpdateTypeOrganizationAndesCertTypeSeeder`
-- [ ] Ejecutar seeders individualmente *(pendiente — acción manual post-migración)*
+- [x] Seeders ejecutados ✅ — 4 identity_documents y 2 type_organization con andes_code/cert_type
 - [ ] Crear y ejecutar seeder de pricing tiers *(PricingService usa tabla estática en código, seeder no requerido)*
 - [x] Implementar todos los Enums (Andes: 6, Payments: 2, Quotas: 3 = **11 Enums**)
 - [x] Crear `config/andes.php`, `config/wompi.php`

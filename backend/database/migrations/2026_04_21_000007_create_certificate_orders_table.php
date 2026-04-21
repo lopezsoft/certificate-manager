@@ -18,7 +18,7 @@ return new class extends Migration
         Schema::create('certificate_orders', function (Blueprint $table) {
             $table->id();
 
-            $table->unsignedBigInteger('company_id')
+            $table->bigInteger('company_id')
                 ->comment('FK a companies.id');
 
             $table->unsignedBigInteger('user_id')
