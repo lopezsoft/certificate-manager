@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 /**
  * @OA\Info(
- *     version="2.0.0",
+ *     version="2.1.0",
  *     title="Certificate Manager API",
- *     description="API REST para la gestión de solicitudes de certificados digitales. v1=CAMERFIRMA (email), v2=ANDES SCD (API) + WOMPI. Requiere autenticación OAuth 2.0 con Laravel Passport.",
+ *     description="API REST para la gestión de solicitudes de certificados digitales. v1=CAMERFIRMA (flujo por email), v2=WOMPI + Cuotas. Requiere autenticación OAuth 2.0 con Laravel Passport.",
  *     @OA\Contact(
  *         email="soporte@matias.com.co",
  *         name="Soporte Matias"
@@ -20,7 +20,7 @@ namespace App\Http\Controllers;
  *
  * @OA\Server(
  *     url="/api/v2",
- *     description="API v2 — ANDES SCD + WOMPI (flujo automatizado)"
+ *     description="API v2 — WOMPI + Cuotas (flujo automatizado)"
  * )
  *
  * @OA\SecurityScheme(
@@ -43,13 +43,11 @@ namespace App\Http\Controllers;
  * @OA\Tag(name="Notificaciones", description="Alertas de vencimiento de certificados: listado, marcado de lectura y disparo manual")
  * @OA\Tag(name="Datos Maestros", description="Datos de referencia públicos: países, departamentos, ciudades, tipos de documento y organización")
  * @OA\Tag(name="Configuración", description="Configuración de encabezados de reportes")
- * @OA\Tag(name="v2 - Solicitudes ANDES", description="[v2] Emisión automatizada de certificados digitales vía ANDES SCD SOAP")
- * @OA\Tag(name="v2 - Identidad ANDES", description="[v2] Validación de identidad vía ANDES ID REST API (OTP y cuestionario)")
  * @OA\Tag(name="v2 - Órdenes", description="[v2] Compra de certificados PREPAID: crear orden y ejecutar pago WOMPI")
  * @OA\Tag(name="v2 - Cupos Admin", description="[v2] Gestión de cupos POSTPAID — solo administradores LOPEZSOFT")
  * @OA\Tag(name="v2 - Precios", description="[v2] Consulta pública de tarifas por volumen (sin autenticación)")
  * @OA\Tag(name="v2 - Pagos Externos", description="[v2] Webhooks entrantes de WOMPI (sin autenticación, firmados con HMAC-SHA256)")
- * @OA\Tag(name="v2 - Sistema", description="[v2] Health check de servicios externos: ANDES ID, ANDES PKI, WOMPI")
+ * @OA\Tag(name="v2 - Sistema", description="[v2] Health check de servicios externos: WOMPI")
  *
  * ─── Schemas reutilizables ────────────────────────────────────────────────────
  *
@@ -178,34 +176,6 @@ namespace App\Http\Controllers;
  * )
  *
  * @OA\Schema(
- *     schema="AndesCertificateRequest",
- *     description="Solicitud de certificado enviada a ANDES PKI",
- *     @OA\Property(property="id", type="integer", readOnly=true, example=1),
- *     @OA\Property(property="certificate_request_id", type="integer", example=42),
- *     @OA\Property(property="andes_solicitud_id", type="string", nullable=true, example="SOL-2026-001234"),
- *     @OA\Property(property="tipo_cert", type="integer", description="10=PJ, 11=PN", example=10),
- *     @OA\Property(property="formato", type="integer", description="2=físico, 3=PKCS10, 4=virtual", example=4),
- *     @OA\Property(property="vigencia_cert", type="integer", description="3=1año, 4=2años", example=3),
- *     @OA\Property(property="andes_estado", type="string", nullable=true, example="PROCESADA"),
- *     @OA\Property(property="andes_message", type="string", nullable=true, example="Solicitud recibida"),
- *     @OA\Property(property="certificate_serial", type="string", nullable=true, example="CERT-SERIAL-001"),
- *     @OA\Property(property="is_emitted", type="boolean", readOnly=true, example=false),
- *     @OA\Property(property="is_revoked", type="boolean", readOnly=true, example=false),
- *     @OA\Property(property="emitted_at", type="string", format="date-time", nullable=true),
- *     @OA\Property(property="revoked_at", type="string", format="date-time", nullable=true)
- * )
- *
- * @OA\Schema(
- *     schema="AndesIdentityValidation",
- *     description="Sesión de validación de identidad ANDES ID",
- *     @OA\Property(property="validation_id", type="integer", readOnly=true, example=5),
- *     @OA\Property(property="validation_type", type="string", enum={"PhoneSelection","ShowExam"}, example="PhoneSelection"),
- *     @OA\Property(property="estado", type="integer", description="-1=No encontrado, 0=En curso, 1=Validado, 2=Fallido", example=0),
- *     @OA\Property(property="message", type="string", nullable=true, example="OTP enviado al celular"),
- *     @OA\Property(property="questions", type="array", nullable=true, @OA\Items(type="object"), description="Solo presente cuando validation_type=ShowExam")
- * )
- *
- * @OA\Schema(
  *     schema="CertificateOrder",
  *     description="Orden de compra de certificados PREPAID",
  *     @OA\Property(property="id", type="integer", readOnly=true, example=1),
@@ -254,20 +224,12 @@ namespace App\Http\Controllers;
  *     description="Estado de salud de los servicios externos",
  *     @OA\Property(property="status", type="string", enum={"healthy","degraded"}, example="healthy"),
  *     @OA\Property(property="services", type="object",
- *         @OA\Property(property="andes_id_api", type="object",
- *             @OA\Property(property="status", type="string", enum={"ok","error"}, example="ok"),
- *             @OA\Property(property="message", type="string", example="ANDES ID disponible")
- *         ),
- *         @OA\Property(property="andes_pki", type="object",
- *             @OA\Property(property="status", type="string", enum={"ok","error","warning"}, example="ok"),
- *             @OA\Property(property="message", type="string", example="WSDL accesible")
- *         ),
  *         @OA\Property(property="wompi", type="object",
  *             @OA\Property(property="status", type="string", enum={"ok","error","warning"}, example="ok"),
  *             @OA\Property(property="message", type="string", example="WOMPI disponible (LOPEZSOFT)")
  *         )
  *     ),
- *     @OA\Property(property="checked_at", type="string", format="date-time", example="2026-04-20T15:30:00Z")
+ *     @OA\Property(property="checked_at", type="string", format="date-time", example="2026-04-21T15:30:00Z")
  * )
  */
 class SwaggerDefinitions

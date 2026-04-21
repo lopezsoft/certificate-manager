@@ -2,12 +2,10 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 /**
- * Tests de Feature para los endpoints V2.
- * Usa RefreshDatabase NO — prueba solo acceso y estructura de respuesta.
+ * Tests de Feature para los endpoints V2 — WOMPI + Cuotas.
  */
 class V2EndpointsTest extends TestCase
 {
@@ -43,21 +41,6 @@ class V2EndpointsTest extends TestCase
 
     // ── Rutas protegidas — 401 sin token ─────────────────────────────────────
 
-    public function test_certificate_request_v2_store_requiere_autenticacion(): void
-    {
-        $this->postJson('/api/v2/certificate-request', [])->assertStatus(401);
-    }
-
-    public function test_andes_identity_start_requiere_autenticacion(): void
-    {
-        $this->postJson('/api/v2/andes/identity/start', [])->assertStatus(401);
-    }
-
-    public function test_andes_identity_verify_otp_requiere_autenticacion(): void
-    {
-        $this->postJson('/api/v2/andes/identity/verify-otp', [])->assertStatus(401);
-    }
-
     public function test_orders_requiere_autenticacion(): void
     {
         $this->getJson('/api/v2/orders')->assertStatus(401);
@@ -78,4 +61,3 @@ class V2EndpointsTest extends TestCase
         $this->getJson('/api/v2/health')->assertStatus(401);
     }
 }
-
