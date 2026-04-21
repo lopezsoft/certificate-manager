@@ -17,11 +17,11 @@ class WompiServiceProvider extends ServiceProvider
     {
         $this->app->singleton(WompiPaymentService::class, function () {
             return new WompiPaymentService(
-                apiUrl:       config('wompi.api_url', 'https://sandbox.wompi.co/v1'),
-                publicKey:    config('wompi.public_key', ''),
-                privateKey:   config('wompi.private_key', ''),
-                eventsSecret: config('wompi.events_secret', ''),
-                integrityKey: config('wompi.integrity_key', ''),
+                apiUrl:       config('wompi.api_url') ?? 'https://sandbox.wompi.co/v1',
+                publicKey:    config('wompi.public_key') ?? '',
+                privateKey:   config('wompi.private_key') ?? '',
+                eventsSecret: config('wompi.events_secret') ?? '',
+                integrityKey: config('wompi.integrity_key') ?? '',
             );
         });
 
