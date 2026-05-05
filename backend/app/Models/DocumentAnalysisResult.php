@@ -1,112 +1,67 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Resultado de análisis IA de un documento.
+ *
+ * Almacena texto OCR + respuesta IA + datos extraídos.
+ */
 class DocumentAnalysisResult extends Model
 {
-    use HasFactory;
+    protected $table = 'document_analysis_results';
 
     protected $fillable = [
         'certificate_request_id',
-        'analysis_results',
-        'validation_summary',
-        'validation_errors',
+        'file_manager_id',
+        'provider',
+        'analysis_type',
+        'ocr_text',
+        'ocr_provider',
+        'ocr_confidence',
+        'ai_response',
+        'ai_confidence',
+        'completeness_score',
         'extracted_data',
-        'overall_valid',
-        'rut_found',
-        'person_type',
-        'chamber_commerce_required',
-        'chamber_commerce_found',
-        'chamber_commerce_valid_date',
-        'cedula_found',
-        'cedula_complete',
-        'legal_representative_match',
-        'documents_processed',
-        'processing_time'
+        'validation_result',
+        'processing_time',
+        'status',
+        'error_message',
+        'processed_by',
     ];
 
     protected $casts = [
-        'analysis_results' => 'array',
-        'validation_summary' => 'array',
-        'validation_errors' => 'array',
-        'extracted_data' => 'array',
-        'overall_valid' => 'boolean',
-        'rut_found' => 'boolean',
-        'chamber_commerce_required' => 'boolean',
-        'chamber_commerce_found' => 'boolean',
-        'chamber_commerce_valid_date' => 'boolean',
-        'cedula_found' => 'boolean',
-        'cedula_complete' => 'boolean',
-        'legal_representative_match' => 'boolean',
-        'processing_time' => 'decimal:4'
+        'ocr_confidence'    => 'decimal:2',
+        'ai_confidence'     => 'decimal:2',
+        'completeness_score' => 'decimal:2',
+        'processing_time'   => 'decimal:3',
+        'ai_response'       => 'array',
+        'extracted_data'    => 'array',
+        'validation_result' => 'array',
     ];
 
-    /**
-     * Get the certificate request that owns this analysis result
-     */
     public function certificateRequest(): BelongsTo
     {
-        return $this->belongsTo(CertificateRequest::class);
+        return $this->belongsTo(CertificateRequest::class, 'certificate_request_id');
     }
 
-    /**
-     * Scope for valid analyses
-     */
-    public function scopeValid($query)
+    public function processedByUser(): BelongsTo
     {
-        return $query->where('overall_valid', true);
+        return $this->belongsTo(User::class, 'processed_by');
     }
 
-    /**
-     * Scope for invalid analyses
-     */
-    public function scopeInvalid($query)
+    public function isCompleted(): bool
     {
-        return $query->where('overall_valid', false);
+        return $this->status === 'COMPLETED';
     }
 
-    /**
-     * Scope for juridical persons
-     */
-    public function scopeJuridical($query)
+    public function isFailed(): bool
     {
-        return $query->where('person_type', 'juridica');
-    }
-
-    /**
-     * Scope for natural persons
-     */
-    public function scopeNatural($query)
-    {
-        return $query->where('person_type', 'natural');
-    }
-
-    /**
-     * Get validation status as text
-     */
-    public function getValidationStatusAttribute(): string
-    {
-        if ($this->overall_valid) {
-            return 'Válido';
-        }
-
-        $errors = $this->validation_errors ?? [];
-        return 'Inválido (' . count($errors) . ' errores)';
-    }
-
-    /**
-     * Get person type in Spanish
-     */
-    public function getPersonTypeSpanishAttribute(): string
-    {
-        return match($this->person_type) {
-            'natural' => 'Persona Natural',
-            'juridica' => 'Persona Jurídica',
-            default => 'No determinado'
-        };
+        return $this->status === 'FAILED';
     }
 }

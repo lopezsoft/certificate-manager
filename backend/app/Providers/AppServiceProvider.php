@@ -56,6 +56,21 @@ class AppServiceProvider extends ServiceProvider
                 new \App\Webhooks\Builders\CertificateFileUploadedPayloadBuilder(),
                 new \App\Webhooks\Builders\CertificateDeletedPayloadBuilder(),
             ]);
+
+        // ── Sprint 4: Bindings IA (Auto-detección de credenciales) ───────
+        $this->app->bind(
+            \App\Contracts\OcrServiceContract::class,
+            fn () => ! empty(config('ai.google_vision.api_key'))
+                ? new \App\Services\Ocr\GoogleVisionOcrService()
+                : new \App\Services\Ocr\MockOcrService(),
+        );
+
+        $this->app->bind(
+            \App\Contracts\AiAnalysisServiceContract::class,
+            fn () => ! empty(config('ai.gemini.api_key'))
+                ? new \App\Services\Ai\GeminiAnalysisService()
+                : new \App\Services\Ai\MockAiAnalysisService(),
+        );
     }
 
     /**

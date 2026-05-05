@@ -35,6 +35,14 @@ Route::middleware(['auth:api'])->group(function () {
         Route::get('/company/{id}', [\App\Quotas\Http\Controllers\QuotaController::class, 'byCompany'])->name('by-company');
     });
 
+    // ── Analíticas IA (Sprint 4) ──
+    Route::prefix('analytics')->name('v2.analytics.')->group(function () {
+        Route::get('/results',      [\App\Http\Controllers\DocumentAnalysisController::class, 'index'])->name('results');
+        Route::get('/stats',        [\App\Http\Controllers\DocumentAnalysisController::class, 'stats'])->name('stats');
+        Route::get('/providers',    [\App\Http\Controllers\DocumentAnalysisController::class, 'providers'])->name('providers');
+        Route::get('/results/{id}', [\App\Http\Controllers\DocumentAnalysisController::class, 'show'])->name('results.show');
+    });
+
     // ── Health check (admin) ──
     Route::get('health', \App\Http\Controllers\V2\HealthCheckController::class)
         ->name('v2.health');
