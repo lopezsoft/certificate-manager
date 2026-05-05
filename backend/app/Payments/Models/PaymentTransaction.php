@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Payments\Models;
 
 use App\Payments\Enums\PaymentStatusEnum;
@@ -7,27 +9,37 @@ use App\Quotas\Models\CertificateOrder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modelo de transacciones de pago — Agnóstico de pasarela.
+ *
+ * Todos los montos se almacenan en valor real (COP con decimales).
+ * La conversión a centavos u otro formato específico del proveedor
+ * se realiza exclusivamente en la capa Adapter (WompiPaymentService, etc.).
+ */
 class PaymentTransaction extends Model
 {
     protected $table = 'payment_transactions';
 
     protected $fillable = [
         'certificate_order_id',
-        'wompi_transaction_id',
-        'wompi_reference',
+        'payment_provider',
+        'provider_transaction_id',
+        'provider_reference',
         'status',
-        'amount_in_cents',
+        'amount',
         'currency',
         'payment_method_type',
-        'wompi_raw_response',
+        'provider_raw_response',
+        'signature_valid',
         'acceptance_token',
         'paid_at',
     ];
 
     protected $casts = [
-        'amount_in_cents'    => 'integer',
-        'wompi_raw_response' => 'array',
-        'paid_at'            => 'datetime',
+        'amount'                => 'decimal:2',
+        'provider_raw_response' => 'array',
+        'signature_valid'       => 'boolean',
+        'paid_at'               => 'datetime',
     ];
 
     public function order(): BelongsTo
@@ -45,4 +57,3 @@ class PaymentTransaction extends Model
         return $this->getStatusEnum()->isSuccessful();
     }
 }
-

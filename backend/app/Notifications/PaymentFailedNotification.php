@@ -27,12 +27,12 @@ class PaymentFailedNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('❌ Pago rechazado — Referencia ' . $this->transaction->wompi_reference)
+            ->subject('❌ Pago rechazado — Referencia ' . $this->transaction->provider_reference)
             ->greeting('Hola, ' . ($notifiable->name ?? 'estimado usuario') . '.')
             ->error()
             ->line('Tu pago no pudo ser procesado.')
             ->line('**Detalle del intento:**')
-            ->line('- Referencia: ' . $this->transaction->wompi_reference)
+            ->line('- Referencia: ' . $this->transaction->provider_reference)
             ->line('- Motivo: ' . $this->reason)
             ->line('Por favor intenta nuevamente con otro medio de pago.')
             ->action('Reintentar pago', url('/dashboard'))

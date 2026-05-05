@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Quotas\Services;
 
+use App\Payments\Contracts\PaymentGatewayContract;
 use App\Payments\DTOs\CreateTransactionRequest;
 use App\Payments\Models\PaymentTransaction;
-use App\Payments\Services\WompiPaymentService;
 use App\Quotas\Models\CertificateOrder;
 use App\Quotas\Models\CertificateOrderItem;
 use Illuminate\Support\Facades\DB;
@@ -13,18 +15,21 @@ use Illuminate\Support\Facades\Log;
 /**
  * PaymentOrchestrator
  *
- * Orquesta el flujo: crear transacción WOMPI → actualizar orden → crear items.
- * Si el pago se aprueba (por webhook), genera los CertificateOrderItems PENDING.
+ * Orquesta el flujo de pago agnóstico de pasarela:
+ * crear transacción → actualizar orden → crear items.
+ *
+ * Recibe PaymentGatewayContract (no WompiPaymentService directamente).
+ * La conversión a centavos u otros formatos se delega al Adapter.
  */
 class PaymentOrchestrator
 {
     public function __construct(
-        private readonly WompiPaymentService $wompi,
+        private readonly PaymentGatewayContract $gateway,
     ) {}
 
     /**
      * Inicia el proceso de pago para una orden.
-     * Crea la transacción en WOMPI y la persiste como PENDING.
+     * El monto se pasa en valor real (COP). El Adapter lo convierte al formato del proveedor.
      */
     public function initiatePayment(
         CertificateOrder $order,
@@ -34,9 +39,9 @@ class PaymentOrchestrator
         ?int $installments = 1,
     ): PaymentTransaction {
         $dto = new CreateTransactionRequest(
-            amountInCents:   $order->getTotalInCents(),
+            amountInCents:   (int) round((float) $order->total_amount * 100),
             currency:        $order->currency,
-            reference:       $order->wompi_reference,
+            reference:       $order->provider_reference,
             customerEmail:   $order->user->email,
             acceptanceToken: $acceptanceToken,
             paymentSourceId: $paymentSourceId,
@@ -44,29 +49,31 @@ class PaymentOrchestrator
             installments:    (string) $installments,
         );
 
-        $txResponse = $this->wompi->createTransaction($dto);
+        $txResponse = $this->gateway->createTransaction($dto);
 
-        Log::info('[PAYMENT] Transacción WOMPI creada.', [
-            'wompi_id'  => $txResponse->id,
-            'status'    => $txResponse->status->value,
-            'order_id'  => $order->id,
+        Log::info('[PAYMENT] Transacción creada.', [
+            'provider_id' => $txResponse->id,
+            'status'      => $txResponse->status->value,
+            'order_id'    => $order->id,
+            'provider'    => $order->payment_provider ?? 'WOMPI',
         ]);
 
         return PaymentTransaction::create([
-            'certificate_order_id' => $order->id,
-            'wompi_transaction_id' => $txResponse->id,
-            'wompi_reference'      => $txResponse->reference,
-            'status'               => $txResponse->status->value,
-            'amount_in_cents'      => $txResponse->amountInCents,
-            'currency'             => $txResponse->currency,
-            'payment_method_type'  => $txResponse->paymentMethodType,
-            'wompi_raw_response'   => $txResponse->rawResponse,
-            'acceptance_token'     => $acceptanceToken,
+            'certificate_order_id'   => $order->id,
+            'payment_provider'       => $order->payment_provider ?? 'WOMPI',
+            'provider_transaction_id' => $txResponse->id,
+            'provider_reference'     => $txResponse->reference,
+            'status'                 => $txResponse->status->value,
+            'amount'                 => (float) $txResponse->amountInCents / 100,
+            'currency'               => $txResponse->currency,
+            'payment_method_type'    => $txResponse->paymentMethodType,
+            'provider_raw_response'  => $txResponse->rawResponse,
+            'acceptance_token'       => $acceptanceToken,
         ]);
     }
 
     /**
-     * Procesa un webhook de WOMPI. Llamado por ProcessWompiWebhookJob.
+     * Procesa un webhook de pago. Llamado por ProcessWompiWebhookJob.
      * Actualiza el estado de la transacción y, si APPROVED, crea los items.
      */
     public function processWebhookEvent(array $event): void
@@ -74,25 +81,25 @@ class PaymentOrchestrator
         $txData = $event['data']['transaction'] ?? [];
         if (empty($txData)) return;
 
-        $wompiTxId = $txData['id'] ?? null;
-        $status    = $txData['status'] ?? null;
+        $providerTxId = $txData['id'] ?? null;
+        $status       = $txData['status'] ?? null;
 
-        if (! $wompiTxId || ! $status) return;
+        if (! $providerTxId || ! $status) return;
 
-        DB::transaction(function () use ($txData, $wompiTxId, $status) {
-            $transaction = PaymentTransaction::where('wompi_transaction_id', $wompiTxId)
+        DB::transaction(function () use ($txData, $providerTxId, $status) {
+            $transaction = PaymentTransaction::where('provider_transaction_id', $providerTxId)
                 ->lockForUpdate()
                 ->first();
 
             if (! $transaction) {
-                Log::warning('[PAYMENT] Webhook: transacción no encontrada.', ['wompi_id' => $wompiTxId]);
+                Log::warning('[PAYMENT] Webhook: transacción no encontrada.', ['provider_id' => $providerTxId]);
                 return;
             }
 
             $transaction->update([
-                'status'             => $status,
-                'wompi_raw_response' => $txData,
-                'paid_at'            => $status === 'APPROVED' ? now() : null,
+                'status'               => $status,
+                'provider_raw_response' => $txData,
+                'paid_at'              => $status === 'APPROVED' ? now() : null,
             ]);
 
             $order = $transaction->order;
@@ -113,7 +120,6 @@ class PaymentOrchestrator
 
     private function createOrderItems(CertificateOrder $order): void
     {
-        // Solo crear si no existen ya
         if ($order->items()->count() > 0) return;
 
         $items = [];
@@ -130,4 +136,3 @@ class PaymentOrchestrator
         CertificateOrderItem::insert($items);
     }
 }
-

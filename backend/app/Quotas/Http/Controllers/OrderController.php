@@ -1,25 +1,29 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Quotas\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Payments\Contracts\PaymentGatewayContract;
 use App\Quotas\Models\CertificateOrder;
 use App\Quotas\Services\OrderService;
 use App\Quotas\Services\PaymentOrchestrator;
-use App\Payments\Services\WompiPaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * OrderController — Sprint 4
- * Gestiona la compra de certificados PREPAID vía WOMPI.
+ * OrderController — Sprint 5
+ *
+ * Gestiona la compra de certificados PREPAID.
+ * Agnóstico de pasarela: usa PaymentGatewayContract.
  */
 class OrderController extends Controller
 {
     public function __construct(
-        private readonly OrderService        $orderService,
-        private readonly PaymentOrchestrator $orchestrator,
-        private readonly WompiPaymentService $wompi,
+        private readonly OrderService           $orderService,
+        private readonly PaymentOrchestrator    $orchestrator,
+        private readonly PaymentGatewayContract $gateway,
     ) {}
 
     /**
@@ -48,7 +52,7 @@ class OrderController extends Controller
      *     path="/v2/orders",
      *     tags={"v2 - Órdenes"},
      *     summary="Crear orden de compra de certificados",
-     *     description="Crea una orden PENDING y devuelve los datos necesarios para el widget de WOMPI.",
+     *     description="Crea una orden PENDING y devuelve los datos necesarios para el widget de pago.",
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(required=true, @OA\JsonContent(
      *         required={"quantity","vigencia"},
@@ -58,10 +62,9 @@ class OrderController extends Controller
      *     @OA\Response(response=201, description="Orden creada",
      *         @OA\JsonContent(@OA\Property(property="data", type="object",
      *             @OA\Property(property="order_id", type="integer", example=1),
-     *             @OA\Property(property="total_amount", type="integer", example=743750),
-     *             @OA\Property(property="total_in_cents", type="integer", example=74375000),
-     *             @OA\Property(property="wompi_reference", type="string", example="CERT-MGR-1745123456-ABCD"),
-     *             @OA\Property(property="wompi_public_key", type="string", example="pub_test_XXXX"),
+     *             @OA\Property(property="total_amount", type="number", format="float", example=743750.00),
+     *             @OA\Property(property="provider_reference", type="string", example="ORD-ABCD1234EFGH"),
+     *             @OA\Property(property="payment_provider", type="string", example="WOMPI"),
      *             @OA\Property(property="acceptance_token", type="string"),
      *             @OA\Property(property="acceptance_url", type="string", format="uri"),
      *             @OA\Property(property="integrity_hash", type="string", description="SHA-256 para integridad del widget")
@@ -85,20 +88,20 @@ class OrderController extends Controller
             vigencia:  $data['vigencia'],
         );
 
-        $acceptanceDto = $this->wompi->getAcceptanceToken();
+        $acceptanceDto = $this->gateway->getAcceptanceToken();
+        $totalInCents  = (int) round((float) $order->total_amount * 100);
 
         return response()->json([
             'data' => [
-                'order_id'         => $order->id,
-                'total_amount'     => $order->total_amount,
-                'total_in_cents'   => $order->getTotalInCents(),
-                'wompi_reference'  => $order->wompi_reference,
-                'wompi_public_key' => config('wompi.public_key'),
-                'acceptance_token' => $acceptanceDto->token,
-                'acceptance_url'   => $acceptanceDto->permalink,
-                'integrity_hash'   => $this->wompi->generateIntegrityHash(
-                    $order->wompi_reference,
-                    $order->getTotalInCents(),
+                'order_id'           => $order->id,
+                'total_amount'       => $order->total_amount,
+                'provider_reference' => $order->provider_reference,
+                'payment_provider'   => $order->payment_provider,
+                'acceptance_token'   => $acceptanceDto->token,
+                'acceptance_url'     => $acceptanceDto->permalink,
+                'integrity_hash'     => $this->gateway->generateIntegrityHash(
+                    $order->provider_reference,
+                    $totalInCents,
                     $order->currency,
                 ),
             ],
@@ -131,26 +134,20 @@ class OrderController extends Controller
      * @OA\Post(
      *     path="/v2/orders/{id}/pay",
      *     tags={"v2 - Órdenes"},
-     *     summary="Ejecutar pago de una orden vía WOMPI",
-     *     description="Crea la transacción en WOMPI. El estado final llega asíncronamente por webhook.",
+     *     summary="Ejecutar pago de una orden",
+     *     description="Crea la transacción de pago. El estado final llega asíncronamente por webhook.",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
      *     @OA\RequestBody(required=true, @OA\JsonContent(
      *         required={"payment_source_id","acceptance_token","payment_method"},
-     *         @OA\Property(property="payment_source_id", type="string", example="tok_test_XXXX", description="Token de tarjeta tokenizada en WOMPI"),
-     *         @OA\Property(property="acceptance_token", type="string", description="Token de aceptación de T&C de WOMPI"),
+     *         @OA\Property(property="payment_source_id", type="string", example="tok_test_XXXX"),
+     *         @OA\Property(property="acceptance_token", type="string"),
      *         @OA\Property(property="payment_method", type="string", enum={"CARD","NEQUI","PSE","BANCOLOMBIA_TRANSFER"}, example="CARD"),
-     *         @OA\Property(property="installments", type="integer", nullable=true, minimum=1, maximum=36, example=1, description="Cuotas (solo tarjeta)")
+     *         @OA\Property(property="installments", type="integer", nullable=true, minimum=1, maximum=36, example=1)
      *     )),
-     *     @OA\Response(response=200, description="Transacción iniciada",
-     *         @OA\JsonContent(@OA\Property(property="data", type="object",
-     *             @OA\Property(property="transaction_id", type="string", example="12345-abcd"),
-     *             @OA\Property(property="transaction_status", type="string", enum={"PENDING","APPROVED","DECLINED","ERROR"}, example="PENDING"),
-     *             @OA\Property(property="order_status", type="string", example="PENDING")
-     *         ))
-     *     ),
+     *     @OA\Response(response=200, description="Transacción iniciada"),
      *     @OA\Response(response=404, description="Orden no encontrada o no está PENDING"),
-     *     @OA\Response(response=502, description="Error al comunicarse con WOMPI")
+     *     @OA\Response(response=502, description="Error al comunicarse con la pasarela")
      * )
      */
     public function pay(Request $request, int $id): JsonResponse
@@ -177,7 +174,7 @@ class OrderController extends Controller
 
             return response()->json([
                 'data' => [
-                    'transaction_id'     => $transaction->wompi_transaction_id,
+                    'transaction_id'     => $transaction->provider_transaction_id,
                     'transaction_status' => $transaction->status,
                     'order_status'       => $order->fresh()->status,
                 ],

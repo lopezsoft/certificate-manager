@@ -25,14 +25,14 @@ class PaymentApprovedNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $amount = number_format($this->transaction->amount_in_cents / 100, 0, ',', '.');
+        $amount = number_format((float) $this->transaction->amount, 0, ',', '.');
 
         return (new MailMessage)
             ->subject('✅ Pago aprobado — ' . $this->order->quantity . ' certificado(s) disponibles')
             ->greeting('¡Hola, ' . ($notifiable->name ?? 'estimado usuario') . '!')
             ->line('Tu pago ha sido aprobado exitosamente.')
             ->line('**Resumen de la orden:**')
-            ->line('- Referencia: ' . $this->transaction->wompi_reference)
+            ->line('- Referencia: ' . $this->transaction->provider_reference)
             ->line('- Cantidad: ' . $this->order->quantity . ' certificado(s)')
             ->line('- Vigencia: ' . $this->order->vigencia . ' año(s)')
             ->line('- Total pagado: $' . $amount . ' COP')
@@ -46,7 +46,7 @@ class PaymentApprovedNotification extends Notification implements ShouldQueue
         return [
             'order_id'        => $this->order->id,
             'transaction_id'  => $this->transaction->id,
-            'amount_in_cents' => $this->transaction->amount_in_cents,
+            'amount'          => $this->transaction->amount,
         ];
     }
 }

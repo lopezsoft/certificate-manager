@@ -181,12 +181,12 @@ namespace App\Http\Controllers;
  *     @OA\Property(property="id", type="integer", readOnly=true, example=1),
  *     @OA\Property(property="quantity", type="integer", example=5),
  *     @OA\Property(property="vigencia", type="integer", description="Años: 1 o 2", example=1),
- *     @OA\Property(property="unit_price", type="integer", description="COP sin IVA", example=125000),
- *     @OA\Property(property="subtotal", type="integer", example=625000),
- *     @OA\Property(property="tax_amount", type="integer", description="IVA 19%", example=118750),
- *     @OA\Property(property="total_amount", type="integer", description="Total con IVA en COP", example=743750),
- *     @OA\Property(property="total_in_cents", type="integer", description="Total en centavos para WOMPI", example=74375000),
- *     @OA\Property(property="wompi_reference", type="string", example="CERT-MGR-1745123456-ABCD"),
+ *     @OA\Property(property="unit_price", type="number", format="float", description="COP sin IVA", example=125000.00),
+ *     @OA\Property(property="subtotal", type="number", format="float", example=625000.00),
+ *     @OA\Property(property="tax_amount", type="number", format="float", description="IVA 19%", example=118750.00),
+ *     @OA\Property(property="total_amount", type="number", format="float", description="Total con IVA en COP", example=743750.00),
+ *     @OA\Property(property="payment_provider", type="string", example="WOMPI"),
+ *     @OA\Property(property="provider_reference", type="string", example="ORD-ABCD1234EFGH"),
  *     @OA\Property(property="status", type="string", enum={"PENDING","PAID","FAILED","REFUNDED"}, example="PENDING"),
  *     @OA\Property(property="currency", type="string", example="COP")
  * )

@@ -25,17 +25,18 @@ class CertificateOrder extends Model
         'total_amount',
         'currency',
         'status',
+        'payment_provider',
+        'provider_reference',
         'payment_method',
-        'wompi_reference',
     ];
 
     protected $casts = [
         'quantity'     => 'integer',
         'vigencia'     => 'integer',
-        'unit_price'   => 'integer',
-        'subtotal'     => 'integer',
-        'tax_amount'   => 'integer',
-        'total_amount' => 'integer',
+        'unit_price'   => 'decimal:2',
+        'subtotal'     => 'decimal:2',
+        'tax_amount'   => 'decimal:2',
+        'total_amount' => 'decimal:2',
     ];
 
     public function company(): BelongsTo
@@ -66,12 +67,6 @@ class CertificateOrder extends Model
     public function getStatusEnum(): OrderStatusEnum
     {
         return OrderStatusEnum::from($this->status);
-    }
-
-    /** Monto total en centavos para WOMPI */
-    public function getTotalInCents(): int
-    {
-        return $this->total_amount * 100;
     }
 }
 

@@ -24,17 +24,18 @@ class OrderService
         $pricing = $this->pricingService->calculatePrice($quantity, $vigencia);
 
         return CertificateOrder::create([
-            'company_id'      => $companyId,
-            'user_id'         => $userId,
-            'quantity'        => $quantity,
-            'vigencia'        => $vigencia,
-            'unit_price'      => $pricing['unit_price'],
-            'subtotal'        => $pricing['subtotal'],
-            'tax_amount'      => $pricing['tax_amount'],
-            'total_amount'    => $pricing['total'],
-            'currency'        => $pricing['currency'],
-            'status'          => 'PENDING',
-            'wompi_reference' => 'ORD-' . strtoupper(Str::random(12)),
+            'company_id'         => $companyId,
+            'user_id'            => $userId,
+            'quantity'           => $quantity,
+            'vigencia'           => $vigencia,
+            'unit_price'         => $pricing['unit_price'],
+            'subtotal'           => $pricing['subtotal'],
+            'tax_amount'         => $pricing['tax_amount'],
+            'total_amount'       => $pricing['total'],
+            'currency'           => $pricing['currency'],
+            'status'             => 'PENDING',
+            'payment_provider'   => config('payments.default_provider', 'WOMPI'),
+            'provider_reference' => 'ORD-' . strtoupper(Str::random(12)),
         ]);
     }
 }

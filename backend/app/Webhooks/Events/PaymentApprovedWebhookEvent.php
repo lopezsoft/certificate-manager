@@ -25,14 +25,15 @@ class PaymentApprovedWebhookEvent implements WebhookEventContract
     public function resourceData(): array
     {
         return [
-            'transaction_id'     => $this->transaction->id,
-            'wompi_transaction_id' => $this->transaction->wompi_transaction_id,
-            'wompi_reference'    => $this->transaction->wompi_reference,
-            'order_id'           => $this->transaction->certificate_order_id,
-            'amount_in_cents'    => $this->transaction->amount_in_cents,
-            'currency'           => $this->transaction->currency,
-            'payment_method_type' => $this->transaction->payment_method_type,
-            'paid_at'            => $this->transaction->paid_at?->toIso8601String(),
+            'transaction_id'          => $this->transaction->id,
+            'provider_transaction_id' => $this->transaction->provider_transaction_id,
+            'provider_reference'      => $this->transaction->provider_reference,
+            'payment_provider'        => $this->transaction->payment_provider,
+            'order_id'                => $this->transaction->certificate_order_id,
+            'amount'                  => $this->transaction->amount,
+            'currency'                => $this->transaction->currency,
+            'payment_method_type'     => $this->transaction->payment_method_type,
+            'paid_at'                 => $this->transaction->paid_at?->toIso8601String(),
         ];
     }
 }
