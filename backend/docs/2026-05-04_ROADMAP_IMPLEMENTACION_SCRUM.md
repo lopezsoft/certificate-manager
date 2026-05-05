@@ -1,7 +1,8 @@
 # Roadmap de Implementación y Arquitectura (Certificate Manager)
 
 **Fecha:** 2026-05-04  
-**Versión del Roadmap:** 1.1  
+**Última Actualización:** 2026-05-05  
+**Versión del Roadmap:** 2.0  
 **Proyecto:** Certificate Manager (Backend / Laravel 10 / PHP 8.1)  
 **Enfoque:** Deuda Técnica, Refactorización, Mejoras Arquitectónicas y Modelo de Negocio B2B  
 **Metodología:** SCRUM (Sprints Iterativos de 2 semanas)  
@@ -53,7 +54,8 @@ Este roadmap está diseñado a partir del [Inventario de Funcionalidades](./2026
 
 ---
 
-## 🎯 Sprint 1: Deuda Técnica y Clean Code (Refactorización Estructural)
+## ✅ Sprint 1: Deuda Técnica y Clean Code (Refactorización Estructural)
+**Estado:** ✅ COMPLETADO — Commit `80db580` (2026-05-05)  
 **Objetivo:** Eliminar anti-patrones, fortalecer el tipado y aislar responsabilidades (SRP).  
 **Capacidad estimada:** 13 SP  
 **Dependencias:** 🟢 Ninguna (puede iniciarse de inmediato).
@@ -67,7 +69,8 @@ Este roadmap está diseñado a partir del [Inventario de Funcionalidades](./2026
 
 ---
 
-## 🏗️ Sprint 2: Evolución Arquitectónica y Patrones de Diseño
+## ✅ Sprint 2: Evolución Arquitectónica y Patrones de Diseño
+**Estado:** ✅ COMPLETADO — Commit `ff47e78` (2026-05-05)  
 **Objetivo:** Estandarizar la comunicación entre capas y abstraer la persistencia del módulo v1.  
 **Capacidad estimada:** 21 SP  
 **Dependencias:** 🟡 Requiere Sprint 1 completado (el `CompanyService` debe existir antes de crear su Repository).
@@ -80,7 +83,8 @@ Este roadmap está diseñado a partir del [Inventario de Funcionalidades](./2026
 
 ---
 
-## 🛡️ Sprint 3: Mantenimiento, Seguridad y Entorno Local
+## ✅ Sprint 3: Mantenimiento, Seguridad y Entorno Local
+**Estado:** ✅ COMPLETADO — Commit `c96c008` (2026-05-05)  
 **Objetivo:** Estabilizar observabilidad, blindar comunicaciones y garantizar testing local equivalente a producción.  
 **Capacidad estimada:** 8 SP  
 **Dependencias:** 🟢 Independiente de Sprint 1-2 (puede ejecutarse en paralelo si hay capacidad).
@@ -94,10 +98,44 @@ Este roadmap está diseñado a partir del [Inventario de Funcionalidades](./2026
 
 ---
 
-## 🧠 Sprint 4 (Opcional/Latente): Reactivación Inteligencia Artificial
+## ⏸️ Sprint 4 (Bloqueado): Reactivación Inteligencia Artificial
+**Estado:** ⏸️ BLOQUEADO — Esperando credenciales de Google Cloud y Gemini API  
 **Objetivo:** Concluir y conectar los módulos de IA en estado de pausa.  
 **Capacidad estimada:** 21 SP  
 **Dependencias:** 🔴 Bloqueado por credenciales externas (Google Vision / Gemini API Keys).
+
+> [!IMPORTANT]
+> ### 📋 Requisitos para Desbloquear Sprint 4
+> Para poder ejecutar este Sprint, se necesitan las siguientes credenciales y configuraciones en `.env`:
+>
+> **1. Google Cloud Vision API (OCR de documentos)**
+> ```env
+> GOOGLE_VISION_PROJECT_ID=tu-proyecto-gcp
+> GOOGLE_VISION_PRIVATE_KEY_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+> GOOGLE_VISION_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----\n"
+> GOOGLE_VISION_CLIENT_EMAIL=vision-sa@tu-proyecto.iam.gserviceaccount.com
+> GOOGLE_VISION_CLIENT_ID=123456789012345678901
+> ```
+>
+> **2. Google Gemini API (Análisis de contenido con IA)**
+> ```env
+> GEMINI_API_KEY=AIzaSy...
+> GEMINI_MODEL=gemini-1.5-flash
+> ```
+>
+> **Pasos para obtenerlas:**
+> 1. Crear un proyecto en [Google Cloud Console](https://console.cloud.google.com)
+> 2. Habilitar la **Cloud Vision API** en el proyecto
+> 3. Crear una **Service Account** con rol `Cloud Vision API User`
+> 4. Generar una **clave JSON** de la Service Account y extraer los campos listados arriba
+> 5. Para Gemini: obtener un API Key desde [Google AI Studio](https://aistudio.google.com/apikey)
+> 6. Agregar todas las variables al `.env` del proyecto
+>
+> **Archivos afectados al activar:**
+> - `app/Services/OcrService.php` — Descomentar bloque de inicialización (líneas 24-42)
+> - `app/Services/AiContentService.php` — Descomentar llamada real a Gemini (línea 96+)
+> - `app/Listeners/HandleCertificateAIProcessing.php` — Conectar pipeline completo
+> - Crear migración `document_analysis_results` para persistir analítica IA
 
 | ID | Tarea | Patrón / Principio | SP | Criterio de Aceptación |
 |----|-------|--------------------|----|------------------------|
@@ -108,7 +146,9 @@ Este roadmap está diseñado a partir del [Inventario de Funcionalidades](./2026
 
 ---
 
-## 🔄 [SECCIÓN ABIERTA] — Sprint 5: Modelo de Negocio B2B
+## ✅ Sprint 5: Modelo de Negocio B2B (Sección Abierta)
+**Estado:** ✅ COMPLETADO — Commits `3ea7b2d` + `7790bec` (2026-05-05)  
+**Migraciones ejecutadas:** 4 tablas creadas + 1 ALTER + B2BCatalogSeeder poblado
 
 ### 🚀 Pagos WOMPI, Tarifas Dinámicas y Cupos Corporativos
 **Análisis de Arquitectura y Base de Datos (Basado en Reglas de Negocio 2026)**  
@@ -272,27 +312,27 @@ Tabla de relación que conecta **una empresa** con **un rango de precios** y le 
 
 ---
 
-## 📊 Resumen de Velocidad y Capacidad
+## 📊 Resumen de Velocidad y Estado
 
-| Sprint | Enfoque | Story Points | Dependencias |
-|--------|---------|:------------:|:------------:|
-| **Sprint 1** | Deuda Técnica / Clean Code | 13 SP | 🟢 Ninguna |
-| **Sprint 2** | Arquitectura (Repository + DTO) | 21 SP | 🟡 Sprint 1 |
-| **Sprint 3** | Seguridad / Observabilidad / Local | 8 SP | 🟢 Independiente |
-| **Sprint 4** | IA (OCR / Gemini) — *Opcional* | 21 SP | 🔴 Credenciales |
-| **Sprint 5** | Modelo B2B (WOMPI / Cupos) | 34 SP | 🟡 Sprint 2 |
-| | **TOTAL** | **97 SP** | |
+| Sprint | Enfoque | Story Points | Estado | Commit |
+|--------|---------|:------------:|:------:|--------|
+| **Sprint 1** | Deuda Técnica / Clean Code | 13 SP | ✅ Completado | `80db580` |
+| **Sprint 2** | Arquitectura (Repository + DTO) | 21 SP | ✅ Completado | `ff47e78` |
+| **Sprint 3** | Seguridad / Observabilidad / Local | 8 SP | ✅ Completado | `c96c008` |
+| **Sprint 4** | IA (OCR / Gemini) — *Bloqueado* | 21 SP | ⏸️ Bloqueado | — |
+| **Sprint 5** | Modelo B2B (Pagos / Cupos) | 34 SP | ✅ Completado | `3ea7b2d` |
+| | **TOTAL** | **97 SP** | **76 SP ✅** | |
 
-> **Nota:** Sprint 3 es independiente y puede ejecutarse en paralelo con Sprint 1 o 2 si hay capacidad en el equipo. Sprint 4 está bloqueado hasta que se resuelvan las credenciales de APIs externas.
+> **Progreso:** 4 de 5 sprints completados (76 de 97 SP = ~78%). Sprint 4 bloqueado exclusivamente por credenciales externas de Google Cloud y Gemini.
 
 ---
 
 ## 📐 Diagrama de Dependencias
 
 ```
-Sprint 1 (Clean Code) ──► Sprint 2 (Arquitectura) ──► Sprint 5 (B2B / WOMPI)
-                                                          │
-Sprint 3 (Seguridad) ─── [Independiente / Paralelo] ─────┘
-                                                          
-Sprint 4 (IA) ─── [Bloqueado por credenciales] ──────────►  Futuro
+Sprint 1 (Clean Code) ✅ ──► Sprint 2 (Arquitectura) ✅ ──► Sprint 5 (B2B / Pagos) ✅
+                                                              │
+Sprint 3 (Seguridad)  ✅ ─── [Independiente / Paralelo] ─────┘
+                                                              
+Sprint 4 (IA) ⏸️ ─── [Bloqueado por credenciales] ──────────►  Pendiente
 ```
