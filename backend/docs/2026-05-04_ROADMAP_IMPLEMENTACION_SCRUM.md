@@ -98,11 +98,11 @@ Este roadmap está diseñado a partir del [Inventario de Funcionalidades](./2026
 
 ---
 
-## ⏸️ Sprint 4 (Bloqueado): Reactivación Inteligencia Artificial
-**Estado:** ⏸️ BLOQUEADO — Esperando credenciales de Google Cloud y Gemini API  
-**Objetivo:** Concluir y conectar los módulos de IA en estado de pausa.  
+## ✅ Sprint 4: Reactivación Inteligencia Artificial
+**Estado:** ✅ COMPLETADO — Commit `3f5445a` (2026-05-05)  
+**Objetivo:** Concluir y conectar los módulos de IA con Adapter Pattern y auto-detección.  
 **Capacidad estimada:** 21 SP  
-**Dependencias:** 🔴 Bloqueado por credenciales externas (Google Vision / Gemini API Keys).
+**Dependencias:** 🟢 Resuelto — Auto-detección: si credenciales existen usa real, sino Mock.
 
 > [!IMPORTANT]
 > ### 📋 Requisitos para Desbloquear Sprint 4
@@ -319,11 +319,11 @@ Tabla de relación que conecta **una empresa** con **un rango de precios** y le 
 | **Sprint 1** | Deuda Técnica / Clean Code | 13 SP | ✅ Completado | `80db580` |
 | **Sprint 2** | Arquitectura (Repository + DTO) | 21 SP | ✅ Completado | `ff47e78` |
 | **Sprint 3** | Seguridad / Observabilidad / Local | 8 SP | ✅ Completado | `c96c008` |
-| **Sprint 4** | IA (OCR / Gemini) — *Bloqueado* | 21 SP | ⏸️ Bloqueado | — |
+| **Sprint 4** | IA (OCR / Gemini) | 21 SP | ✅ Completado | `3f5445a` |
 | **Sprint 5** | Modelo B2B (Pagos / Cupos) | 34 SP | ✅ Completado | `3ea7b2d` |
-| | **TOTAL** | **97 SP** | **76 SP ✅** | |
+| | **TOTAL** | **97 SP** | **97 SP ✅** | |
 
-> **Progreso:** 4 de 5 sprints completados (76 de 97 SP = ~78%). Sprint 4 bloqueado exclusivamente por credenciales externas de Google Cloud y Gemini.
+> **Progreso:** 5 de 5 sprints completados (97 de 97 SP = 100%). Roadmap finalizado.
 
 ---
 
@@ -334,5 +334,5 @@ Sprint 1 (Clean Code) ✅ ──► Sprint 2 (Arquitectura) ✅ ──► Sprint
                                                               │
 Sprint 3 (Seguridad)  ✅ ─── [Independiente / Paralelo] ─────┘
                                                               
-Sprint 4 (IA) ⏸️ ─── [Bloqueado por credenciales] ──────────►  Pendiente
+Sprint 4 (IA) ✅ ─── [Adapter Pattern + Auto-detección] ─────► Completado
 ```
