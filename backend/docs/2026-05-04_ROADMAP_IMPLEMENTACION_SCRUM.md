@@ -27,6 +27,30 @@ Este roadmap está diseñado a partir del [Inventario de Funcionalidades](./2026
 4. Se aplica `declare(strict_types=1)` en todo archivo nuevo o modificado.
 5. Commit con formato *Conventional Commits* (`feat:`, `refactor:`, `fix:`).
 
+> [!CAUTION]
+> ### ⛔ Regla de Oro: Protección de Datos Productivos
+> La base de datos de este proyecto **contiene datos reales de producción**. Está terminantemente prohibido ejecutar comandos masivos que puedan destruir o corromper la información existente.
+>
+> **NUNCA ejecutar:**
+> ```bash
+> php artisan migrate          # ❌ Ejecuta TODAS las migraciones pendientes
+> php artisan db:seed           # ❌ Ejecuta TODOS los seeders (puede sobrescribir datos)
+> php artisan migrate:fresh     # ❌ BORRA toda la BD y recrea desde cero
+> php artisan migrate:refresh   # ❌ Hace rollback de todo y re-migra
+> ```
+>
+> **SIEMPRE ejecutar migraciones INDIVIDUALMENTE con `--path`:**
+> ```bash
+> php artisan migrate --path=database/migrations/2026_XX_XX_NOMBRE_MIGRACION.php
+> ```
+>
+> **SIEMPRE ejecutar seeders INDIVIDUALMENTE con `--class`:**
+> ```bash
+> php artisan db:seed --class=NombreDelSeederEspecifico
+> ```
+>
+> Esta regla aplica tanto en el entorno local como en producción. No hay excepciones.
+
 ---
 
 ## 🎯 Sprint 1: Deuda Técnica y Clean Code (Refactorización Estructural)
