@@ -18,8 +18,10 @@ return new class extends Migration
     {
         Schema::create('company_quota_assignments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('company_id')
-                  ->constrained('companies')
+            // companies.id es bigint SIGNED (esquema legacy)
+            $table->bigInteger('company_id');
+            $table->foreign('company_id')
+                  ->references('id')->on('companies')
                   ->cascadeOnDelete();
             $table->foreignId('pricing_tier_id')
                   ->constrained('pricing_tiers')
