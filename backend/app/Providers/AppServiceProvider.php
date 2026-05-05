@@ -42,6 +42,11 @@ class AppServiceProvider extends ServiceProvider
             \App\Webhooks\Repositories\WebhookEndpointRepository::class,
         );
 
+        $this->app->bind(
+            \App\Contracts\CertificateRequestRepositoryContract::class,
+            \App\Repositories\EloquentCertificateRequestRepository::class,
+        );
+
         $this->app->when(\App\Webhooks\Services\WebhookDispatcher::class)
             ->needs('$builders')
             ->give([

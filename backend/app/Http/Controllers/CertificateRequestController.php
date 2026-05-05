@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Certificate\CreateCertificateRequestFormRequest;
 use App\Http\Requests\Certificate\UpdateCertificateRequestFormRequest;
+use App\DTOs\CertificateRequestFiltersDTO;
 use App\Services\CertificateRequestMailService;
 use App\Services\CertificateRequestService;
 use Illuminate\Http\JsonResponse;
@@ -80,7 +81,7 @@ class CertificateRequestController extends Controller
      */
     public function getCertificateRequest(Request $request): JsonResponse
     {
-        return $this->service->getCertificateRequest($request);
+        return $this->service->getCertificateRequest(CertificateRequestFiltersDTO::fromRequest($request));
     }
 
     /**
@@ -107,7 +108,7 @@ class CertificateRequestController extends Controller
      */
     public function getAllCertificateRequest(Request $request): JsonResponse
     {
-        return $this->service->getAllCertificateRequest($request);
+        return $this->service->getAllCertificateRequest(CertificateRequestFiltersDTO::fromRequest($request));
     }
 
     /**
@@ -121,7 +122,7 @@ class CertificateRequestController extends Controller
      *     @OA\Response(response=401, description="No autenticado")
      * )
      */
-    public function getCertificateRequestById($id): JsonResponse
+    public function getCertificateRequestById(int $id): JsonResponse
     {
         return $this->service->getCertificateRequestById($id);
     }

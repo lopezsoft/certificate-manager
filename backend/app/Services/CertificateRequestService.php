@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Commands\Certificate\CreateCertificateRequestCommand;
@@ -8,12 +10,12 @@ use App\Commands\Certificate\UpdateCertificateRequestCommand;
 use App\Commands\Certificate\UpdateCertificateStatusCommand;
 use App\Common\HttpResponseMessages;
 use App\Common\MessageExceptionResponse;
-use App\Enums\CertificateRequestStatusEnum;
+use App\Contracts\CertificateRequestRepositoryContract;
+use App\DTOs\CertificateRequestFiltersDTO;
 use App\Handlers\Certificate\CreateCertificateRequestHandler;
 use App\Handlers\Certificate\DeleteCertificateRequestHandler;
 use App\Handlers\Certificate\UpdateCertificateRequestHandler;
 use App\Handlers\Certificate\UpdateCertificateStatusHandler;
-use App\Models\CertificateRequest;
 use App\Modules\Company\CompanyQueries;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -22,10 +24,11 @@ use Illuminate\Http\Request;
 class CertificateRequestService
 {
     public function __construct(
-        private readonly CreateCertificateRequestHandler $createHandler,
-        private readonly UpdateCertificateRequestHandler $updateHandler,
-        private readonly UpdateCertificateStatusHandler  $statusHandler,
-        private readonly DeleteCertificateRequestHandler $deleteHandler,
+        private readonly CreateCertificateRequestHandler     $createHandler,
+        private readonly UpdateCertificateRequestHandler     $updateHandler,
+        private readonly UpdateCertificateStatusHandler      $statusHandler,
+        private readonly DeleteCertificateRequestHandler     $deleteHandler,
+        private readonly CertificateRequestRepositoryContract $repository,
     ) {}
 
     // ── Comandos (escritura) ──────────────────────────────────────────────────
@@ -98,74 +101,27 @@ class CertificateRequestService
         ));
     }
 
-    // ── Consultas (lectura) ───────────────────────────────────────────────────
+    // ── Consultas (lectura) — Delegadas al Repository ────────────────────────
 
-    public function getCertificateRequest(Request $request): JsonResponse
+    public function getCertificateRequest(CertificateRequestFiltersDTO $filters): JsonResponse
     {
         try {
-            $company     = CompanyQueries::getCompany();
-            $status      = $request->input('request_status');
-            $search      = $request->input('query');
-            $startDate   = $request->input('start_date');
-            $endDate     = $request->input('end_date');
-            $customerId  = $request->input('company_id');
-
-            $query = CertificateRequest::query()
-                ->where('company_id', $company->id)
-                ->orderBy('created_at', 'desc')
-                ->with([
-                    'identity:id,document_name',
-                    'organization:id,description',
-                    'city:id,name_city',
-                    'files:id,certificate_request_id,file_name,file_path,extension_file,mime_type,file_size,last_modified,status,document_type',
-                ]);
-
-            if (!empty($search)) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('company_name', 'LIKE', "%{$search}%")
-                      ->orWhere('dni', 'LIKE', "%{$search}%")
-                      ->orWhere('document_number', 'LIKE', "%{$search}%")
-                      ->orWhere('legal_representative', 'LIKE', "%{$search}%");
-                });
-            }
-
-            if ($startDate && $endDate) {
-                $startDate = date('Y-m-d H:i:s', strtotime(str_replace('/', '-', $startDate)));
-                $endDate   = date('Y-m-d H:i:s', strtotime(str_replace('/', '-', $endDate) . ' 23:59:59'));
-                $query->whereBetween('created_at', [$startDate, $endDate]);
-            }
-
-            if (!empty($status)) {
-                $query->where('request_status', $status);
-            }
-
-            if (!empty($customerId)) {
-                $query->where('company_id', $customerId);
-            }
+            $company = CompanyQueries::getCompany();
 
             return HttpResponseMessages::getResponse([
                 'message'     => 'Lista de solicitudes de certificados',
-                'dataRecords' => $query->paginate($request->input('limit', 15)),
+                'dataRecords' => $this->repository->findByCompany($company->id, $filters->toArray()),
             ]);
         } catch (Exception $e) {
             return MessageExceptionResponse::response($e);
         }
     }
 
-    public function getCertificateRequestById($id): JsonResponse
+    public function getCertificateRequestById(int $id): JsonResponse
     {
         try {
             $company     = CompanyQueries::getCompany();
-            $certificate = CertificateRequest::query()
-                ->where('company_id', $company->id)
-                ->where('id', $id)
-                ->with([
-                    'identity:id,document_name',
-                    'organization:id,description',
-                    'city:id,name_city',
-                    'files:id,certificate_request_id,file_name,file_path,extension_file,mime_type,file_size,last_modified,status,document_type',
-                ])
-                ->first();
+            $certificate = $this->repository->findOneByCompany($company->id, $id);
 
             return HttpResponseMessages::getResponse([
                 'message'     => 'Solicitud de certificado',
@@ -176,52 +132,12 @@ class CertificateRequestService
         }
     }
 
-    public function getAllCertificateRequest(Request $request): JsonResponse
+    public function getAllCertificateRequest(CertificateRequestFiltersDTO $filters): JsonResponse
     {
         try {
-            $status    = $request->input('request_status');
-            $search    = $request->input('query');
-            $startDate = $request->input('start_date');
-            $endDate   = $request->input('end_date');
-
-            $query = CertificateRequest::query()
-                ->orderBy('request_status')
-                ->orderBy('created_at', 'desc')
-                ->with([
-                    'identity:id,document_name',
-                    'organization:id,description',
-                    'city:id,name_city',
-                    'files:id,certificate_request_id,file_name,file_path,extension_file,mime_type,file_size,last_modified,status,document_type',
-                    'company:id,company_name,dni,dv,address,email,phone',
-                ]);
-
-            if (!empty($search)) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('company_name', 'LIKE', "%{$search}%")
-                      ->orWhere('dni', 'LIKE', "%{$search}%")
-                      ->orWhere('document_number', 'LIKE', "%{$search}%")
-                      ->orWhere('legal_representative', 'LIKE', "%{$search}%");
-                });
-                $query->orWhereHas('company', function ($q) use ($search) {
-                    $q->where('company_name', 'LIKE', "%{$search}%");
-                });
-            }
-
-            if ($startDate && $endDate) {
-                $startDate = date('Y-m-d H:i:s', strtotime(str_replace('/', '-', $startDate)));
-                $endDate   = date('Y-m-d H:i:s', strtotime(str_replace('/', '-', $endDate) . ' 23:59:59'));
-                $query->whereBetween('created_at', [$startDate, $endDate]);
-            }
-
-            if (!empty($status)) {
-                $query->where('request_status', $status);
-            } else {
-                $query->whereIn('request_status', CertificateRequestStatusEnum::adminDefaultStatuses());
-            }
-
             return HttpResponseMessages::getResponse([
                 'message'     => 'Lista de solicitudes de certificados',
-                'dataRecords' => $query->paginate($request->input('limit', 15)),
+                'dataRecords' => $this->repository->findAll($filters->toArray()),
             ]);
         } catch (Exception $e) {
             return MessageExceptionResponse::response($e);
