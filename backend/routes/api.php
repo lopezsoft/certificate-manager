@@ -121,7 +121,7 @@ Route::group(['prefix' => 'v1'], function () {
     });
 });
 
-// ── API v2: ANDES SCD + WOMPI + Cupos ────────────────────────────────────
+// ── API v2: WOMPI + Cupos ────────────────────────────────────
 Route::group(['prefix' => 'v2'], function () {
     require __DIR__ . '/api-v2.php';
 });

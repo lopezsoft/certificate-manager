@@ -36,7 +36,7 @@ class PaymentApprovedNotification extends Notification implements ShouldQueue
             ->line('- Cantidad: ' . $this->order->quantity . ' certificado(s)')
             ->line('- Vigencia: ' . $this->order->vigencia . ' año(s)')
             ->line('- Total pagado: $' . $amount . ' COP')
-            ->line('Ya puedes emitir tus certificados digitales ANDES SCD.')
+            ->line('Ya puedes emitir tus certificados digitales.')
             ->action('Ver mis certificados', url('/dashboard'))
             ->line('Gracias por confiar en nosotros.');
     }
