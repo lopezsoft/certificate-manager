@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 /**
  * @OA\Info(
- *     version="2.1.0",
+ *     version="2.2.0",
  *     title="Certificate Manager API",
- *     description="API REST para la gestión de solicitudes de certificados digitales. v1=CAMERFIRMA (flujo por email), v2=WOMPI + Cuotas. Requiere autenticación OAuth 2.0 con Laravel Passport.",
+ *     description="API REST para la gestión de solicitudes de certificados digitales. v1=CAMERFIRMA (flujo por email), v2=Pagos + Cuotas + Analíticas IA. Requiere autenticación OAuth 2.0 con Laravel Passport.",
  *     @OA\Contact(
  *         email="soporte@matias.com.co",
  *         name="Soporte Matias"
@@ -47,6 +47,7 @@ namespace App\Http\Controllers;
  * @OA\Tag(name="v2 - Cupos Admin", description="[v2] Gestión de cupos POSTPAID — solo administradores LOPEZSOFT")
  * @OA\Tag(name="v2 - Precios", description="[v2] Consulta pública de tarifas por volumen (sin autenticación)")
  * @OA\Tag(name="v2 - Pagos Externos", description="[v2] Webhooks entrantes de WOMPI (sin autenticación, firmados con HMAC-SHA256)")
+ * @OA\Tag(name="v2 - Analíticas IA", description="[v2] Pipeline OCR + IA: resultados de análisis, estadísticas y estado de proveedores")
  * @OA\Tag(name="v2 - Sistema", description="[v2] Health check de servicios externos: WOMPI")
  *
  * ─── Schemas reutilizables ────────────────────────────────────────────────────
@@ -212,11 +213,63 @@ namespace App\Http\Controllers;
  *     @OA\Property(property="quantity", type="integer", example=5),
  *     @OA\Property(property="vigencia", type="integer", example=1),
  *     @OA\Property(property="tier", type="string", enum={"RANGO_1","RANGO_2","RANGO_3"}, example="RANGO_2"),
- *     @OA\Property(property="unit_price", type="integer", description="Precio unitario COP sin IVA", example=125000),
- *     @OA\Property(property="subtotal", type="integer", example=625000),
- *     @OA\Property(property="tax_amount", type="integer", description="IVA 19%", example=118750),
- *     @OA\Property(property="total_amount", type="integer", description="Total con IVA", example=743750),
+ *     @OA\Property(property="unit_price", type="number", format="float", description="Precio unitario COP sin IVA", example=125000.00),
+ *     @OA\Property(property="subtotal", type="number", format="float", example=625000.00),
+ *     @OA\Property(property="tax_amount", type="number", format="float", description="IVA 19%", example=118750.00),
+ *     @OA\Property(property="total_amount", type="number", format="float", description="Total con IVA", example=743750.00),
  *     @OA\Property(property="currency", type="string", example="COP")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="DocumentAnalysisResult",
+ *     description="Resultado de análisis IA de un documento (OCR + IA)",
+ *     @OA\Property(property="id", type="integer", readOnly=true, example=1),
+ *     @OA\Property(property="certificate_request_id", type="integer", example=42),
+ *     @OA\Property(property="file_manager_id", type="integer", nullable=true, example=15),
+ *     @OA\Property(property="provider", type="string", description="Proveedor IA", example="GEMINI"),
+ *     @OA\Property(property="analysis_type", type="string", enum={"general","rut","cedula","chamber_commerce"}, example="rut"),
+ *     @OA\Property(property="ocr_text", type="string", nullable=true, description="Texto extraído por OCR"),
+ *     @OA\Property(property="ocr_provider", type="string", nullable=true, description="Proveedor OCR", example="GOOGLE_VISION"),
+ *     @OA\Property(property="ocr_confidence", type="number", format="float", nullable=true, example=0.87),
+ *     @OA\Property(property="ai_response", type="object", nullable=true, description="Respuesta estructurada del análisis IA"),
+ *     @OA\Property(property="ai_confidence", type="number", format="float", nullable=true, example=0.92),
+ *     @OA\Property(property="completeness_score", type="number", format="float", nullable=true, example=0.85),
+ *     @OA\Property(property="extracted_data", type="object", nullable=true, description="Datos clave extraídos del documento"),
+ *     @OA\Property(property="validation_result", type="object", nullable=true, description="Resultado de validación"),
+ *     @OA\Property(property="processing_time", type="number", format="float", nullable=true, description="Tiempo en segundos", example=2.345),
+ *     @OA\Property(property="status", type="string", enum={"PENDING","PROCESSING","COMPLETED","FAILED"}, example="COMPLETED"),
+ *     @OA\Property(property="error_message", type="string", nullable=true),
+ *     @OA\Property(property="created_at", type="string", format="date-time", readOnly=true)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="AnalyticsStats",
+ *     description="Estadísticas agregadas del módulo de análisis IA",
+ *     @OA\Property(property="total", type="integer", example=150),
+ *     @OA\Property(property="completed", type="integer", example=142),
+ *     @OA\Property(property="failed", type="integer", example=8),
+ *     @OA\Property(property="avg_confidence", type="number", format="float", example=0.89),
+ *     @OA\Property(property="avg_processing_time", type="number", format="float", description="Promedio en segundos", example=1.876),
+ *     @OA\Property(property="avg_completeness", type="number", format="float", example=0.82),
+ *     @OA\Property(property="by_type", type="object", description="Conteo por tipo de análisis",
+ *         @OA\Property(property="general", type="integer", example=50),
+ *         @OA\Property(property="rut", type="integer", example=40),
+ *         @OA\Property(property="cedula", type="integer", example=35),
+ *         @OA\Property(property="chamber_commerce", type="integer", example=25)
+ *     )
+ * )
+ *
+ * @OA\Schema(
+ *     schema="ProviderStatus",
+ *     description="Estado de los proveedores IA/OCR activos",
+ *     @OA\Property(property="ocr", type="object",
+ *         @OA\Property(property="provider", type="string", example="GOOGLE_VISION"),
+ *         @OA\Property(property="available", type="boolean", example=true)
+ *     ),
+ *     @OA\Property(property="ai", type="object",
+ *         @OA\Property(property="provider", type="string", example="GEMINI"),
+ *         @OA\Property(property="available", type="boolean", example=true)
+ *     )
  * )
  *
  * @OA\Schema(

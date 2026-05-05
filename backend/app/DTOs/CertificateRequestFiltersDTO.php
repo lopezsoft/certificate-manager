@@ -12,15 +12,15 @@ use Illuminate\Http\Request;
  * Reemplaza el paso directo del objeto Request a la capa de servicios,
  * garantizando un contrato claro y tipado.
  */
-final readonly class CertificateRequestFiltersDTO
+final class CertificateRequestFiltersDTO
 {
     public function __construct(
-        public ?string $search = null,
-        public ?string $status = null,
-        public ?string $startDate = null,
-        public ?string $endDate = null,
-        public ?int    $customerId = null,
-        public int     $limit = 15,
+        public readonly ?string $search = null,
+        public readonly ?string $status = null,
+        public readonly ?string $startDate = null,
+        public readonly ?string $endDate = null,
+        public readonly ?int    $customerId = null,
+        public readonly int     $limit = 15,
     ) {}
 
     /**

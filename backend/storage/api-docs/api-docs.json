@@ -2,12 +2,12 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Certificate Manager API",
-        "description": "API REST para la gestión de solicitudes de certificados digitales. v1=CAMERFIRMA (flujo por email), v2=WOMPI + Cuotas. Requiere autenticación OAuth 2.0 con Laravel Passport.",
+        "description": "API REST para la gestión de solicitudes de certificados digitales. v1=CAMERFIRMA (flujo por email), v2=Pagos + Cuotas + Analíticas IA. Requiere autenticación OAuth 2.0 con Laravel Passport.",
         "contact": {
             "name": "Soporte Matias",
             "email": "soporte@matias.com.co"
         },
-        "version": "2.1.0"
+        "version": "2.2.0"
     },
     "servers": [
         {
@@ -1991,6 +1991,233 @@
                 ]
             }
         },
+        "/v2/analytics/results": {
+            "get": {
+                "tags": [
+                    "v2 - Analíticas IA"
+                ],
+                "summary": "Listar resultados de análisis IA",
+                "description": "Retorna resultados paginados de análisis OCR+IA filtrados por empresa del usuario autenticado.",
+                "operationId": "listAnalysisResults",
+                "parameters": [
+                    {
+                        "name": "analysis_type",
+                        "in": "query",
+                        "description": "Filtrar por tipo de análisis",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "general",
+                                "rut",
+                                "cedula",
+                                "chamber_commerce"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "description": "Fecha inicio (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "description": "Fecha fin (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Registros por página",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15,
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de resultados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/DocumentAnalysisResult"
+                                                    }
+                                                },
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 72
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v2/analytics/stats": {
+            "get": {
+                "tags": [
+                    "v2 - Analíticas IA"
+                ],
+                "summary": "Estadísticas resumidas de análisis IA",
+                "description": "Retorna métricas agregadas: total, completados, fallidos, confianza promedio, tiempo promedio y distribución por tipo.",
+                "operationId": "getAnalyticsStats",
+                "responses": {
+                    "200": {
+                        "description": "Estadísticas agregadas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AnalyticsStats"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v2/analytics/results/{id}": {
+            "get": {
+                "tags": [
+                    "v2 - Analíticas IA"
+                ],
+                "summary": "Detalle de un resultado de análisis",
+                "description": "Retorna el resultado completo incluyendo texto OCR, respuesta IA, datos extraídos y validación.",
+                "operationId": "showAnalysisResult",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del resultado de análisis",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalle del análisis",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/DocumentAnalysisResult"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    },
+                    "404": {
+                        "description": "Resultado no encontrado o no pertenece a la empresa"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v2/analytics/providers": {
+            "get": {
+                "tags": [
+                    "v2 - Analíticas IA"
+                ],
+                "summary": "Proveedores IA/OCR activos",
+                "description": "Retorna qué proveedores de OCR e IA están configurados y disponibles. Si no hay credenciales, muestra MOCK como proveedor activo.",
+                "operationId": "getActiveProviders",
+                "responses": {
+                    "200": {
+                        "description": "Estado de proveedores",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ProviderStatus"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/countries": {
             "get": {
                 "tags": [
@@ -3094,7 +3321,7 @@
                     "v2 - Órdenes"
                 ],
                 "summary": "Crear orden de compra de certificados",
-                "description": "Crea una orden PENDING y devuelve los datos necesarios para el widget de WOMPI.",
+                "description": "Crea una orden PENDING y devuelve los datos necesarios para el widget de pago.",
                 "operationId": "36a237f39eb0c68f7a0356773424ca52",
                 "requestBody": {
                     "required": true,
@@ -3141,20 +3368,17 @@
                                                     "example": 1
                                                 },
                                                 "total_amount": {
-                                                    "type": "integer",
+                                                    "type": "number",
+                                                    "format": "float",
                                                     "example": 743750
                                                 },
-                                                "total_in_cents": {
-                                                    "type": "integer",
-                                                    "example": 74375000
-                                                },
-                                                "wompi_reference": {
+                                                "provider_reference": {
                                                     "type": "string",
-                                                    "example": "CERT-MGR-1745123456-ABCD"
+                                                    "example": "ORD-ABCD1234EFGH"
                                                 },
-                                                "wompi_public_key": {
+                                                "payment_provider": {
                                                     "type": "string",
-                                                    "example": "pub_test_XXXX"
+                                                    "example": "WOMPI"
                                                 },
                                                 "acceptance_token": {
                                                     "type": "string"
@@ -3237,8 +3461,8 @@
                 "tags": [
                     "v2 - Órdenes"
                 ],
-                "summary": "Ejecutar pago de una orden vía WOMPI",
-                "description": "Crea la transacción en WOMPI. El estado final llega asíncronamente por webhook.",
+                "summary": "Ejecutar pago de una orden",
+                "description": "Crea la transacción de pago. El estado final llega asíncronamente por webhook.",
                 "operationId": "0c0b671c0527c39750487393e76eec54",
                 "parameters": [
                     {
@@ -3263,12 +3487,10 @@
                                 ],
                                 "properties": {
                                     "payment_source_id": {
-                                        "description": "Token de tarjeta tokenizada en WOMPI",
                                         "type": "string",
                                         "example": "tok_test_XXXX"
                                     },
                                     "acceptance_token": {
-                                        "description": "Token de aceptación de T&C de WOMPI",
                                         "type": "string"
                                     },
                                     "payment_method": {
@@ -3282,7 +3504,6 @@
                                         "example": "CARD"
                                     },
                                     "installments": {
-                                        "description": "Cuotas (solo tarjeta)",
                                         "type": "integer",
                                         "maximum": 36,
                                         "minimum": 1,
@@ -3297,45 +3518,13 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Transacción iniciada",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "properties": {
-                                                "transaction_id": {
-                                                    "type": "string",
-                                                    "example": "12345-abcd"
-                                                },
-                                                "transaction_status": {
-                                                    "type": "string",
-                                                    "enum": [
-                                                        "PENDING",
-                                                        "APPROVED",
-                                                        "DECLINED",
-                                                        "ERROR"
-                                                    ],
-                                                    "example": "PENDING"
-                                                },
-                                                "order_status": {
-                                                    "type": "string",
-                                                    "example": "PENDING"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Transacción iniciada"
                     },
                     "404": {
                         "description": "Orden no encontrada o no está PENDING"
                     },
                     "502": {
-                        "description": "Error al comunicarse con WOMPI"
+                        "description": "Error al comunicarse con la pasarela"
                     }
                 },
                 "security": [
@@ -4562,31 +4751,34 @@
                     },
                     "unit_price": {
                         "description": "COP sin IVA",
-                        "type": "integer",
+                        "type": "number",
+                        "format": "float",
                         "example": 125000
                     },
                     "subtotal": {
-                        "type": "integer",
+                        "type": "number",
+                        "format": "float",
                         "example": 625000
                     },
                     "tax_amount": {
                         "description": "IVA 19%",
-                        "type": "integer",
+                        "type": "number",
+                        "format": "float",
                         "example": 118750
                     },
                     "total_amount": {
                         "description": "Total con IVA en COP",
-                        "type": "integer",
+                        "type": "number",
+                        "format": "float",
                         "example": 743750
                     },
-                    "total_in_cents": {
-                        "description": "Total en centavos para WOMPI",
-                        "type": "integer",
-                        "example": 74375000
-                    },
-                    "wompi_reference": {
+                    "payment_provider": {
                         "type": "string",
-                        "example": "CERT-MGR-1745123456-ABCD"
+                        "example": "WOMPI"
+                    },
+                    "provider_reference": {
+                        "type": "string",
+                        "example": "ORD-ABCD1234EFGH"
                     },
                     "status": {
                         "type": "string",
@@ -4687,26 +4879,223 @@
                     },
                     "unit_price": {
                         "description": "Precio unitario COP sin IVA",
-                        "type": "integer",
+                        "type": "number",
+                        "format": "float",
                         "example": 125000
                     },
                     "subtotal": {
-                        "type": "integer",
+                        "type": "number",
+                        "format": "float",
                         "example": 625000
                     },
                     "tax_amount": {
                         "description": "IVA 19%",
-                        "type": "integer",
+                        "type": "number",
+                        "format": "float",
                         "example": 118750
                     },
                     "total_amount": {
                         "description": "Total con IVA",
-                        "type": "integer",
+                        "type": "number",
+                        "format": "float",
                         "example": 743750
                     },
                     "currency": {
                         "type": "string",
                         "example": "COP"
+                    }
+                },
+                "type": "object"
+            },
+            "DocumentAnalysisResult": {
+                "description": "Resultado de análisis IA de un documento (OCR + IA)",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 1
+                    },
+                    "certificate_request_id": {
+                        "type": "integer",
+                        "example": 42
+                    },
+                    "file_manager_id": {
+                        "type": "integer",
+                        "example": 15,
+                        "nullable": true
+                    },
+                    "provider": {
+                        "description": "Proveedor IA",
+                        "type": "string",
+                        "example": "GEMINI"
+                    },
+                    "analysis_type": {
+                        "type": "string",
+                        "enum": [
+                            "general",
+                            "rut",
+                            "cedula",
+                            "chamber_commerce"
+                        ],
+                        "example": "rut"
+                    },
+                    "ocr_text": {
+                        "description": "Texto extraído por OCR",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "ocr_provider": {
+                        "description": "Proveedor OCR",
+                        "type": "string",
+                        "example": "GOOGLE_VISION",
+                        "nullable": true
+                    },
+                    "ocr_confidence": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 0.87,
+                        "nullable": true
+                    },
+                    "ai_response": {
+                        "description": "Respuesta estructurada del análisis IA",
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "ai_confidence": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 0.92,
+                        "nullable": true
+                    },
+                    "completeness_score": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 0.85,
+                        "nullable": true
+                    },
+                    "extracted_data": {
+                        "description": "Datos clave extraídos del documento",
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "validation_result": {
+                        "description": "Resultado de validación",
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "processing_time": {
+                        "description": "Tiempo en segundos",
+                        "type": "number",
+                        "format": "float",
+                        "example": 2.345,
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "PENDING",
+                            "PROCESSING",
+                            "COMPLETED",
+                            "FAILED"
+                        ],
+                        "example": "COMPLETED"
+                    },
+                    "error_message": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "type": "object"
+            },
+            "AnalyticsStats": {
+                "description": "Estadísticas agregadas del módulo de análisis IA",
+                "properties": {
+                    "total": {
+                        "type": "integer",
+                        "example": 150
+                    },
+                    "completed": {
+                        "type": "integer",
+                        "example": 142
+                    },
+                    "failed": {
+                        "type": "integer",
+                        "example": 8
+                    },
+                    "avg_confidence": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 0.89
+                    },
+                    "avg_processing_time": {
+                        "description": "Promedio en segundos",
+                        "type": "number",
+                        "format": "float",
+                        "example": 1.876
+                    },
+                    "avg_completeness": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 0.82
+                    },
+                    "by_type": {
+                        "description": "Conteo por tipo de análisis",
+                        "properties": {
+                            "general": {
+                                "type": "integer",
+                                "example": 50
+                            },
+                            "rut": {
+                                "type": "integer",
+                                "example": 40
+                            },
+                            "cedula": {
+                                "type": "integer",
+                                "example": 35
+                            },
+                            "chamber_commerce": {
+                                "type": "integer",
+                                "example": 25
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "ProviderStatus": {
+                "description": "Estado de los proveedores IA/OCR activos",
+                "properties": {
+                    "ocr": {
+                        "properties": {
+                            "provider": {
+                                "type": "string",
+                                "example": "GOOGLE_VISION"
+                            },
+                            "available": {
+                                "type": "boolean",
+                                "example": true
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "ai": {
+                        "properties": {
+                            "provider": {
+                                "type": "string",
+                                "example": "GEMINI"
+                            },
+                            "available": {
+                                "type": "boolean",
+                                "example": true
+                            }
+                        },
+                        "type": "object"
                     }
                 },
                 "type": "object"
@@ -4823,6 +5212,10 @@
         {
             "name": "v2 - Pagos Externos",
             "description": "[v2] Webhooks entrantes de WOMPI (sin autenticación, firmados con HMAC-SHA256)"
+        },
+        {
+            "name": "v2 - Analíticas IA",
+            "description": "[v2] Pipeline OCR + IA: resultados de análisis, estadísticas y estado de proveedores"
         },
         {
             "name": "v2 - Sistema",
