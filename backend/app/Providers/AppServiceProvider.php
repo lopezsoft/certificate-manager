@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
@@ -7,6 +9,7 @@ use Laravel\Passport\Passport;
 use App\Services\CertificateRequestService;
 use App\Services\CertificateRequestMailService;
 use App\Services\CertificateRequestFilesService;
+use App\Services\CompanyService;
 use App\Handlers\Certificate\CreateCertificateRequestHandler;
 use App\Handlers\Certificate\UpdateCertificateRequestHandler;
 use App\Handlers\Certificate\UpdateCertificateStatusHandler;
@@ -19,10 +22,12 @@ class AppServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function register()
+    public function register(): void
     {
-        // app()->usePublicPath(__DIR__.'/public'); // TODO: Enable this line when you are ready to deploy to production
+        // NOTA: usePublicPath se habilita solo en producción vía el script de deploy.
         Passport::ignoreRoutes();
+
+        $this->app->singleton(CompanyService::class);
 
         $this->app->singleton(CertificateRequestService::class);
         $this->app->singleton(CertificateRequestMailService::class);

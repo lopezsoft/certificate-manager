@@ -93,7 +93,7 @@ class AiContentService
                 ]
             ];
 
-            // TODO: Implement actual Gemini API call when keys are available
+            // [Sprint 4 — Bloqueado] Implementación real de Gemini API pendiente de credenciales.
             /*
             $response = $this->client->post('https://generativelanguage.googleapis.com/v1beta/models/' . $this->model . ':generateContent', [
                 'headers' => [

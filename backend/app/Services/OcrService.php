@@ -21,7 +21,7 @@ class OcrService
         
         Log::info('OCR Service initialized in mock mode');
         
-        /* TODO: Uncomment when Google Vision credentials are available
+        /* [Sprint 4 — Bloqueado] Descomentar cuando las credenciales de Google Vision estén disponibles.
         try {
             $this->client = new ImageAnnotatorClient([
                 'credentials' => [

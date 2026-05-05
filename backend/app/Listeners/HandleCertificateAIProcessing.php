@@ -136,7 +136,7 @@ class HandleCertificateAIProcessing implements ShouldQueue
 
             Log::info('AI Processing Metrics', $metrics);
 
-            // TODO: Store in database table for analytics dashboard
+            // [Sprint 4] Persistir en tabla ai_processing_metrics cuando se implemente el dashboard.
             // DB::table('ai_processing_metrics')->insert($metrics);
 
         } catch (\Exception $e) {

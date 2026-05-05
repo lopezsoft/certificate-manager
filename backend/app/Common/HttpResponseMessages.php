@@ -1,92 +1,119 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Common;
 
+use App\Common\Enums\HttpStatusCode;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * Factoría de respuestas HTTP estandarizadas para la API.
+ *
+ * Utiliza el enum HttpStatusCode para garantizar tipado fuerte
+ * y consistencia en los códigos de respuesta.
+ */
 class HttpResponseMessages
 {
-    // '200 OK'
-    public static function getResponse($data = []): JsonResponse
+    /**
+     * Respuesta exitosa genérica.
+     *
+     * @param array<string, mixed> $data
+     */
+    public static function getResponse(array $data = []): JsonResponse
     {
-        $data['success']    = true;
-        return response()->json($data);
-    }
-    // '201 Created'
-    public static function getResponse201($data = []): JsonResponse
-    {
-        $data['success'] = true;
-        return response()->json($data, 201);
+        return self::buildResponse($data, HttpStatusCode::OK);
     }
 
-   /**
-     * '400 Bad Request'
-     * @param array $data
-     * @return JsonResponse
+    /**
+     * Respuesta 201 Created.
+     *
+     * @param array<string, mixed> $data
+     */
+    public static function getResponse201(array $data = []): JsonResponse
+    {
+        return self::buildResponse($data, HttpStatusCode::CREATED);
+    }
+
+    /**
+     * Respuesta 400 Bad Request.
+     *
+     * @param array<string, mixed> $data
      */
     public static function getResponse400(array $data = []): JsonResponse
     {
-        $data['success'] = false;
-        return response()->json($data, 400);
+        return self::buildResponse($data, HttpStatusCode::BAD_REQUEST);
     }
+
     /**
-     * '401 Unauthorized'
-     * @return JsonResponse
+     * Respuesta 401 Unauthorized.
+     *
+     * @param array<string, mixed> $data
      */
     public static function getResponse401(array $data = []): JsonResponse
     {
-        $data['success'] = false;
-        return response()->json($data, 401);
-    }
-    /**
-     * '402 Payment Required'
-     * @return JsonResponse
-     */
-    public static function getResponse402(): JsonResponse
-    {
-        return response()->json([
-            'success'   => false,
-        ], 402);
+        return self::buildResponse($data, HttpStatusCode::UNAUTHORIZED);
     }
 
     /**
-     * '403 Forbidden'
-     * @return JsonResponse
+     * Respuesta 402 Payment Required.
+     *
+     * @param array<string, mixed> $data
+     */
+    public static function getResponse402(array $data = []): JsonResponse
+    {
+        return self::buildResponse($data, HttpStatusCode::PAYMENT_REQUIRED);
+    }
+
+    /**
+     * Respuesta 403 Forbidden.
+     *
+     * @param array<string, mixed> $data
      */
     public static function getResponse403(array $data = []): JsonResponse
     {
-        $data['success'] = false;
-        return response()->json($data, 403);
-    }
-    /**
-     * '404 Not Found'
-     * @param array $data
-     * @return JsonResponse
-     */
-    public static function getResponse404(array $data = []) : JsonResponse
-    {
-        $data['success'] = false;
-        return response()->json($data, 404);
+        return self::buildResponse($data, HttpStatusCode::FORBIDDEN);
     }
 
     /**
-     * '422 Unprocessable Entity'
-     * @param array $data
-     * @return JsonResponse
+     * Respuesta 404 Not Found.
+     *
+     * @param array<string, mixed> $data
+     */
+    public static function getResponse404(array $data = []): JsonResponse
+    {
+        return self::buildResponse($data, HttpStatusCode::NOT_FOUND);
+    }
+
+    /**
+     * Respuesta 422 Unprocessable Entity.
+     *
+     * @param array<string, mixed> $data
      */
     public static function getResponse422(array $data = []): JsonResponse
     {
-        $data['success']    = false;
-        return response()->json($data, 422);
+        return self::buildResponse($data, HttpStatusCode::UNPROCESSABLE_ENTITY);
     }
+
     /**
-     * '500 Internal Server Error'
-     * @param array $data
-     * @return JsonResponse
+     * Respuesta 500 Internal Server Error.
+     *
+     * @param array<string, mixed> $data
      */
     public static function getResponse500(array $data = []): JsonResponse
     {
-        $data['success'] = false;
-        return response()->json($data, 500);
+        return self::buildResponse($data, HttpStatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    /**
+     * Construye la respuesta JSON estandarizada.
+     *
+     * @param array<string, mixed> $data
+     */
+    private static function buildResponse(array $data, HttpStatusCode $status): JsonResponse
+    {
+        $data['success'] = $status->isSuccess();
+
+        return response()->json($data, $status->value);
     }
 }
