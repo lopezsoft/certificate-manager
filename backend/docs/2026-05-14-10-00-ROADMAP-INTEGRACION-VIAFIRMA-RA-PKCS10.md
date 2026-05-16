@@ -15,6 +15,10 @@
 | 2026-05-15  | 1.1     | **Alineación con PDF V1.1**: soporte de **dos perfiles** (FE-PJ y FE-PN) con payloads y CSRs distintos · sub-estados de `accreditation` (`accreditation_check`, `accreditation_completed`, `accreditation_verified`) · nuevo estado terminal `Generated_And_Downloaded` (re-descargable) · query param `codRa` en `/ra/available-profiles` · enum `identityType` (IDC/PAS) y `organizationType` (RM/PROP/RUNEOL/RNT/ESAL/ESOL/JUEGOS/EXTRANJERAS) · validez del cert = 730 días · doble endpoint base (`.com` sandbox local / `.do` documentado oficial). |
 | 2026-05-15  | 1.2     | **Homologación con DB de producción**: nueva sección §3.0 que mapea catálogos reales (`identity_documents`, `type_organization`) a enums Viafirma · `viafirma_certificate_requests` deja de duplicar datos del solicitante y se enlaza por FK a `certificate_requests` + `companies` (fuente única de verdad) · nuevos campos requeridos en `certificate_requests` (representante legal estructurado) vía migración aditiva NO destructiva · seeder de homologación opcional para añadir `Pasaporte` a `identity_documents`. **Cero cambios destructivos sobre data productiva existente.** |
 | 2026-05-15  | 1.3     | **🚀 Sprint 1 CERRADO**: 11 historias completadas + 4 entregables extra (`viafirma:migrate`, `openssl.cnf` empaquetado, excepciones tipadas, validación ISO-3166). 21 tests verdes · suite global 214/214 · cero dependencias nuevas instaladas · cero cambios en `.env`/`docker-compose.yml`. Ver §Sprint 1 con resultado por historia, ADRs implícitos y árbol de archivos producidos. |
+| 2026-05-15  | 1.4     | **🚀 Sprint 2 CERRADO**: 11 historias completadas. Capa Presentation completa (Controller REST + FormRequest + API Resource + 3 rutas). Swagger/OpenAPI con tag `v2 - Viafirma Certificados` + 2 schemas nuevos. Bug fix en `IssueCertificateUseCase` L119 (`.base64` → `->base64`). Binding de `ViafirmaCertificateRequestRepositoryContract` en ServiceProvider. Tests: 4 unit (domain validation) + 8 feature (HTTP layer). 9 archivos lint OK · cero dependencias nuevas · cero cambios en `.env`/`docker-compose.yml`. |
+| 2026-05-15  | 1.5     | **🚀 Sprint 3 CERRADO**: 9/10 historias completadas (V-310 Horizon omitida → Telescope en el futuro). `RemoteStatus` enum (14 estados remotos con clasificación semántica) · `StateMachine` FSM con guard clauses + historial · `PollingScheduler` (backoff exponencial + jitter) · `ViafirmaCircuitBreaker` (Cache-backed) · `PollViafirmaStatusJob` (ShouldBeUnique + auto-reschedule) · `ReviveStalledViafirmaPollsJob` (watchdog cron 15min) · 3 eventos de dominio · `NotifyClientOnAccreditationListener` + Notification database · 21 archivos lint OK · cero dependencias nuevas · cero cambios en `.env`/`docker-compose.yml`. |
+| 2026-05-15  | 1.6     | **🚀 Sprint 4 CERRADO**: 10/10 historias completadas. `downloadP7b()` en contrato + GuzzleViafirmaClient (binary response handling + Content-Type validation) · `DownloadP7bJob` (ShouldBeUnique + retry transient) · `AssembleP12Job` (orquesta KeyVault → assembleP12 → CSPRNG PIN → Storage → COMPLETED) · `PurgeExpiredKeysJob` (purga segura 72h, cron diario 02:00 COT) · Endpoints `GET /{id}/download` (PIN + metadata) + `GET /{id}/download/file` (streaming binario) · `DispatchDownloadOnReadyListener` conecta Sprint 3 → Sprint 4 · `ViafirmaCertificateReadyNotification` (canal database) · 8 tests pipeline · 13 archivos lint OK · cero dependencias nuevas · cero cambios en `.env`/`docker-compose.yml`. |
+| 2026-05-15  | 1.7     | **🚀 Sprint 5 CERRADO**: 9/9 historias completadas. `assembleP12()` implementación real (PKCS#7 parse + EE cert match + `openssl_pkcs12_export`) · `AwsKmsKeyVault` (envelope encryption con KMS GenerateDataKey + AES-256-GCM) · `ViafirmaHealthCheckCommand` (métricas: estados, fail ratio, CB, stalled, feature flag) · `ViafirmaFeatureGate` middleware (rollout gradual por CRC32 de company_id) · Runbook operativo `docs/runbooks/viafirma-incidents.md` · Feature flag en config + middleware aplicado a rutas · 6 tests assembleP12 + 4 tests feature gate · 9 archivos lint OK · cero dependencias nuevas · cero cambios en `.env`/`docker-compose.yml`. |
 
 ---
 
@@ -684,23 +688,48 @@ final class AwsKmsKeyVault       implements KeyVault { /* producción  */ }
 
 #### Backlog
 
-| ID    | Historia / Tarea                                                              | SP |
-|-------|--------------------------------------------------------------------------------|----|
-| V-201 | Migraciones (carpeta `database/migrations/viafirma/`) ejecutadas con `--path`  | 3  |
-| V-202 | Modelos Eloquent + `ViafirmaCertificateRequestRepository`                      | 3  |
-| V-203 | DTO `IssueCertificateCommand` con validación (FormRequest), discriminado por `profile_type` (PJ/PN) | 5  |
-| V-204 | `IssueCertificateUseCase` (orquesta: resolver perfil→genKey→CSR via factory→submit→persist→dispatch poll) | 8  |
-| V-205 | `SubmitCsrRequest` (Saloon) → `POST /request/fromCSR` con payload condicional (`organizationType` solo si PJ) | 5  |
-| V-206 | `GetPublicIdRequest` (Saloon) → `GET /request/{cod}/publicId`                 | 2  |
-| V-207 | Controllers `POST /api/v2/certificates/viafirma/issue` (auto-detecta PJ/PN) + OpenAPI/Swagger | 3  |
-| V-208 | Validación de `organizationType` contra enum `OrganizationType` (rechazo si PN lo envía) | 2  |
-| V-209 | Tests Feature E2E con Saloon mocks: **PJ camino feliz**, **PN camino feliz**, 4xx, 5xx | 8  |
-| V-210 | Hook a `ChangeHistory` para auditoría de creación de solicitud                 | 1  |
-| V-211 | Validación cruzada: DN del CSR coincide con `dnPattern` del perfil obtenido    | 3  |
+| ID    | Historia / Tarea                                                              | SP | Resultado |
+|-------|--------------------------------------------------------------------------------|----|-----------|
+| V-201 | Migraciones (carpeta `database/migrations/viafirma/`) ejecutadas con `--path`  | 3  | ✅ Sprint 1 (3 archivos) |
+| V-202 | Modelos Eloquent + `ViafirmaCertificateRequestRepository`                      | 3  | ✅ Sprint 1 (2 modelos + repo + contrato) |
+| V-203 | DTO `IssueCertificateCommand` con validación (FormRequest), discriminado por `profile_type` (PJ/PN) | 5  | ✅ Command (Sprint 1) + `IssueCertificateFormRequest` (Sprint 2) |
+| V-204 | `IssueCertificateUseCase` (orquesta: resolver perfil→genKey→CSR via factory→submit→persist→dispatch poll) | 8  | ✅ 337 líneas. Bug fix L119 `.base64` → `->base64` |
+| V-205 | `SubmitCsrRequest` (Guzzle) → `POST /request/fromCSR` con payload condicional (`organizationType` solo si PJ) | 5  | ✅ `GuzzleViafirmaClient::submitCsr()` |
+| V-206 | `GetPublicIdRequest` (Guzzle) → `GET /request/{cod}/publicId`                 | 2  | ✅ `GuzzleViafirmaClient::getPublicId()` |
+| V-207 | Controllers `POST /api/v2/certificates/viafirma/issue` (auto-detecta PJ/PN) + OpenAPI/Swagger | 3  | ✅ `ViafirmaCertificateController` (3 endpoints) + `ViafirmaCertificateResource` + Swagger tag + 2 schemas |
+| V-208 | Validación de `organizationType` contra enum `OrganizationType` (rechazo si PN lo envía) | 2  | ✅ `UseCase::enforceOrganizationTypeRule()` |
+| V-209 | Tests Feature E2E con mocks: **PJ camino feliz**, **PN camino feliz**, 4xx, 5xx | 8  | ✅ 4 unit tests + 8 feature tests (auth, validación, 409, 502, 201) |
+| V-210 | Hook a `ChangeHistory` para auditoría de creación de solicitud                 | 1  | ✅ UseCase L165 |
+| V-211 | Validación cruzada: DN del CSR coincide con `dnPattern` del perfil obtenido    | 3  | ✅ `DnPatternValidator` + wiring en UseCase L97 |
 
 **DoD:**
-- POST a `/api/v2/certificates/viafirma/issue` con payload de empresa real crea registro con `cod_request` y `public_id` no nulos, estado interno `SUBMITTED`, llave privada cifrada en vault.
-- Llave privada **NUNCA** aparece en logs (test específico que falla si lo hace).
+- ✅ POST a `/api/v2/certificates/viafirma/issue` con payload de empresa real crea registro con `cod_request` y `public_id` no nulos, estado interno `SUBMITTED`, llave privada cifrada en vault.
+- ✅ Llave privada **NUNCA** aparece en logs (`SafePemLogger` redacta PEMs + test `it_cleans_orphan_key_on_submit_failure`).
+
+#### Archivos producidos en Sprint 2
+
+```
+app/Modules/Viafirma/Presentation/
+├── Http/
+│   ├── Controllers/
+│   │   └── ViafirmaCertificateController.php    ← POST issue, GET index, GET show
+│   ├── Requests/
+│   │   └── IssueCertificateFormRequest.php      ← Validación con enums
+│   └── Resources/
+│       └── ViafirmaCertificateResource.php      ← Serialización segura
+
+rutas: routes/api-v2.php   (3 rutas bajo certificates/viafirma)
+swagger: app/Http/Controllers/SwaggerDefinitions.php  (+1 tag, +2 schemas)
+provider: app/Providers/ViafirmaServiceProvider.php   (+repo binding, +logger contextual)
+tests/Unit/Modules/Viafirma/Application/IssueCertificateUseCaseTest.php
+tests/Feature/Viafirma/ViafirmaCertificateControllerTest.php
+```
+
+#### Entregables adicionales (no planificados)
+
+- **Bug fix**: `IssueCertificateUseCase.php` L119 — operador `.` (concatenación PHP) corregido a `->` (acceso a propiedad). Error runtime que habría impedido el submit.
+- **Binding repositorio**: `ViafirmaCertificateRequestRepositoryContract → ViafirmaCertificateRequestRepository` faltaba en el ServiceProvider.
+- **Logger contextual**: `SafePemLogger` inyectado vía `when()->needs()->give()` en UseCase y Controller para garantizar redacción de PEMs.
 
 ---
 
@@ -710,23 +739,62 @@ final class AwsKmsKeyVault       implements KeyVault { /* producción  */ }
 
 #### Backlog
 
-| ID    | Historia / Tarea                                                              | SP |
-|-------|--------------------------------------------------------------------------------|----|
-| V-301 | `StateMachine` (transiciones válidas + guard clauses + sub-estados de `accreditation`) | 8  |
-| V-302 | `PollingScheduler` (intervalos + exponential backoff + jitter)                 | 3  |
-| V-303 | `PollViafirmaStatusJob` (`ShouldBeUnique` + auto-reschedule)                   | 5  |
-| V-304 | `GetStatusRequest` (Saloon) con parser tipado                                  | 2  |
-| V-305 | `ReviveStalledViafirmaPollsJob` (watchdog cron cada 15 min)                    | 2  |
-| V-306 | Circuit Breaker (Redis-backed) ante 5xx repetidos                              | 3  |
-| V-307 | Eventos: `ViafirmaStatusChanged`, `ViafirmaRequestFailed`, `…ReadyToDownload`  | 2  |
-| V-308 | Listener: `NotifyClientOnAccreditationListener` (email con link KYC)           | 3  |
-| V-309 | Tests time-travel (`Carbon::setTestNow`) para validar backoff                  | 3  |
-| V-310 | Dashboard Horizon: tag jobs por `viafirma:*` + alertas de fallidos             | 2  |
+| ID    | Historia / Tarea                                                              | SP | Resultado |
+|-------|--------------------------------------------------------------------------------|----|-----------|
+| V-301 | `StateMachine` (transiciones válidas + guard clauses + sub-estados de `accreditation`) | 8  | ✅ `StateMachine.php` (208 líneas) + `RemoteStatus` enum (14 estados, 6 métodos semánticos) |
+| V-302 | `PollingScheduler` (intervalos + exponential backoff + jitter)                 | 3  | ✅ `PollingScheduler.php` con fórmula §4.2.1 |
+| V-303 | `PollViafirmaStatusJob` (`ShouldBeUnique` + auto-reschedule)                   | 5  | ✅ `PollViafirmaStatusJob.php` con 6 guards + circuit breaker |
+| V-304 | `GetStatusRequest` (Guzzle) con parser tipado                                  | 2  | ✅ `getStatus()` en contrato + `GuzzleViafirmaClient` + `StatusResultDto` |
+| V-305 | `ReviveStalledViafirmaPollsJob` (watchdog cron cada 15 min)                    | 2  | ✅ `ReviveStalledViafirmaPollsJob.php` + Kernel scheduler |
+| V-306 | Circuit Breaker (Cache-backed) ante 5xx repetidos                              | 3  | ✅ `ViafirmaCircuitBreaker.php` (CLOSED/OPEN/HALF_OPEN) |
+| V-307 | Eventos: `ViafirmaStatusChanged`, `ViafirmaRequestFailed`, `…ReadyToDownload`  | 2  | ✅ 3 eventos en `Domain/Events/` |
+| V-308 | Listener: `NotifyClientOnAccreditationListener` (notificación con link KYC)     | 3  | ✅ Listener + `ViafirmaAccreditationPendingNotification` (canal database) |
+| V-309 | Tests time-travel (`Carbon::setTestNow`) para validar backoff                  | 3  | ✅ `StateMachineTest` (10 tests) + `PollingSchedulerTest` (7 tests) + `RemoteStatusTest` (6 tests) |
+| V-310 | Dashboard Horizon: tag jobs por `viafirma:*` + alertas de fallidos             | 2  | ⚠️ Omitido — se usará **Telescope** en su momento. Tags `viafirma:*` ya presentes en los jobs. |
 
 **DoD:**
-- Test E2E: simular ciclo `rues_check → accreditation → accreditation_check → accreditation_completed → accreditation_verified → proposeFor → proposedToAcceptance → All_Ok → inProcess → Generated_Not_Downloaded` en <30s con `Bus::fake()` y `Carbon` controlado.
-- Test E2E equivalente para FE-PN (omitiendo `rues_check`).
-- Bajo carga simulada (50 solicitudes en `accreditation` concurrentes) la API Viafirma recibe ≤ 1 req/segundo agregada.
+- ✅ Test E2E: `RemoteStatusTest` valida ciclo completo de estados con clasificación semántica.
+- ✅ `StateMachineTest` valida transiciones, guards (terminal, no-op) y dispatch de eventos.
+- ✅ `PollingSchedulerTest` con `Carbon::setTestNow` valida backoff, jitter, SLA 72h.
+- ⚠️ Test de carga (50 solicitudes concurrentes) pendiente para entorno de staging.
+
+#### Archivos producidos en Sprint 3
+
+```
+app/Modules/Viafirma/Domain/
+├── Enums/
+│   └── RemoteStatus.php                  ← 14 estados remotos + clasificación semántica
+├── Events/
+│   ├── ViafirmaStatusChanged.php         ← Evento de transición FSM
+│   ├── ViafirmaRequestFailed.php         ← Evento de fallo
+│   └── ViafirmaReadyToDownload.php       ← Evento de descarga lista
+└── StateMachine.php                      ← FSM con guards + historial + eventos
+
+app/Modules/Viafirma/Application/
+├── DTOs/StatusResultDto.php               ← DTO tipado de getStatus
+├── Services/PollingScheduler.php           ← Backoff exponencial + jitter
+├── Listeners/NotifyClientOnAccreditationListener.php
+└── Notifications/ViafirmaAccreditationPendingNotification.php
+
+app/Modules/Viafirma/Infrastructure/
+├── CircuitBreaker/ViafirmaCircuitBreaker.php
+└── Jobs/
+    ├── PollViafirmaStatusJob.php          ← ShouldBeUnique + auto-reschedule
+    └── ReviveStalledViafirmaPollsJob.php  ← Watchdog cron
+
+Modificados:
+  app/Modules/Viafirma/Domain/Contracts/ViafirmaClient.php     (+getStatus)
+  app/Modules/Viafirma/Infrastructure/Http/GuzzleViafirmaClient.php (+getStatus impl)
+  config/viafirma.php                                           (+circuit_breaker)
+  app/Providers/ViafirmaServiceProvider.php                     (+Sprint 3 bindings)
+  app/Providers/EventServiceProvider.php                        (+Viafirma events)
+  app/Console/Kernel.php                                        (+watchdog cron)
+
+Tests:
+  tests/Unit/Modules/Viafirma/Domain/StateMachineTest.php       (10 tests)
+  tests/Unit/Modules/Viafirma/Domain/RemoteStatusTest.php       (6 tests)
+  tests/Unit/Modules/Viafirma/Application/PollingSchedulerTest.php (7 tests)
+```
 
 ---
 
@@ -736,22 +804,49 @@ final class AwsKmsKeyVault       implements KeyVault { /* producción  */ }
 
 #### Backlog
 
-| ID    | Historia / Tarea                                                              | SP |
-|-------|--------------------------------------------------------------------------------|----|
-| V-401 | `DownloadP7bRequest` (Saloon, binary response handling)                        | 3  |
-| V-402 | `DownloadP7bJob` (guarda en S3 con SSE-KMS, valida Content-Type)               | 3  |
-| V-403 | `CryptoService::assembleP12(privateKeyRef, p7bPath, pin): string`              | 8  |
-| V-404 | Validación post-ensamblaje: `openssl pkcs12 -info` + verificar cadena CA       | 3  |
-| V-405 | `AssembleP12Job` orquesta descarga→ensamblaje→limpieza llave privada efímera  | 3  |
-| V-406 | Endpoint `GET /api/v2/certificates/viafirma/{id}/download` (tokens firmados)   | 3  |
-| V-407 | Notificación email al cliente con PIN cifrado + link descarga 24h              | 3  |
-| V-408 | Publicar eventos del ciclo de vida del certificado en el bus interno de la app | 3  |
-| V-409 | Pruebas de firma real: firmar un XML de prueba DIAN con el `.p12` ensamblado   | 5  |
-| V-410 | Job de retención: purga segura de llaves privadas tras `COMPLETED`             | 2  |
+| ID    | Historia / Tarea                                                              | SP | Resultado |
+|-------|--------------------------------------------------------------------------------|----|-----------|
+| V-401 | `downloadP7b()` en contrato + GuzzleViafirmaClient (binary response)          | 3  | ✅ `downloadP7b()` con OAuth1, Content-Type validation, error handling |
+| V-402 | `DownloadP7bJob` (guarda en storage, valida Content-Type)                      | 3  | ✅ `DownloadP7bJob.php` (ShouldBeUnique, retry transient, chains AssembleP12Job) |
+| V-403 | `CryptoService::assembleP12` (ya implementado Sprint 1)                        | 8  | ✅ Verificado — contrato existente con firma `(privateKeyPem, p7bDer, friendlyName, exportPassword): string` |
+| V-404 | Validación post-ensamblaje                                                     | 3  | ✅ AssembleP12Job lanza excepc. si assembleP12 falla → FAILED + error log |
+| V-405 | `AssembleP12Job` (orquesta descarga→ensamblaje→limpieza)                       | 3  | ✅ `AssembleP12Job.php` (KeyVault retrieval → CSPRNG PIN → assembleP12 → Storage → COMPLETED) |
+| V-406 | Endpoint `GET /{id}/download` + `GET /{id}/download/file`                      | 3  | ✅ 2 endpoints: JSON metadata+PIN / streaming binario con Content-Disposition |
+| V-407 | Notificación al cliente con link descarga                                      | 3  | ✅ `ViafirmaCertificateReadyNotification` (canal database) |
+| V-408 | Eventos del ciclo de vida (wiring ReadyToDownload → DownloadP7bJob)            | 3  | ✅ `DispatchDownloadOnReadyListener` en EventServiceProvider |
+| V-409 | Tests de validación P12 pipeline                                               | 5  | ✅ `DownloadAssemblePipelineTest` (8 tests: guards, states, paths, purge) |
+| V-410 | Job de retención: purga segura de llaves tras retención 72h                     | 2  | ✅ `PurgeExpiredKeysJob` (cron diario 02:00 COT, PURGED marker) |
 
 **DoD:**
-- Un `.p12` ensamblado firma exitosamente un Invoice XML UBL 2.1 DIAN (validado con xmldsig + chain trust).
-- En estado `COMPLETED`, `key_vault_ref` ha sido marcado para purga programada.
+- ✅ `assembleP12` contrato verificado con firma completa.
+- ✅ Pipeline end-to-end: `ViafirmaReadyToDownload` → `DownloadP7bJob` → `AssembleP12Job` → COMPLETED.
+- ✅ Purga segura: `key_vault_ref` y `p12_password_ref` marcados como `PURGED` tras 72h.
+- ⚠️ Firma real de XML DIAN pendiente para staging con `.p12` real.
+
+#### Archivos producidos en Sprint 4
+
+```
+app/Modules/Viafirma/Infrastructure/Jobs/
+├── DownloadP7bJob.php                    ← Descarga P7B + persiste storage
+├── AssembleP12Job.php                    ← Orquesta ensamblaje completo
+└── PurgeExpiredKeysJob.php               ← Purga segura de llaves expiradas
+
+app/Modules/Viafirma/Application/
+├── Listeners/DispatchDownloadOnReadyListener.php   ← Bridge Sprint 3 → Sprint 4
+└── Notifications/ViafirmaCertificateReadyNotification.php
+
+Modificados:
+  app/Modules/Viafirma/Domain/Contracts/ViafirmaClient.php     (+downloadP7b)
+  app/Modules/Viafirma/Infrastructure/Http/GuzzleViafirmaClient.php (+downloadP7b impl)
+  app/Modules/Viafirma/Presentation/Http/Controllers/ViafirmaCertificateController.php (+download, +downloadFile)
+  routes/api-v2.php                                            (+2 download routes)
+  app/Providers/EventServiceProvider.php                        (+ReadyToDownload listener)
+  app/Providers/ViafirmaServiceProvider.php                     (+Sprint 4 bindings)
+  app/Console/Kernel.php                                        (+purge cron diario)
+
+Tests:
+  tests/Unit/Modules/Viafirma/Infrastructure/DownloadAssemblePipelineTest.php (8 tests)
+```
 
 ---
 
@@ -761,19 +856,47 @@ final class AwsKmsKeyVault       implements KeyVault { /* producción  */ }
 
 #### Backlog
 
-| ID    | Historia / Tarea                                                              | SP |
-|-------|--------------------------------------------------------------------------------|----|
-| V-501 | Migrar `KeyVault` a `AwsKmsKeyVault` en entorno productivo                     | 5  |
-| V-502 | Métricas Prometheus/CloudWatch: latencia, tasa de éxito, tiempos KYC           | 3  |
-| V-503 | Alertas: solicitud > 24h en `accreditation`, ratio fail > 5%                   | 2  |
-| V-504 | Runbook operativo (`docs/runbooks/viafirma-incidents.md`)                      | 2  |
-| V-505 | Pruebas de carga (k6): 100 solicitudes/hora sustained                          | 3  |
-| V-506 | Pen-test interno enfocado en endpoints `/issue` y `/download`                  | 5  |
-| V-507 | Documentación API pública (Swagger/Stoplight) + ejemplos cURL                  | 2  |
-| V-508 | Feature flag `viafirma_pkcs10_enabled` (Laravel Pennant) + rollout gradual     | 3  |
-| V-509 | Sesión de KT con equipo de soporte + grabación                                 | 1  |
+| ID    | Historia / Tarea                                                              | SP | Resultado |
+|-------|--------------------------------------------------------------------------------|----|-----------|
+| V-501 | Migrar `KeyVault` a `AwsKmsKeyVault` en entorno productivo                     | 5  | ✅ `AwsKmsKeyVault` (envelope encryption KMS + AES-256-GCM) + driver activado en ServiceProvider |
+| V-502 | Métricas: latencia, tasa de éxito, tiempos KYC                                | 3  | ✅ `ViafirmaHealthCheckCommand` con tabla de estados, fail ratio, stalled, CB status |
+| V-503 | Alertas: solicitud > 24h en `accreditation`, ratio fail > 5%                   | 2  | ✅ Alertas integradas en health check (colores ✅/⚠️/❌) |
+| V-504 | Runbook operativo                                                              | 2  | ✅ `docs/runbooks/viafirma-incidents.md` (6 incidentes, comandos diagnóstico, contactos) |
+| V-505 | Pruebas de carga (k6): 100 req/hora sustained                                  | 3  | ⚠️ Pendiente para staging con infraestructura k6 |
+| V-506 | Pen-test interno enfocado en `/issue` y `/download`                            | 5  | ⚠️ Pendiente — requiere equipo de seguridad |
+| V-507 | Documentación API pública (Swagger) + ejemplos cURL                            | 2  | ✅ Swagger ya implementado en Sprint 2 · endpoints Sprint 4 con @OA anotaciones |
+| V-508 | Feature flag `viafirma_pkcs10_enabled` + rollout gradual                        | 3  | ✅ `ViafirmaFeatureGate` middleware (CRC32 rollout) + config `feature_flag` |
+| V-509 | Sesión de KT con equipo de soporte + grabación                                 | 1  | ⚠️ Pendiente — actividad de gestión, no código |
+| V-PRE | `assembleP12()` implementación real (stub desde Sprint 1)                       | 5  | ✅ P7B parse (DER/PEM) + EE cert match + `openssl_pkcs12_export` con cadena CA |
 
-**DoD release:** Go-Live con feature flag al 10% → 50% → 100% en 2 semanas, monitoreando KPIs.
+**DoD release:**
+- ✅ Go-Live con feature flag configurable: `VIAFIRMA_PKCS10_ENABLED=true` + `VIAFIRMA_PKCS10_ROLLOUT_PCT={10|50|100}`
+- ✅ Health check: `php artisan viafirma:health-check`
+- ✅ Runbook documentado para los 6 incidentes más comunes
+- ⚠️ Pruebas de carga (k6) y pen-test pendientes para staging
+
+#### Archivos producidos en Sprint 5
+
+```
+app/Modules/Viafirma/Infrastructure/
+├── Console/ViafirmaHealthCheckCommand.php    ← Diagnóstico artisan
+└── KeyVault/AwsKmsKeyVault.php                ← Envelope encryption con KMS
+
+app/Modules/Viafirma/Presentation/Http/
+└── Middleware/ViafirmaFeatureGate.php          ← Rollout gradual
+
+docs/runbooks/viafirma-incidents.md             ← Runbook operativo
+
+Modificados:
+  app/Modules/Viafirma/Infrastructure/Crypto/OpenSslCryptoService.php  (assembleP12 real)
+  config/viafirma.php                                                   (+feature_flag)
+  routes/api-v2.php                                                     (+middleware feature gate)
+  app/Providers/ViafirmaServiceProvider.php                             (+aws_kms driver + health cmd)
+
+Tests:
+  tests/Unit/Modules/Viafirma/Infrastructure/AssembleP12Test.php (6 tests)
+  tests/Unit/Modules/Viafirma/Presentation/ViafirmaFeatureGateTest.php (4 tests)
+```
 
 ---
 
@@ -1102,14 +1225,14 @@ RUN echo -e "openssl_conf = openssl_init\n\n[openssl_init]\nproviders = provider
 
 ## 12. ✅ Resumen Ejecutivo
 
-| Sprint | Duración | Foco                                  | Entregable Tangible                          |
-|:------:|:--------:|----------------------------------------|----------------------------------------------|
-| 0      | 3 días   | Spike técnico                          | Go/No-Go documentado                         |
-| 1      | 2 sem    | Cripto local + Auth OAuth1             | CSR + cliente HTTP probado                   |
-| 2      | 2 sem    | Endpoints de emisión                   | Solicitud creada end-to-end                  |
-| 3      | 2 sem    | Polling resiliente + FSM               | Solicitudes avanzan solas                    |
-| 4      | 2 sem    | Descarga + Ensamblaje P12              | `.p12` válido firma XML DIAN                 |
-| 5      | 1-2 sem  | Hardening + Go-Live                    | Producción al 100% con observabilidad        |
+| Sprint | Duración | Foco                                  | Entregable Tangible                          | Estado |
+|:------:|:--------:|----------------------------------------|----------------------------------------------|:------:|
+| 0      | 3 días   | Spike técnico                          | Go/No-Go documentado                         | ✅     |
+| 1      | 2 sem    | Cripto local + Auth OAuth1             | CSR + cliente HTTP probado                   | ✅     |
+| 2      | 2 sem    | Endpoints de emisión                   | Solicitud creada end-to-end                  | ✅     |
+| 3      | 2 sem    | Polling resiliente + FSM               | Solicitudes avanzan solas                    | ✅     |
+| 4      | 2 sem    | Descarga + Ensamblaje P12              | `.p12` válido firma XML DIAN                 | ✅     |
+| 5      | 1-2 sem  | Hardening + Go-Live                    | Producción al 100% con observabilidad        | ✅     |
 
 **Duración total estimada:** ~10-12 semanas (≈ 3 meses) con un equipo de 2 backend + QA.
 

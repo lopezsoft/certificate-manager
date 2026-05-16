@@ -12,7 +12,9 @@ use App\Modules\Viafirma\Infrastructure\Http\GuzzleViafirmaClient;
 use App\Modules\Viafirma\Infrastructure\Http\OAuth1Signer;
 use App\Modules\Viafirma\Infrastructure\Http\ProfileResponseParser;
 use App\Modules\Viafirma\Infrastructure\KeyVault\EncryptedLocalKeyVault;
+use App\Modules\Viafirma\Domain\Contracts\ViafirmaCertificateRequestRepositoryContract;
 use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
+use App\Modules\Viafirma\Infrastructure\Persistence\ViafirmaCertificateRequestRepository;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\ClientInterface;
 use Illuminate\Contracts\Encryption\Encrypter;
@@ -63,7 +65,7 @@ final class ViafirmaServiceProvider extends ServiceProvider
                     crypt: $app->make(Encrypter::class),
                     vaultPath: (string) config('viafirma.crypto.vault_path', 'viafirma/vault'),
                 ),
-                // 'aws_kms' => $app->make(AwsKmsKeyVault::class),  // Sprint 5 (V-501)
+                'aws_kms' => $app->make(\App\Modules\Viafirma\Infrastructure\KeyVault\AwsKmsKeyVault::class),
                 default => throw new \RuntimeException(
                     "Driver de KeyVault no soportado: '{$driver}'"
                 ),
@@ -102,6 +104,59 @@ final class ViafirmaServiceProvider extends ServiceProvider
             );
         });
         $this->app->bind(ViafirmaClient::class, GuzzleViafirmaClient::class);
+
+        // ---- Repository ---------------------------------------------------------
+        $this->app->bind(
+            ViafirmaCertificateRequestRepositoryContract::class,
+            ViafirmaCertificateRequestRepository::class
+        );
+
+        // ---- UseCase Logger (SafePemLogger para todo el módulo Viafirma) ---------
+        $this->app->when(\App\Modules\Viafirma\Application\UseCases\IssueCertificateUseCase::class)
+            ->needs(\Psr\Log\LoggerInterface::class)
+            ->give(SafePemLogger::class);
+
+        $this->app->when(\App\Modules\Viafirma\Presentation\Http\Controllers\ViafirmaCertificateController::class)
+            ->needs(\Psr\Log\LoggerInterface::class)
+            ->give(SafePemLogger::class);
+
+        // ---- Sprint 3: Polling + FSM + Resiliencia ----------------------------
+        $this->app->singleton(\App\Modules\Viafirma\Application\Services\PollingScheduler::class);
+        $this->app->singleton(\App\Modules\Viafirma\Infrastructure\CircuitBreaker\ViafirmaCircuitBreaker::class);
+        $this->app->singleton(\App\Modules\Viafirma\Domain\StateMachine::class, function ($app) {
+            return new \App\Modules\Viafirma\Domain\StateMachine(
+                $app->make(SafePemLogger::class),
+            );
+        });
+
+        $this->app->when(\App\Modules\Viafirma\Infrastructure\Jobs\PollViafirmaStatusJob::class)
+            ->needs(\Psr\Log\LoggerInterface::class)
+            ->give(SafePemLogger::class);
+
+        $this->app->when(\App\Modules\Viafirma\Infrastructure\Jobs\ReviveStalledViafirmaPollsJob::class)
+            ->needs(\Psr\Log\LoggerInterface::class)
+            ->give(SafePemLogger::class);
+
+        $this->app->when(\App\Modules\Viafirma\Application\Listeners\NotifyClientOnAccreditationListener::class)
+            ->needs(\Psr\Log\LoggerInterface::class)
+            ->give(SafePemLogger::class);
+
+        // ---- Sprint 4: Descarga + Ensamblaje + Purga --------------------------
+        $this->app->when(\App\Modules\Viafirma\Infrastructure\Jobs\DownloadP7bJob::class)
+            ->needs(\Psr\Log\LoggerInterface::class)
+            ->give(SafePemLogger::class);
+
+        $this->app->when(\App\Modules\Viafirma\Infrastructure\Jobs\AssembleP12Job::class)
+            ->needs(\Psr\Log\LoggerInterface::class)
+            ->give(SafePemLogger::class);
+
+        $this->app->when(\App\Modules\Viafirma\Infrastructure\Jobs\PurgeExpiredKeysJob::class)
+            ->needs(\Psr\Log\LoggerInterface::class)
+            ->give(SafePemLogger::class);
+
+        $this->app->when(\App\Modules\Viafirma\Application\Listeners\DispatchDownloadOnReadyListener::class)
+            ->needs(\Psr\Log\LoggerInterface::class)
+            ->give(SafePemLogger::class);
     }
 
     public function boot(): void
@@ -111,6 +166,7 @@ final class ViafirmaServiceProvider extends ServiceProvider
             $this->commands([
                 \App\Console\Commands\Viafirma\ViafirmaMigrateCommand::class,
                 \App\Console\Commands\Viafirma\ViafirmaMigrateStatusCommand::class,
+                \App\Modules\Viafirma\Infrastructure\Console\ViafirmaHealthCheckCommand::class,
             ]);
         }
     }

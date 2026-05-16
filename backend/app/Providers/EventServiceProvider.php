@@ -66,6 +66,16 @@ class EventServiceProvider extends ServiceProvider
         PaymentFailed::class => [
             SendPaymentFailedNotification::class,
         ],
+
+        // Viafirma events (Sprint 3)
+        \App\Modules\Viafirma\Domain\Events\ViafirmaStatusChanged::class => [
+            \App\Modules\Viafirma\Application\Listeners\NotifyClientOnAccreditationListener::class,
+        ],
+
+        // Viafirma events (Sprint 4)
+        \App\Modules\Viafirma\Domain\Events\ViafirmaReadyToDownload::class => [
+            \App\Modules\Viafirma\Application\Listeners\DispatchDownloadOnReadyListener::class,
+        ],
     ];
 
     public function boot(): void

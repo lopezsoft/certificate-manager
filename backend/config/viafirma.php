@@ -73,10 +73,23 @@ return [
         'p12_path' => env('VIAFIRMA_P12_PATH', 'viafirma/p12'),
     ],
 
+    'circuit_breaker' => [
+        'failure_threshold' => (int) env('VIAFIRMA_CB_FAILURE_THRESHOLD', 5),
+        'recovery_seconds'  => (int) env('VIAFIRMA_CB_RECOVERY_SECONDS', 300),
+        'cache_store'       => env('VIAFIRMA_CB_CACHE_STORE', env('CACHE_DRIVER', 'file')),
+    ],
+
     'logging' => [
         // Canal Laravel logging. Si null usa el default; ver SafePemLogger.
         'channel' => env('VIAFIRMA_LOG_CHANNEL'),
     ],
+
+    // Sprint 5: Feature flag + rollout gradual
+    'feature_flag' => [
+        'enabled'             => (bool) env('VIAFIRMA_PKCS10_ENABLED', true),
+        'rollout_percentage'  => (int) env('VIAFIRMA_PKCS10_ROLLOUT_PCT', 100),
+    ],
 ];
+
 
 

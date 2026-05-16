@@ -49,6 +49,7 @@ namespace App\Http\Controllers;
  * @OA\Tag(name="v2 - Pagos Externos", description="[v2] Webhooks entrantes de WOMPI (sin autenticación, firmados con HMAC-SHA256)")
  * @OA\Tag(name="v2 - Analíticas IA", description="[v2] Pipeline OCR + IA: resultados de análisis, estadísticas y estado de proveedores")
  * @OA\Tag(name="v2 - Sistema", description="[v2] Health check de servicios externos: WOMPI")
+ * @OA\Tag(name="v2 - Viafirma Certificados", description="[v2] Emisión automatizada de certificados digitales Zero-Touch PKCS#10 vía Viafirma RA Colombia")
  *
  * ─── Schemas reutilizables ────────────────────────────────────────────────────
  *
@@ -283,6 +284,46 @@ namespace App\Http\Controllers;
  *         )
  *     ),
  *     @OA\Property(property="checked_at", type="string", format="date-time", example="2026-04-21T15:30:00Z")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="IssueCertificateBody",
+ *     description="Payload para iniciar emisión de certificado digital vía Viafirma PKCS#10",
+ *     required={"certificate_request_id", "email_certificate"},
+ *     @OA\Property(property="certificate_request_id", type="integer", example=42, description="ID de la solicitud de certificado existente en certificate_requests"),
+ *     @OA\Property(property="email_certificate", type="string", format="email", example="rep.legal@empresa.com", description="Email de notificación KYC (puede diferir del email del CSR)"),
+ *     @OA\Property(property="organization_type", type="string", nullable=true, enum={"RM","PROP","RUNEOL","RNT","ESAL","ESOL","JUEGOS","EXTRANJERAS"}, example="RM", description="Tipo de organización Viafirma. Obligatorio para Persona Jurídica, prohibido para Persona Natural."),
+ *     @OA\Property(property="identity_type_override", type="string", nullable=true, enum={"IDC","PAS"}, example=null, description="Override del tipo de identidad del solicitante. Si null se deriva del catálogo.")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="ViafirmaCertificateRequest",
+ *     description="Solicitud de certificado Viafirma (agregado del bounded context Viafirma Issuance)",
+ *     @OA\Property(property="id", type="integer", readOnly=true, example=1),
+ *     @OA\Property(property="certificate_request_id", type="integer", example=42),
+ *     @OA\Property(property="company_id", type="integer", example=7),
+ *     @OA\Property(property="requested_by_user_id", type="integer", nullable=true, example=1),
+ *     @OA\Property(property="cod_request", type="string", nullable=true, example="PYJR5N4QC", description="Código de solicitud Viafirma"),
+ *     @OA\Property(property="public_id", type="string", nullable=true, example="bd6eda8d0f2d", description="ID público Viafirma para URL de KYC"),
+ *     @OA\Property(property="ra_code", type="string", example="viafirmaco"),
+ *     @OA\Property(property="profile_type", type="string", enum={"FE-PJ","FE-PN"}, example="FE-PJ"),
+ *     @OA\Property(property="profile_type_label", type="string", example="Persona Jurídica"),
+ *     @OA\Property(property="identity_type", type="string", enum={"IDC","PAS"}, example="IDC"),
+ *     @OA\Property(property="country_code", type="string", example="CO"),
+ *     @OA\Property(property="organization_type", type="string", nullable=true, enum={"RM","PROP","RUNEOL","RNT","ESAL","ESOL","JUEGOS","EXTRANJERAS"}, example="RM"),
+ *     @OA\Property(property="validity_days", type="integer", example=730),
+ *     @OA\Property(property="internal_state", type="string", enum={"DRAFT","CSR_GENERATED","SUBMITTED","POLLING","READY_TO_DOWNLOAD","DOWNLOADED","ASSEMBLED","COMPLETED","FAILED","FAILED_RECOVERABLE","EXPIRED"}, example="SUBMITTED"),
+ *     @OA\Property(property="remote_status", type="string", nullable=true, example="accreditation"),
+ *     @OA\Property(property="is_terminal", type="boolean", example=false),
+ *     @OA\Property(property="is_failed", type="boolean", example=false),
+ *     @OA\Property(property="has_expired", type="boolean", example=false),
+ *     @OA\Property(property="csr_fingerprint", type="string", example="a1b2c3d4e5f6...", description="SHA-256 hex del CSR"),
+ *     @OA\Property(property="poll_attempts", type="integer", example=0),
+ *     @OA\Property(property="submitted_at", type="string", format="date-time", nullable=true),
+ *     @OA\Property(property="expires_at", type="string", format="date-time", nullable=true),
+ *     @OA\Property(property="last_error_code", type="string", nullable=true),
+ *     @OA\Property(property="last_error_message", type="string", nullable=true),
+ *     @OA\Property(property="created_at", type="string", format="date-time", readOnly=true)
  * )
  */
 class SwaggerDefinitions

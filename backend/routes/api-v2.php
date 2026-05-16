@@ -46,4 +46,18 @@ Route::middleware(['auth:api'])->group(function () {
     // ── Health check (admin) ──
     Route::get('health', \App\Http\Controllers\V2\HealthCheckController::class)
         ->name('v2.health');
+
+    // ── Viafirma Certificados (PKCS#10 Zero-Touch) ──
+    Route::prefix('certificates/viafirma')
+        ->name('v2.viafirma.')
+        ->middleware(\App\Modules\Viafirma\Presentation\Http\Middleware\ViafirmaFeatureGate::class)
+        ->group(function () {
+        Route::post('/issue', [\App\Modules\Viafirma\Presentation\Http\Controllers\ViafirmaCertificateController::class, 'issue'])->name('issue');
+        Route::get('/',       [\App\Modules\Viafirma\Presentation\Http\Controllers\ViafirmaCertificateController::class, 'index'])->name('index');
+        Route::get('/{id}',   [\App\Modules\Viafirma\Presentation\Http\Controllers\ViafirmaCertificateController::class, 'show'])->name('show')->where('id', '[0-9]+');
+
+        // Sprint 4: Descarga P12
+        Route::get('/{id}/download',      [\App\Modules\Viafirma\Presentation\Http\Controllers\ViafirmaCertificateController::class, 'download'])->name('download')->where('id', '[0-9]+');
+        Route::get('/{id}/download/file', [\App\Modules\Viafirma\Presentation\Http\Controllers\ViafirmaCertificateController::class, 'downloadFile'])->name('download.file')->where('id', '[0-9]+');
+    });
 });

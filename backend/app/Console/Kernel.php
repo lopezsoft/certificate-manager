@@ -134,6 +134,40 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping(5)
             ->onOneServer()
             ->appendOutputTo(storage_path('logs/scheduled-quotas-expire.log'));
+
+        // ====================================================================
+        // VIAFIRMA POLLING WATCHDOG
+        // ====================================================================
+
+        /**
+         * Job 7: Revivir solicitudes Viafirma huérfanas (sin poll programado)
+         *
+         * Frecuencia: Cada 15 minutos
+         * Función: Busca solicitudes en estado SUBMITTED/POLLING sin next_poll_at
+         *          programado y las re-arma despachando PollViafirmaStatusJob
+         */
+        $schedule->job(new \App\Modules\Viafirma\Infrastructure\Jobs\ReviveStalledViafirmaPollsJob())
+            ->everyFifteenMinutes()
+            ->timezone('America/Bogota')
+            ->name('viafirma:revive-stalled-polls')
+            ->withoutOverlapping(10)
+            ->onOneServer()
+            ->appendOutputTo(storage_path('logs/scheduled-viafirma-watchdog.log'));
+
+        /**
+         * Job 8: Purga segura de llaves privadas expiradas (Sprint 4)
+         *
+         * Frecuencia: Diaria a las 02:00 COT
+         * Función: Destruye key_vault_ref y p12_password_ref de solicitudes
+         *          terminales (COMPLETED/FAILED/EXPIRED) tras 72h de retención
+         */
+        $schedule->job(new \App\Modules\Viafirma\Infrastructure\Jobs\PurgeExpiredKeysJob())
+            ->dailyAt('02:00')
+            ->timezone('America/Bogota')
+            ->name('viafirma:purge-expired-keys')
+            ->withoutOverlapping(10)
+            ->onOneServer()
+            ->appendOutputTo(storage_path('logs/scheduled-viafirma-purge.log'));
     }
 
     /**
