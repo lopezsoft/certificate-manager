@@ -1,0 +1,25 @@
+# Minimal OpenSSL config bundled with Certificate Manager (módulo Viafirma).
+# Es suficiente para generar pares RSA y CSRs PKCS#10 sin depender del
+# openssl.cnf del sistema (que en muchos Windows/WAMP no existe).
+
+HOME            = .
+RANDFILE        = $ENV::HOME/.rnd
+
+oid_section     = new_oids
+
+[ new_oids ]
+
+[ req ]
+default_bits        = 2048
+default_md          = sha256
+default_keyfile     = privkey.pem
+distinguished_name  = req_distinguished_name
+attributes          = req_attributes
+prompt              = no
+string_mask         = utf8only
+
+[ req_distinguished_name ]
+# Subject DN is provided programmatically via openssl_csr_new()
+
+[ req_attributes ]
+

@@ -1,0 +1,1656 @@
+{
+  "info": {
+    "_postman_id": "e4b3383f-c3a8-4167-b965-aecd6ee8fbd3",
+    "name": "RA Colombia - PKCS10 API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "37704356"
+  },
+  "item": [
+    {
+      "name": "certificate profile",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "",
+              "const responseData = pm.response.json();",
+              "",
+              "// datos por defecto",
+              "",
+              "var codProfile = \"VklBRklSTUEtUEktREdJSTtFRV9WSUFGSVJNQV9QSV9ER0lJOzE2MjQ2MjQ1NjM1NjU=\";",
+              "var title = \"Certificado Digital Procedimientos Tributarios\";",
+              "var description = \"Certificado Digital Procedimientos Tributarios\";",
+              "var propertyRfc822 = \"email\";",
+              "var validity = \"365\";",
+              "var ra = \"viafirmard\";",
+              "var type = \"INDIVIDUAL\";",
+              "var token = \"P12\";",
+              "var dnPattern = \"C=DO,SERIALNUMBER={identityType}{countryCode}-{identity},givenName={name},surname={lastName},CN={name} {lastName},DN=QUALIFIED CERTIFICATE FOR NATURAL PERSON - TAX PROCEDURES\";",
+              "var altPattern = \"\";",
+              "var terms = \"\";",
+              "",
+              "// carga de datos",
+              "",
+              "ra = responseData.items[0].ra;",
+              "    console.info(\"ra: \" + ra);",
+              "    pm.collectionVariables.set(\"ra\",ra);",
+              "title = responseData.items[0].title;",
+              "codProfile = responseData.items[0].code;",
+              "    console.info(\"codProfile: \" + codProfile);",
+              "    pm.collectionVariables.set(\"codProfile\",codProfile);",
+              "title = responseData.items[0].title;",
+              "    console.info(\"title: \" + title);",
+              "    pm.collectionVariables.set(\"title\",title);",
+              "description = responseData.items[0].description;",
+              "    console.info(\"description: \" + description);",
+              "    pm.collectionVariables.set(\"description\",description);",
+              "terms = responseData.items[0].terms;",
+              "    console.info(\"terms: \" + terms);",
+              "    pm.collectionVariables.set(\"terms\",terms);",
+              "",
+              "",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{urlRA}}/ra/available-profiles?codRa={{ra}}",
+          "host": [
+            "{{urlRA}}"
+          ],
+          "path": [
+            "ra",
+            "available-profiles"
+          ],
+          "query": [
+            {
+              "key": "codRa",
+              "value": "{{ra}}"
+            }
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200 OK",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{urlRA}}/ra/available-profiles?codRa={{COD_RA}}",
+              "host": [
+                "{{urlRA}}"
+              ],
+              "path": [
+                "ra",
+                "available-profiles"
+              ],
+              "query": [
+                {
+                  "key": "codRa",
+                  "value": "{{COD_RA}}"
+                }
+              ]
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Date",
+              "value": "Tue, 12 May 2026 09:52:17 GMT"
+            },
+            {
+              "key": "Server",
+              "value": "Apache"
+            },
+            {
+              "key": "Strict-Transport-Security",
+              "value": "max-age=63072000; includeSubDomains; preload"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "SAMEORIGIN"
+            },
+            {
+              "key": "Referrer-Policy",
+              "value": "same-origin"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            },
+            {
+              "key": "Expires",
+              "value": "Thu, 01 Jan 1970 00:00:00 GMT"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "1; mode=block"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "description": "",
+              "type": "text"
+            },
+            {
+              "key": "Content-Security-Policy",
+              "value": "frame-ancestors 'self' https://bcnet.gov.do https://bancentral.gov.do https://sandbox.viafirma.com;"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5, max=100"
+            },
+            {
+              "key": "Connection",
+              "value": "Keep-Alive"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"items\": [\n        {\n            \"code\": \"VklBRklSTUEtQ08tUEotRkFDVFVSQUUtUDEyO0VFLVZJQUZJUk1BLUNPLVBKLUZBQ1RVUkFFLVAxMg==\",\n            \"title\": \"Facturación Electrónica desde CSR\",\n            \"description\": \"Para la firma de factura electrónica. Emitido a partir de una solicitud CSR para poder ser generado en cliente en formato p12.\",\n            \"propertyRfc822\": \"email\",\n            \"validity\": 730,\n            \"ra\": \"viafirmaco\",\n            \"type\": \"CORPORATIVO\",\n            \"token\": \"P7B\",\n            \"dnPattern\": \"CN={legalNameCorp} - {departament},UID={identity},name={name} {lastName},serialNumber={dnAlternativo1},C=CO,DN=EMISOR FACTURA ELECTRONICA PERSONA JURIDICA,O={legalNameCorp},L={district},STREET={addressCorp},OU={departament},givenName={name},surname={lastName}\",\n            \"altPattern\": \"\",\n            \"terms\": \"https://ecd.viafirma.com/docs/ECD-TERMS-PJ-QSCD.pdf\"\n        }\n    ]\n}"
+        }
+      ]
+    },
+    {
+      "name": "new request from CSR",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// 1. Definimos el CSR manteniendo el formato multilínea",
+              "var csr_generated = pm.collectionVariables.get(\"csr\");",
+              "",
+              "// 2. Codificamos el string a Base64 usando Buffer",
+              "var csrBase64 = Buffer.from(csr_generated).toString('base64');",
+              "",
+              "// 3. Guardamos el resultado en una variable local de la petición (o de entorno)",
+              "pm.collectionVariables.set(\"csr_base64_encoded\",csrBase64);",
+              "",
+              "// (Opcional) Lo imprimimos en la consola de Postman para verificar",
+              "console.info(\"CRS codificado en Base64 correctamente.\");",
+              "//console.log(\"CSR en Base64:\", csrBase64);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "console.info(\"Payload enviado: \");",
+              "console.info(\"****************\");",
+              "",
+              "console.info(\"identityType: \" + pm.collectionVariables.get(\"identityType\"));",
+              "console.info(\"countryCode: \" + pm.collectionVariables.get(\"countryCode\"));",
+              "console.info(\"identity: \" + pm.collectionVariables.get(\"identity\"));",
+              "console.info(\"ra: \" + pm.collectionVariables.get(\"COD_RA\"));",
+              "console.info(\"codProfile: \" + pm.collectionVariables.get(\"codProfile\"));",
+              "console.info(\"emailCertificate: \" + pm.collectionVariables.get(\"emailCertificate\"));",
+              "console.info(\"organizationType: \"  + pm.collectionVariables.get(\"organizationType\"));",
+              "//console.info(\"csr: \" + pm.collectionVariables.get(\"csr_base64_encoded\"));",
+              "",
+              "const responseData = pm.response.json();",
+              "",
+              "pm.collectionVariables.set(\"codRequest\", responseData.codRequest);",
+              "",
+              "console.info(\"Solicitud creada con código: \" + responseData.codRequest);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"identityType\": \"{{identityType}}\",\n    \"countryCode\": \"{{countryCode}}\",\n    \"identity\": \"{{identity}}\",\n    \"ra\": \"{{ra}}\",\n    \"codProfile\": \"{{codProfile}}\",\n    \"emailCertificate\": \"{{emailCertificate}}\",\n    \"organizationType\": \"{{organizationType}}\",\n    \"csr\": \"{{csr_base64_encoded}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{urlRA}}/request/fromCSR",
+          "host": [
+            "{{urlRA}}"
+          ],
+          "path": [
+            "request",
+            "fromCSR"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200 OK",
+          "originalRequest": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"identityType\": \"{{identityType}}\",\n    \"countryCode\": \"{{countryCode}}\",\n    \"identity\": \"{{identity}}\",\n    \"ra\": \"{{COD_RA}}\",\n    \"codProfile\": \"{{codProfile}}\",\n    \"emailCertificate\": \"{{emailCertificate}}\",\n    \"organizationType\": \"{{organizationType}}\",\n    \"csr\": \"{{csr_base64_encoded}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{urlRA}}/request/fromCSR",
+              "host": [
+                "{{urlRA}}"
+              ],
+              "path": [
+                "request",
+                "fromCSR"
+              ]
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Date",
+              "value": "Tue, 12 May 2026 13:04:55 GMT"
+            },
+            {
+              "key": "Server",
+              "value": "Apache"
+            },
+            {
+              "key": "Strict-Transport-Security",
+              "value": "max-age=63072000; includeSubDomains; preload"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "SAMEORIGIN"
+            },
+            {
+              "key": "Referrer-Policy",
+              "value": "same-origin"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            },
+            {
+              "key": "Expires",
+              "value": "Thu, 01 Jan 1970 00:00:00 GMT"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "1; mode=block"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "description": "",
+              "type": "text"
+            },
+            {
+              "key": "Content-Security-Policy",
+              "value": "frame-ancestors 'self' https://bcnet.gov.do https://bancentral.gov.do https://sandbox.viafirma.com;"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5, max=100"
+            },
+            {
+              "key": "Connection",
+              "value": "Keep-Alive"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"ra\": \"viafirmaco\",\n    \"raEntity\": {\n        \"codRa\": \"viafirmaco\",\n        \"name\": \"Viafirma Colombia\",\n        \"address\": \"Viafirma Colombia\",\n        \"email\": \"ra@viafirma.com\",\n        \"telephone\": \"+34626673811\",\n        \"legalName\": \"Viafirma Colombia\",\n        \"active\": true,\n        \"published\": true\n    },\n    \"codProfile\": \"VklBRklSTUEtQ08tUEotRkFDVFVSQUUtUDEyO0VFLVZJQUZJUk1BLUNPLVBKLUZBQ1RVUkFFLVAxMg==\",\n    \"profileEntity\": {\n        \"code\": \"VklBRklSTUEtQ08tUEotRkFDVFVSQUUtUDEyO0VFLVZJQUZJUk1BLUNPLVBKLUZBQ1RVUkFFLVAxMg==\",\n        \"title\": \"Factura Electrónica Persona Jurídica emitido en PKCS10\",\n        \"description\": \"Para la firma de factura electrónica. Emitido a partir de una solicitud CSR PKCS10\",\n        \"propertyRfc822\": \"email\",\n        \"validity\": 730,\n        \"ra\": \"viafirmaco\",\n        \"type\": \"CORPORATIVO\",\n        \"token\": \"P7B\",\n        \"dnPattern\": \"CN={legalNameCorp} - {departament},name={name} {lastName},serialNumber={dnAlternativo1},C=CO,DN=EMISOR FACTURA ELECTRONICA PERSONA JURIDICA,O={legalNameCorp},L={district},STREET={addressCorp},OU={departament},givenName={name},surname={lastName}\",\n        \"altPattern\": \"\",\n        \"terms\": \"https://ecd.viafirma.com/docs/ECD-PDS-CERTIFICADOS-VIAFIRMA.pdf\"\n    },\n    \"typeCertificate\": \"Factura Electrónica Persona Jurídica emitido en PKCS10\",\n    \"typeRequest\": \"Solicitud de nuevo certificado\",\n    \"codRequest\": \"PYJR5N4QC\",\n    \"client\": \"lopezsoft_sandbox\",\n    \"paid\": \"NOT_STARTED\",\n    \"accredited\": \"NOT_STARTED\",\n    \"status\": \"rues_check\",\n    \"returnActivationUrl\": false,\n    \"fields\": [\n        {\n            \"key\": \"keyCertificate\",\n            \"value\": \"\"\n        },\n        {\n            \"key\": \"dnAlternativo3\",\n            \"value\": null\n        },\n        {\n            \"key\": \"title\",\n            \"value\": null\n        },\n        {\n            \"key\": \"address\",\n            \"value\": null\n        },\n        {\n            \"key\": \"country\",\n            \"value\": null\n        },\n        {\n            \"key\": \"addressCorp\",\n            \"value\": \"MI DIRECCION\"\n        },\n        {\n            \"key\": \"messageError\",\n            \"value\": null\n        },\n        {\n            \"key\": \"telephoneCorp\",\n            \"value\": null\n        },\n        {\n            \"key\": \"telephone\",\n            \"value\": null\n        },\n        {\n            \"key\": \"nameCorp\",\n            \"value\": null\n        },\n        {\n            \"key\": \"legalNameCorp\",\n            \"value\": \"MI ORG\"\n        },\n        {\n            \"key\": \"dnAlternativo1\",\n            \"value\": \"MOCKOK\"\n        },\n        {\n            \"key\": \"emailCorp\",\n            \"value\": null\n        },\n        {\n            \"key\": \"identityType\",\n            \"value\": \"IDC\"\n        },\n        {\n            \"key\": \"identity\",\n            \"value\": \"11111111H\"\n        },\n        {\n            \"key\": \"countryCode\",\n            \"value\": \"ES\"\n        },\n        {\n            \"key\": \"departament\",\n            \"value\": \"MI OU\"\n        },\n        {\n            \"key\": \"district\",\n            \"value\": \"EL ENCANTO\"\n        },\n        {\n            \"key\": \"lastName\",\n            \"value\": \"GALAN ALGORA\"\n        },\n        {\n            \"key\": \"name\",\n            \"value\": \"BENITO\"\n        },\n        {\n            \"key\": \"email\",\n            \"value\": \"BGALAN@VIAFIRMA.COM\"\n        },\n        {\n            \"key\": \"dnAlternativo2\",\n            \"value\": \"EXTRANJERAS\"\n        }\n    ],\n    \"formFields\": [\n        {\n            \"label\": \"Organización\",\n            \"name\": \"legalNameCorp\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ&\\\\-\\\\s]{1,35}$\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 0,\n            \"value\": \"MI ORG\",\n            \"error\": false\n        },\n        {\n            \"label\": \"NIT de la organización\",\n            \"name\": \"dnAlternativo1\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"^\\\\d{5,12}(-\\\\d{1})?$\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 1,\n            \"value\": \"MOCKOK\",\n            \"error\": false\n        },\n        {\n            \"label\": \"Departamento de la organización\",\n            \"name\": \"departament\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ&\\\\-\\\\s]{1,30}$\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 2,\n            \"value\": \"MI OU\",\n            \"error\": false\n        },\n        {\n            \"label\": \"Tipo de organización\",\n            \"name\": \"dnAlternativo2\",\n            \"defaultValue\": \"Registro mercantil|RM;Proponentes|PROP;Registro único nacional de entidades operadoras de libranza|RUNEOL;Registro nacional de turismo|RNT;Entidad sin ánimo de lucro|ESAL;Entidades de economía solidaria|ESOL;Vendedores de juegos de suerte y azar|JUEGOS;Entidades extranjeras de derecho privado sin ánimo de lucro|EXTRANJERAS\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"SELECT\",\n            \"index\": 3,\n            \"value\": \"EXTRANJERAS\",\n            \"error\": false\n        },\n        {\n            \"label\": \"Nombre del representante\",\n            \"name\": \"name\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\\\s]{1,30}$\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 4,\n            \"value\": \"BENITO\",\n            \"error\": false\n        },\n        {\n            \"label\": \"Apellidos del representante\",\n            \"name\": \"lastName\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\\\s]{1,30}$\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 5,\n            \"value\": \"GALAN ALGORA\",\n            \"error\": false\n        },\n        {\n            \"label\": \"Tipo de identificación del representante\",\n            \"name\": \"identityType\",\n            \"defaultValue\": \"Cédula|IDC;Pasaporte|PAS\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"SELECT\",\n            \"index\": 6,\n            \"value\": \"IDC\",\n            \"error\": false\n        },\n        {\n            \"label\": \"País donde se expidió el documento de identificación del representante\",\n            \"name\": \"countryCode\",\n            \"defaultValue\": \"Colombia|CO;Afganistán|AF;Albania|AL;Alemania|DE;Andorra|AD;Angola|AO;Anguila|AI;Antártida|AQ;Antigua y Barbuda|AG;Arabia Saudí|SA;Argelia|DZ;Argentina|AR;Armenia|AM;Aruba|AW;Australia|AU;Austria|AT;Azerbaiyán|AZ;Bahamas|BS;Bangladés|BD;Barbados|BB;Baréin|BH;Bélgica|BE;Belice|BZ;Benín|BJ;Bermudas|BM;Bielorrusia|BY;Bolivia|BO;Bosnia y Herzegovina|BA;Botsuana|BW;Brasil|BR;Brunéi|BN;Bulgaria|BG;Burkina Faso|BF;Burundi|BI;Bután|BT;Cabo Verde|CV;Camboya|KH;Camerún|CM;Canadá|CA;Caribe neerlandés|BQ;Catar|QA;Chad|TD;Chequia|CZ;Chile|CL;China|CN;Chipre|CY;Ciudad del Vaticano|VA;Colombia|CO;Comoras|KM;Corea del Norte|KP;Corea del Sur|KR;Costa Rica|CR;Côte d’Ivoire|CI;Croacia|HR;Cuba|CU;Curazao|CW;Dinamarca|DK;Dominica|DM;Ecuador|EC;Egipto|EG;El Salvador|SV;Emiratos Árabes Unidos|AE;Eritrea|ER;Eslovaquia|SK;Eslovenia|SI;España|ES;Estados Unidos|US;Estonia|EE;Etiopía|ET;Filipinas|PH;Finlandia|FI;Fiyi|FJ;Francia|FR;Gabón|GA;Gambia|GM;Georgia|GE;Ghana|GH;Gibraltar|GI;Granada|GD;Grecia|GR;Groenlandia|GL;Guadalupe|GP;Guam|GU;Guatemala|GT;Guayana Francesa|GF;Guernsey|GG;Guinea Ecuatorial|GQ;Guinea|GN;Guinea-Bisáu|GW;Guyana|GY;Haití|HT;Honduras|HN;Hungría|HU;India|IN;Indonesia|ID;Irak|IQ;Irán|IR;Irlanda|IE;Isla Bouvet|BV;Isla de Man|IM;Isla de Navidad|CX;Isla Norfolk|NF;Islandia|IS;Islas Åland|AX;Islas Caimán|KY;Islas Cocos|CC;Islas Cook|CK;Islas Feroe|FO;Islas Georgia del Sur y Sandwich del Sur|GS;Islas Heard y McDonald|HM;Islas Malvinas|FK;Islas Marianas del Norte|MP;Islas Marshall|MH;Islas menores alejadas de EE. UU.|UM;Islas Pitcairn|PN;Islas Salomón|SB;Islas Turcas y Caicos|TC;Islas Vírgenes Británicas|VG;Islas Vírgenes de EE. UU.|VI;Israel|IL;Italia|IT;Jamaica|JM;Japón|JP;Jersey|JE;Jordania|JO;Kazajistán|KZ;Kenia|KE;Kirguistán|KG;Kiribati|KI;Kuwait|KW;Laos|LA;Lesoto|LS;Letonia|LV;Líbano|LB;Liberia|LR;Libia|LY;Liechtenstein|LI;Lituania|LT;Luxemburgo|LU;Macedonia|MK;Madagascar|MG;Malasia|MY;Malaui|MW;Maldivas|MV;Mali|ML;Malta|MT;Marruecos|MA;Martinica|MQ;Mauricio|MU;Mauritania|MR;Mayotte|YT;México|MX;Micronesia|FM;Moldavia|MD;Mónaco|MC;Mongolia|MN;Montenegro|ME;Montserrat|MS;Mozambique|MZ;Myanmar (Birmania)|MM;Namibia|NA;Nauru|NR;Nepal|NP;Nicaragua|NI;Níger|NE;Nigeria|NG;Niue|NU;Noruega|NO;Nueva Caledonia|NC;Nueva Zelanda|NZ;Omán|OM;Países Bajos|NL;Pakistán|PK;Palaos|PW;Panamá|PA;Papúa Nueva Guinea|PG;Paraguay|PY;Perú|PE;Polinesia Francesa|PF;Polonia|PL;Portugal|PT;Puerto Rico|PR;RAE de Hong Kong (China)|HK;RAE de Macao (China)|MO;Reino Unido|GB;República Centroafricana|CF;República del Congo|CG;República Democrática del Congo|CD;República Dominicana|DO;Reunión|RE;Ruanda|RW;Rumanía|RO;Rusia|RU;Sáhara Occidental|EH;Samoa Americana|AS;Samoa|WS;San Bartolomé|BL;San Cristóbal y Nieves|KN;San Marino|SM;San Martín|MF;San Pedro y Miquelón|PM;San Vicente y las Granadinas|VC;Santa Elena|SH;Santa Lucía|LC;Santo Tomé y Príncipe|ST;Senegal|SN;Serbia|RS;Seychelles|SC;Sierra Leona|SL;Singapur|SG;Sint Maarten|SX;Siria|SY;Somalia|SO;Sri Lanka|LK;Suazilandia|SZ;Sudáfrica|ZA;Sudán del Sur|SS;Sudán|SD;Suecia|SE;Suiza|CH;Surinam|SR;Svalbard y Jan Mayen|SJ;Tailandia|TH;Taiwán|TW;Tanzania|TZ;Tayikistán|TJ;Territorio Británico del Océano Índico|IO;Territorios Australes Franceses|TF;Territorios Palestinos|PS;Timor-Leste|TL;Togo|TG;Tokelau|TK;Tonga|TO;Trinidad y Tobago|TT;Túnez|TN;Turkmenistán|TM;Turquía|TR;Tuvalu|TV;Ucrania|UA;Uganda|UG;Uruguay|UY;Uzbekistán|UZ;Vanuatu|VU;Venezuela|VE;Vietnam|VN;Wallis y Futuna|WF;Yemen|YE;Yibuti|DJ;Zambia|ZM;Zimbabue|ZW;\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"SELECT\",\n            \"index\": 7,\n            \"value\": \"ES\",\n            \"error\": false\n        },\n        {\n            \"label\": \"Núm identificación del representante legal\",\n            \"name\": \"identity\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"[A-Z0-9]+\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"IDENTIFICATION\",\n            \"index\": 8,\n            \"value\": \"11111111H\",\n            \"error\": false\n        },\n        {\n            \"label\": \"Email del representante\",\n            \"name\": \"email\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"^[\\\\w\\\\-\\\\_]+(\\\\.[\\\\w\\\\-\\\\_]+)*@([A-Za-z0-9-]+\\\\.)+([A-Za-z0-9-]+\\\\.)*+[A-Za-z]{2,4}$\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"EMAIL\",\n            \"index\": 9,\n            \"value\": \"BGALAN@VIAFIRMA.COM\",\n            \"error\": false\n        },\n        {\n            \"label\": \"Ciudad de la organización\",\n            \"name\": \"district\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 10,\n            \"value\": \"EL ENCANTO\",\n            \"error\": false\n        },\n        {\n            \"label\": \"Dirección de la organización\",\n            \"name\": \"addressCorp\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ.,#\\\\-\\\\/\\\\s]{1,100}$\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 11,\n            \"value\": \"MI DIRECCION\",\n            \"error\": false\n        },\n        {\n            \"label\": \"Dirección del representante\",\n            \"name\": \"address\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": false,\n            \"used\": false,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 12,\n            \"value\": null,\n            \"error\": false\n        },\n        {\n            \"label\": \"Teléfono del representante\",\n            \"name\": \"telephone\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"[\\\\+](\\\\d{1}|\\\\d{2})(\\\\d{3})(\\\\d{6,8})\",\n            \"required\": false,\n            \"used\": false,\n            \"editable\": true,\n            \"type\": \"TELEPHONE\",\n            \"index\": 13,\n            \"value\": null,\n            \"error\": false\n        },\n        {\n            \"label\": \"Teléfono de la organización\",\n            \"name\": \"telephoneCorp\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": false,\n            \"used\": false,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 14,\n            \"value\": null,\n            \"error\": false\n        },\n        {\n            \"label\": \"Email de la organización\",\n            \"name\": \"emailCorp\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"^[\\\\w\\\\-\\\\_]+(\\\\.[\\\\w\\\\-\\\\_]+)*@([A-Za-z0-9-]+\\\\.)+([A-Za-z0-9-]+\\\\.)*+[A-Za-z]{2,4}$\",\n            \"required\": false,\n            \"used\": false,\n            \"editable\": true,\n            \"type\": \"EMAIL\",\n            \"index\": 15,\n            \"value\": null,\n            \"error\": false\n        },\n        {\n            \"label\": \"Cédula del representante\",\n            \"name\": \"title\",\n            \"defaultValue\": \"cédula o pasaporte que será validado durante la identificación\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": false,\n            \"used\": false,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 16,\n            \"value\": null,\n            \"error\": false\n        },\n        {\n            \"label\": \"country\",\n            \"name\": \"country\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": false,\n            \"used\": false,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 17,\n            \"value\": null,\n            \"error\": false\n        },\n        {\n            \"label\": \"messageError\",\n            \"name\": \"messageError\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": false,\n            \"used\": false,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 18,\n            \"value\": null,\n            \"error\": false\n        },\n        {\n            \"label\": \"nameCorp\",\n            \"name\": \"nameCorp\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": false,\n            \"used\": false,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 19,\n            \"value\": null,\n            \"error\": false\n        },\n        {\n            \"label\": \"dnAlternativo3\",\n            \"name\": \"dnAlternativo3\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": false,\n            \"used\": false,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 20,\n            \"value\": null,\n            \"error\": false\n        },\n        {\n            \"label\": \"keyCertificate\",\n            \"name\": \"keyCertificate\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": false,\n            \"used\": false,\n            \"editable\": true,\n            \"type\": \"PASSWORD\",\n            \"index\": 21,\n            \"value\": \"\",\n            \"error\": false\n        }\n    ]\n}"
+        }
+      ]
+    },
+    {
+      "name": "publicId",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const responseData = pm.response.json();",
+              "",
+              "pm.collectionVariables.set(\"publicId\", responseData.publicId);",
+              "console.info(\"publicId: \" + responseData.publicId);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{urlRA}}/request/{{codRequest}}/publicId",
+          "host": [
+            "{{urlRA}}"
+          ],
+          "path": [
+            "request",
+            "{{codRequest}}",
+            "publicId"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200 OK",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{urlRA}}/request/{{codRequest}}/publicId",
+              "host": [
+                "{{urlRA}}"
+              ],
+              "path": [
+                "request",
+                "{{codRequest}}",
+                "publicId"
+              ]
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Date",
+              "value": "Wed, 13 May 2026 11:00:13 GMT"
+            },
+            {
+              "key": "Server",
+              "value": "Apache"
+            },
+            {
+              "key": "Strict-Transport-Security",
+              "value": "max-age=63072000; includeSubDomains; preload"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "SAMEORIGIN"
+            },
+            {
+              "key": "Referrer-Policy",
+              "value": "same-origin"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            },
+            {
+              "key": "Expires",
+              "value": "Thu, 01 Jan 1970 00:00:00 GMT"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "1; mode=block"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "description": "",
+              "type": "text"
+            },
+            {
+              "key": "Content-Security-Policy",
+              "value": "frame-ancestors 'self' https://bcnet.gov.do https://bancentral.gov.do https://sandbox.viafirma.com;"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5, max=100"
+            },
+            {
+              "key": "Connection",
+              "value": "Keep-Alive"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"publicId\": \"bd6eda8d0f2d45da8d350c0316596585\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{urlRA}}/request/{{codRequest}}/status",
+          "host": [
+            "{{urlRA}}"
+          ],
+          "path": [
+            "request",
+            "{{codRequest}}",
+            "status"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200 OK - status rues_check",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{urlRA}}/request/{{codRequest}}/status",
+              "host": [
+                "{{urlRA}}"
+              ],
+              "path": [
+                "request",
+                "{{codRequest}}",
+                "status"
+              ]
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Date",
+              "value": "Tue, 12 May 2026 10:51:41 GMT"
+            },
+            {
+              "key": "Server",
+              "value": "Apache"
+            },
+            {
+              "key": "Strict-Transport-Security",
+              "value": "max-age=63072000; includeSubDomains; preload"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "SAMEORIGIN"
+            },
+            {
+              "key": "Referrer-Policy",
+              "value": "same-origin"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            },
+            {
+              "key": "Expires",
+              "value": "Thu, 01 Jan 1970 00:00:00 GMT"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "1; mode=block"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "description": "",
+              "type": "text"
+            },
+            {
+              "key": "Content-Security-Policy",
+              "value": "frame-ancestors 'self' https://bcnet.gov.do https://bancentral.gov.do https://sandbox.viafirma.com;"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5, max=100"
+            },
+            {
+              "key": "Connection",
+              "value": "Keep-Alive"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"code\": \"rues_check\"\n}"
+        },
+        {
+          "name": "200 OK - status rues_error",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{urlRA}}/request/{{codRequest}}/status",
+              "host": [
+                "{{urlRA}}"
+              ],
+              "path": [
+                "request",
+                "{{codRequest}}",
+                "status"
+              ]
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Date",
+              "value": "Tue, 12 May 2026 10:27:13 GMT"
+            },
+            {
+              "key": "Server",
+              "value": "Apache"
+            },
+            {
+              "key": "Strict-Transport-Security",
+              "value": "max-age=63072000; includeSubDomains; preload"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "SAMEORIGIN"
+            },
+            {
+              "key": "Referrer-Policy",
+              "value": "same-origin"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            },
+            {
+              "key": "Expires",
+              "value": "Thu, 01 Jan 1970 00:00:00 GMT"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "1; mode=block"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "description": "",
+              "type": "text"
+            },
+            {
+              "key": "Content-Security-Policy",
+              "value": "frame-ancestors 'self' https://bcnet.gov.do https://bancentral.gov.do https://sandbox.viafirma.com;"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5, max=100"
+            },
+            {
+              "key": "Connection",
+              "value": "Keep-Alive"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"code\": \"rues_error\"\n}"
+        },
+        {
+          "name": "200 OK - status accreditation",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{urlRA}}/request/{{codRequest}}/status",
+              "host": [
+                "{{urlRA}}"
+              ],
+              "path": [
+                "request",
+                "{{codRequest}}",
+                "status"
+              ]
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Date",
+              "value": "Tue, 12 May 2026 10:29:01 GMT"
+            },
+            {
+              "key": "Server",
+              "value": "Apache"
+            },
+            {
+              "key": "Strict-Transport-Security",
+              "value": "max-age=63072000; includeSubDomains; preload"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "SAMEORIGIN"
+            },
+            {
+              "key": "Referrer-Policy",
+              "value": "same-origin"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            },
+            {
+              "key": "Expires",
+              "value": "Thu, 01 Jan 1970 00:00:00 GMT"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "1; mode=block"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "description": "",
+              "type": "text"
+            },
+            {
+              "key": "Content-Security-Policy",
+              "value": "frame-ancestors 'self' https://bcnet.gov.do https://bancentral.gov.do https://sandbox.viafirma.com;"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5, max=100"
+            },
+            {
+              "key": "Connection",
+              "value": "Keep-Alive"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"code\": \"accreditation\"\n}"
+        },
+        {
+          "name": "200 OK - status proposeFor",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{urlRA}}/request/{{codRequest}}/status",
+              "host": [
+                "{{urlRA}}"
+              ],
+              "path": [
+                "request",
+                "{{codRequest}}",
+                "status"
+              ]
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Date",
+              "value": "Tue, 12 May 2026 10:30:10 GMT"
+            },
+            {
+              "key": "Server",
+              "value": "Apache"
+            },
+            {
+              "key": "Strict-Transport-Security",
+              "value": "max-age=63072000; includeSubDomains; preload"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "SAMEORIGIN"
+            },
+            {
+              "key": "Referrer-Policy",
+              "value": "same-origin"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            },
+            {
+              "key": "Expires",
+              "value": "Thu, 01 Jan 1970 00:00:00 GMT"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "1; mode=block"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "description": "",
+              "type": "text"
+            },
+            {
+              "key": "Content-Security-Policy",
+              "value": "frame-ancestors 'self' https://bcnet.gov.do https://bancentral.gov.do https://sandbox.viafirma.com;"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5, max=100"
+            },
+            {
+              "key": "Connection",
+              "value": "Keep-Alive"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"code\": \"proposeFor\"\n}"
+        },
+        {
+          "name": "200 OK - status proposedToAcceptance",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{urlRA}}/request/{{codRequest}}/status",
+              "host": [
+                "{{urlRA}}"
+              ],
+              "path": [
+                "request",
+                "{{codRequest}}",
+                "status"
+              ]
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Date",
+              "value": "Tue, 12 May 2026 10:30:53 GMT"
+            },
+            {
+              "key": "Server",
+              "value": "Apache"
+            },
+            {
+              "key": "Strict-Transport-Security",
+              "value": "max-age=63072000; includeSubDomains; preload"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "SAMEORIGIN"
+            },
+            {
+              "key": "Referrer-Policy",
+              "value": "same-origin"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            },
+            {
+              "key": "Expires",
+              "value": "Thu, 01 Jan 1970 00:00:00 GMT"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "1; mode=block"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "description": "",
+              "type": "text"
+            },
+            {
+              "key": "Content-Security-Policy",
+              "value": "frame-ancestors 'self' https://bcnet.gov.do https://bancentral.gov.do https://sandbox.viafirma.com;"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5, max=100"
+            },
+            {
+              "key": "Connection",
+              "value": "Keep-Alive"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"code\": \"proposedToAcceptance\"\n}"
+        },
+        {
+          "name": "200 OK - status All_Ok",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{urlRA}}/request/{{codRequest}}/status",
+              "host": [
+                "{{urlRA}}"
+              ],
+              "path": [
+                "request",
+                "{{codRequest}}",
+                "status"
+              ]
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Date",
+              "value": "Tue, 12 May 2026 10:31:37 GMT"
+            },
+            {
+              "key": "Server",
+              "value": "Apache"
+            },
+            {
+              "key": "Strict-Transport-Security",
+              "value": "max-age=63072000; includeSubDomains; preload"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "SAMEORIGIN"
+            },
+            {
+              "key": "Referrer-Policy",
+              "value": "same-origin"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            },
+            {
+              "key": "Expires",
+              "value": "Thu, 01 Jan 1970 00:00:00 GMT"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "1; mode=block"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "description": "",
+              "type": "text"
+            },
+            {
+              "key": "Content-Security-Policy",
+              "value": "frame-ancestors 'self' https://bcnet.gov.do https://bancentral.gov.do https://sandbox.viafirma.com;"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5, max=100"
+            },
+            {
+              "key": "Connection",
+              "value": "Keep-Alive"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"code\": \"All_Ok\"\n}"
+        },
+        {
+          "name": "200 OK - inProcess",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{urlRA}}/request/{{codRequest}}/status",
+              "host": [
+                "{{urlRA}}"
+              ],
+              "path": [
+                "request",
+                "{{codRequest}}",
+                "status"
+              ]
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Date",
+              "value": "Tue, 12 May 2026 10:57:15 GMT"
+            },
+            {
+              "key": "Server",
+              "value": "Apache"
+            },
+            {
+              "key": "Strict-Transport-Security",
+              "value": "max-age=63072000; includeSubDomains; preload"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "SAMEORIGIN"
+            },
+            {
+              "key": "Referrer-Policy",
+              "value": "same-origin"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            },
+            {
+              "key": "Expires",
+              "value": "Thu, 01 Jan 1970 00:00:00 GMT"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "1; mode=block"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "description": "",
+              "type": "text"
+            },
+            {
+              "key": "Content-Security-Policy",
+              "value": "frame-ancestors 'self' https://bcnet.gov.do https://bancentral.gov.do https://sandbox.viafirma.com;"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5, max=100"
+            },
+            {
+              "key": "Connection",
+              "value": "Keep-Alive"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"code\": \"inProcess\"\n}"
+        },
+        {
+          "name": "200 OK - status fail",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{urlRA}}/request/{{codRequest}}/status",
+              "host": [
+                "{{urlRA}}"
+              ],
+              "path": [
+                "request",
+                "{{codRequest}}",
+                "status"
+              ]
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Date",
+              "value": "Tue, 12 May 2026 10:32:13 GMT"
+            },
+            {
+              "key": "Server",
+              "value": "Apache"
+            },
+            {
+              "key": "Strict-Transport-Security",
+              "value": "max-age=63072000; includeSubDomains; preload"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "SAMEORIGIN"
+            },
+            {
+              "key": "Referrer-Policy",
+              "value": "same-origin"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            },
+            {
+              "key": "Expires",
+              "value": "Thu, 01 Jan 1970 00:00:00 GMT"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "1; mode=block"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "description": "",
+              "type": "text"
+            },
+            {
+              "key": "Content-Security-Policy",
+              "value": "frame-ancestors 'self' https://bcnet.gov.do https://bancentral.gov.do https://sandbox.viafirma.com;"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5, max=100"
+            },
+            {
+              "key": "Connection",
+              "value": "Keep-Alive"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"ra\": \"viafirmaco\",\n    \"raEntity\": {\n        \"codRa\": \"viafirmaco\",\n        \"name\": \"Viafirma Colombia\",\n        \"address\": \"Viafirma Colombia\",\n        \"email\": \"ra@viafirma.com\",\n        \"telephone\": \"+34626673811\",\n        \"legalName\": \"Viafirma Colombia\",\n        \"active\": true,\n        \"published\": true\n    },\n    \"codProfile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n    \"profileEntity\": {\n        \"code\": \"VklBRklSTUEtQ08tUEotRkFDVFVSQUUtUDEyO0VFLVZJQUZJUk1BLUNPLVBKLUZBQ1RVUkFFLVAxMg==\",\n        \"title\": \"Facturación Electrónica desde CSR\",\n        \"description\": \"Para la firma de factura electrónica. Emitido a partir de una solicitud CSR para poder ser generado en cliente en formato p12.\",\n        \"propertyRfc822\": \"email\",\n        \"validity\": 730,\n        \"ra\": \"viafirmaco\",\n        \"type\": \"CORPORATIVO\",\n        \"token\": \"P7B\",\n        \"dnPattern\": \"CN={legalNameCorp} - {departament},UID={identity},name={name} {lastName},serialNumber={dnAlternativo1},C=CO,DN=EMISOR FACTURA ELECTRONICA PERSONA JURIDICA,O={legalNameCorp},L={district},STREET={addressCorp},OU={departament},givenName={name},surname={lastName}\",\n        \"altPattern\": \"\",\n        \"terms\": \"https://ecd.viafirma.com/docs/ECD-TERMS-PJ-QSCD.pdf\"\n    },\n    \"typeCertificate\": \"Facturación Electrónica desde CSR\",\n    \"typeRequest\": \"Solicitud de nuevo certificado\",\n    \"codRequest\": \"MJ23KGY9T\",\n    \"client\": \"api_co\",\n    \"paid\": \"NOT_STARTED\",\n    \"accredited\": \"NOT_STARTED\",\n    \"status\": \"fail\",\n    \"returnActivationUrl\": false,\n    \"fields\": [\n        {\n            \"key\": \"name\",\n            \"value\": \"FRANCISCO JOSÉ\"\n        },\n        {\n            \"key\": \"keyCertificate\",\n            \"value\": \"\"\n        },\n        {\n            \"key\": \"dnAlternativo3\",\n            \"value\": null\n        },\n        {\n            \"key\": \"dnAlternativo2\",\n            \"value\": \"RM\"\n        },\n        {\n            \"key\": \"title\",\n            \"value\": null\n        },\n        {\n            \"key\": \"address\",\n            \"value\": null\n        },\n        {\n            \"key\": \"lastName\",\n            \"value\": \"ALBA REGAÑA\"\n        },\n        {\n            \"key\": \"country\",\n            \"value\": null\n        },\n        {\n            \"key\": \"addressCorp\",\n            \"value\": null\n        },\n        {\n            \"key\": \"messageError\",\n            \"value\": null\n        },\n        {\n            \"key\": \"telephoneCorp\",\n            \"value\": null\n        },\n        {\n            \"key\": \"departament\",\n            \"value\": \"DESARROLLO\"\n        },\n        {\n            \"key\": \"telephone\",\n            \"value\": null\n        },\n        {\n            \"key\": \"nameCorp\",\n            \"value\": null\n        },\n        {\n            \"key\": \"district\",\n            \"value\": \"BOGOTÁ D.C.\"\n        },\n        {\n            \"key\": \"legalNameCorp\",\n            \"value\": \"VIAFIRMA COLOMBIA\"\n        },\n        {\n            \"key\": \"identityType\",\n            \"value\": \"IDC\"\n        },\n        {\n            \"key\": \"countryCode\",\n            \"value\": \"CO\"\n        },\n        {\n            \"key\": \"email\",\n            \"value\": \"BGALAN@VIAFIRMA.COM\"\n        },\n        {\n            \"key\": \"dnAlternativo1\",\n            \"value\": \"901465419\"\n        },\n        {\n            \"key\": \"emailCorp\",\n            \"value\": null\n        },\n        {\n            \"key\": \"identity\",\n            \"value\": \"28613933R\"\n        }\n    ],\n    \"formFields\": [\n        {\n            \"label\": \"Organización\",\n            \"name\": \"legalNameCorp\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ&\\\\-\\\\s]{1,35}$\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 0,\n            \"value\": \"VIAFIRMA COLOMBIA\",\n            \"error\": false\n        },\n        {\n            \"label\": \"NIT de la organización\",\n            \"name\": \"dnAlternativo1\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"^\\\\d{5,12}(-\\\\d{1})?$\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 1,\n            \"value\": \"901465419\",\n            \"error\": false\n        },\n        {\n            \"label\": \"Tipo de organización\",\n            \"name\": \"dnAlternativo2\",\n            \"defaultValue\": \"Registro mercantil|RM;Proponentes|PROP;Registro único nacional de entidades operadoras de libranza|RUNEOL;Registro nacional de turismo|RNT;Entidad sin ánimo de lucro|ESAL;Entidades de economía solidaria|ESOL;Vendedores de juegos de suerte y azar|JUEGOS;Entidades extranjeras de derecho privado sin ánimo de lucro|EXTRANJERAS\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"SELECT\",\n            \"index\": 2,\n            \"value\": \"RM\",\n            \"error\": false\n        },\n        {\n            \"label\": \"Nombre del representante\",\n            \"name\": \"name\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\\\s]{1,30}$\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 3,\n            \"value\": \"FRANCISCO JOSÉ\",\n            \"error\": false\n        },\n        {\n            \"label\": \"Apellidos del representante\",\n            \"name\": \"lastName\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\\\s]{1,30}$\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 4,\n            \"value\": \"ALBA REGAÑA\",\n            \"error\": false\n        },\n        {\n            \"label\": \"Tipo de identificación del representante\",\n            \"name\": \"identityType\",\n            \"defaultValue\": \"Cédula|IDC;Pasaporte|PAS\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"SELECT\",\n            \"index\": 5,\n            \"value\": \"IDC\",\n            \"error\": false\n        },\n        {\n            \"label\": \"País donde se expidió el documento de identificación del representante\",\n            \"name\": \"countryCode\",\n            \"defaultValue\": \"Colombia|CO;Afganistán|AF;Albania|AL;Alemania|DE;Andorra|AD;Angola|AO;Anguila|AI;Antártida|AQ;Antigua y Barbuda|AG;Arabia Saudí|SA;Argelia|DZ;Argentina|AR;Armenia|AM;Aruba|AW;Australia|AU;Austria|AT;Azerbaiyán|AZ;Bahamas|BS;Bangladés|BD;Barbados|BB;Baréin|BH;Bélgica|BE;Belice|BZ;Benín|BJ;Bermudas|BM;Bielorrusia|BY;Bolivia|BO;Bosnia y Herzegovina|BA;Botsuana|BW;Brasil|BR;Brunéi|BN;Bulgaria|BG;Burkina Faso|BF;Burundi|BI;Bután|BT;Cabo Verde|CV;Camboya|KH;Camerún|CM;Canadá|CA;Caribe neerlandés|BQ;Catar|QA;Chad|TD;Chequia|CZ;Chile|CL;China|CN;Chipre|CY;Ciudad del Vaticano|VA;Colombia|CO;Comoras|KM;Corea del Norte|KP;Corea del Sur|KR;Costa Rica|CR;Côte d’Ivoire|CI;Croacia|HR;Cuba|CU;Curazao|CW;Dinamarca|DK;Dominica|DM;Ecuador|EC;Egipto|EG;El Salvador|SV;Emiratos Árabes Unidos|AE;Eritrea|ER;Eslovaquia|SK;Eslovenia|SI;España|ES;Estados Unidos|US;Estonia|EE;Etiopía|ET;Filipinas|PH;Finlandia|FI;Fiyi|FJ;Francia|FR;Gabón|GA;Gambia|GM;Georgia|GE;Ghana|GH;Gibraltar|GI;Granada|GD;Grecia|GR;Groenlandia|GL;Guadalupe|GP;Guam|GU;Guatemala|GT;Guayana Francesa|GF;Guernsey|GG;Guinea Ecuatorial|GQ;Guinea|GN;Guinea-Bisáu|GW;Guyana|GY;Haití|HT;Honduras|HN;Hungría|HU;India|IN;Indonesia|ID;Irak|IQ;Irán|IR;Irlanda|IE;Isla Bouvet|BV;Isla de Man|IM;Isla de Navidad|CX;Isla Norfolk|NF;Islandia|IS;Islas Åland|AX;Islas Caimán|KY;Islas Cocos|CC;Islas Cook|CK;Islas Feroe|FO;Islas Georgia del Sur y Sandwich del Sur|GS;Islas Heard y McDonald|HM;Islas Malvinas|FK;Islas Marianas del Norte|MP;Islas Marshall|MH;Islas menores alejadas de EE. UU.|UM;Islas Pitcairn|PN;Islas Salomón|SB;Islas Turcas y Caicos|TC;Islas Vírgenes Británicas|VG;Islas Vírgenes de EE. UU.|VI;Israel|IL;Italia|IT;Jamaica|JM;Japón|JP;Jersey|JE;Jordania|JO;Kazajistán|KZ;Kenia|KE;Kirguistán|KG;Kiribati|KI;Kuwait|KW;Laos|LA;Lesoto|LS;Letonia|LV;Líbano|LB;Liberia|LR;Libia|LY;Liechtenstein|LI;Lituania|LT;Luxemburgo|LU;Macedonia|MK;Madagascar|MG;Malasia|MY;Malaui|MW;Maldivas|MV;Mali|ML;Malta|MT;Marruecos|MA;Martinica|MQ;Mauricio|MU;Mauritania|MR;Mayotte|YT;México|MX;Micronesia|FM;Moldavia|MD;Mónaco|MC;Mongolia|MN;Montenegro|ME;Montserrat|MS;Mozambique|MZ;Myanmar (Birmania)|MM;Namibia|NA;Nauru|NR;Nepal|NP;Nicaragua|NI;Níger|NE;Nigeria|NG;Niue|NU;Noruega|NO;Nueva Caledonia|NC;Nueva Zelanda|NZ;Omán|OM;Países Bajos|NL;Pakistán|PK;Palaos|PW;Panamá|PA;Papúa Nueva Guinea|PG;Paraguay|PY;Perú|PE;Polinesia Francesa|PF;Polonia|PL;Portugal|PT;Puerto Rico|PR;RAE de Hong Kong (China)|HK;RAE de Macao (China)|MO;Reino Unido|GB;República Centroafricana|CF;República del Congo|CG;República Democrática del Congo|CD;República Dominicana|DO;Reunión|RE;Ruanda|RW;Rumanía|RO;Rusia|RU;Sáhara Occidental|EH;Samoa Americana|AS;Samoa|WS;San Bartolomé|BL;San Cristóbal y Nieves|KN;San Marino|SM;San Martín|MF;San Pedro y Miquelón|PM;San Vicente y las Granadinas|VC;Santa Elena|SH;Santa Lucía|LC;Santo Tomé y Príncipe|ST;Senegal|SN;Serbia|RS;Seychelles|SC;Sierra Leona|SL;Singapur|SG;Sint Maarten|SX;Siria|SY;Somalia|SO;Sri Lanka|LK;Suazilandia|SZ;Sudáfrica|ZA;Sudán del Sur|SS;Sudán|SD;Suecia|SE;Suiza|CH;Surinam|SR;Svalbard y Jan Mayen|SJ;Tailandia|TH;Taiwán|TW;Tanzania|TZ;Tayikistán|TJ;Territorio Británico del Océano Índico|IO;Territorios Australes Franceses|TF;Territorios Palestinos|PS;Timor-Leste|TL;Togo|TG;Tokelau|TK;Tonga|TO;Trinidad y Tobago|TT;Túnez|TN;Turkmenistán|TM;Turquía|TR;Tuvalu|TV;Ucrania|UA;Uganda|UG;Uruguay|UY;Uzbekistán|UZ;Vanuatu|VU;Venezuela|VE;Vietnam|VN;Wallis y Futuna|WF;Yemen|YE;Yibuti|DJ;Zambia|ZM;Zimbabue|ZW;\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"SELECT\",\n            \"index\": 6,\n            \"value\": \"CO\",\n            \"error\": false\n        },\n        {\n            \"label\": \"Núm identificación del representante legal\",\n            \"name\": \"identity\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"[A-Z0-9]+\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"IDENTIFICATION\",\n            \"index\": 7,\n            \"value\": \"28613933R\",\n            \"error\": false\n        },\n        {\n            \"label\": \"Email del representante\",\n            \"name\": \"email\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"^[\\\\w\\\\-\\\\_]+(\\\\.[\\\\w\\\\-\\\\_]+)*@([A-Za-z0-9-]+\\\\.)+([A-Za-z0-9-]+\\\\.)*+[A-Za-z]{2,4}$\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"EMAIL\",\n            \"index\": 8,\n            \"value\": \"BGALAN@VIAFIRMA.COM\",\n            \"error\": false\n        },\n        {\n            \"label\": \"Ciudad de la organización\",\n            \"name\": \"district\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 9,\n            \"value\": \"BOGOTÁ D.C.\",\n            \"error\": false\n        },\n        {\n            \"label\": \"Departamento de la organización\",\n            \"name\": \"departament\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ&\\\\-\\\\s]{1,30}$\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 10,\n            \"value\": \"DESARROLLO\",\n            \"error\": false\n        },\n        {\n            \"label\": \"Dirección de la organización\",\n            \"name\": \"addressCorp\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ.,#\\\\-\\\\/\\\\s]{1,100}$\",\n            \"required\": true,\n            \"used\": true,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 11,\n            \"value\": null,\n            \"error\": false\n        },\n        {\n            \"label\": \"Dirección del representante\",\n            \"name\": \"address\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": false,\n            \"used\": false,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 12,\n            \"value\": null,\n            \"error\": false\n        },\n        {\n            \"label\": \"Teléfono del representante\",\n            \"name\": \"telephone\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"[\\\\+](\\\\d{1}|\\\\d{2})(\\\\d{3})(\\\\d{6,8})\",\n            \"required\": false,\n            \"used\": false,\n            \"editable\": true,\n            \"type\": \"TELEPHONE\",\n            \"index\": 13,\n            \"value\": null,\n            \"error\": false\n        },\n        {\n            \"label\": \"Teléfono de la organización\",\n            \"name\": \"telephoneCorp\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": false,\n            \"used\": false,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 14,\n            \"value\": null,\n            \"error\": false\n        },\n        {\n            \"label\": \"Email de la organización\",\n            \"name\": \"emailCorp\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"^[\\\\w\\\\-\\\\_]+(\\\\.[\\\\w\\\\-\\\\_]+)*@([A-Za-z0-9-]+\\\\.)+([A-Za-z0-9-]+\\\\.)*+[A-Za-z]{2,4}$\",\n            \"required\": false,\n            \"used\": false,\n            \"editable\": true,\n            \"type\": \"EMAIL\",\n            \"index\": 15,\n            \"value\": null,\n            \"error\": false\n        },\n        {\n            \"label\": \"Cédula del representante\",\n            \"name\": \"title\",\n            \"defaultValue\": \"cédula o pasaporte que será validado durante la identificación\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": false,\n            \"used\": false,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 16,\n            \"value\": null,\n            \"error\": false\n        },\n        {\n            \"label\": \"country\",\n            \"name\": \"country\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": false,\n            \"used\": false,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 17,\n            \"value\": null,\n            \"error\": false\n        },\n        {\n            \"label\": \"messageError\",\n            \"name\": \"messageError\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": false,\n            \"used\": false,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 18,\n            \"value\": null,\n            \"error\": false\n        },\n        {\n            \"label\": \"nameCorp\",\n            \"name\": \"nameCorp\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": false,\n            \"used\": false,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 19,\n            \"value\": null,\n            \"error\": false\n        },\n        {\n            \"label\": \"dnAlternativo3\",\n            \"name\": \"dnAlternativo3\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": false,\n            \"used\": false,\n            \"editable\": true,\n            \"type\": \"TEXT\",\n            \"index\": 20,\n            \"value\": null,\n            \"error\": false\n        },\n        {\n            \"label\": \"keyCertificate\",\n            \"name\": \"keyCertificate\",\n            \"defaultValue\": \"\",\n            \"profile\": \"VIAFIRMA-CO-PJ-FACTURAE-P12;EE-VIAFIRMA-CO-PJ-FACTURAE-P12\",\n            \"validate\": \"\",\n            \"required\": false,\n            \"used\": false,\n            \"editable\": true,\n            \"type\": \"PASSWORD\",\n            \"index\": 21,\n            \"value\": \"\",\n            \"error\": false\n        }\n    ]\n}"
+        },
+        {
+          "name": "200 OK - status Generated_Not_Downloaded",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{urlRA}}/request/{{codRequest}}/status",
+              "host": [
+                "{{urlRA}}"
+              ],
+              "path": [
+                "request",
+                "{{codRequest}}",
+                "status"
+              ]
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Date",
+              "value": "Tue, 12 May 2026 12:16:34 GMT"
+            },
+            {
+              "key": "Server",
+              "value": "Apache"
+            },
+            {
+              "key": "Strict-Transport-Security",
+              "value": "max-age=63072000; includeSubDomains; preload"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "SAMEORIGIN"
+            },
+            {
+              "key": "Referrer-Policy",
+              "value": "same-origin"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            },
+            {
+              "key": "Expires",
+              "value": "Thu, 01 Jan 1970 00:00:00 GMT"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "1; mode=block"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "description": "",
+              "type": "text"
+            },
+            {
+              "key": "Content-Security-Policy",
+              "value": "frame-ancestors 'self' https://bcnet.gov.do https://bancentral.gov.do https://sandbox.viafirma.com;"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5, max=100"
+            },
+            {
+              "key": "Connection",
+              "value": "Keep-Alive"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"code\": \"Generated_Not_Downloaded\"\n}"
+        },
+        {
+          "name": "200 OK - status Generated_And_Downloaded",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{urlRA}}/request/{{codRequest}}/status",
+              "host": [
+                "{{urlRA}}"
+              ],
+              "path": [
+                "request",
+                "{{codRequest}}",
+                "status"
+              ]
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "Date",
+              "value": "Tue, 12 May 2026 12:29:14 GMT"
+            },
+            {
+              "key": "Server",
+              "value": "Apache"
+            },
+            {
+              "key": "Strict-Transport-Security",
+              "value": "max-age=63072000; includeSubDomains; preload"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "SAMEORIGIN"
+            },
+            {
+              "key": "Referrer-Policy",
+              "value": "same-origin"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            },
+            {
+              "key": "Expires",
+              "value": "Thu, 01 Jan 1970 00:00:00 GMT"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "1; mode=block"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Content-Security-Policy",
+              "value": "frame-ancestors 'self' https://bcnet.gov.do https://bancentral.gov.do https://sandbox.viafirma.com;"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5, max=100"
+            },
+            {
+              "key": "Connection",
+              "value": "Keep-Alive"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"code\": \"Generated_And_Downloaded\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "download P7B",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{urlRADescarga}}/downloadCertificateServlet?req={{publicId}}",
+          "host": [
+            "{{urlRADescarga}}"
+          ],
+          "path": [
+            "downloadCertificateServlet"
+          ],
+          "query": [
+            {
+              "key": "req",
+              "value": "{{publicId}}"
+            }
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200 OK",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{urlRADescarga}}/downloadCertificateServlet?req={{publicId}}",
+              "host": [
+                "{{urlRADescarga}}"
+              ],
+              "path": [
+                "downloadCertificateServlet"
+              ],
+              "query": [
+                {
+                  "key": "req",
+                  "value": "{{publicId}}"
+                }
+              ]
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "Date",
+              "value": "Wed, 13 May 2026 11:29:06 GMT"
+            },
+            {
+              "key": "Server",
+              "value": "Apache"
+            },
+            {
+              "key": "Strict-Transport-Security",
+              "value": "max-age=63072000; includeSubDomains; preload"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "SAMEORIGIN"
+            },
+            {
+              "key": "Referrer-Policy",
+              "value": "same-origin"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            },
+            {
+              "key": "Expires",
+              "value": "Thu, 01 Jan 1970 00:00:00 GMT"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "1; mode=block"
+            },
+            {
+              "key": "Content-Disposition",
+              "value": "attachment; filename=\"20260513-1054539-HQLZGWRKF.p7b\""
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/x-pkcs7-certificates"
+            },
+            {
+              "key": "Content-Security-Policy",
+              "value": "frame-ancestors 'self' https://bcnet.gov.do https://bancentral.gov.do https://sandbox.viafirma.com;"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5, max=100"
+            },
+            {
+              "key": "Connection",
+              "value": "Keep-Alive"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "cookie": [],
+          "body": "0�\u0006\t*�H��\r\u0001\u0007\u0002��0�\u0002\u0001\u00011\u000b0\t\u0006\u0005+\u000e\u0003\u0002\u001a\u0005\u00000�\u0006\t*�H��\r\u0001\u0007\u0001��$�\u0004\u0005EJBCA\u0000\u0000\u0000\u0000\u0000\u0000��0�\u0007\u00010�\u0005�\u0003\u0002\u0001\u0002\u0002\bL�\nN%�X�0\r\u0006\t*�H��\r\u0001\u0001\u000b\u0005\u00000��1\u000b0\t\u0006\u0003U\u0004\u0006\u0013\u0002DO1\u00130\u0011\u0006\u0003U\u0004\n\f\nAVANSI SRL1\u001c0\u001a\u0006\u0003U\u0004\u000b\f\u0013VIAFIRMA DOMINICANA1\u00160\u0014\u0006\u0003U\u0004\u0005\u0013\rRNC 1302225091-0+\u0006\u0003U\u0004\u0003\f$VIAFIRMA QUALIFIED CERTIFICATES TEST0\u001e\u0017\r260513104514Z\u0017\r280512104514Z0�\u000111\u000b0\t\u0006\u0003U\u0004\u0006\u0013\u0002CO1\u00130\u0011\u0006\u0003U\u0004\u0007\f\nEL ENCANTO1\u00190\u0017\u0006\u0003U\u0004\n\f\u0010MI ORGANIZACIÓN1\u00180\u0016\u0006\u0003U\u0004\u000b\f\u000fMI DEPARTAMENTO1\u00160\u0014\u0006\u0003U\u0004\u0004\f\rMIS APELLIDOS1\u00120\u0010\u0006\u0003U\u0004*\f\tMI NOMBRE1\u000f0\r\u0006\u0003U\u0004\u0005\u0013\u0006MOCKOK1 0\u001e\u0006\u0003U\u0004)\f\u0017MI NOMBRE MIS APELLIDOS1+0)\u0006\u0003U\u0004\u0003\f\"MI ORGANIZACIÓN - MI DEPARTAMENTO1402\u0006\u0003U\u0004.\u0013+EMISOR FACTURA ELECTRONICA PERSONA JURIDICA1\u00160\u0014\u0006\u0003U\u0004\t\f\rMI DIRECCIÓN0�\u0002\"0\r\u0006\t*�H��\r\u0001\u0001\u0001\u0005\u0000\u0003�\u0002\u000f\u00000�\u0002\n\u0002�\u0002\u0001\u0000�ت\u0018Ey�K=\\z��mʯ(v��y����as^�|\u0013�\b\f�m�:F����f�f\"��\u001d��O��k�(m��\u0002x�%H�h\u0016�ӱ�)L^��J$�0&�a�\"��5���@\u0010I&�\u000b?\u0011�hg\n2|��\u001f\fk\u0003b�Dk�\"@&��[���\n��\u001a�+��1r�!\u0017���kWi|�oa�m�:�QO�\bF�\u00134��\u0017����E�<=\u0012'�ٰD�\u0019\t�k\f\u0004��:�F�On�X���ck\u0004\u000b�\u001f�[�('��\u001a��\u0002f,m\u0012;\u0018\u0000�)U�a/qt_\b\u001b��I��h�G0G\u0016Ė�\u0000٣�\r0�)��\u0011\u0010�\u0010�X�Z�BAD[\r����̶��*��\u000b��������f�z��P�o\u0017f\u0015�\r�Q�\u001e���;]\t�Z\rEe�\u0014r��MiTЭ�Hݙ��l���\\麑\u001f?��Ӛ\u0011��\u000b�ئ��:V��V�_6I�|�\u001b���?�ֺ˘Ң�\u001e\u0003��׃\u0014l�\u001a��>�e��}]�����\u001bV*J��*_�F�V����)�\u0012�a��o�\u0001h���^\u0007R�\\�W�w�\u0019G\u000b�L��S3��\u0015�Ð�cER�.\u0017��\u001d���\u0003�NO\n���\u001f�(�(�X��n.\u001aO\u0002\u0003\u0001\u0000\u0001��\u0001�0�\u0001�0n\u0006\b+\u0006\u0001\u0005\u0005\u0007\u0001\u0001\u0004b0`00\u0006\b+\u0006\u0001\u0005\u0005\u00070\u0002�$http://cps.viafirma.do/subcatest.crt0,\u0006\b+\u0006\u0001\u0005\u0005\u00070\u0001� http://ocsptest.viafirma.do/ocsp0\u001d\u0006\u0003U\u001d\u000e\u0004\u0016\u0004\u0014�\f#P$c��V:����A��){0\f\u0006\u0003U\u001d\u0013\u0001\u0001�\u0004\u00020\u00000\u001f\u0006\u0003U\u001d#\u0004\u00180\u0016�\u00143�+����p\u001cj:%b3�\b\n��0��\u0006\u0003U\u001d\u001f\u0004��0��0���i�g�ehttp://ejbca.localdomain:8080/ejbca/publicweb/webdist/certdist?cmd=crl&issuer=CN=TestCA,O=AnaTom,C=SE�3�10/1\u000f0\r\u0006\u0003U\u0004\u0003\f\u0006TestCA1\u000f0\r\u0006\u0003U\u0004\n\f\u0006AnaTom1\u000b0\t\u0006\u0003U\u0004\u0006\u0013\u0002SE0\u000e\u0006\u0003U\u001d\u000f\u0001\u0001�\u0004\u0004\u0003\u0002\u0005�0\u001d\u0006\u0003U\u001d%\u0004\u00160\u0014\u0006\b+\u0006\u0001\u0005\u0005\u0007\u0003\u0002\u0006\b+\u0006\u0001\u0005\u0005\u0007\u0003\u00040\u001e\u0006\u0003U\u001d\u0011\u0004\u00170\u0015�\u0013BGALAN@VIAFIRMA.COM0\r\u0006\t*�H��\r\u0001\u0001\u000b\u0005\u0000\u0003�\u0001\u0001\u0000\"\u000em{�\u0014*�=\u001a�R\u0013�A�\u0003�\u001e��T��\u0012��,Ќ|ǐ�ߪ�K�!��+\u0004�?\"\"���\u0011w������\"\u0003��U��\u001f�xc�\u001c�\tv����)\u0006�\u001fl�:]�.��e\u0015�\u001a��f\\y>\u001d���;��\u0013�V��8#��m\u001e���\bq*{hKd��&Y\bO��}����\u0015�81qk��s3\u0018Wz[����i�[\u0003��q\u00105m/ξ�1��O�\t=�������\u001f÷OfClm��9\u001a\n�;~�t��_����?\f�\u0003�\u0004�Q*�� �)�\"SP \u000bd��X�\u0005e�2�\u0011���v60�\u0005-0�\u0004\u0015�\u0003\u0002\u0001\u0002\u0002\bs9e3g�4X0\r\u0006\t*�H��\r\u0001\u0001\u000b\u0005\u00000��1\u000b0\t\u0006\u0003U\u0004\u0006\u0013\u0002DO110/\u0006\u0003U\u0004\u0007\f(DISTRITO NACIONAL - REPUBLICA DOMINICANA1&0$\u0006\u0003U\u0004\n\f\u001dAVANSI S.R.L. - RNC 1302225091&0$\u0006\u0003U\u0004\u0003\f\u001dVIAFIRMA CERTIFICATION - TEST0\u001e\u0017\r240426103650Z\u0017\r340426103650Z0��1\u000b0\t\u0006\u0003U\u0004\u0006\u0013\u0002DO1\u00130\u0011\u0006\u0003U\u0004\n\f\nAVANSI SRL1\u001c0\u001a\u0006\u0003U\u0004\u000b\f\u0013VIAFIRMA DOMINICANA1\u00160\u0014\u0006\u0003U\u0004\u0005\u0013\rRNC 1302225091-0+\u0006\u0003U\u0004\u0003\f$VIAFIRMA QUALIFIED CERTIFICATES TEST0�\u0001\"0\r\u0006\t*�H��\r\u0001\u0001\u0001\u0005\u0000\u0003�\u0001\u000f\u00000�\u0001\n\u0002�\u0001\u0001\u0000�)��m}O��XQ0.�e3%\u000be���/���lld�K�uϙ}H��`��n�dM���#kz*%b�zB&8%r��\"M��h�=��i\\3\u001cK1&@ye�er��p�(\u000f���}ATC��\r@�d/#��:\\FVe��ǔ���-�\u001fG~^��Ԋ�\u0017V���Iȹw;��?�c��Yu�\u001fP��\u0007�\u0019���Z�~X�u|a+o�H*���\r�\u0012��&�Tzyk\u001bog��7�\u000f���F!G�%D��\u0001D\u0001�1���b\u001d\n�\u0007�\u0014���ͭm��5n0�x��\u001e�\u0012����r\u0017�&W\u0002\u0003\u0001\u0000\u0001��\u0001�0�\u0001�0p\u0006\b+\u0006\u0001\u0005\u0005\u0007\u0001\u0001\u0004d0b01\u0006\b+\u0006\u0001\u0005\u0005\u00070\u0002�%http://cps.viafirma.do/rootcatest.crt0-\u0006\b+\u0006\u0001\u0005\u0005\u00070\u0001�!https://ocsptest.viafirma.do/ocsp0\u001d\u0006\u0003U\u001d\u000e\u0004\u0016\u0004\u00143�+����p\u001cj:%b3�\b\n��0\u000f\u0006\u0003U\u001d\u0013\u0001\u0001�\u0004\u00050\u0003\u0001\u0001�0\u001f\u0006\u0003U\u001d#\u0004\u00180\u0016�\u0014Z�E�+e\\��\u0015��:�d�����0=\u0006\u0003U\u001d \u000460402\u0006\n+\u0006\u0001\u0004\u0001��\u0003\u0005\u00010$0\"\u0006\b+\u0006\u0001\u0005\u0005\u0007\u0002\u0001\u0016\u0016http://cps.viafirma.do0x\u0006\u0003U\u001d\u001f\u0004q0o05�3�1�/http://crltest.viafirma.do/viafirmaroottest.crl06�4�2�0http://crl2test.viafirma.do/viafirmaroottest.crl0\u000e\u0006\u0003U\u001d\u000f\u0001\u0001�\u0004\u0004\u0003\u0002\u0001�0\r\u0006\t*�H��\r\u0001\u0001\u000b\u0005\u0000\u0003�\u0001\u0001\u0000x�\u0002����)V��q�{�C@��*�f�>?\u0004D�s\u0011ȼգl3��\u001eZL���T\"�{�s��1+�}�wL�/ȼ������\u0015Ƣ�c]\t��|j�\\9^��v�\u001a򌤝!�ص\u0018T\u0003\u0012W_�@�\u0003^����@��,�?$��3\u00045\u001c��f\u0015�])�ʓꂃD��\"v7(�۫VR�l\u000b:�pp�7�&�hi�\u001e �\u000b22]-�+^�}j��hV��T��]\u0014U�����{�J�;\u00161F��\b��S��N�Q�n�\u0012I����)��d��}f�,ψ��\u0004TO;<w���O�(9Z�0�\u0004J0�\u00032�\u0003\u0002\u0001\u0002\u0002\bd�B�Y�(�0\r\u0006\t*�H��\r\u0001\u0001\u000b\u0005\u00000��1\u000b0\t\u0006\u0003U\u0004\u0006\u0013\u0002DO110/\u0006\u0003U\u0004\u0007\f(DISTRITO NACIONAL - REPUBLICA DOMINICANA1&0$\u0006\u0003U\u0004\n\f\u001dAVANSI S.R.L. - RNC 1302225091&0$\u0006\u0003U\u0004\u0003\f\u001dVIAFIRMA CERTIFICATION - TEST0 \u0017\r240426101345Z\u0018\u000f20540426101345Z0��1\u000b0\t\u0006\u0003U\u0004\u0006\u0013\u0002DO110/\u0006\u0003U\u0004\u0007\f(DISTRITO NACIONAL - REPUBLICA DOMINICANA1&0$\u0006\u0003U\u0004\n\f\u001dAVANSI S.R.L. - RNC 1302225091&0$\u0006\u0003U\u0004\u0003\f\u001dVIAFIRMA CERTIFICATION - TEST0�\u0001\"0\r\u0006\t*�H��\r\u0001\u0001\u0001\u0005\u0000\u0003�\u0001\u000f\u00000�\u0001\n\u0002�\u0001\u0001\u0000���O�\u0014�ĩ�7H�P��J\u0011\u0001�q\u0016\u00007�\u0002�|��;�\u0017et/OϾ��Rdj\u0000��\u0015 ���6��=gde<��B�\ri�.��Oa��F\u0001V���\u001e�mt�~�+\u0018�+�L��\u0010��Sr���_[Mh7�ƽ\u001d���\u001e=F\u001b��`\u0004L=Z��k�\u001b�,\u0004��ǌɼՓX�~�����vq�\u0018gvd+�T\u000e�t�^��_��\u0017��0�CP\u001b.\u0003�|���\u001bJ�d�\u001bs\\m-�\"X\u0007S���|�Q]�r��G{\u0010�S�n\u001fP������\u001b�U6\u0019_��PD�j\u0001�^�Y\n��)\u0002\u0003\u0001\u0000\u0001���0��0\u001d\u0006\u0003U\u001d\u000e\u0004\u0016\u0004\u0014Z�E�+e\\��\u0015��:�d�����0\u000f\u0006\u0003U\u001d\u0013\u0001\u0001�\u0004\u00050\u0003\u0001\u0001�0\u001f\u0006\u0003U\u001d#\u0004\u00180\u0016�\u0014Z�E�+e\\��\u0015��:�d�����0=\u0006\u0003U\u001d \u000460402\u0006\n+\u0006\u0001\u0004\u0001��\u0003\u0005\u00010$0\"\u0006\b+\u0006\u0001\u0005\u0005\u0007\u0002\u0001\u0016\u0016http://cps.viafirma.do0\u000e\u0006\u0003U\u001d\u000f\u0001\u0001�\u0004\u0004\u0003\u0002\u0001�0\r\u0006\t*�H��\r\u0001\u0001\u000b\u0005\u0000\u0003�\u0001\u0001\u0000��t���-(�E�ҿx��s��-\nҦ�=6�J?��@Յ'�m*�_�\u0018R���%�3�\u001f�F���^o�\u0004-��*�е��oݲ!S(\\��K<&\u001e���\u0004�k�\u0001�ưI\u001b\u0019r\u001a\u0010��)P\u001cu�]>�\u0006\r�b\u0002\u0013�\u00013OM\r�����VA{�:~�:�4��`�6�@\u0006��\\�K���kY��\u0018^\u001f7r��L�\u0016S'^�Ѭ�����\u0013�:�;�L��̕�Y�]\u0011�M�K�ѳ�����\u0010�V�_\u0013���/��Y��Ϊ�Z�\u0002n�5�i��;΍��]����\u0000x @���\u0000\u00001�\u0002$0�\u0002 \u0002\u0001\u00010��0��1\u000b0\t\u0006\u0003U\u0004\u0006\u0013\u0002DO110/\u0006\u0003U\u0004\u0007\f(DISTRITO NACIONAL - REPUBLICA DOMINICANA1&0$\u0006\u0003U\u0004\n\f\u001dAVANSI S.R.L. - RNC 1302225091&0$\u0006\u0003U\u0004\u0003\f\u001dVIAFIRMA CERTIFICATION - TEST\u0002\bs9e3g�4X0\t\u0006\u0005+\u000e\u0003\u0002\u001a\u0005\u0000�]0\u0018\u0006\t*�H��\r\u0001\t\u00031\u000b\u0006\t*�H��\r\u0001\u0007\u00010\u001c\u0006\t*�H��\r\u0001\t\u00051\u000f\u0017\r260513105514Z0#\u0006\t*�H��\r\u0001\t\u00041\u0016\u0004\u0014`*�|��\u0006\u0018\f2�9�\u0018��{W0\r\u0006\t*�H��\r\u0001\u0001\u0001\u0005\u0000\u0004�\u0001\u0000s��>��y�}F茞\b�P=\u001c�BQ�\u0004�1�\u0016���\u0003\u0018\u0004\u0001c�J�{k�F�P\u001d�@r\r��\u0007��$�B=,��\u0017\u0004[�(p�\u0001�h��3��D�$�z��J.\u000b�qu�쐚*#�\u0013�s��=\u0015=dK3%[`��%-Uɫ����ͪ��Rz�\u000f�\u001f�\f?��?\u0017��g\u001d�Z�B#:�a\u0003��i�q,OS��<�ˣ�Y�\u0010���P\u0015�\u001a\n.�l�y\u0006��ےE���>��s�\u00130I��jZE��6L<q\u0010,���[�^�m\u001ec�EA>�u\u0010�{�\u001a�\u0005[������'M��\u001b٨��\u001d\u0004\u0000\u0000\u0000\u0000\u0000\u0000"
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "oauth1",
+    "oauth1": [
+      {
+        "key": "addParamsToHeader",
+        "value": true,
+        "type": "boolean"
+      },
+      {
+        "key": "signatureMethod",
+        "value": "HMAC-SHA1",
+        "type": "string"
+      },
+      {
+        "key": "consumerSecret",
+        "value": "{{clientSecret_RA}}",
+        "type": "string"
+      },
+      {
+        "key": "consumerKey",
+        "value": "{{clientID_RA}}",
+        "type": "string"
+      },
+      {
+        "key": "version",
+        "value": "1.0",
+        "type": "string"
+      },
+      {
+        "key": "addEmptyParamsToSign",
+        "value": false,
+        "type": "boolean"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "ra",
+      "value": ""
+    },
+    {
+      "key": "profileCode_VIAFIRMA-CO-PJ-FACTURAE-P12",
+      "value": ""
+    },
+    {
+      "key": "title",
+      "value": ""
+    },
+    {
+      "key": "description",
+      "value": ""
+    },
+    {
+      "key": "terms",
+      "value": ""
+    },
+    {
+      "key": "identityType",
+      "value": ""
+    },
+    {
+      "key": "countryCode",
+      "value": ""
+    },
+    {
+      "key": "identity",
+      "value": ""
+    },
+    {
+      "key": "emailCertificate",
+      "value": ""
+    },
+    {
+      "key": "organizationType",
+      "value": ""
+    },
+    {
+      "key": "csr",
+      "value": ""
+    },
+    {
+      "key": "csr_base64_encoded",
+      "value": ""
+    },
+    {
+      "key": "codRequest",
+      "value": ""
+    },
+    {
+      "key": "codProfile",
+      "value": ""
+    },
+    {
+      "key": "publicId",
+      "value": ""
+    }
+  ]
+}
