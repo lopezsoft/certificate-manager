@@ -21,9 +21,9 @@ class DocumentAnalysisController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/v2/analytics/results",
+     *     path="/analytics/results",
      *     operationId="listAnalysisResults",
-     *     tags={"v2 - Analíticas IA"},
+     *     tags={"Analíticas IA"},
      *     summary="Listar resultados de análisis IA",
      *     description="Retorna resultados paginados de análisis OCR+IA filtrados por empresa del usuario autenticado.",
      *     security={{"bearerAuth":{}}},
@@ -62,9 +62,9 @@ class DocumentAnalysisController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/v2/analytics/stats",
+     *     path="/analytics/stats",
      *     operationId="getAnalyticsStats",
-     *     tags={"v2 - Analíticas IA"},
+     *     tags={"Analíticas IA"},
      *     summary="Estadísticas resumidas de análisis IA",
      *     description="Retorna métricas agregadas: total, completados, fallidos, confianza promedio, tiempo promedio y distribución por tipo.",
      *     security={{"bearerAuth":{}}},
@@ -89,9 +89,9 @@ class DocumentAnalysisController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/v2/analytics/results/{id}",
+     *     path="/analytics/results/{id}",
      *     operationId="showAnalysisResult",
-     *     tags={"v2 - Analíticas IA"},
+     *     tags={"Analíticas IA"},
      *     summary="Detalle de un resultado de análisis",
      *     description="Retorna el resultado completo incluyendo texto OCR, respuesta IA, datos extraídos y validación.",
      *     security={{"bearerAuth":{}}},
@@ -119,9 +119,9 @@ class DocumentAnalysisController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/v2/analytics/providers",
+     *     path="/analytics/providers",
      *     operationId="getActiveProviders",
-     *     tags={"v2 - Analíticas IA"},
+     *     tags={"Analíticas IA"},
      *     summary="Proveedores IA/OCR activos",
      *     description="Retorna qué proveedores de OCR e IA están configurados y disponibles. Si no hay credenciales, muestra MOCK como proveedor activo.",
      *     security={{"bearerAuth":{}}},

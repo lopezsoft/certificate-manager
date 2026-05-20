@@ -178,6 +178,7 @@ return [
         App\Providers\RouteServiceProvider::class,
         App\Providers\WompiServiceProvider::class,
         App\Providers\ViafirmaServiceProvider::class,
+        App\Providers\CertificateIssuanceServiceProvider::class,
 
     ],
 

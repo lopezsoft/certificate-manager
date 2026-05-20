@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 /**
  * @OA\Info(
- *     version="2.2.0",
+ *     version="3.0.0",
  *     title="Certificate Manager API",
- *     description="API REST para la gestión de solicitudes de certificados digitales. v1=CAMERFIRMA (flujo por email), v2=Pagos + Cuotas + Analíticas IA. Requiere autenticación OAuth 2.0 con Laravel Passport.",
+ *     description="API REST unificada (v1) para la gestión completa de solicitudes de certificados digitales: creación, archivos adjuntos, emisión agnóstica de proveedor (correo legacy / Viafirma RA PKCS#10 Zero-Touch), pagos WOMPI, cuotas POSTPAID, analíticas IA, notificaciones de vencimiento y webhooks. Requiere autenticación OAuth 2.0 con Laravel Passport.",
  *     @OA\Contact(
  *         email="soporte@matias.com.co",
  *         name="Soporte Matias"
@@ -15,12 +15,7 @@ namespace App\Http\Controllers;
  *
  * @OA\Server(
  *     url="/api/v1",
- *     description="API v1 — CAMERFIRMA (flujo por email)"
- * )
- *
- * @OA\Server(
- *     url="/api/v2",
- *     description="API v2 — WOMPI + Cuotas (flujo automatizado)"
+ *     description="API v1 — única versión soportada"
  * )
  *
  * @OA\SecurityScheme(
@@ -32,7 +27,8 @@ namespace App\Http\Controllers;
  * )
  *
  * @OA\Tag(name="Autenticación", description="Endpoints de login, registro, verificación de email y recuperación de contraseña")
- * @OA\Tag(name="Solicitudes de Certificado", description="Gestión completa de solicitudes de certificados digitales (v1 - CAMERFIRMA)")
+ * @OA\Tag(name="Solicitudes de Certificado", description="Gestión completa de solicitudes de certificados digitales (datos, listado, actualización, borrado)")
+ * @OA\Tag(name="Emisión de Certificados", description="Emisión agnóstica del proveedor (correo legacy / Viafirma RA PKCS#10 Zero-Touch / futuros). Cada solicitud de certificado puede dispararse, consultarse y descargarse desde aquí.")
  * @OA\Tag(name="Archivos", description="Carga y eliminación de archivos adjuntos")
  * @OA\Tag(name="Empresa", description="Configuración y perfil de la empresa")
  * @OA\Tag(name="Perfil", description="Gestión del perfil de usuario")
@@ -43,13 +39,12 @@ namespace App\Http\Controllers;
  * @OA\Tag(name="Notificaciones", description="Alertas de vencimiento de certificados: listado, marcado de lectura y disparo manual")
  * @OA\Tag(name="Datos Maestros", description="Datos de referencia públicos: países, departamentos, ciudades, tipos de documento y organización")
  * @OA\Tag(name="Configuración", description="Configuración de encabezados de reportes")
- * @OA\Tag(name="v2 - Órdenes", description="[v2] Compra de certificados PREPAID: crear orden y ejecutar pago WOMPI")
- * @OA\Tag(name="v2 - Cupos Admin", description="[v2] Gestión de cupos POSTPAID — solo administradores LOPEZSOFT")
- * @OA\Tag(name="v2 - Precios", description="[v2] Consulta pública de tarifas por volumen (sin autenticación)")
- * @OA\Tag(name="v2 - Pagos Externos", description="[v2] Webhooks entrantes de WOMPI (sin autenticación, firmados con HMAC-SHA256)")
- * @OA\Tag(name="v2 - Analíticas IA", description="[v2] Pipeline OCR + IA: resultados de análisis, estadísticas y estado de proveedores")
- * @OA\Tag(name="v2 - Sistema", description="[v2] Health check de servicios externos: WOMPI")
- * @OA\Tag(name="v2 - Viafirma Certificados", description="[v2] Emisión automatizada de certificados digitales Zero-Touch PKCS#10 vía Viafirma RA Colombia")
+ * @OA\Tag(name="Órdenes", description="Compra de certificados PREPAID: crear orden y ejecutar pago WOMPI")
+ * @OA\Tag(name="Cupos Admin", description="Gestión de cupos POSTPAID — solo administradores LOPEZSOFT")
+ * @OA\Tag(name="Precios", description="Consulta pública de tarifas por volumen (sin autenticación)")
+ * @OA\Tag(name="Pagos Externos", description="Webhooks entrantes de WOMPI (sin autenticación, firmados con HMAC-SHA256)")
+ * @OA\Tag(name="Analíticas IA", description="Pipeline OCR + IA: resultados de análisis, estadísticas y estado de proveedores")
+ * @OA\Tag(name="Sistema", description="Health check de servicios externos: WOMPI, etc.")
  *
  * ─── Schemas reutilizables ────────────────────────────────────────────────────
  *
@@ -288,12 +283,42 @@ namespace App\Http\Controllers;
  *
  * @OA\Schema(
  *     schema="IssueCertificateBody",
- *     description="Payload para iniciar emisión de certificado digital vía Viafirma PKCS#10",
- *     required={"certificate_request_id", "email_certificate"},
- *     @OA\Property(property="certificate_request_id", type="integer", example=42, description="ID de la solicitud de certificado existente en certificate_requests"),
- *     @OA\Property(property="email_certificate", type="string", format="email", example="rep.legal@empresa.com", description="Email de notificación KYC (puede diferir del email del CSR)"),
- *     @OA\Property(property="organization_type", type="string", nullable=true, enum={"RM","PROP","RUNEOL","RNT","ESAL","ESOL","JUEGOS","EXTRANJERAS"}, example="RM", description="Tipo de organización Viafirma. Obligatorio para Persona Jurídica, prohibido para Persona Natural."),
- *     @OA\Property(property="identity_type_override", type="string", nullable=true, enum={"IDC","PAS"}, example=null, description="Override del tipo de identidad del solicitante. Si null se deriva del catálogo.")
+ *     description="Payload del endpoint unificado de emisión: POST /certificate-request/{id}/issue. Todos los campos son opcionales — el sistema resuelve el proveedor activo (mail/viafirma) por config + reglas de la empresa.",
+ *     @OA\Property(property="provider", type="string", nullable=true, enum={"mail","viafirma"}, example="viafirma", description="Override del proveedor. Sólo se honra si el caller es admin y la config CERTIFICATE_ISSUANCE_ALLOW_OVERRIDE está activa."),
+ *     @OA\Property(property="email_certificate", type="string", format="email", nullable=true, example="rep.legal@empresa.com", description="Email de notificación KYC. OBLIGATORIO cuando el provider resuelto/forzado es 'viafirma'."),
+ *     @OA\Property(property="organization_type", type="string", nullable=true, enum={"RM","PROP","RUNEOL","RNT","ESAL","ESOL","JUEGOS","EXTRANJERAS"}, example="RM", description="Tipo de organización Viafirma. Obligatorio para Persona Jurídica."),
+ *     @OA\Property(property="identity_type_override", type="string", nullable=true, enum={"IDC","PAS"}, example=null, description="Override del tipo de identidad del solicitante. Si null se deriva del catálogo."),
+ *     @OA\Property(property="comments", type="string", nullable=true, maxLength=1000, example="Solicitud expedita por convenio empresarial"),
+ *     @OA\Property(property="metadata", type="object", nullable=true, description="Metadatos libres adjuntos a la auditoría")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="IssuanceResultData",
+ *     description="Resultado normalizado de cualquier proveedor de emisión (mail, viafirma, ...).",
+ *     @OA\Property(property="provider", type="string", enum={"mail","viafirma"}, example="viafirma"),
+ *     @OA\Property(property="status", type="string", enum={"sent","submitted","processing","ready","completed","failed","unsupported"}, example="submitted"),
+ *     @OA\Property(property="message", type="string", example="Solicitud Viafirma creada exitosamente."),
+ *     @OA\Property(property="external_id", type="string", nullable=true, example="PYJR5N4QC", description="ID externo del proveedor (cod_request en Viafirma)."),
+ *     @OA\Property(property="resource_id", type="integer", nullable=true, example=1, description="ID interno del agregado de emisión."),
+ *     @OA\Property(property="data", type="object", description="Payload extendido específico del proveedor. Ejemplo Viafirma: public_id, internal_state, remote_status.")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="IssuanceResponse",
+ *     description="Envoltura estándar de los endpoints de emisión.",
+ *     @OA\Property(property="success", type="boolean", example=true),
+ *     @OA\Property(property="message", type="string", example="Solicitud Viafirma creada exitosamente."),
+ *     @OA\Property(property="data", ref="#/components/schemas/IssuanceResultData")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="IssuanceDownloadMetadata",
+ *     description="Metadata de descarga del P12 (sólo proveedor Viafirma cuando el estado interno es ASSEMBLED/COMPLETED).",
+ *     @OA\Property(property="success", type="boolean", example=true),
+ *     @OA\Property(property="p12_pin", type="string", example="X3kP9aQ1mZv7", description="PIN temporal para abrir el archivo P12."),
+ *     @OA\Property(property="p12_filename", type="string", example="empresa_900400300.p12"),
+ *     @OA\Property(property="download_url", type="string", format="uri", nullable=true, description="URL firmada temporal (24h) para descarga directa. Null si el disco no soporta URLs firmadas."),
+ *     @OA\Property(property="expires_at", type="string", format="date-time", example="2026-05-20T18:00:00Z")
  * )
  *
  * @OA\Schema(

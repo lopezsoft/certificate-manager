@@ -12,8 +12,8 @@ use App\Modules\Viafirma\Domain\Enums\OrganizationType;
  *
  * Convención de campos (alineada con §2.bis.5 del roadmap):
  *  - country         (C)            ISO 3166-1 alpha-2  — ej. "CO"
- *  - state           (ST)           Departamento        — ej. "ANTIOQUIA"
- *  - locality        (L)            Ciudad              — ej. "MEDELLÍN"
+ *  - state           (ST)           Departamento        — ej. "ANTIOQUIA" (sólo FE_PJ, API v3.4.53)
+ *  - locality        (L)            Ciudad              — ej. "MEDELLÍN"  (sólo FE_PJ, API v3.4.53)
  *  - street          (STREET)       Dirección
  *  - organization    (O)            Razón social        — sólo FE_PJ
  *  - organizationUnit(OU)           Unidad organizativa — sólo FE_PJ (opcional)
@@ -31,13 +31,15 @@ final class CsrInputDto
     public function __construct(
         public readonly CertificateProfile $profile,
         public readonly string $country,
-        public readonly string $state,
-        public readonly string $locality,
         public readonly string $street,
         public readonly string $serialNumber,
         public readonly string $email,
         public readonly string $givenName,
         public readonly string $surname,
+        /** ST — sólo FE_PJ (API v3.4.53: FE-PN no lleva ST). */
+        public readonly ?string $state = null,
+        /** L — sólo FE_PJ (API v3.4.53: FE-PN no lleva L). */
+        public readonly ?string $locality = null,
         public readonly ?string $organization = null,
         public readonly ?string $organizationUnit = null,
         public readonly ?OrganizationType $organizationType = null,

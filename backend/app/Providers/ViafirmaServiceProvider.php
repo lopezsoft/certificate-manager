@@ -32,6 +32,12 @@ use Psr\Log\LoggerInterface;
  *  - ViafirmaClient        → GuzzleViafirmaClient   (configurable)
  *  - LoggerInterface (#viafirma) → SafePemLogger (decorator del canal config)
  *
+ * IMPORTANTE: Ningún singleton valida credenciales al registrarse.
+ * La validación de VIAFIRMA_CLIENT_ID / VIAFIRMA_CLIENT_SECRET es LAZY
+ * (se ejecuta en OAuth1Signer::ensureCredentialsConfigured() al firmar),
+ * para no bloquear comandos de introspección (route:list, config:cache)
+ * ni requests HTTP que no usen el módulo Viafirma.
+ *
  * No registra migraciones a propósito (política §10.bis del roadmap): éstas
  * se ejecutan SIEMPRE individualmente vía `viafirma:migrate {file}`.
  */
@@ -72,16 +78,12 @@ final class ViafirmaServiceProvider extends ServiceProvider
             };
         });
 
-        // ---- HTTP client (Guzzle) ----------------------------------------------
+        // ---- HTTP client (Guzzle) — SIN validación eager de credenciales --------
         $this->app->singleton(OAuth1Signer::class, function (): OAuth1Signer {
-            $key    = (string) config('viafirma.client_id');
-            $secret = (string) config('viafirma.client_secret');
-            if ($key === '' || $secret === '') {
-                throw new \RuntimeException(
-                    'VIAFIRMA_CLIENT_ID / VIAFIRMA_CLIENT_SECRET no están configurados.'
-                );
-            }
-            return new OAuth1Signer($key, $secret);
+            return new OAuth1Signer(
+                consumerKey:    (string) config('viafirma.client_id'),
+                consumerSecret: (string) config('viafirma.client_secret'),
+            );
         });
 
         $this->app->singleton(ProfileResponseParser::class);
@@ -116,7 +118,13 @@ final class ViafirmaServiceProvider extends ServiceProvider
             ->needs(\Psr\Log\LoggerInterface::class)
             ->give(SafePemLogger::class);
 
-        $this->app->when(\App\Modules\Viafirma\Presentation\Http\Controllers\ViafirmaCertificateController::class)
+        // El antiguo ViafirmaCertificateController fue eliminado (Fase 3,
+        // 2026-05-19). Su funcionalidad vive ahora en
+        // App\Http\Controllers\Certificate\CertificateIssuanceController + ViafirmaIssuanceProvider.
+
+        // ViafirmaDownloadService (extraído del controller eliminado): usa el
+        // SafePemLogger del módulo Viafirma para preservar el filtrado PEM.
+        $this->app->when(\App\Modules\Viafirma\Application\Services\ViafirmaDownloadService::class)
             ->needs(\Psr\Log\LoggerInterface::class)
             ->give(SafePemLogger::class);
 
@@ -171,5 +179,3 @@ final class ViafirmaServiceProvider extends ServiceProvider
         }
     }
 }
-
-

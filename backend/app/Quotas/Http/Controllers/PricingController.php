@@ -22,8 +22,8 @@ class PricingController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/v2/pricing",
-     *     tags={"v2 - Precios"},
+     *     path="/pricing",
+     *     tags={"Precios"},
      *     summary="Consultar tarifas de certificados",
      *     description="Devuelve los rangos de precios. Si se pasan quantity y vigencia, calcula el precio exacto.",
      *     @OA\Parameter(name="quantity", in="query", required=false, @OA\Schema(type="integer", minimum=1)),

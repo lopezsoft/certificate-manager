@@ -11,7 +11,8 @@ final class SubmitCsrResultDto
 {
     public function __construct(
         public readonly string $codRequest,
-        public readonly ?string $publicId,
+        /** API v3.4.53: publicId siempre viene en la respuesta de POST /request/fromCSR. */
+        public readonly string $publicId,
         public readonly ?string $initialStatus,
         /** @var array<string,mixed> */
         public readonly array $raw,

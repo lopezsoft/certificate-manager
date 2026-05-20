@@ -18,7 +18,7 @@ class WompiWebhookController extends Controller
     /**
      * @OA\Post(
      *     path="/webhooks/wompi",
-     *     tags={"v2 - Pagos Externos"},
+     *     tags={"Pagos Externos"},
      *     summary="Recibir evento de pago de WOMPI",
      *     description="Endpoint receptor de webhooks de WOMPI. La firma HMAC-SHA256 es validada automáticamente por el middleware ValidateWompiSignature. No requiere autenticación Bearer.",
      *     @OA\RequestBody(required=true, @OA\JsonContent(

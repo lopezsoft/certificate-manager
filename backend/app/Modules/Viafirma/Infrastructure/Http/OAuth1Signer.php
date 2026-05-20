@@ -13,6 +13,12 @@ namespace App\Modules\Viafirma\Infrastructure\Http;
  *  - consumer_key + consumer_secret (sin token de usuario)
  *  - signing_key      = rawurlencode(consumer_secret) . '&' (token vacío)
  *
+ * IMPORTANTE: La validación de credenciales es LAZY — solo se ejecuta en
+ * buildAuthorizationHeader(), NUNCA en el constructor. Esto permite que el
+ * container registre el singleton sin requerir que las env vars estén
+ * configuradas (necesario para route:list, config:cache, y requests HTTP
+ * que no usan Viafirma).
+ *
  * Es testable de forma independiente (V-106) y sin dependencias externas, lo
  * que evita instalar `guzzlehttp/oauth-subscriber` y mantiene control total.
  */
@@ -41,6 +47,8 @@ final class OAuth1Signer
         ?string $nonce = null,
         ?int $timestamp = null,
     ): string {
+        $this->ensureCredentialsConfigured();
+
         $oauthParams = [
             'oauth_consumer_key'     => $this->consumerKey,
             'oauth_nonce'            => $nonce ?? bin2hex(random_bytes(16)),
@@ -111,5 +119,23 @@ final class OAuth1Signer
         $path = $parts['path'] ?? '/';
         return $scheme . '://' . $host . $portPart . $path;
     }
-}
 
+    /**
+     * Valida que las credenciales OAuth estén configuradas.
+     *
+     * Se invoca de forma lazy (al firmar), no en construcción,
+     * para no bloquear comandos de introspección del framework
+     * (route:list, config:cache, etc.).
+     *
+     * @throws \RuntimeException Si falta consumer key o consumer secret.
+     */
+    private function ensureCredentialsConfigured(): void
+    {
+        if ($this->consumerKey === '' || $this->consumerSecret === '') {
+            throw new \RuntimeException(
+                'VIAFIRMA_CLIENT_ID / VIAFIRMA_CLIENT_SECRET no están configurados. '
+                . 'Revisa las variables de entorno en tu archivo .env.'
+            );
+        }
+    }
+}

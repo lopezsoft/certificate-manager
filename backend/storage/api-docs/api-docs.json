@@ -2,21 +2,17 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Certificate Manager API",
-        "description": "API REST para la gestión de solicitudes de certificados digitales. v1=CAMERFIRMA (flujo por email), v2=Pagos + Cuotas + Analíticas IA. Requiere autenticación OAuth 2.0 con Laravel Passport.",
+        "description": "API REST unificada (v1) para la gestión completa de solicitudes de certificados digitales: creación, archivos adjuntos, emisión agnóstica de proveedor (correo legacy / Viafirma RA PKCS#10 Zero-Touch), pagos WOMPI, cuotas POSTPAID, analíticas IA, notificaciones de vencimiento y webhooks. Requiere autenticación OAuth 2.0 con Laravel Passport.",
         "contact": {
             "name": "Soporte Matias",
             "email": "soporte@matias.com.co"
         },
-        "version": "2.2.0"
+        "version": "3.0.0"
     },
     "servers": [
         {
             "url": "/api/v1",
-            "description": "API v1 — CAMERFIRMA (flujo por email)"
-        },
-        {
-            "url": "/api/v2",
-            "description": "API v2 — WOMPI + Cuotas (flujo automatizado)"
+            "description": "API v1 — única versión soportada"
         }
     ],
     "paths": {
@@ -1519,68 +1515,6 @@
                 ]
             }
         },
-        "/certificate-request/{id}/send-mail": {
-            "post": {
-                "tags": [
-                    "Solicitudes de Certificado"
-                ],
-                "summary": "Enviar solicitud por correo electrónico",
-                "description": "Envía la solicitud al proveedor y actualiza el estado a PROCESSING. Límite: 5 envíos/minuto.",
-                "operationId": "cfdbe84f97ecc081eec49168bdb0cc75",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "schema": "SendMailBody",
-                                "properties": {
-                                    "comments": {
-                                        "type": "string",
-                                        "nullable": true
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Correo enviado exitosamente",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ApiSuccessResponse"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Solicitud no encontrada o sin archivos adjuntos"
-                    },
-                    "429": {
-                        "description": "Demasiados envíos"
-                    },
-                    "401": {
-                        "description": "No autenticado"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/certificate-request/{id}/files": {
             "post": {
                 "tags": [
@@ -1714,6 +1648,351 @@
                     },
                     "400": {
                         "description": "Archivo no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/certificate-request/{id}/issue": {
+            "post": {
+                "tags": [
+                    "Emisión de Certificados"
+                ],
+                "summary": "Disparar emisión del certificado (provider-agnostic)",
+                "description": "Inicia el flujo de emisión usando el proveedor activo (mail / viafirma / futuros). El proveedor se resuelve por cascada: payload override (admin) → companies.issuance_provider → CERTIFICATE_ISSUANCE_PROVIDER → fallback 'mail'. Para Viafirma el cuerpo debe incluir 'email_certificate'.",
+                "operationId": "certificateRequestIssue",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la solicitud (certificate_requests.id)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/IssueCertificateBody"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Emisión por correo (mail) ejecutada con éxito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/IssuanceResponse"
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "Solicitud Viafirma creada (estado SUBMITTED)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/IssuanceResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Solicitud no encontrada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Ya existe un trámite Viafirma activo para esta solicitud",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validación fallida o proveedor no soporta la solicitud",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "502": {
+                        "description": "Error transitorio del proveedor remoto (Viafirma)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/certificate-request/{id}/send-mail": {
+            "post": {
+                "tags": [
+                    "Emisión de Certificados"
+                ],
+                "summary": "[DEPRECATED] Enviar solicitud por correo electrónico",
+                "description": "Alias de compatibilidad con el flujo legacy. Internamente delega al proveedor 'mail'. Será eliminado tras el sunset window (header Sunset). Migrar a POST /certificate-request/{id}/issue.",
+                "operationId": "certificateRequestSendMailDeprecated",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "comments": {
+                                        "type": "string",
+                                        "example": "Solicitud reprocesada",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Correo enviado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/IssuanceResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "No fue posible enviar la solicitud",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "deprecated": true,
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/certificate-request/{id}/issuance": {
+            "get": {
+                "tags": [
+                    "Emisión de Certificados"
+                ],
+                "summary": "Consultar estado del trámite",
+                "description": "Devuelve el estado normalizado del trámite de emisión. Para Viafirma incluye internal_state, remote_status, public_id y fechas relevantes. Para 'mail' devuelve el request_status actual.",
+                "operationId": "certificateRequestIssuanceShow",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Estado del trámite",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/IssuanceResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Solicitud (o trámite Viafirma) no encontrada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/certificate-request/{id}/issuance/download": {
+            "get": {
+                "tags": [
+                    "Emisión de Certificados"
+                ],
+                "summary": "Metadata de descarga del P12 (sólo Viafirma)",
+                "description": "Retorna el PIN temporal y una URL firmada (24h) para descargar el .p12 ensamblado. Disponible cuando el estado interno es ASSEMBLED o COMPLETED.",
+                "operationId": "certificateRequestIssuanceDownload",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Metadata + PIN",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/IssuanceDownloadMetadata"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Trámite no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "El estado actual no permite descarga / proveedor no soporta descarga",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "410": {
+                        "description": "El PIN del certificado fue purgado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/certificate-request/{id}/issuance/download/file": {
+            "get": {
+                "tags": [
+                    "Emisión de Certificados"
+                ],
+                "summary": "Descarga binaria del P12 (streaming)",
+                "description": "Streaming directo del archivo .p12 con Content-Disposition: attachment. Sólo proveedor Viafirma en estado ASSEMBLED/COMPLETED.",
+                "operationId": "certificateRequestIssuanceDownloadFile",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Binario P12",
+                        "content": {
+                            "application/x-pkcs12": {}
+                        }
+                    },
+                    "404": {
+                        "description": "Trámite no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "El estado actual no permite descarga / proveedor no soporta descarga",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1991,10 +2270,10 @@
                 ]
             }
         },
-        "/v2/analytics/results": {
+        "/analytics/results": {
             "get": {
                 "tags": [
-                    "v2 - Analíticas IA"
+                    "Analíticas IA"
                 ],
                 "summary": "Listar resultados de análisis IA",
                 "description": "Retorna resultados paginados de análisis OCR+IA filtrados por empresa del usuario autenticado.",
@@ -2099,10 +2378,10 @@
                 ]
             }
         },
-        "/v2/analytics/stats": {
+        "/analytics/stats": {
             "get": {
                 "tags": [
-                    "v2 - Analíticas IA"
+                    "Analíticas IA"
                 ],
                 "summary": "Estadísticas resumidas de análisis IA",
                 "description": "Retorna métricas agregadas: total, completados, fallidos, confianza promedio, tiempo promedio y distribución por tipo.",
@@ -2134,10 +2413,10 @@
                 ]
             }
         },
-        "/v2/analytics/results/{id}": {
+        "/analytics/results/{id}": {
             "get": {
                 "tags": [
-                    "v2 - Analíticas IA"
+                    "Analíticas IA"
                 ],
                 "summary": "Detalle de un resultado de análisis",
                 "description": "Retorna el resultado completo incluyendo texto OCR, respuesta IA, datos extraídos y validación.",
@@ -2183,10 +2462,10 @@
                 ]
             }
         },
-        "/v2/analytics/providers": {
+        "/analytics/providers": {
             "get": {
                 "tags": [
-                    "v2 - Analíticas IA"
+                    "Analíticas IA"
                 ],
                 "summary": "Proveedores IA/OCR activos",
                 "description": "Retorna qué proveedores de OCR e IA están configurados y disponibles. Si no hay credenciales, muestra MOCK como proveedor activo.",
@@ -2853,6 +3132,28 @@
                 ]
             }
         },
+        "/health": {
+            "get": {
+                "tags": [
+                    "Sistema"
+                ],
+                "summary": "Estado de salud de los servicios externos",
+                "operationId": "49a59c9e68466fb63f7f95e7a62337d5",
+                "responses": {
+                    "200": {
+                        "description": "Todos los servicios operativos"
+                    },
+                    "503": {
+                        "description": "Uno o más servicios con problemas"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/crud": {
             "get": {
                 "tags": [
@@ -3186,32 +3487,10 @@
                 ]
             }
         },
-        "/v2/health": {
-            "get": {
-                "tags": [
-                    "v2 - Sistema"
-                ],
-                "summary": "Estado de salud de los servicios externos",
-                "operationId": "a1970db21e007817539286bdc67ec340",
-                "responses": {
-                    "200": {
-                        "description": "Todos los servicios operativos"
-                    },
-                    "503": {
-                        "description": "Uno o más servicios con problemas"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/webhooks/wompi": {
             "post": {
                 "tags": [
-                    "v2 - Pagos Externos"
+                    "Pagos Externos"
                 ],
                 "summary": "Recibir evento de pago de WOMPI",
                 "description": "Endpoint receptor de webhooks de WOMPI. La firma HMAC-SHA256 es validada automáticamente por el middleware ValidateWompiSignature. No requiere autenticación Bearer.",
@@ -3286,13 +3565,13 @@
                 }
             }
         },
-        "/v2/orders": {
+        "/orders": {
             "get": {
                 "tags": [
-                    "v2 - Órdenes"
+                    "Órdenes"
                 ],
                 "summary": "Listar órdenes de compra de la empresa",
-                "operationId": "5dc59b872d9197ee67d0339208bf00d8",
+                "operationId": "86ae51fa52ae3db91fe22eaf43d668bc",
                 "responses": {
                     "200": {
                         "description": "Lista paginada de órdenes",
@@ -3318,11 +3597,11 @@
             },
             "post": {
                 "tags": [
-                    "v2 - Órdenes"
+                    "Órdenes"
                 ],
                 "summary": "Crear orden de compra de certificados",
                 "description": "Crea una orden PENDING y devuelve los datos necesarios para el widget de pago.",
-                "operationId": "36a237f39eb0c68f7a0356773424ca52",
+                "operationId": "0870b2611417f7e6260e1f5391c4c151",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -3411,13 +3690,13 @@
                 ]
             }
         },
-        "/v2/orders/{id}": {
+        "/orders/{id}": {
             "get": {
                 "tags": [
-                    "v2 - Órdenes"
+                    "Órdenes"
                 ],
                 "summary": "Ver detalle de una orden",
-                "operationId": "ce912c2e2b57443cde15921a56ec99a0",
+                "operationId": "6576e0d2293c940a998bf599151fba57",
                 "parameters": [
                     {
                         "name": "id",
@@ -3456,14 +3735,14 @@
                 ]
             }
         },
-        "/v2/orders/{id}/pay": {
+        "/orders/{id}/pay": {
             "post": {
                 "tags": [
-                    "v2 - Órdenes"
+                    "Órdenes"
                 ],
                 "summary": "Ejecutar pago de una orden",
                 "description": "Crea la transacción de pago. El estado final llega asíncronamente por webhook.",
-                "operationId": "0c0b671c0527c39750487393e76eec54",
+                "operationId": "754ab033017a56eac52f15e4ec8bf24f",
                 "parameters": [
                     {
                         "name": "id",
@@ -3534,14 +3813,14 @@
                 ]
             }
         },
-        "/v2/pricing": {
+        "/pricing": {
             "get": {
                 "tags": [
-                    "v2 - Precios"
+                    "Precios"
                 ],
                 "summary": "Consultar tarifas de certificados",
                 "description": "Devuelve los rangos de precios. Si se pasan quantity y vigencia, calcula el precio exacto.",
-                "operationId": "54244511b7fccd5df49ddc8a0127f4eb",
+                "operationId": "459efc80623373f57729a31cc17db771",
                 "parameters": [
                     {
                         "name": "quantity",
@@ -3576,14 +3855,14 @@
                 }
             }
         },
-        "/v2/admin/quotas": {
+        "/admin/quotas": {
             "get": {
                 "tags": [
-                    "v2 - Cupos Admin"
+                    "Cupos Admin"
                 ],
                 "summary": "Listar todos los cupos (admin)",
-                "description": "GET /v2/admin/quotas — Listar todos los cupos",
-                "operationId": "528e26879243d08f87d82240a77f83ed",
+                "description": "GET /admin/quotas — Listar todos los cupos",
+                "operationId": "9a92c1f75ebbf22d954da20c23d8bd2c",
                 "responses": {
                     "200": {
                         "description": "Lista paginada de cupos",
@@ -3612,11 +3891,11 @@
             },
             "post": {
                 "tags": [
-                    "v2 - Cupos Admin"
+                    "Cupos Admin"
                 ],
                 "summary": "Asignar cupo POSTPAID a una empresa",
-                "description": "POST /v2/admin/quotas — Asignar cupo POSTPAID a empresa",
-                "operationId": "a03c34500839e72b8522fb98d0b4663e",
+                "description": "POST /admin/quotas — Asignar cupo POSTPAID a empresa",
+                "operationId": "f59beb9ab9d6700331213d82b396c05a",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -3689,14 +3968,14 @@
                 ]
             }
         },
-        "/v2/admin/quotas/{id}": {
+        "/admin/quotas/{id}": {
             "get": {
                 "tags": [
-                    "v2 - Cupos Admin"
+                    "Cupos Admin"
                 ],
                 "summary": "Ver detalle de un cupo",
-                "description": "GET /v2/admin/quotas/{id} — Ver detalle de un cupo",
-                "operationId": "028f30011b832bd12a8d49a462ba743f",
+                "description": "GET /admin/quotas/{id} — Ver detalle de un cupo",
+                "operationId": "4df57555f5a2be420250ce356362e958",
                 "parameters": [
                     {
                         "name": "id",
@@ -3735,14 +4014,14 @@
                 ]
             }
         },
-        "/v2/admin/quotas/company/{id}": {
+        "/admin/quotas/company/{id}": {
             "get": {
                 "tags": [
-                    "v2 - Cupos Admin"
+                    "Cupos Admin"
                 ],
                 "summary": "Estado y historial de cupos de una empresa",
-                "description": "GET /v2/admin/quotas/company/{id} — Estado de cupos de una empresa",
-                "operationId": "1114dd483a065d97e7eac0fff9ca8781",
+                "description": "GET /admin/quotas/company/{id} — Estado de cupos de una empresa",
+                "operationId": "c72d0215ee321cd2648eef36756ccee7",
                 "parameters": [
                     {
                         "name": "id",
@@ -5141,6 +5420,309 @@
                     }
                 },
                 "type": "object"
+            },
+            "IssueCertificateBody": {
+                "description": "Payload del endpoint unificado de emisión: POST /certificate-request/{id}/issue. Todos los campos son opcionales — el sistema resuelve el proveedor activo (mail/viafirma) por config + reglas de la empresa.",
+                "properties": {
+                    "provider": {
+                        "description": "Override del proveedor. Sólo se honra si el caller es admin y la config CERTIFICATE_ISSUANCE_ALLOW_OVERRIDE está activa.",
+                        "type": "string",
+                        "enum": [
+                            "mail",
+                            "viafirma"
+                        ],
+                        "example": "viafirma",
+                        "nullable": true
+                    },
+                    "email_certificate": {
+                        "description": "Email de notificación KYC. OBLIGATORIO cuando el provider resuelto/forzado es 'viafirma'.",
+                        "type": "string",
+                        "format": "email",
+                        "example": "rep.legal@empresa.com",
+                        "nullable": true
+                    },
+                    "organization_type": {
+                        "description": "Tipo de organización Viafirma. Obligatorio para Persona Jurídica.",
+                        "type": "string",
+                        "enum": [
+                            "RM",
+                            "PROP",
+                            "RUNEOL",
+                            "RNT",
+                            "ESAL",
+                            "ESOL",
+                            "JUEGOS",
+                            "EXTRANJERAS"
+                        ],
+                        "example": "RM",
+                        "nullable": true
+                    },
+                    "identity_type_override": {
+                        "description": "Override del tipo de identidad del solicitante. Si null se deriva del catálogo.",
+                        "type": "string",
+                        "enum": [
+                            "IDC",
+                            "PAS"
+                        ],
+                        "example": null,
+                        "nullable": true
+                    },
+                    "comments": {
+                        "type": "string",
+                        "maxLength": 1000,
+                        "example": "Solicitud expedita por convenio empresarial",
+                        "nullable": true
+                    },
+                    "metadata": {
+                        "description": "Metadatos libres adjuntos a la auditoría",
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "IssuanceResultData": {
+                "description": "Resultado normalizado de cualquier proveedor de emisión (mail, viafirma, ...).",
+                "properties": {
+                    "provider": {
+                        "type": "string",
+                        "enum": [
+                            "mail",
+                            "viafirma"
+                        ],
+                        "example": "viafirma"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "sent",
+                            "submitted",
+                            "processing",
+                            "ready",
+                            "completed",
+                            "failed",
+                            "unsupported"
+                        ],
+                        "example": "submitted"
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Solicitud Viafirma creada exitosamente."
+                    },
+                    "external_id": {
+                        "description": "ID externo del proveedor (cod_request en Viafirma).",
+                        "type": "string",
+                        "example": "PYJR5N4QC",
+                        "nullable": true
+                    },
+                    "resource_id": {
+                        "description": "ID interno del agregado de emisión.",
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "data": {
+                        "description": "Payload extendido específico del proveedor. Ejemplo Viafirma: public_id, internal_state, remote_status.",
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "IssuanceResponse": {
+                "description": "Envoltura estándar de los endpoints de emisión.",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Solicitud Viafirma creada exitosamente."
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/IssuanceResultData"
+                    }
+                },
+                "type": "object"
+            },
+            "IssuanceDownloadMetadata": {
+                "description": "Metadata de descarga del P12 (sólo proveedor Viafirma cuando el estado interno es ASSEMBLED/COMPLETED).",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "p12_pin": {
+                        "description": "PIN temporal para abrir el archivo P12.",
+                        "type": "string",
+                        "example": "X3kP9aQ1mZv7"
+                    },
+                    "p12_filename": {
+                        "type": "string",
+                        "example": "empresa_900400300.p12"
+                    },
+                    "download_url": {
+                        "description": "URL firmada temporal (24h) para descarga directa. Null si el disco no soporta URLs firmadas.",
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-05-20T18:00:00Z"
+                    }
+                },
+                "type": "object"
+            },
+            "ViafirmaCertificateRequest": {
+                "description": "Solicitud de certificado Viafirma (agregado del bounded context Viafirma Issuance)",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "example": 1
+                    },
+                    "certificate_request_id": {
+                        "type": "integer",
+                        "example": 42
+                    },
+                    "company_id": {
+                        "type": "integer",
+                        "example": 7
+                    },
+                    "requested_by_user_id": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "cod_request": {
+                        "description": "Código de solicitud Viafirma",
+                        "type": "string",
+                        "example": "PYJR5N4QC",
+                        "nullable": true
+                    },
+                    "public_id": {
+                        "description": "ID público Viafirma para URL de KYC",
+                        "type": "string",
+                        "example": "bd6eda8d0f2d",
+                        "nullable": true
+                    },
+                    "ra_code": {
+                        "type": "string",
+                        "example": "viafirmaco"
+                    },
+                    "profile_type": {
+                        "type": "string",
+                        "enum": [
+                            "FE-PJ",
+                            "FE-PN"
+                        ],
+                        "example": "FE-PJ"
+                    },
+                    "profile_type_label": {
+                        "type": "string",
+                        "example": "Persona Jurídica"
+                    },
+                    "identity_type": {
+                        "type": "string",
+                        "enum": [
+                            "IDC",
+                            "PAS"
+                        ],
+                        "example": "IDC"
+                    },
+                    "country_code": {
+                        "type": "string",
+                        "example": "CO"
+                    },
+                    "organization_type": {
+                        "type": "string",
+                        "enum": [
+                            "RM",
+                            "PROP",
+                            "RUNEOL",
+                            "RNT",
+                            "ESAL",
+                            "ESOL",
+                            "JUEGOS",
+                            "EXTRANJERAS"
+                        ],
+                        "example": "RM",
+                        "nullable": true
+                    },
+                    "validity_days": {
+                        "type": "integer",
+                        "example": 730
+                    },
+                    "internal_state": {
+                        "type": "string",
+                        "enum": [
+                            "DRAFT",
+                            "CSR_GENERATED",
+                            "SUBMITTED",
+                            "POLLING",
+                            "READY_TO_DOWNLOAD",
+                            "DOWNLOADED",
+                            "ASSEMBLED",
+                            "COMPLETED",
+                            "FAILED",
+                            "FAILED_RECOVERABLE",
+                            "EXPIRED"
+                        ],
+                        "example": "SUBMITTED"
+                    },
+                    "remote_status": {
+                        "type": "string",
+                        "example": "accreditation",
+                        "nullable": true
+                    },
+                    "is_terminal": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "is_failed": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "has_expired": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "csr_fingerprint": {
+                        "description": "SHA-256 hex del CSR",
+                        "type": "string",
+                        "example": "a1b2c3d4e5f6..."
+                    },
+                    "poll_attempts": {
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "submitted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "last_error_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_error_message": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -5159,7 +5741,11 @@
         },
         {
             "name": "Solicitudes de Certificado",
-            "description": "Gestión completa de solicitudes de certificados digitales (v1 - CAMERFIRMA)"
+            "description": "Gestión completa de solicitudes de certificados digitales (datos, listado, actualización, borrado)"
+        },
+        {
+            "name": "Emisión de Certificados",
+            "description": "Emisión agnóstica del proveedor (correo legacy / Viafirma RA PKCS#10 Zero-Touch / futuros). Cada solicitud de certificado puede dispararse, consultarse y descargarse desde aquí."
         },
         {
             "name": "Archivos",
@@ -5198,28 +5784,28 @@
             "description": "Configuración de encabezados de reportes"
         },
         {
-            "name": "v2 - Órdenes",
-            "description": "[v2] Compra de certificados PREPAID: crear orden y ejecutar pago WOMPI"
+            "name": "Órdenes",
+            "description": "Compra de certificados PREPAID: crear orden y ejecutar pago WOMPI"
         },
         {
-            "name": "v2 - Cupos Admin",
-            "description": "[v2] Gestión de cupos POSTPAID — solo administradores LOPEZSOFT"
+            "name": "Cupos Admin",
+            "description": "Gestión de cupos POSTPAID — solo administradores LOPEZSOFT"
         },
         {
-            "name": "v2 - Precios",
-            "description": "[v2] Consulta pública de tarifas por volumen (sin autenticación)"
+            "name": "Precios",
+            "description": "Consulta pública de tarifas por volumen (sin autenticación)"
         },
         {
-            "name": "v2 - Pagos Externos",
-            "description": "[v2] Webhooks entrantes de WOMPI (sin autenticación, firmados con HMAC-SHA256)"
+            "name": "Pagos Externos",
+            "description": "Webhooks entrantes de WOMPI (sin autenticación, firmados con HMAC-SHA256)"
         },
         {
-            "name": "v2 - Analíticas IA",
-            "description": "[v2] Pipeline OCR + IA: resultados de análisis, estadísticas y estado de proveedores"
+            "name": "Analíticas IA",
+            "description": "Pipeline OCR + IA: resultados de análisis, estadísticas y estado de proveedores"
         },
         {
-            "name": "v2 - Sistema",
-            "description": "[v2] Health check de servicios externos: WOMPI"
+            "name": "Sistema",
+            "description": "Health check de servicios externos: WOMPI, etc."
         }
     ]
 }

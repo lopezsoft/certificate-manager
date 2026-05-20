@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Certificate\CreateCertificateRequestFormRequest;
 use App\Http\Requests\Certificate\UpdateCertificateRequestFormRequest;
 use App\DTOs\CertificateRequestFiltersDTO;
-use App\Services\CertificateRequestMailService;
 use App\Services\CertificateRequestService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,7 +13,6 @@ class CertificateRequestController extends Controller
 {
     public function __construct(
         private readonly CertificateRequestService $service,
-        private readonly CertificateRequestMailService $mailService
     ) {}
 
     /**
@@ -185,30 +183,5 @@ class CertificateRequestController extends Controller
     public function deleteCertificateRequest($id): JsonResponse
     {
         return $this->service->deleteCertificateRequest($id);
-    }
-
-    /**
-     * @OA\Post(
-     *     path="/certificate-request/{id}/send-mail",
-     *     tags={"Solicitudes de Certificado"},
-     *     summary="Enviar solicitud por correo electrónico",
-     *     description="Envía la solicitud al proveedor y actualiza el estado a PROCESSING. Límite: 5 envíos/minuto.",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\RequestBody(
-     *         @OA\JsonContent(
-     *             schema="SendMailBody",
-     *             @OA\Property(property="comments", type="string", nullable=true)
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Correo enviado exitosamente", @OA\JsonContent(ref="#/components/schemas/ApiSuccessResponse")),
-     *     @OA\Response(response=400, description="Solicitud no encontrada o sin archivos adjuntos"),
-     *     @OA\Response(response=429, description="Demasiados envíos"),
-     *     @OA\Response(response=401, description="No autenticado")
-     * )
-     */
-    public function sendMail(Request $request, $id): JsonResponse
-    {
-        return $this->mailService->sendMail($request, $id);
     }
 }

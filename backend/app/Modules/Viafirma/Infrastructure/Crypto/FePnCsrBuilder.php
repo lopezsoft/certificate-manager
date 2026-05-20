@@ -9,17 +9,17 @@ use App\Modules\Viafirma\Domain\Enums\CertificateProfile;
 use App\Modules\Viafirma\Domain\Exceptions\CsrBuildException;
 
 /**
- * Builder de CSR para perfil FE-PN (Persona Natural) — 9 atributos.
+ * Builder de CSR para perfil FE-PN (Persona Natural) — 7 atributos.
  *
- *  C, ST, L, STREET, SERIALNUMBER (cédula), E, GN, SN
+ *  C, STREET, SERIALNUMBER (cédula), E, GN, SN, CN
  *
- *  Nótese: NO incluye O ni OU.
+ *  Nótese: NO incluye O, OU, L ni ST (API v3.4.53).
  */
 final class FePnCsrBuilder extends AbstractOpenSslCsrBuilder
 {
     protected function expectedAttributeCount(): int
     {
-        return 9;
+        return 7;
     }
 
     protected function validate(CsrInputDto $input): void
@@ -31,19 +31,24 @@ final class FePnCsrBuilder extends AbstractOpenSslCsrBuilder
         }
 
         $this->assertNotBlank($input->country, 'C');
-        $this->assertNotBlank($input->state, 'ST');
-        $this->assertNotBlank($input->locality, 'L');
         $this->assertNotBlank($input->street, 'STREET');
         $this->assertNotBlank($input->serialNumber, 'SERIALNUMBER (cédula)');
         $this->assertNotBlank($input->email, 'E');
         $this->assertNotBlank($input->givenName, 'GN');
         $this->assertNotBlank($input->surname, 'SN');
 
+        // API v3.4.53: FE-PN no admite O, OU, L ni ST en el CSR.
         if ($input->organization !== null && trim($input->organization) !== '') {
             throw new CsrBuildException("El perfil FE-PN no admite el atributo 'O' (organización).");
         }
         if ($input->organizationUnit !== null && trim($input->organizationUnit) !== '') {
             throw new CsrBuildException("El perfil FE-PN no admite el atributo 'OU' (unidad organizativa).");
+        }
+        if ($input->locality !== null && trim($input->locality) !== '') {
+            throw new CsrBuildException("El perfil FE-PN no admite el atributo 'L' (localidad) — API v3.4.53.");
+        }
+        if ($input->state !== null && trim($input->state) !== '') {
+            throw new CsrBuildException("El perfil FE-PN no admite el atributo 'ST' (departamento) — API v3.4.53.");
         }
 
         if (strlen($input->country) !== 2) {
@@ -53,20 +58,14 @@ final class FePnCsrBuilder extends AbstractOpenSslCsrBuilder
 
     protected function dn(CsrInputDto $input): array
     {
-        // Notar: aquí se devuelve el "DN visible" — 9 atributos contables.
-        // El campo `STREET` se mantiene como atributo separado.
+        // API v3.4.53: 7 atributos (sin ST, L, O, OU)
         return [
             'C'            => $input->country,
-            'ST'           => $input->state,
-            'L'            => $input->locality,
             'street'       => $input->street,
             'serialNumber' => $input->serialNumber,
             'emailAddress' => $input->email,
             'GN'           => $input->givenName,
             'SN'           => $input->surname,
-            // 9º atributo: CN derivado del nombre completo (Viafirma lo exige aunque
-            // el doc V1.1 lo mencione implícitamente vía dnPattern; queda parametrizable
-            // por validate() del dnPattern en Sprint 2 — V-211).
             'CN'           => trim($input->givenName . ' ' . $input->surname),
         ];
     }

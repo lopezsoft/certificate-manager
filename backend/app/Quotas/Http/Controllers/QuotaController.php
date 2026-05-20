@@ -20,11 +20,11 @@ class QuotaController extends Controller
     ) {}
 
     /**
-     * GET /v2/admin/quotas — Listar todos los cupos
+     * GET /admin/quotas — Listar todos los cupos
      *
      * @OA\Get(
-     *     path="/v2/admin/quotas",
-     *     tags={"v2 - Cupos Admin"},
+     *     path="/admin/quotas",
+     *     tags={"Cupos Admin"},
      *     summary="Listar todos los cupos (admin)",
      *     security={{"bearerAuth":{}}},
      *     @OA\Response(response=200, description="Lista paginada de cupos",
@@ -43,11 +43,11 @@ class QuotaController extends Controller
     }
 
     /**
-     * POST /v2/admin/quotas — Asignar cupo POSTPAID a empresa
+     * POST /admin/quotas — Asignar cupo POSTPAID a empresa
      *
      * @OA\Post(
-     *     path="/v2/admin/quotas",
-     *     tags={"v2 - Cupos Admin"},
+     *     path="/admin/quotas",
+     *     tags={"Cupos Admin"},
      *     summary="Asignar cupo POSTPAID a una empresa",
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(required=true, @OA\JsonContent(
@@ -88,11 +88,11 @@ class QuotaController extends Controller
     }
 
     /**
-     * GET /v2/admin/quotas/{id} — Ver detalle de un cupo
+     * GET /admin/quotas/{id} — Ver detalle de un cupo
      *
      * @OA\Get(
-     *     path="/v2/admin/quotas/{id}",
-     *     tags={"v2 - Cupos Admin"},
+     *     path="/admin/quotas/{id}",
+     *     tags={"Cupos Admin"},
      *     summary="Ver detalle de un cupo",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
@@ -110,11 +110,11 @@ class QuotaController extends Controller
     }
 
     /**
-     * GET /v2/admin/quotas/company/{id} — Estado de cupos de una empresa
+     * GET /admin/quotas/company/{id} — Estado de cupos de una empresa
      *
      * @OA\Get(
-     *     path="/v2/admin/quotas/company/{id}",
-     *     tags={"v2 - Cupos Admin"},
+     *     path="/admin/quotas/company/{id}",
+     *     tags={"Cupos Admin"},
      *     summary="Estado y historial de cupos de una empresa",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, description="ID de la empresa", @OA\Schema(type="integer"), example=10),

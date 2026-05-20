@@ -165,15 +165,50 @@ return [
     'file_upload' => [
         // Tamaño máximo por archivo individual en MB
         'max_file_size' => env('CERTIFICATE_MAX_FILE_SIZE', 7),
-        
+
         // Tamaño máximo total de todos los archivos en MB
         'max_total_size' => env('CERTIFICATE_MAX_TOTAL_SIZE', 10),
-        
+
         // Número máximo de archivos permitidos
         'max_files' => env('CERTIFICATE_MAX_FILES', 3),
-        
+
         // Número mínimo de archivos requeridos
         'min_files' => env('CERTIFICATE_MIN_FILES', 2),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Issuance Providers (provider-agnostic)
+    |--------------------------------------------------------------------------
+    |
+    | Configuración del subsistema agnóstico de emisión de certificados.
+    | El sistema soporta múltiples proveedores que implementan el contrato
+    | App\Contracts\CertificateIssuanceProvider. La elección se resuelve en
+    | runtime por App\Services\Certificate\CertificateIssuanceProviderFactory.
+    |
+    | Ver: docs/2026-05-19-15-00-PLAN-UNIFICACION-API-V1-Y-PROVEEDOR-AGNOSTICO-VIAFIRMA.md
+    |
+    */
+    'issuance' => [
+        // Proveedor por defecto cuando no hay override por payload ni por empresa.
+        // Valores soportados de fábrica: 'mail', 'viafirma'.
+        'default_provider' => env('CERTIFICATE_ISSUANCE_PROVIDER', 'mail'),
+
+        // Lista blanca de proveedores resolubles por el factory.
+        'providers' => [
+            'mail'     => \App\Services\Certificate\Providers\MailIssuanceProvider::class,
+            'viafirma' => \App\Services\Certificate\Providers\ViafirmaIssuanceProvider::class,
+        ],
+
+        // Permitir que un caller con rol admin fuerce un proveedor por payload.
+        'allow_payload_override' => env('CERTIFICATE_ISSUANCE_ALLOW_OVERRIDE', false),
+
+        // Canal de log dedicado (vacío = canal por defecto del stack).
+        'log_channel' => env('CERTIFICATE_ISSUANCE_LOG_CHANNEL', ''),
+
+        // Compat: mientras se completa la migración a /issue, el alias legacy
+        // /send-mail sigue respondiendo (con header Deprecation).
+        'expose_legacy_send_mail' => env('CERTIFICATE_EXPOSE_LEGACY_SEND_MAIL', true),
     ],
 
 ];

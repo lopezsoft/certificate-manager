@@ -28,8 +28,8 @@ class OrderController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/v2/orders",
-     *     tags={"v2 - Órdenes"},
+     *     path="/orders",
+     *     tags={"Órdenes"},
      *     summary="Listar órdenes de compra de la empresa",
      *     security={{"bearerAuth":{}}},
      *     @OA\Response(response=200, description="Lista paginada de órdenes",
@@ -49,8 +49,8 @@ class OrderController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/v2/orders",
-     *     tags={"v2 - Órdenes"},
+     *     path="/orders",
+     *     tags={"Órdenes"},
      *     summary="Crear orden de compra de certificados",
      *     description="Crea una orden PENDING y devuelve los datos necesarios para el widget de pago.",
      *     security={{"bearerAuth":{}}},
@@ -110,8 +110,8 @@ class OrderController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/v2/orders/{id}",
-     *     tags={"v2 - Órdenes"},
+     *     path="/orders/{id}",
+     *     tags={"Órdenes"},
      *     summary="Ver detalle de una orden",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
@@ -132,8 +132,8 @@ class OrderController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/v2/orders/{id}/pay",
-     *     tags={"v2 - Órdenes"},
+     *     path="/orders/{id}/pay",
+     *     tags={"Órdenes"},
      *     summary="Ejecutar pago de una orden",
      *     description="Crea la transacción de pago. El estado final llega asíncronamente por webhook.",
      *     security={{"bearerAuth":{}}},

@@ -38,7 +38,7 @@ use Psr\Log\LoggerInterface;
  *   4) Construir el CSR con el builder correspondiente (Strategy).
  *   5) Validar CSR contra `dnPattern` del perfil (V-211).
  *   6) Guardar la llave privada cifrada en el KeyVault.
- *   7) `POST /request/fromCSR` → obtener codRequest + publicId.
+ *   7) `POST /request/fromCSR` → obtener codRequest + publicId (ambos directos, API v3.4.53).
  *   8) Persistir el agregado `viafirma_certificate_requests` (estado SUBMITTED).
  *   9) Auditoría: `change_histories` + `viafirma_status_history`.
  *  10) Despachar el primer poll job (Sprint 3).
@@ -289,12 +289,12 @@ final class IssueCertificateUseCase
             );
         }
 
-        // FE_PN
+        // FE_PN — API v3.4.53: sin O, OU, L, ST en el CSR
         return new CsrInputDto(
             profile:          $profile,
             country:          $countryCode,
-            state:            mb_strtoupper($department),
-            locality:         mb_strtoupper($cityName),
+            state:            null,     // API v3.4.53: FE-PN no lleva ST
+            locality:         null,     // API v3.4.53: FE-PN no lleva L
             street:           $street,
             serialNumber:     (string) ($cr->document_number ?? $cr->dni),
             email:            (string) ($cr->email ?? $company->email ?? $cmd->emailCertificate),

@@ -71,15 +71,17 @@ final class DownloadP7bJob implements ShouldQueue, ShouldBeUnique
             return;
         }
 
-        if (empty($entity->cod_request)) {
-            $logger->warning('viafirma.download.no_cod_request', ['id' => $entity->id]);
+        // Guard: API v3.4.53 usa publicId para descargar el P7B
+        if (empty($entity->public_id)) {
+            $logger->warning('viafirma.download.no_public_id', ['id' => $entity->id]);
             return;
         }
 
-        $logger->info('viafirma.download.start', ['id' => $entity->id, 'cod' => $entity->cod_request]);
+        $logger->info('viafirma.download.start', ['id' => $entity->id, 'publicId' => $entity->public_id]);
 
         try {
-            $p7bBinary = $client->downloadP7b($entity->cod_request);
+            // API v3.4.53: downloadCertificateServlet?req={publicId}
+            $p7bBinary = $client->downloadP7b($entity->public_id);
         } catch (TransientHttpException $e) {
             $logger->warning('viafirma.download.transient_error', [
                 'id'      => $entity->id,

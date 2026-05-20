@@ -85,7 +85,14 @@ final class GuzzleViafirmaClient implements ViafirmaClient
             );
         }
 
-        $publicId      = isset($decoded['publicId']) ? (string) $decoded['publicId'] : null;
+        // API v3.4.53: publicId es OBLIGATORIO en la respuesta del POST /request/fromCSR.
+        $publicId = (string) ($decoded['publicId'] ?? $decoded['public_id'] ?? '');
+        if ($publicId === '') {
+            throw new ViafirmaClientException(
+                "Respuesta de submitCsr sin `publicId` para codRequest={$codRequest}: " . json_encode($decoded)
+            );
+        }
+
         $initialStatus = isset($decoded['status']) ? (string) $decoded['status'] : null;
 
         $this->logger->info('viafirma.submitCsr.response', [
@@ -102,25 +109,9 @@ final class GuzzleViafirmaClient implements ViafirmaClient
         );
     }
 
-    public function getPublicId(string $codRequest): string
-    {
-        if ($codRequest === '') {
-            throw new ViafirmaClientException('codRequest no puede ser vacío.');
-        }
-
-        $url = $this->urlFor('/request/' . rawurlencode($codRequest) . '/publicId');
-        $this->logger->info('viafirma.getPublicId.request', ['codRequest' => $codRequest, 'url' => $url]);
-
-        $decoded = $this->send('GET', $url);
-
-        $publicId = (string) ($decoded['publicId'] ?? $decoded['public_id'] ?? '');
-        if ($publicId === '') {
-            throw new ViafirmaClientException(
-                "Respuesta de getPublicId sin `publicId` para codRequest={$codRequest}: " . json_encode($decoded)
-            );
-        }
-        return $publicId;
-    }
+    // NOTA: getPublicId() ELIMINADO — API v3.4.53 devuelve publicId directamente
+    // en la respuesta de POST /request/fromCSR. Ya no existe el endpoint
+    // GET /request/{codRequest}/publicId.
 
     public function getStatus(string $codRequest): \App\Modules\Viafirma\Application\DTOs\StatusResultDto
     {
@@ -163,10 +154,15 @@ final class GuzzleViafirmaClient implements ViafirmaClient
         );
     }
 
-    public function downloadP7b(string $codRequest): string
+    /**
+     * API v3.4.53: descarga el P7B vía `downloadCertificateServlet?req={publicId}`.
+     *
+     * Reemplaza la URL legacy `/request/{codRequest}/download/pkcs7`.
+     */
+    public function downloadP7b(string $publicId): string
     {
-        if ($codRequest === '') {
-            throw new ViafirmaClientException('codRequest no puede ser vacío para descarga P7B.');
+        if ($publicId === '') {
+            throw new ViafirmaClientException('publicId no puede ser vacío para descarga P7B.');
         }
 
         $downloadBase = rtrim((string) config('viafirma.download_url'), '/');
@@ -176,18 +172,20 @@ final class GuzzleViafirmaClient implements ViafirmaClient
             );
         }
 
-        // URL de descarga: {download_url}/request/{codRequest}/download/pkcs7
-        $url = $downloadBase . '/request/' . rawurlencode($codRequest) . '/download/pkcs7';
+        // API v3.4.53: {download_url}/downloadCertificateServlet?req={publicId}
+        $url         = $downloadBase . '/downloadCertificateServlet';
+        $queryParams = ['req' => $publicId];
 
-        $this->logger->info('viafirma.downloadP7b.request', ['codRequest' => $codRequest, 'url' => $url]);
+        $this->logger->info('viafirma.downloadP7b.request', ['publicId' => $publicId, 'url' => $url]);
 
         $authHeader = $this->signer->buildAuthorizationHeader(
             method:      'GET',
             url:         $url,
-            queryParams: [],
+            queryParams: $queryParams,
         );
 
         $options = [
+            'query'   => $queryParams,
             'headers' => [
                 'Authorization' => $authHeader,
                 'Accept'        => 'application/x-pkcs7-certificates, application/octet-stream',
@@ -211,7 +209,7 @@ final class GuzzleViafirmaClient implements ViafirmaClient
                 );
             }
             throw new ViafirmaClientException(
-                "Viafirma respondió {$status} en descarga P7B para codRequest={$codRequest}",
+                "Viafirma respondió {$status} en descarga P7B para publicId={$publicId}",
                 $status,
                 $e,
             );
@@ -220,12 +218,12 @@ final class GuzzleViafirmaClient implements ViafirmaClient
         $binary = (string) $response->getBody();
 
         if ($binary === '') {
-            throw new ViafirmaClientException("Descarga P7B vacía para codRequest={$codRequest}.");
+            throw new ViafirmaClientException("Descarga P7B vacía para publicId={$publicId}.");
         }
 
         $contentType = $response->getHeaderLine('Content-Type');
         $this->logger->info('viafirma.downloadP7b.response', [
-            'codRequest'  => $codRequest,
+            'publicId'    => $publicId,
             'size_bytes'  => strlen($binary),
             'contentType' => $contentType,
         ]);

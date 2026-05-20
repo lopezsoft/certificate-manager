@@ -27,16 +27,12 @@ interface ViafirmaClient
     /**
      * POST /request/fromCSR
      *
-     * @throws \App\Modules\Viafirma\Domain\Exceptions\ViafirmaClientException
-     */
-    public function submitCsr(SubmitCsrInputDto $input): SubmitCsrResultDto;
-
-    /**
-     * GET /request/{codRequest}/publicId
+     * A partir de la API v3.4.53, la respuesta 200 OK devuelve directamente
+     * `codRequest` y `publicId` (ambos obligatorios).
      *
      * @throws \App\Modules\Viafirma\Domain\Exceptions\ViafirmaClientException
      */
-    public function getPublicId(string $codRequest): string;
+    public function submitCsr(SubmitCsrInputDto $input): SubmitCsrResultDto;
 
     /**
      * GET /request/{codRequest}/status
@@ -49,14 +45,15 @@ interface ViafirmaClient
     /**
      * Descarga el certificado P7B emitido.
      *
-     * Usa la download_url (distinta de la API base) para descargar
-     * el bundle de certificados en formato DER/P7B.
+     * API v3.4.53: usa `downloadCertificateServlet?req={publicId}` (URL de descarga).
+     * Reemplaza el antiguo `/request/{codRequest}/download/pkcs7`.
      *
+     * @param string $publicId Identificador público devuelto por `submitCsr()`.
      * @return string Contenido binario del .p7b (DER).
      *
      * @throws \App\Modules\Viafirma\Domain\Exceptions\ViafirmaClientException
      * @throws \App\Modules\Viafirma\Domain\Exceptions\TransientHttpException
      */
-    public function downloadP7b(string $codRequest): string;
+    public function downloadP7b(string $publicId): string;
 }
 
