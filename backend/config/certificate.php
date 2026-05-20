@@ -206,9 +206,6 @@ return [
         // Canal de log dedicado (vacío = canal por defecto del stack).
         'log_channel' => env('CERTIFICATE_ISSUANCE_LOG_CHANNEL', ''),
 
-        // Compat: mientras se completa la migración a /issue, el alias legacy
-        // /send-mail sigue respondiendo (con header Deprecation).
-        'expose_legacy_send_mail' => env('CERTIFICATE_EXPOSE_LEGACY_SEND_MAIL', true),
     ],
 
 ];

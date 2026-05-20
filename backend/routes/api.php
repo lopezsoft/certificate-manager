@@ -73,12 +73,6 @@ Route::group(['prefix' => 'v1'], function () {
                 Route::get('/{id}/issuance/download/file', 'downloadFile')
                     ->name('v1.certificate-request.issuance.download.file');
 
-                // Alias deprecado — sólo si la feature flag de compat sigue activa.
-                if ((bool) config('certificate.issuance.expose_legacy_send_mail', true)) {
-                    Route::post('/{id}/send-mail', 'sendMail')
-                        ->middleware('throttle:send-mail')
-                        ->name('v1.certificate-request.send-mail.deprecated');
-                }
             });
         });
 
@@ -177,11 +171,6 @@ Route::group(['prefix' => 'v1'], function () {
         Route::get('health', \App\Http\Controllers\System\HealthCheckController::class)
             ->name('v1.health');
     });
-});
-
-// ── API v2 (Deprecated): redirects 308 + 410 para /certificates/viafirma ─
-Route::group(['prefix' => 'v2'], function () {
-    require __DIR__ . '/v2-deprecated.php';
 });
 
 // ── Webhooks externos (WOMPI) — sin auth:api, firma HMAC ─────────────────

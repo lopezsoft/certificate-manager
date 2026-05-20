@@ -80,64 +80,6 @@ class CertificateIssuanceController extends Controller
         ], $result->httpStatus);
     }
 
-    /**
-     * Alias deprecado del endpoint legacy /send-mail.
-     * Fuerza `provider=mail` independientemente del default global.
-     *
-     * @OA\Post(
-     *     path="/certificate-request/{id}/send-mail",
-     *     operationId="certificateRequestSendMailDeprecated",
-     *     tags={"Emisión de Certificados"},
-     *     deprecated=true,
-     *     summary="[DEPRECATED] Enviar solicitud por correo electrónico",
-     *     description="Alias de compatibilidad con el flujo legacy. Internamente delega al proveedor 'mail'. Será eliminado tras el sunset window (header Sunset). Migrar a POST /certificate-request/{id}/issue.",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\RequestBody(
-     *         required=false,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="comments", type="string", nullable=true, example="Solicitud reprocesada")
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Correo enviado", @OA\JsonContent(ref="#/components/schemas/IssuanceResponse")),
-     *     @OA\Response(response=400, description="No fue posible enviar la solicitud", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
-     *     @OA\Response(response=401, description="No autenticado")
-     * )
-     */
-    public function sendMail(IssueCertificateRequest $request, int $id): JsonResponse
-    {
-        $dto = new IssuanceRequest(
-            certificateRequestId:  $id,
-            requestedByUserId:     $request->user()?->id,
-            emailCertificate:      $request->input('email_certificate'),
-            providerHint:          'mail',
-            comments:              $request->input('comments'),
-        );
-
-        try {
-            // En este alias siempre permitimos el hint=mail (no es un override
-            // a un proveedor sensible). Bypaseamos la verificación de admin.
-            $provider = app(\App\Services\Certificate\CertificateIssuanceProviderFactory::class)
-                ->make('mail');
-            $result = $provider->issue($dto);
-        } catch (CertificateIssuanceException $e) {
-            return response()->json([
-                'success'  => false,
-                'message'  => $e->getMessage(),
-                'provider' => $e->providerName,
-            ], $e->httpStatus)->header('Deprecation', 'true')->header('Sunset', 'Wed, 02 Jul 2026 00:00:00 GMT');
-        }
-
-        return response()
-            ->json([
-                'success' => $result->isSuccess(),
-                'message' => $result->message,
-                'data'    => $result->toArray(),
-            ], $result->httpStatus)
-            ->header('Deprecation', 'true')
-            ->header('Sunset', 'Wed, 02 Jul 2026 00:00:00 GMT')
-            ->header('Link', '</api/v1/certificate-request/' . $id . '/issue>; rel="successor-version"');
-    }
 
     /**
      * Consulta el estado de emisión usando el proveedor activo.
