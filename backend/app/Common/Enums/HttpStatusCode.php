@@ -19,8 +19,11 @@ enum HttpStatusCode: int
     case PAYMENT_REQUIRED = 402;
     case FORBIDDEN = 403;
     case NOT_FOUND = 404;
+    case CONFLICT = 409;
+    case GONE = 410;
     case UNPROCESSABLE_ENTITY = 422;
     case INTERNAL_SERVER_ERROR = 500;
+    case BAD_GATEWAY = 502;
 
     /**
      * Descripción legible del estado HTTP.
@@ -35,8 +38,11 @@ enum HttpStatusCode: int
             self::PAYMENT_REQUIRED      => 'Payment Required',
             self::FORBIDDEN             => 'Forbidden',
             self::NOT_FOUND             => 'Not Found',
+            self::CONFLICT              => 'Conflict',
+            self::GONE                  => 'Gone',
             self::UNPROCESSABLE_ENTITY  => 'Unprocessable Entity',
             self::INTERNAL_SERVER_ERROR => 'Internal Server Error',
+            self::BAD_GATEWAY           => 'Bad Gateway',
         };
     }
 

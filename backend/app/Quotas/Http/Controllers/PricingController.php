@@ -2,8 +2,11 @@
 
 namespace App\Quotas\Http\Controllers;
 
+use App\Common\HttpResponseMessages;
+use App\Common\MessageExceptionResponse;
 use App\Http\Controllers\Controller;
 use App\Quotas\Services\PricingService;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -36,32 +39,35 @@ class PricingController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $quantity = $request->query('quantity');
-        $vigencia = $request->query('vigencia');
+        try {
+            $quantity = $request->query('quantity');
+            $vigencia = $request->query('vigencia');
 
-        if ($quantity !== null && $vigencia !== null) {
-            $validated = $request->validate([
-                'quantity' => ['required', 'integer', 'min:1'],
-                'vigencia' => ['required', 'integer', 'in:1,2'],
-            ]);
+            if ($quantity !== null && $vigencia !== null) {
+                $validated = $request->validate([
+                    'quantity' => ['required', 'integer', 'min:1'],
+                    'vigencia' => ['required', 'integer', 'in:1,2'],
+                ]);
 
-            try {
                 $price = $this->pricingService->calculatePrice(
                     (int) $validated['quantity'],
                     (int) $validated['vigencia'],
                 );
 
-                return response()->json([
-                    'data' => $price,
+                return HttpResponseMessages::getResponse([
+                    'message'     => 'Precio calculado exitosamente',
+                    'dataRecords' => $price,
                 ]);
-            } catch (\InvalidArgumentException $e) {
-                return response()->json(['message' => $e->getMessage()], 422);
             }
-        }
 
-        return response()->json([
-            'data' => $this->pricingService->getActiveTiers(),
-        ]);
+            return HttpResponseMessages::getResponse([
+                'message'     => 'Tarifas obtenidas exitosamente',
+                'dataRecords' => $this->pricingService->getActiveTiers(),
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return HttpResponseMessages::getResponse422(['message' => $e->getMessage()]);
+        } catch (Exception $e) {
+            return MessageExceptionResponse::response($e);
+        }
     }
 }
-

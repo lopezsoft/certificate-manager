@@ -106,6 +106,41 @@ class HttpResponseMessages
     }
 
     /**
+     * Respuesta 409 Conflict.
+     *
+     * @param array<string, mixed> $data
+     */
+    public static function getResponse409(array $data = []): JsonResponse
+    {
+        return self::buildResponse($data, HttpStatusCode::CONFLICT);
+    }
+
+    /**
+     * Respuesta 502 Bad Gateway.
+     *
+     * @param array<string, mixed> $data
+     */
+    public static function getResponse502(array $data = []): JsonResponse
+    {
+        return self::buildResponse($data, HttpStatusCode::BAD_GATEWAY);
+    }
+
+    /**
+     * Respuesta con código HTTP dinámico (resuelto desde el enum).
+     *
+     * Útil cuando el código llega como int desde una excepción de negocio.
+     * Si el código no existe en el enum, se responde con 500.
+     *
+     * @param array<string, mixed> $data
+     */
+    public static function getResponseForStatus(int $statusCode, array $data = []): JsonResponse
+    {
+        $status = HttpStatusCode::tryFrom($statusCode) ?? HttpStatusCode::INTERNAL_SERVER_ERROR;
+
+        return self::buildResponse($data, $status);
+    }
+
+    /**
      * Construye la respuesta JSON estandarizada.
      *
      * @param array<string, mixed> $data

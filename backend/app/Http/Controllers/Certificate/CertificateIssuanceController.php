@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Certificate;
 
+use App\Common\HttpResponseMessages;
+use App\Common\MessageExceptionResponse;
 use App\DTOs\Certificate\IssuanceRequest;
 use App\Exceptions\Certificate\CertificateIssuanceException;
 use App\Http\Controllers\Controller;
@@ -11,6 +13,7 @@ use App\Http\Requests\Certificate\IssueCertificateRequest;
 use App\Modules\Viafirma\Application\Services\ViafirmaDownloadService;
 use App\Services\Certificate\CertificateIssuanceOrchestrator;
 use App\Services\Certificate\Providers\ViafirmaIssuanceProvider;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -61,25 +64,23 @@ class CertificateIssuanceController extends Controller
      */
     public function issue(IssueCertificateRequest $request, int $id): JsonResponse
     {
-        $dto = IssuanceRequest::fromRequest($request, $id);
-
         try {
+            $dto    = IssuanceRequest::fromRequest($request, $id);
             $result = $this->orchestrator->dispatch($dto, $request->callerCanOverrideProvider());
+
+            return HttpResponseMessages::getResponseForStatus($result->httpStatus, [
+                'message'  => $result->message,
+                'data'     => $result->toArray(),
+            ]);
         } catch (CertificateIssuanceException $e) {
-            return response()->json([
-                'success'  => false,
+            return HttpResponseMessages::getResponseForStatus($e->httpStatus, [
                 'message'  => $e->getMessage(),
                 'provider' => $e->providerName,
-            ], $e->httpStatus);
+            ]);
+        } catch (Exception $e) {
+            return MessageExceptionResponse::response($e);
         }
-
-        return response()->json([
-            'success' => $result->isSuccess(),
-            'message' => $result->message,
-            'data'    => $result->toArray(),
-        ], $result->httpStatus);
     }
-
 
     /**
      * Consulta el estado de emisión usando el proveedor activo.
@@ -101,19 +102,19 @@ class CertificateIssuanceController extends Controller
     {
         try {
             $result = $this->orchestrator->status($id, $this->callerIsAdmin($request));
+
+            return HttpResponseMessages::getResponse([
+                'message' => $result->message,
+                'data'    => $result->toArray(),
+            ]);
         } catch (CertificateIssuanceException $e) {
-            return response()->json([
-                'success'  => false,
+            return HttpResponseMessages::getResponseForStatus($e->httpStatus, [
                 'message'  => $e->getMessage(),
                 'provider' => $e->providerName,
-            ], $e->httpStatus);
+            ]);
+        } catch (Exception $e) {
+            return MessageExceptionResponse::response($e);
         }
-
-        return response()->json([
-            'success' => $result->isSuccess(),
-            'message' => $result->message,
-            'data'    => $result->toArray(),
-        ], $result->httpStatus);
     }
 
     /**
@@ -137,16 +138,19 @@ class CertificateIssuanceController extends Controller
      */
     public function download(Request $request, int $id): JsonResponse
     {
-        $provider = $this->orchestrator->providerFor($id, $this->callerIsAdmin($request));
+        try {
+            $provider = $this->orchestrator->providerFor($id, $this->callerIsAdmin($request));
 
-        if ($provider->name() !== ViafirmaIssuanceProvider::NAME) {
-            return response()->json([
-                'success' => false,
-                'message' => "El proveedor '{$provider->name()}' no soporta descarga binaria.",
-            ], 409);
+            if ($provider->name() !== ViafirmaIssuanceProvider::NAME) {
+                return HttpResponseMessages::getResponse409([
+                    'message' => "El proveedor '{$provider->name()}' no soporta descarga binaria.",
+                ]);
+            }
+
+            return $this->viafirmaDownload->metadataFor($id, $request->user()?->id);
+        } catch (Exception $e) {
+            return MessageExceptionResponse::response($e);
         }
-
-        return $this->viafirmaDownload->metadataFor($id, $request->user()?->id);
     }
 
     /**
@@ -172,16 +176,19 @@ class CertificateIssuanceController extends Controller
      */
     public function downloadFile(Request $request, int $id): StreamedResponse|JsonResponse
     {
-        $provider = $this->orchestrator->providerFor($id, $this->callerIsAdmin($request));
+        try {
+            $provider = $this->orchestrator->providerFor($id, $this->callerIsAdmin($request));
 
-        if ($provider->name() !== ViafirmaIssuanceProvider::NAME) {
-            return response()->json([
-                'success' => false,
-                'message' => "El proveedor '{$provider->name()}' no soporta descarga binaria.",
-            ], 409);
+            if ($provider->name() !== ViafirmaIssuanceProvider::NAME) {
+                return HttpResponseMessages::getResponse409([
+                    'message' => "El proveedor '{$provider->name()}' no soporta descarga binaria.",
+                ]);
+            }
+
+            return $this->viafirmaDownload->streamFor($id, $request->user()?->id);
+        } catch (Exception $e) {
+            return MessageExceptionResponse::response($e);
         }
-
-        return $this->viafirmaDownload->streamFor($id, $request->user()?->id);
     }
 
     private function callerIsAdmin(Request $request): bool
@@ -196,4 +203,3 @@ class CertificateIssuanceController extends Controller
         return (bool) ($user->is_admin ?? false);
     }
 }
-
