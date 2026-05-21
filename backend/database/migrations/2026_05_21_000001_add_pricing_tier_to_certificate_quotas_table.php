@@ -7,18 +7,36 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Tabla pivote 3NF: asigna rangos de precios a empresas.
+ * Agrega pricing_tier_id a certificate_quotas y elimina company_quota_assignments.
  *
- * Une company + pricing_tier + cuota asignada + tipo de cupo.
- * Cada empresa puede tener una asignación activa a la vez.
+ * Unifica el modelo de cuotas: certificate_quotas es la única tabla de cupos.
+ * La columna pricing_tier_id vincula cada cupo con su rango de precio.
+ *
+ * Ejecución segura (individual):
+ * php artisan migrate --path=database/migrations/2026_05_21_000001_add_pricing_tier_to_certificate_quotas_table.php
  */
 return new class extends Migration
 {
     public function up(): void
     {
+        // 1. Agregar FK pricing_tier_id a certificate_quotas
+        Schema::table('certificate_quotas', function (Blueprint $table) {
+            $table->foreignId('pricing_tier_id')
+                  ->nullable()
+                  ->after('company_id')
+                  ->constrained('pricing_tiers')
+                  ->nullOnDelete();
+        });
+
+        // 2. Eliminar tabla huérfana (nunca tuvo datos)
+        Schema::dropIfExists('company_quota_assignments');
+    }
+
+    public function down(): void
+    {
+        // 1. Restaurar company_quota_assignments
         Schema::create('company_quota_assignments', function (Blueprint $table) {
             $table->id();
-            // companies.id es bigint SIGNED (esquema legacy)
             $table->bigInteger('company_id');
             $table->foreign('company_id')
                   ->references('id')->on('companies')
@@ -41,13 +59,13 @@ return new class extends Migration
                   ->constrained('users')
                   ->nullOnDelete();
             $table->timestamps();
-
             $table->index(['company_id', 'is_active']);
         });
-    }
 
-    public function down(): void
-    {
-        Schema::dropIfExists('company_quota_assignments');
+        // 2. Quitar pricing_tier_id de certificate_quotas
+        Schema::table('certificate_quotas', function (Blueprint $table) {
+            $table->dropForeign(['pricing_tier_id']);
+            $table->dropColumn('pricing_tier_id');
+        });
     }
 };

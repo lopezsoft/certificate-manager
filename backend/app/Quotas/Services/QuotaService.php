@@ -137,10 +137,12 @@ class QuotaService
         Carbon $start,
         Carbon $end,
         int    $adminId,
-        string $notes = ''
+        string $notes = '',
+        ?int   $pricingTierId = null,
     ): CertificateQuota {
         return CertificateQuota::create([
             'company_id'         => $companyId,
+            'pricing_tier_id'    => $pricingTierId,
             'allocated_quantity' => $quantity,
             'used_quantity'      => 0,
             'period_start'       => $start->toDateString(),

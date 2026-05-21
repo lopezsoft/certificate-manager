@@ -53,6 +53,7 @@ class QuotaController extends Controller
      *     @OA\RequestBody(required=true, @OA\JsonContent(
      *         required={"company_id","quantity","period_start","period_end"},
      *         @OA\Property(property="company_id", type="integer", example=10),
+     *         @OA\Property(property="pricing_tier_id", type="integer", nullable=true, example=2, description="Rango de precio asociado (FK a pricing_tiers)"),
      *         @OA\Property(property="quantity", type="integer", minimum=1, example=50),
      *         @OA\Property(property="period_start", type="string", format="date", example="2026-05-01"),
      *         @OA\Property(property="period_end", type="string", format="date", example="2026-05-31"),
@@ -68,23 +69,25 @@ class QuotaController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'company_id'    => ['required', 'integer', 'exists:companies,id'],
-            'quantity'      => ['required', 'integer', 'min:1'],
-            'period_start'  => ['required', 'date'],
-            'period_end'    => ['required', 'date', 'after:period_start'],
-            'notes'         => ['nullable', 'string', 'max:500'],
+            'company_id'       => ['required', 'integer', 'exists:companies,id'],
+            'pricing_tier_id'  => ['nullable', 'integer', 'exists:pricing_tiers,id'],
+            'quantity'         => ['required', 'integer', 'min:1'],
+            'period_start'     => ['required', 'date'],
+            'period_end'       => ['required', 'date', 'after:period_start'],
+            'notes'            => ['nullable', 'string', 'max:500'],
         ]);
 
         $quota = $this->quotaService->allocateQuota(
-            companyId: $data['company_id'],
-            quantity:  $data['quantity'],
-            start:     Carbon::parse($data['period_start']),
-            end:       Carbon::parse($data['period_end']),
-            adminId:   $request->user()->id,
-            notes:     $data['notes'] ?? '',
+            companyId:     $data['company_id'],
+            quantity:      $data['quantity'],
+            start:         Carbon::parse($data['period_start']),
+            end:           Carbon::parse($data['period_end']),
+            adminId:       $request->user()->id,
+            notes:         $data['notes'] ?? '',
+            pricingTierId: $data['pricing_tier_id'] ?? null,
         );
 
-        return response()->json(['data' => $quota->load('company')], 201);
+        return response()->json(['data' => $quota->load('company', 'pricingTier')], 201);
     }
 
     /**

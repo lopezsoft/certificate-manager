@@ -3,6 +3,7 @@
 namespace App\Quotas\Models;
 
 use App\Models\Company;
+use App\Models\PricingTier;
 use App\Models\User;
 use App\Quotas\Enums\QuotaStatusEnum;
 use Illuminate\Database\Eloquent\Model;
@@ -14,6 +15,7 @@ class CertificateQuota extends Model
 
     protected $fillable = [
         'company_id',
+        'pricing_tier_id',
         'allocated_quantity',
         'used_quantity',
         'period_start',
@@ -34,6 +36,11 @@ class CertificateQuota extends Model
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class, 'company_id');
+    }
+
+    public function pricingTier(): BelongsTo
+    {
+        return $this->belongsTo(PricingTier::class, 'pricing_tier_id');
     }
 
     public function assignedBy(): BelongsTo

@@ -2,27 +2,15 @@
 
 namespace App\Quotas\Services;
 
+use App\Models\PricingTier;
+
 /**
  * PricingService
  *
- * Calcula el precio de certificados según el volumen mensual.
- *
- * Tarifas LOPEZSOFT (al público):
- * | Nivel   | Volumen     | 1 Año     | 2 Años    |
- * |---------|-------------|-----------|-----------|
- * | RANGO_1 | 1-4 und/mes | $135,000  | $215,000  |
- * | RANGO_2 | 5-9 und/mes | $125,000  | $200,000  |
- * | RANGO_3 | 10+ und/mes | $115,000  | $185,000  |
+ * Calcula el precio de certificados según el volumen mensual basándose en la tabla pricing_tiers.
  */
 class PricingService
 {
-    /** Tabla de precios indexada por rango y vigencia (años) */
-    private const PRICE_TABLE = [
-        'RANGO_1' => ['min' => 1,  'max' => 4,     'prices' => [1 => 135_000, 2 => 215_000]],
-        'RANGO_2' => ['min' => 5,  'max' => 9,     'prices' => [1 => 125_000, 2 => 200_000]],
-        'RANGO_3' => ['min' => 10, 'max' => PHP_INT_MAX, 'prices' => [1 => 115_000, 2 => 185_000]],
-    ];
-
     /**
      * Calcula el precio total para una compra.
      *
@@ -36,15 +24,16 @@ class PricingService
     {
         $this->validateInputs($quantity, $vigenciaYears);
 
-        $tier      = $this->getTierForQuantity($quantity);
-        $unitPrice = self::PRICE_TABLE[$tier]['prices'][$vigenciaYears];
+        $tierModel = $this->getTierModelForQuantity($quantity);
+        $unitPrice = (int) $tierModel->getPriceForVigencia($vigenciaYears);
+        
         $subtotal  = $unitPrice * $quantity;
         $taxPct    = (int) config('wompi.tax_percentage', 19);
         $taxAmount = (int) round($subtotal * ($taxPct / 100));
         $total     = $subtotal + $taxAmount;
 
         return [
-            'tier'       => $tier,
+            'tier'       => $tierModel->code,
             'unit_price' => $unitPrice,
             'quantity'   => $quantity,
             'vigencia'   => $vigenciaYears,
@@ -56,43 +45,56 @@ class PricingService
     }
 
     /**
-     * Devuelve todos los rangos de precio con su tabla completa.
-     * Útil para el endpoint público GET /v2/pricing.
+     * Devuelve todos los rangos de precio con su tabla completa desde la base de datos.
+     * Útil para el endpoint privado GET /v1/pricing.
      */
     public function getActiveTiers(): array
     {
-        $result = [];
-        foreach (self::PRICE_TABLE as $tier => $data) {
-            $result[] = [
-                'tier'      => $tier,
-                'min'       => $data['min'],
-                'max'       => $data['max'] === PHP_INT_MAX ? null : $data['max'],
-                'price_1yr' => $data['prices'][1],
-                'price_2yr' => $data['prices'][2],
-            ];
-        }
-        return $result;
+        return PricingTier::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get()
+            ->map(fn($tier) => [
+                'tier'      => $tier->code,
+                'min'       => $tier->min_quantity,
+                'max'       => $tier->max_quantity,
+                'price_1yr' => (int) $tier->price_1yr,
+                'price_2yr' => (int) $tier->price_2yr,
+            ])
+            ->toArray();
     }
 
     /**
-     * Devuelve el nombre del tier (RANGO_1, RANGO_2, RANGO_3) para una cantidad.
+     * Devuelve el código del tier (ej. RANGO_1) para una cantidad.
      *
      * @throws \InvalidArgumentException si la cantidad es menor a 1
      */
     public function getTierForQuantity(int $quantity): string
     {
+        return $this->getTierModelForQuantity($quantity)->code;
+    }
+
+    /**
+     * Devuelve el modelo PricingTier correspondiente a la cantidad.
+     */
+    private function getTierModelForQuantity(int $quantity): PricingTier
+    {
         if ($quantity < 1) {
             throw new \InvalidArgumentException('La cantidad de certificados debe ser al menos 1.');
         }
 
-        foreach (self::PRICE_TABLE as $tier => $data) {
-            if ($quantity >= $data['min'] && $quantity <= $data['max']) {
-                return $tier;
-            }
+        $tier = PricingTier::where('is_active', true)
+            ->where('min_quantity', '<=', $quantity)
+            ->where(function ($query) use ($quantity) {
+                $query->where('max_quantity', '>=', $quantity)
+                      ->orWhereNull('max_quantity');
+            })
+            ->first();
+
+        if (! $tier) {
+            throw new \InvalidArgumentException("No se encontró un rango de precios configurado para la cantidad {$quantity}.");
         }
 
-        // Fallback (no debería ocurrir si PHP_INT_MAX está correctamente definido)
-        return 'RANGO_3';
+        return $tier;
     }
 
     private function validateInputs(int $quantity, int $vigenciaYears): void

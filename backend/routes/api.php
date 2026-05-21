@@ -25,11 +25,13 @@ Route::group(['prefix' => 'v1'], function () {
     require_once __DIR__ . "/authentication.php";
     require_once __DIR__ . "/auth-api.php";
 
-    // ── Pricing público (movido desde v2) ─────────────────────────────────
-    Route::get('pricing', [\App\Quotas\Http\Controllers\PricingController::class, 'index'])
-        ->name('v1.pricing');
-
     Route::group(['middleware' => 'auth:api'], function () {
+
+        // ── Pricing (Solo Admin) ─────────────────────────────────
+        Route::get('pricing', [\App\Quotas\Http\Controllers\PricingController::class, 'index'])
+            ->middleware('admin')
+            ->name('v1.pricing');
+
 
         Route::apiResource('crud', 'TableCrudController');
 

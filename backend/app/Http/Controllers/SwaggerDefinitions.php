@@ -193,6 +193,7 @@ namespace App\Http\Controllers;
  *     description="Cupo POSTPAID asignado a una empresa por el admin LOPEZSOFT",
  *     @OA\Property(property="id", type="integer", readOnly=true, example=1),
  *     @OA\Property(property="company_id", type="integer", example=10),
+ *     @OA\Property(property="pricing_tier_id", type="integer", nullable=true, example=2, description="FK a pricing_tiers — rango de precio asociado al cupo"),
  *     @OA\Property(property="allocated_quantity", type="integer", example=50),
  *     @OA\Property(property="used_quantity", type="integer", readOnly=true, example=12),
  *     @OA\Property(property="remaining", type="integer", readOnly=true, example=38),

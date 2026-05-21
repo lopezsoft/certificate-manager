@@ -3750,8 +3750,8 @@
                 "tags": [
                     "Precios"
                 ],
-                "summary": "Consultar tarifas de certificados",
-                "description": "Devuelve los rangos de precios. Si se pasan quantity y vigencia, calcula el precio exacto.",
+                "summary": "Consultar tarifas de certificados (Solo Admin)",
+                "description": "Devuelve los rangos de precios desde la base de datos (pricing_tiers). Si se pasan quantity y vigencia, calcula el precio exacto. Requiere rol de admin.",
                 "operationId": "459efc80623373f57729a31cc17db771",
                 "parameters": [
                     {
@@ -3781,10 +3781,21 @@
                     "200": {
                         "description": "Tarifas obtenidas"
                     },
+                    "401": {
+                        "description": "No autenticado"
+                    },
+                    "403": {
+                        "description": "No autorizado (requiere admin)"
+                    },
                     "422": {
                         "description": "Parámetros inválidos"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/admin/quotas": {
@@ -3843,6 +3854,12 @@
                                     "company_id": {
                                         "type": "integer",
                                         "example": 10
+                                    },
+                                    "pricing_tier_id": {
+                                        "description": "Rango de precio asociado (FK a pricing_tiers)",
+                                        "type": "integer",
+                                        "example": 2,
+                                        "nullable": true
                                     },
                                     "quantity": {
                                         "type": "integer",
@@ -5019,6 +5036,12 @@
                     "company_id": {
                         "type": "integer",
                         "example": 10
+                    },
+                    "pricing_tier_id": {
+                        "description": "FK a pricing_tiers — rango de precio asociado al cupo",
+                        "type": "integer",
+                        "example": 2,
+                        "nullable": true
                     },
                     "allocated_quantity": {
                         "type": "integer",

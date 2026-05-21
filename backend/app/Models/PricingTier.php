@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Quotas\Models\CertificateQuota;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * Catálogo agnóstico de rangos de precios (3NF).
  *
  * Almacena exclusivamente definiciones de rango y precio.
- * La asignación a empresas se gestiona en CompanyQuotaAssignment.
+ * La asignación a empresas se gestiona en CertificateQuota.
  *
  * Montos en valor real COP (DECIMAL), NO en centavos.
  */
@@ -39,9 +40,9 @@ class PricingTier extends Model
         'sort_order'   => 'integer',
     ];
 
-    public function quotaAssignments(): HasMany
+    public function certificateQuotas(): HasMany
     {
-        return $this->hasMany(CompanyQuotaAssignment::class, 'pricing_tier_id');
+        return $this->hasMany(CertificateQuota::class, 'pricing_tier_id');
     }
 
     /**
