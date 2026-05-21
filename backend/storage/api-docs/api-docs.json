@@ -3750,8 +3750,8 @@
                 "tags": [
                     "Precios"
                 ],
-                "summary": "Consultar tarifas de certificados (Solo Admin)",
-                "description": "Devuelve los rangos de precios desde la base de datos (pricing_tiers). Si se pasan quantity y vigencia, calcula el precio exacto. Requiere rol de admin.",
+                "summary": "Consultar tarifas de certificados",
+                "description": "Devuelve los rangos de precios desde la base de datos (pricing_tiers). Si se pasan quantity y vigencia, calcula el precio exacto.",
                 "operationId": "459efc80623373f57729a31cc17db771",
                 "parameters": [
                     {
@@ -3783,9 +3783,6 @@
                     },
                     "401": {
                         "description": "No autenticado"
-                    },
-                    "403": {
-                        "description": "No autorizado (requiere admin)"
                     },
                     "422": {
                         "description": "Parámetros inválidos"

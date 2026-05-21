@@ -27,9 +27,8 @@ Route::group(['prefix' => 'v1'], function () {
 
     Route::group(['middleware' => 'auth:api'], function () {
 
-        // ── Pricing (Solo Admin) ─────────────────────────────────
+        // ── Pricing ───────────────────────────────────────────────
         Route::get('pricing', [\App\Quotas\Http\Controllers\PricingController::class, 'index'])
-            ->middleware('admin')
             ->name('v1.pricing');
 
 
