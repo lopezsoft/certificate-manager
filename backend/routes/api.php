@@ -143,7 +143,7 @@ Route::group(['prefix' => 'v1'], function () {
 
         // Webhooks
         Route::group(['prefix' => 'webhooks'], function () {
-            Route::controller('WebhookEndpointController')->group(function () {
+            Route::controller('\\' . \App\Webhooks\Http\Controllers\WebhookEndpointController::class)->group(function () {
                 Route::get('/events', 'availableEvents');
                 Route::get('/', 'index');
                 Route::post('/', 'store');
@@ -153,14 +153,14 @@ Route::group(['prefix' => 'v1'], function () {
                 Route::post('/{id}/rotate-secret', 'rotateSecret');
             });
 
-            Route::controller('WebhookDeliveryController')->group(function () {
+            Route::controller('\\' . \App\Webhooks\Http\Controllers\WebhookDeliveryController::class)->group(function () {
                 Route::get('/{id}/deliveries', 'index');
             });
         });
 
         // ── Órdenes WOMPI (prepaid) — movidas desde v2 ────────────────────
         Route::prefix('orders')->name('v1.orders.')->group(function () {
-            Route::controller('OrderController')->group(function () {
+            Route::controller('\\' . \App\Quotas\Http\Controllers\OrderController::class)->group(function () {
                 Route::get('/',          'index')->name('index');
                 Route::post('/',         'store')->name('store');
                 Route::get('/{id}',      'show')->name('show');
@@ -170,7 +170,7 @@ Route::group(['prefix' => 'v1'], function () {
 
         // ── Admin: gestión de cuotas POSTPAID — movido desde v2 ───────────
         Route::prefix('admin/quotas')->name('v1.admin.quotas.')->group(function () {
-            Route::controller('QuotaController')->group(function () {
+            Route::controller('\\' . \App\Quotas\Http\Controllers\QuotaController::class)->group(function () {
                 Route::get('/',             'index')->name('index');
                 Route::post('/',            'store')->name('store');
                 Route::get('/{id}',         'show')->name('show');
