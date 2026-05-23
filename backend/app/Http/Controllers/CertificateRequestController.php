@@ -44,6 +44,7 @@ class CertificateRequestController extends Controller
      *     ),
      *     @OA\Response(response=200, description="Solicitud creada exitosamente", @OA\JsonContent(ref="#/components/schemas/ApiSuccessResponse")),
      *     @OA\Response(response=400, description="Validación fallida o solicitud duplicada", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
+     *     @OA\Response(response=402, description="Sin cupo disponible — debe adquirir certificados", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
      *     @OA\Response(response=429, description="Demasiadas solicitudes", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
      *     @OA\Response(response=401, description="No autenticado")
      * )

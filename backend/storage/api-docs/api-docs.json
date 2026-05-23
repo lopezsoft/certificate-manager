@@ -1226,6 +1226,16 @@
                             }
                         }
                     },
+                    "402": {
+                        "description": "Sin cupo disponible — debe adquirir certificados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
                     "429": {
                         "description": "Demasiadas solicitudes",
                         "content": {
@@ -4034,6 +4044,91 @@
                 ]
             }
         },
+        "/quota/status": {
+            "get": {
+                "tags": [
+                    "Cupos"
+                ],
+                "summary": "Consultar disponibilidad de certificados",
+                "description": "Retorna el estado de cupos de la empresa del usuario autenticado. Incluye cupos POSTPAID (asignados por admin) y PREPAID (comprados vía WOMPI). El campo 'has_quota' indica si la empresa puede crear nuevas solicitudes.",
+                "operationId": "quotaStatus",
+                "responses": {
+                    "200": {
+                        "description": "Estado de cupos obtenido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Estado de cupos obtenido exitosamente"
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "has_quota": {
+                                                    "description": "true si la empresa puede crear solicitudes",
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "prepaid_items_available": {
+                                                    "description": "Certificados PREPAID pendientes de usar",
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "postpaid": {
+                                                    "properties": {
+                                                        "allocated": {
+                                                            "type": "integer",
+                                                            "example": 50
+                                                        },
+                                                        "used": {
+                                                            "type": "integer",
+                                                            "example": 12
+                                                        },
+                                                        "remaining": {
+                                                            "type": "integer",
+                                                            "example": 38
+                                                        },
+                                                        "expires_at": {
+                                                            "type": "string",
+                                                            "format": "date",
+                                                            "example": "2026-05-31"
+                                                        },
+                                                        "status": {
+                                                            "type": "string",
+                                                            "example": "ACTIVE"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    },
+                    "404": {
+                        "description": "Empresa no encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/webhooks/{id}/deliveries": {
             "get": {
                 "tags": [
@@ -5758,6 +5853,10 @@
         {
             "name": "Sistema",
             "description": "Health check de servicios externos: WOMPI, etc."
+        },
+        {
+            "name": "Cupos",
+            "description": "Cupos"
         }
     ]
 }

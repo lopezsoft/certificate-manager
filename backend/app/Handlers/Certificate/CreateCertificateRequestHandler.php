@@ -12,6 +12,7 @@ use App\Models\CertificateRequest;
 use App\Models\ChangeHistory;
 use App\Models\FileManager;
 use App\Notifications\CertificateRequestCreateNotification;
+use App\Quotas\Services\QuotaService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,10 @@ use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
  */
 class CreateCertificateRequestHandler
 {
+    public function __construct(
+        private readonly QuotaService $quotaService,
+    ) {}
+
     public function handle(CreateCertificateRequestCommand $command): JsonResponse
     {
         try {
@@ -38,6 +43,13 @@ class CreateCertificateRequestHandler
             $dv = VerificationDigit::getDigit($command->dni);
 
             $this->assertNoDuplicateActive($command->companyId, $command->dni, $dv);
+
+            // Validar que la empresa tenga cupo disponible antes de proceder
+            if (! $this->quotaService->hasAvailableQuota($command->companyId)) {
+                return HttpResponseMessages::getResponse402([
+                    'message' => 'No tiene certificados disponibles. Debe adquirir un paquete de certificados para continuar.',
+                ]);
+            }
 
             $disk        = Storage::disk('attachment');
             $folderName  = $this->buildFolderName($command->companyId, $command->dni, $dv);
@@ -77,6 +89,9 @@ class CreateCertificateRequestHandler
             $this->fillAndStoreExcel($activeSheet, $certificate, $command->dni, $dv, $folderName, $disk);
             $this->storeUploadedFiles($command->files, $folderName, $disk, $certificate->id);
 
+            // Consumir un cupo (POSTPAID o PREPAID) de forma atómica
+            $this->quotaService->consumeQuota($command->companyId);
+
             DB::commit();
 
             // Cargar relaciones para la respuesta y el evento
@@ -93,6 +108,14 @@ class CreateCertificateRequestHandler
             ]);
         } catch (Exception $e) {
             DB::rollBack();
+
+            // Si la cuota ya fue consumida pero la transacción falló, devolverla
+            try {
+                $this->quotaService->releaseQuota($command->companyId);
+            } catch (Exception) {
+                // No hacer nada si el release falla; el consumo pudo no haberse ejecutado
+            }
+
             return MessageExceptionResponse::response($e);
         }
     }

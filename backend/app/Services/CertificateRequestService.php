@@ -47,7 +47,7 @@ class CertificateRequestService
             legalRepresentative:  $request->legal_representative,
             companyName:          $request->company_name,
             dni:                  $request->dni,
-            life:                 (int) ($request->input('life') ?? 1),
+            life:                 (int) ($request->input('life') ?? 2),
             info:                 $request->input('info'),
             files:                array_values($request->files->all()),
             userId:               auth()->id(),

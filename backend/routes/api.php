@@ -31,6 +31,9 @@ Route::group(['prefix' => 'v1'], function () {
         Route::get('pricing', [\App\Quotas\Http\Controllers\PricingController::class, 'index'])
             ->name('v1.pricing');
 
+        // ── Estado de cupos (usuario autenticado) ────────────────
+        Route::get('quota/status', [\App\Quotas\Http\Controllers\QuotaStatusController::class, '__invoke'])
+            ->name('v1.quota.status');
 
         Route::apiResource('crud', 'TableCrudController');
 
@@ -106,7 +109,7 @@ Route::group(['prefix' => 'v1'], function () {
 
         // Personal Access Tokens (PAT)
         Route::group(['prefix' => 'tokens'], function () {
-            Route::controller(\App\Http\Controllers\Api\TokenController::class)->group(function () {
+            Route::controller('Api\TokenController')->group(function () {
                 Route::get('/', 'index');
                 Route::post('/', 'store')->middleware('throttle:token-create');
                 Route::post('/revoke-all', 'revokeAll');
@@ -118,59 +121,77 @@ Route::group(['prefix' => 'v1'], function () {
 
         // Notificaciones de vencimiento de certificados
         Route::group(['prefix' => 'certificates'], function () {
-            Route::get('/expiring', [\App\Http\Controllers\NotificationController::class, 'expiring']);
+            Route::controller('NotificationController')->group(function () {
+                Route::get('/expiring', 'expiring');
+            });
         });
 
         Route::group(['prefix' => 'notifications'], function () {
-            Route::get('/', [\App\Http\Controllers\NotificationController::class, 'index']);
-            Route::post('/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead']);
-            Route::post('/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead']);
+            Route::controller('NotificationController')->group(function () {
+                Route::get('/', 'index');
+                Route::post('/read-all', 'markAllAsRead');
+                Route::post('/{id}/read', 'markAsRead');
+            });
         });
 
         Route::group(['prefix' => 'admin', 'middleware' => 'admin'], function () {
-            Route::post('/certificates/notify-now', [\App\Http\Controllers\NotificationController::class, 'triggerNow'])
-                ->middleware('throttle:1,5');
+            Route::controller('NotificationController')->group(function () {
+                Route::post('/certificates/notify-now', 'triggerNow')
+                    ->middleware('throttle:1,5');
+            });
         });
 
         // Webhooks
         Route::group(['prefix' => 'webhooks'], function () {
-            Route::get('/events', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'availableEvents']);
-            Route::get('/', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'index']);
-            Route::post('/', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'store']);
-            Route::get('/{id}', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'show']);
-            Route::put('/{id}', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'update']);
-            Route::delete('/{id}', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'destroy']);
-            Route::post('/{id}/rotate-secret', [\App\Webhooks\Http\Controllers\WebhookEndpointController::class, 'rotateSecret']);
-            Route::get('/{id}/deliveries', [\App\Webhooks\Http\Controllers\WebhookDeliveryController::class, 'index']);
+            Route::controller('WebhookEndpointController')->group(function () {
+                Route::get('/events', 'availableEvents');
+                Route::get('/', 'index');
+                Route::post('/', 'store');
+                Route::get('/{id}', 'show');
+                Route::put('/{id}', 'update');
+                Route::delete('/{id}', 'destroy');
+                Route::post('/{id}/rotate-secret', 'rotateSecret');
+            });
+
+            Route::controller('WebhookDeliveryController')->group(function () {
+                Route::get('/{id}/deliveries', 'index');
+            });
         });
 
         // ── Órdenes WOMPI (prepaid) — movidas desde v2 ────────────────────
         Route::prefix('orders')->name('v1.orders.')->group(function () {
-            Route::get('/',          [\App\Quotas\Http\Controllers\OrderController::class, 'index'])->name('index');
-            Route::post('/',         [\App\Quotas\Http\Controllers\OrderController::class, 'store'])->name('store');
-            Route::get('/{id}',      [\App\Quotas\Http\Controllers\OrderController::class, 'show'])->name('show');
-            Route::post('/{id}/pay', [\App\Quotas\Http\Controllers\OrderController::class, 'pay'])->name('pay');
+            Route::controller('OrderController')->group(function () {
+                Route::get('/',          'index')->name('index');
+                Route::post('/',         'store')->name('store');
+                Route::get('/{id}',      'show')->name('show');
+                Route::post('/{id}/pay', 'pay')->name('pay');
+            });
         });
 
         // ── Admin: gestión de cuotas POSTPAID — movido desde v2 ───────────
         Route::prefix('admin/quotas')->name('v1.admin.quotas.')->group(function () {
-            Route::get('/',             [\App\Quotas\Http\Controllers\QuotaController::class, 'index'])->name('index');
-            Route::post('/',            [\App\Quotas\Http\Controllers\QuotaController::class, 'store'])->name('store');
-            Route::get('/{id}',         [\App\Quotas\Http\Controllers\QuotaController::class, 'show'])->name('show');
-            Route::get('/company/{id}', [\App\Quotas\Http\Controllers\QuotaController::class, 'byCompany'])->name('by-company');
+            Route::controller('QuotaController')->group(function () {
+                Route::get('/',             'index')->name('index');
+                Route::post('/',            'store')->name('store');
+                Route::get('/{id}',         'show')->name('show');
+                Route::get('/company/{id}', 'byCompany')->name('by-company');
+            });
         });
 
         // ── Analíticas IA — movido desde v2 ───────────────────────────────
         Route::prefix('analytics')->name('v1.analytics.')->group(function () {
-            Route::get('/results',      [\App\Http\Controllers\DocumentAnalysisController::class, 'index'])->name('results');
-            Route::get('/stats',        [\App\Http\Controllers\DocumentAnalysisController::class, 'stats'])->name('stats');
-            Route::get('/providers',    [\App\Http\Controllers\DocumentAnalysisController::class, 'providers'])->name('providers');
-            Route::get('/results/{id}', [\App\Http\Controllers\DocumentAnalysisController::class, 'show'])->name('results.show');
+            Route::controller('DocumentAnalysisController')->group(function () {
+                Route::get('/results',      'index')->name('results');
+                Route::get('/stats',        'stats')->name('stats');
+                Route::get('/providers',    'providers')->name('providers');
+                Route::get('/results/{id}', 'show')->name('results.show');
+            });
         });
 
         // ── Health check (admin) — movido desde v2 ────────────────────────
-        Route::get('health', \App\Http\Controllers\System\HealthCheckController::class)
-            ->name('v1.health');
+        Route::controller('System\HealthCheckController')->group(function () {
+            Route::get('health', '__invoke')->name('v1.health');
+        });
     });
 });
 
