@@ -47,8 +47,8 @@ class UpdateCertificateRequestHandler
             ]);
 
             return HttpResponseMessages::getResponse([
-                'message' => 'Solicitud de certificado actualizada exitosamente',
-                'data'    => $certificate->fresh(),
+                'message'     => 'Solicitud de certificado actualizada exitosamente',
+                'dataRecords' => $certificate->fresh(),
             ]);
         } catch (Exception $e) {
             return MessageExceptionResponse::response($e);

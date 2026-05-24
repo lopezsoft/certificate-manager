@@ -69,8 +69,8 @@ class CertificateIssuanceController extends Controller
             $result = $this->orchestrator->dispatch($dto, $request->callerCanOverrideProvider());
 
             return HttpResponseMessages::getResponseForStatus($result->httpStatus, [
-                'message'  => $result->message,
-                'data'     => $result->toArray(),
+                'message'     => $result->message,
+                'dataRecords' => $result->toArray(),
             ]);
         } catch (CertificateIssuanceException $e) {
             return HttpResponseMessages::getResponseForStatus($e->httpStatus, [
@@ -104,8 +104,8 @@ class CertificateIssuanceController extends Controller
             $result = $this->orchestrator->status($id, $this->callerIsAdmin($request));
 
             return HttpResponseMessages::getResponse([
-                'message' => $result->message,
-                'data'    => $result->toArray(),
+                'message'     => $result->message,
+                'dataRecords' => $result->toArray(),
             ]);
         } catch (CertificateIssuanceException $e) {
             return HttpResponseMessages::getResponseForStatus($e->httpStatus, [

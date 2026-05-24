@@ -103,8 +103,8 @@ class CreateCertificateRequestHandler
                 ->notify(new CertificateRequestCreateNotification($certificate));
 
             return HttpResponseMessages::getResponse([
-                'message' => 'Solicitud de certificado creada exitosamente',
-                'data'    => $certificate,
+                'message'     => 'Solicitud de certificado creada exitosamente',
+                'dataRecords' => $certificate,
             ]);
         } catch (Exception $e) {
             DB::rollBack();

@@ -62,8 +62,8 @@ class UpdateCertificateStatusHandler
             ));
 
             return HttpResponseMessages::getResponse([
-                'message' => 'El estado de la solicitud se ha actualizado exitosamente',
-                'data'    => $certificate->fresh(),
+                'message'     => 'El estado de la solicitud se ha actualizado exitosamente',
+                'dataRecords' => $certificate->fresh(),
             ]);
         } catch (Exception $e) {
             DB::rollBack();
