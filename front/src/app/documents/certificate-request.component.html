@@ -7,6 +7,24 @@
                 <h6 class="card-title mb-0">{{title | uppercase}}</h6>
             </div>
             <div class="card-body">
+                <!-- Banner de cupo -->
+                <div class="mb-25" *ngIf="!quotaLoading && quotaStatus">
+                    <div class="alert alert-success py-1 px-2 mb-2 d-flex align-items-center" *ngIf="quotaStatus.has_quota">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <small>
+                            <strong>{{ quotaStatus.prepaid_items_available + (quotaStatus.postpaid?.remaining || 0) }}</strong>
+                            certificado(s) disponible(s)
+                        </small>
+                    </div>
+                    <div class="alert alert-warning py-1 px-2 mb-2" *ngIf="!quotaStatus.has_quota">
+                        <small>
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            Sin cupos.
+                            <a routerLink="/orders/purchase" class="alert-link">Comprar</a>
+                        </small>
+                    </div>
+                </div>
+
                 <div class="w-100 d-flex align-items-center mb-25">
                     <div class="w-100 d-flex align-items-center justify-content-between mb-0">
                         <button

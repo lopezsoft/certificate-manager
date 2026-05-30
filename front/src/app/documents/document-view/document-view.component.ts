@@ -14,6 +14,9 @@ import {
 import {LoadMaskService} from "../../services/load-mask.service";
 import {Router} from "@angular/router";
 import {DocumentViewerService} from "../../services/document-viewer.service";
+import {IssuanceService} from "../../services/issuance.service";
+import {IssuanceStatus, IssuanceDownloadMeta} from "../../interfaces/issuance.interface";
+import {DebugService} from "../../utils/debug.service";
 
 @Component({
 	selector: 'app-document-view',
@@ -45,6 +48,15 @@ export class DocumentViewComponent {
 	protected comments: string = null;
 	protected canAddPaymentFile: boolean = false;
 	protected document_type: string = null;
+
+	/** Emisión de certificados */
+	protected issuanceStatus: IssuanceStatus | null = null;
+	protected issuanceDownloadMeta: IssuanceDownloadMeta | null = null;
+	protected issuanceLoading = false;
+	protected issuanceEmail: string = '';
+	protected issuanceComments: string = '';
+	protected showIssuanceForm = false;
+
 	constructor(
 		public shipping: ShippingService,
 		public format: FormatsService,
@@ -53,6 +65,8 @@ export class DocumentViewComponent {
 		private  msg: MessagesService,
 		private mask: LoadMaskService,
 		private router: Router,
+		private issuanceService: IssuanceService,
+		private debug: DebugService,
 	) {
 	}
 
@@ -232,5 +246,104 @@ export class DocumentViewComponent {
 
 	protected isPaymentFile(file: FileManager): boolean {
 		return file.document_type === FileDocumentTypeEnum.PAYMENT;
+	}
+
+	// ─── Emisión de certificados ──────────────────────────────────────────────
+
+	/**
+	 * Verifica si la solicitud puede ser emitida (estado ACCEPTED).
+	 */
+	protected canIssue(): boolean {
+		return this.currentShipping?.request_status === DocumentStatusEnum.ACCEPTED;
+	}
+
+	/**
+	 * Muestra/oculta el formulario de emisión.
+	 */
+	protected toggleIssuanceForm(): void {
+		this.showIssuanceForm = !this.showIssuanceForm;
+	}
+
+	/**
+	 * Dispara la emisión del certificado.
+	 */
+	protected onIssue(): void {
+		const requestId = this.currentShipping.id;
+		const body: any = {};
+		if (this.issuanceEmail) {
+			body.email_certificate = this.issuanceEmail;
+		}
+		if (this.issuanceComments) {
+			body.comments = this.issuanceComments;
+		}
+
+		this.msg.confirm(
+			'¿Desea emitir el certificado?',
+			'Esta acción iniciará el proceso de emisión del certificado digital.'
+		).then((result) => {
+			if (result.isConfirmed) {
+				this.issuanceLoading = true;
+				this.mask.showBlockUI('Procesando emisión...');
+				this.issuanceService.issue(requestId, body).subscribe({
+					next: (resp) => {
+						this.mask.hideBlockUI();
+						this.issuanceLoading = false;
+						this.showIssuanceForm = false;
+						this.msg.toastMessage('Éxito', resp.message || 'Emisión iniciada correctamente.');
+						this.onCheckIssuanceStatus();
+					},
+					error: (err) => {
+						this.mask.hideBlockUI();
+						this.issuanceLoading = false;
+						this.debug.error('DocumentViewComponent', 'Error al emitir certificado', err);
+					}
+				});
+			}
+		});
+	}
+
+	/**
+	 * Consulta el estado del trámite de emisión.
+	 */
+	protected onCheckIssuanceStatus(): void {
+		const requestId = this.currentShipping.id;
+		this.issuanceLoading = true;
+		this.issuanceService.getIssuanceStatus(requestId).subscribe({
+			next: (status) => {
+				this.issuanceStatus = status;
+				this.issuanceLoading = false;
+			},
+			error: (err) => {
+				this.issuanceLoading = false;
+				this.debug.error('DocumentViewComponent', 'Error al consultar estado de emisión', err);
+			}
+		});
+	}
+
+	/**
+	 * Obtiene la metadata de descarga del P12.
+	 */
+	protected onGetDownloadMeta(): void {
+		const requestId = this.currentShipping.id;
+		this.issuanceLoading = true;
+		this.issuanceService.getDownloadMeta(requestId).subscribe({
+			next: (meta) => {
+				this.issuanceDownloadMeta = meta;
+				this.issuanceLoading = false;
+			},
+			error: (err) => {
+				this.issuanceLoading = false;
+				this.debug.error('DocumentViewComponent', 'Error al obtener metadata de descarga', err);
+			}
+		});
+	}
+
+	/**
+	 * Descarga el archivo P12 directamente (streaming binario).
+	 */
+	protected onDownloadP12(): void {
+		const requestId = this.currentShipping.id;
+		const url = this.issuanceService.getDownloadFileUrl(requestId);
+		window.open(url, '_blank');
 	}
 }

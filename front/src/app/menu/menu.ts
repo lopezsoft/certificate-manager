@@ -19,6 +19,13 @@ export const menu: CoreMenu[] = [
     url: 'requests'
   },
   {
+    id: 'orders',
+    title: 'Comprar Certificados',
+    type: 'item',
+    icon: 'shopping-cart',
+    url: 'orders'
+  },
+  {
     id: 'customers',
     title: 'Clientes',
     // translate: 'MENU.DOCUMENTS',

@@ -9,6 +9,8 @@ import {LoadMaskService} from "../../services/load-mask.service";
 import TokenService from "../../utils/token.service";
 import {FileUploadConfig} from "../../shared/components/file-upload/file-upload-config.interface";
 import {FileUploadData} from "../../shared/components/file-upload/file-upload.component";
+import {HttpErrorResponse} from "@angular/common/http";
+import {DebugService} from "../../utils/debug.service";
 
 @Component({
   selector: 'app-create-request',
@@ -144,6 +146,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
               private _activatedRoute: ActivatedRoute,
               private mask: LoadMaskService,
               protected _token: TokenService,
+              private debug: DebugService,
   ) {
 
   }
@@ -289,14 +292,15 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
               next: (resp) => {
                 ts.finalResponse(resp);
               },
-              error: () => {
-                ts.onError()
+              error: (err) => {
+                ts.onError();
+                ts.handleHttpError(err);
               }
           });
       }
 
     }catch (e) {
-      console.error(e);
+      this.debug.error('CreateRequestComponent', 'Error al crear solicitud', e);
       this.loading = false;
       this.mask.hideBlockUI();
       this._msg.errorMessage('Error', e.message);
@@ -384,7 +388,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
    * Maneja errores de validación
    */
   onFileValidationError(error: string): void {
-    console.warn('File validation error:', error);
+    this.debug.warn('CreateRequestComponent', 'File validation error', error);
   }
 
   protected onChangeDni($event: Event) {
@@ -404,6 +408,23 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     ts.customForm.get('document_number')?.setValue(value);
     if (value.length > 5) {
       ts.documentInput.nativeElement.blur();
+    }
+  }
+
+  /**
+   * Maneja errores HTTP específicos al crear/editar solicitud.
+   * HTTP 402 indica que el cupo se agotó: redirige al flujo de compra.
+   */
+  private handleHttpError(err: any): void {
+    if (err instanceof HttpErrorResponse && err.status === 402) {
+      this._msg.toastMessage(
+        'Sin cupos disponibles',
+        'No tiene certificados disponibles. Será redirigido al módulo de compra para adquirir un paquete.',
+        3
+      );
+      setTimeout(() => {
+        this._router.navigate(['/orders/purchase']);
+      }, 2500);
     }
   }
 

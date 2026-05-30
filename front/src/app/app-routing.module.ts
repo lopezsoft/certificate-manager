@@ -39,6 +39,11 @@ const routes: Routes = [
     canActivate: [AuthGuard],
   },
   {
+    path: 'orders',
+    loadChildren: () => import('./orders/orders.module').then(m => m.OrdersModule),
+    canActivate: [AuthGuard],
+  },
+  {
     path: 'changes-history',
     loadChildren: () => import('./app-versions/app-versions.module').then(m => m.AppVersionsModule),
     canActivate: [AuthGuard],

@@ -1,0 +1,18 @@
+.quota-banner {
+  margin-bottom: 1rem;
+
+  .alert {
+    border-radius: 0.5rem;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .quota-icon {
+    opacity: 0.85;
+  }
+
+  .badge {
+    font-weight: 600;
+    padding: 0.4em 0.8em;
+  }
+}

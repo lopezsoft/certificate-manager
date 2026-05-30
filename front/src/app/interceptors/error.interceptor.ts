@@ -17,7 +17,6 @@ export class ErrorInterceptor implements HttpInterceptor {
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
-        // console.log('ErrorInterceptor', error);
         const _auth = this.accessToken;
         if (_auth && !_auth?.isAuthenticated()) {
           this.clearSessionData();
@@ -26,10 +25,23 @@ export class ErrorInterceptor implements HttpInterceptor {
           // auto logout if 401 Unauthorized or 403 Forbidden response returned from api
           this._router.navigate(['/auth/not-authorized']);
         }
-        const errorMessage = error.error.message || error.message;
+
+        // HTTP 402: Sin cupo disponible — propagar sin mostrar error genérico.
+        // Los componentes que llaman al endpoint deben manejar este caso
+        // detectando error.status === 402 y redirigiendo al flujo de compra.
+        if (error.status === 402) {
+          return throwError(() => error);
+        }
+
+        // HTTP 429: Rate limit — mensaje amigable
+        if (error.status === 429) {
+          this.errorService.showError('Demasiadas solicitudes. Intente nuevamente en un minuto.', error.status);
+          return throwError(() => error);
+        }
+
+        const errorMessage = error.error?.message || error.message;
         this.errorService.showError(errorMessage, error.status);
-        // throwError
-        return throwError(errorMessage);
+        return throwError(() => error);
       })
     );
   }
@@ -39,3 +51,4 @@ export class ErrorInterceptor implements HttpInterceptor {
     this._router.navigate(['/auth/login']);
   }
 }
+

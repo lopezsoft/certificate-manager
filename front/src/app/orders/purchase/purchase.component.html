@@ -1,0 +1,278 @@
+<div class="content-wrapper">
+    <div class="content-body">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-shopping-cart me-2"></i>Comprar Certificados
+                </h5>
+            </div>
+            <div class="card-body">
+
+                <!-- Stepper visual -->
+                <div class="purchase-stepper mb-4">
+                    <div class="d-flex justify-content-between">
+                        <div class="step-item" [ngClass]="{'active': currentStep >= 1, 'completed': currentStep > 1}">
+                            <div class="step-circle">1</div>
+                            <span class="step-label">Cantidad</span>
+                        </div>
+                        <div class="step-line" [ngClass]="{'active': currentStep > 1}"></div>
+                        <div class="step-item" [ngClass]="{'active': currentStep >= 2, 'completed': currentStep > 2}">
+                            <div class="step-circle">2</div>
+                            <span class="step-label">Resumen</span>
+                        </div>
+                        <div class="step-line" [ngClass]="{'active': currentStep > 2}"></div>
+                        <div class="step-item" [ngClass]="{'active': currentStep >= 3, 'completed': currentStep > 3}">
+                            <div class="step-circle">3</div>
+                            <span class="step-label">Orden</span>
+                        </div>
+                        <div class="step-line" [ngClass]="{'active': currentStep > 3}"></div>
+                        <div class="step-item" [ngClass]="{'active': currentStep >= 4}">
+                            <div class="step-circle">4</div>
+                            <span class="step-label">Pago</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══════════════════════════════════════════════════════════════ -->
+                <!-- PASO 1: Selección de cantidad y vigencia                       -->
+                <!-- ═══════════════════════════════════════════════════════════════ -->
+                <div *ngIf="currentStep === 1">
+                    <!-- Tabla de tarifas -->
+                    <h6 class="mb-3">
+                        <i class="fas fa-tags me-2"></i>Tarifas disponibles
+                    </h6>
+
+                    <div class="table-responsive mb-4" *ngIf="!loadingTiers && tiers.length > 0">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Rango</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio 1 año</th>
+                                    <th>Precio 2 años</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let tier of tiers">
+                                    <td><span class="badge bg-primary">{{ tier.tier }}</span></td>
+                                    <td>
+                                        {{ tier.min }}
+                                        <span *ngIf="tier.max"> - {{ tier.max }}</span>
+                                        <span *ngIf="!tier.max">+</span>
+                                        certificados
+                                    </td>
+                                    <td>{{ formatCurrency(tier.price_1yr) }} c/u</td>
+                                    <td>{{ formatCurrency(tier.price_2yr) }} c/u</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div *ngIf="loadingTiers" class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        Cargando tarifas...
+                    </div>
+
+                    <!-- Formulario de selección -->
+                    <form [formGroup]="purchaseForm" class="custom-form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="quantity">Cantidad de certificados</label>
+                                    <input type="number"
+                                        id="quantity"
+                                        class="form-control"
+                                        formControlName="quantity"
+                                        min="1"
+                                        placeholder="Ingrese la cantidad">
+                                    <small class="text-muted" *ngIf="getSelectedTierPrice()">
+                                        Precio unitario estimado: {{ getSelectedTierPrice() }}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="vigencia">Vigencia</label>
+                                    <select id="vigencia" class="form-control" formControlName="vigencia">
+                                        <option [value]="1">1 año</option>
+                                        <option [value]="2">2 años</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="d-flex justify-content-end mt-3">
+                        <button class="btn custom-button fas-fa-ok"
+                            (click)="onCalculatePrice()"
+                            [disabled]="purchaseForm.invalid || loadingPrice">
+                            <span *ngIf="loadingPrice" class="spinner-border spinner-border-sm me-1"></span>
+                            Calcular precio
+                            <i class="fas fa-arrow-right ms-1" *ngIf="!loadingPrice"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ═══════════════════════════════════════════════════════════════ -->
+                <!-- PASO 2: Resumen de precio calculado                            -->
+                <!-- ═══════════════════════════════════════════════════════════════ -->
+                <div *ngIf="currentStep === 2 && priceCalculation">
+                    <h6 class="mb-3">
+                        <i class="fas fa-receipt me-2"></i>Resumen del pedido
+                    </h6>
+
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <dl class="mb-0">
+                                        <dt>Franja tarifaria</dt>
+                                        <dd><span class="badge bg-primary">{{ priceCalculation.tier }}</span></dd>
+
+                                        <dt>Cantidad</dt>
+                                        <dd>{{ priceCalculation.quantity }} certificado{{ priceCalculation.quantity > 1 ? 's' : '' }}</dd>
+
+                                        <dt>Vigencia</dt>
+                                        <dd>{{ priceCalculation.vigencia }} año{{ priceCalculation.vigencia > 1 ? 's' : '' }}</dd>
+
+                                        <dt>Precio unitario</dt>
+                                        <dd>{{ formatCurrency(priceCalculation.unit_price, priceCalculation.currency) }}</dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="price-summary p-3 bg-white rounded">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Subtotal:</span>
+                                            <span>{{ formatCurrency(priceCalculation.subtotal, priceCalculation.currency) }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2 text-muted">
+                                            <span>IVA (19%):</span>
+                                            <span>{{ formatCurrency(priceCalculation.tax_amount, priceCalculation.currency) }}</span>
+                                        </div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between fw-bold fs-5">
+                                            <span>Total:</span>
+                                            <span class="text-success">
+                                                {{ formatCurrency(priceCalculation.total, priceCalculation.currency) }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-3">
+                        <button class="btn btn-outline-secondary" (click)="goToStep(1)">
+                            <i class="fas fa-arrow-left me-1"></i> Modificar
+                        </button>
+                        <button class="btn custom-button fas-fa-ok"
+                            (click)="onCreateOrder()"
+                            [disabled]="creatingOrder">
+                            <span *ngIf="creatingOrder" class="spinner-border spinner-border-sm me-1"></span>
+                            Confirmar y crear orden
+                            <i class="fas fa-arrow-right ms-1" *ngIf="!creatingOrder"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ═══════════════════════════════════════════════════════════════ -->
+                <!-- PASO 3: Orden creada → Pagar con WOMPI                         -->
+                <!-- ═══════════════════════════════════════════════════════════════ -->
+                <div *ngIf="currentStep === 3 && orderResponse">
+                    <h6 class="mb-3">
+                        <i class="fas fa-file-invoice-dollar me-2"></i>Orden creada exitosamente
+                    </h6>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Su orden ha sido creada. Haga clic en el botón para realizar el pago a través de WOMPI.
+                    </div>
+
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">Nº de Orden:</dt>
+                                <dd class="col-sm-8">#{{ orderResponse.order_id }}</dd>
+
+                                <dt class="col-sm-4">Referencia:</dt>
+                                <dd class="col-sm-8">
+                                    <code>{{ orderResponse.provider_reference }}</code>
+                                </dd>
+
+                                <dt class="col-sm-4">Total a pagar:</dt>
+                                <dd class="col-sm-8">
+                                    <strong class="fs-5 text-success">
+                                        {{ formatCurrency(orderResponse.total_amount, orderResponse.currency) }}
+                                    </strong>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-center mt-4">
+                        <button class="btn btn-lg btn-success px-5"
+                            (click)="onPayWithWompi()">
+                            <i class="fas fa-credit-card me-2"></i>
+                            Pagar con WOMPI
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ═══════════════════════════════════════════════════════════════ -->
+                <!-- PASO 4: Esperando confirmación de pago                         -->
+                <!-- ═══════════════════════════════════════════════════════════════ -->
+                <div *ngIf="currentStep === 4">
+                    <div class="text-center py-4">
+                        <!-- Polling activo -->
+                        <div *ngIf="polling">
+                            <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                                <span class="visually-hidden">Verificando pago...</span>
+                            </div>
+                            <h5>Verificando estado del pago...</h5>
+                            <p class="text-muted">
+                                Se está consultando automáticamente el estado de su pago.
+                                No cierre esta ventana.
+                            </p>
+                            <span class="badge bg-warning text-dark">
+                                Estado actual: {{ paymentStatus }}
+                            </span>
+                        </div>
+
+                        <!-- Pago confirmado -->
+                        <div *ngIf="!polling && paymentStatus === 'PAID'">
+                            <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                            <h4 class="text-success">¡Pago confirmado!</h4>
+                            <p class="text-muted">
+                                Su compra ha sido procesada exitosamente.
+                                Los certificados ya están disponibles en su cuenta.
+                            </p>
+                            <div class="d-flex justify-content-center gap-3 mt-4">
+                                <button class="btn custom-button fas-fa-ok" (click)="goToRequests()">
+                                    <i class="fas fa-plus me-1"></i> Crear solicitud
+                                </button>
+                                <button class="btn btn-outline-secondary" (click)="goToOrders()">
+                                    <i class="fas fa-list me-1"></i> Ver mis órdenes
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Error o timeout -->
+                        <div *ngIf="!polling && paymentStatus !== 'PAID' && paymentStatus !== ''">
+                            <i class="fas fa-exclamation-circle fa-4x text-warning mb-3"></i>
+                            <h5>Pago no confirmado</h5>
+                            <p class="text-muted">
+                                El pago no pudo ser confirmado automáticamente.
+                                Revise el estado en su listado de órdenes.
+                            </p>
+                            <button class="btn btn-outline-primary" (click)="goToOrders()">
+                                <i class="fas fa-list me-1"></i> Ver mis órdenes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>

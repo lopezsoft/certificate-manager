@@ -16,6 +16,8 @@ import {FormatsService} from "../services/formats.service";
 import {DateManager} from "../common/class/date-manager";
 import {CertificateRequest} from "../interfaces/file-manager.interface";
 import {DocumentStatusDescription, DocumentStatusEnumArray} from "../common/enums/DocumentStatus";
+import {QuotaService} from "../services/quota.service";
+import {QuotaStatus} from "../interfaces/quota.interface";
 
 @Component({
   selector: 'app-certificate-request',
@@ -35,6 +37,8 @@ export class CertificateRequestComponent extends BaseComponent  implements OnIni
   public statusDocument = DocumentStatusEnumArray;
   protected currentTypePersons: any;
   protected isClicked = false;
+  quotaStatus: QuotaStatus | null = null;
+  quotaLoading = true;
   constructor(
       public msg: MessagesService,
       public api: HttpResponsesService,
@@ -47,6 +51,7 @@ export class CertificateRequestComponent extends BaseComponent  implements OnIni
       public shipping: ShippingService,
       private mask: LoadMaskService,
       public format: FormatsService,
+      private quotaService: QuotaService,
   ) {
     super(_token, router, translate);
     const currentDate = DateManager.currentDate();
@@ -58,6 +63,20 @@ export class CertificateRequestComponent extends BaseComponent  implements OnIni
   }
 
   ngOnInit(): void {
+    this.loadQuota();
+  }
+
+  private loadQuota(): void {
+    this.quotaLoading = true;
+    this.quotaService.getQuotaStatus().subscribe({
+      next: (quota) => {
+        this.quotaStatus = quota;
+        this.quotaLoading = false;
+      },
+      error: () => {
+        this.quotaLoading = false;
+      }
+    });
   }
 
   ngAfterViewInit(): void {
@@ -132,6 +151,17 @@ export class CertificateRequestComponent extends BaseComponent  implements OnIni
   }
 
   protected onNewDocument() {
+    if (this.quotaStatus && !this.quotaStatus.has_quota) {
+      this.msg.toastMessage(
+        'Sin cupos disponibles',
+        'No tiene certificados disponibles. Será redirigido al módulo de compra.',
+        3
+      );
+      setTimeout(() => {
+        this.router.navigate(['/orders/purchase']);
+      }, 2000);
+      return;
+    }
     this.router.navigate(['requests/list/create']);
   }
 }

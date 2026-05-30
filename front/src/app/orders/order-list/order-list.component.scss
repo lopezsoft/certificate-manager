@@ -1,0 +1,22 @@
+:host {
+  display: block;
+}
+
+.table {
+  th {
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: #6c757d;
+    border-bottom-width: 2px;
+  }
+
+  td {
+    vertical-align: middle;
+  }
+}
+
+.badge {
+  font-weight: 500;
+  padding: 0.4em 0.8em;
+}

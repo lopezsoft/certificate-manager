@@ -1,0 +1,105 @@
+:host {
+  display: block;
+}
+
+// ─── Stepper visual ──────────────────────────────────────────────────────────
+.purchase-stepper {
+  padding: 0 1rem;
+
+  .d-flex {
+    align-items: center;
+  }
+
+  .step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+
+    .step-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #e9ecef;
+      color: #6c757d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+
+    .step-label {
+      margin-top: 0.4rem;
+      font-size: 0.75rem;
+      color: #6c757d;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    &.active .step-circle {
+      background: #7367f0;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(115, 103, 240, 0.35);
+    }
+
+    &.active .step-label {
+      color: #7367f0;
+    }
+
+    &.completed .step-circle {
+      background: #28c76f;
+      color: #fff;
+    }
+
+    &.completed .step-label {
+      color: #28c76f;
+    }
+  }
+
+  .step-line {
+    flex: 1;
+    height: 3px;
+    background: #e9ecef;
+    margin: 0 0.5rem;
+    margin-bottom: 1.5rem;
+    transition: background 0.3s ease;
+
+    &.active {
+      background: #28c76f;
+    }
+  }
+}
+
+// ─── Resumen de precios ──────────────────────────────────────────────────────
+.price-summary {
+  border: 1px solid #e9ecef;
+
+  hr {
+    margin: 0.75rem 0;
+  }
+}
+
+// ─── Tabla de tarifas ────────────────────────────────────────────────────────
+.table {
+  th {
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: #6c757d;
+  }
+}
+
+dl {
+  dt {
+    font-weight: 600;
+    color: #5e5873;
+    margin-bottom: 0.25rem;
+  }
+
+  dd {
+    margin-bottom: 0.75rem;
+  }
+}
