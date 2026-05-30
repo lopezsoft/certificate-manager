@@ -84,6 +84,7 @@ Route::group(['prefix' => 'v1'], function () {
         Route::group(['prefix' => 'company'], function () {
             Route::controller('CompanyController')->group(function () {
                 Route::get('/',            'read');
+                Route::put('/{id}',        'update');
                 Route::group(['prefix' => 'settings'], function () {
                     Route::get('/',         'getSetting');
                     Route::put('/',         'updateSetting');
