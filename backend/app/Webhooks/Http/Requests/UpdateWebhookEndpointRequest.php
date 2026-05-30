@@ -11,6 +11,7 @@ class UpdateWebhookEndpointRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'name'        => ['sometimes', 'string', 'max:100'],
             'url'         => ['sometimes', 'url', 'max:500'],
             'events'      => ['sometimes', 'array', 'min:1'],
             'events.*'    => ['required_with:events', 'string', Rule::in(WebhookEventType::all())],

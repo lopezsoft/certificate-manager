@@ -11,6 +11,7 @@ class CreateWebhookEndpointRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'name'        => ['required', 'string', 'max:100'],
             'url'         => ['required', 'url', 'max:500'],
             'events'      => ['required', 'array', 'min:1'],
             'events.*'    => ['required', 'string', Rule::in(WebhookEventType::all())],

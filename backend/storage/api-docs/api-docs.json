@@ -4294,10 +4294,16 @@
                         "application/json": {
                             "schema": {
                                 "required": [
+                                    "name",
                                     "url",
                                     "events"
                                 ],
                                 "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "Notificaciones ERP"
+                                    },
                                     "url": {
                                         "type": "string",
                                         "format": "uri",
@@ -4429,6 +4435,11 @@
                         "application/json": {
                             "schema": {
                                 "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "Nombre actualizado"
+                                    },
                                     "url": {
                                         "type": "string",
                                         "format": "uri",

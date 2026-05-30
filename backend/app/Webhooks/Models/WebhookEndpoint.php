@@ -14,6 +14,7 @@ class WebhookEndpoint extends Model
 
     protected $fillable = [
         'company_id',
+        'name',
         'url',
         'secret',
         'events',

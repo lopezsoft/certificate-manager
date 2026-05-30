@@ -75,7 +75,8 @@ class WebhookEndpointController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"url","events"},
+     *             required={"name","url","events"},
+     *             @OA\Property(property="name", type="string", maxLength=100, example="Notificaciones ERP"),
      *             @OA\Property(property="url", type="string", format="uri", example="https://mi-erp.com/webhook"),
      *             @OA\Property(property="events", type="array", @OA\Items(type="string"),
      *                 example={"certificate_request.created","certificate_request.status_changed"}
@@ -127,6 +128,7 @@ class WebhookEndpointController extends Controller
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
      *     @OA\RequestBody(
      *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", maxLength=100, example="Nombre actualizado"),
      *             @OA\Property(property="url", type="string", format="uri", example="https://mi-erp.com/nuevo-webhook"),
      *             @OA\Property(property="events", type="array", @OA\Items(type="string"), example={"certificate_request.created"}),
      *             @OA\Property(property="is_active", type="boolean", example=false),
