@@ -69,7 +69,7 @@ class CompanyService
             }
 
             if (($records->country_id ?? null) === 45) {
-                $dv = VerificationDigit::getDigit($records->dni);
+                $dv = VerificationDigit::getDigit((int) $records->dni);
             }
             $records->dv = $dv ?? $company->dv;
 
