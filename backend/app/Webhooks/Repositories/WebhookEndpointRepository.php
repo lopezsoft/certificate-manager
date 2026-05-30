@@ -45,12 +45,12 @@ class WebhookEndpointRepository implements WebhookRepositoryContract
         WebhookEndpoint::findOrFail($id)->delete();
     }
 
-    public function listByCompany(int $companyId): Collection
+    public function listByCompany(int $companyId, int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
         return WebhookEndpoint::query()
             ->where('company_id', $companyId)
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate($perPage);
     }
 
     public function countByCompany(int $companyId): int

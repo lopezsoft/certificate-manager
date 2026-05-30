@@ -59,9 +59,9 @@ class WebhookService
         $this->repository->delete($endpointId);
     }
 
-    public function listForCompany(int $companyId): Collection
+    public function listForCompany(int $companyId, int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
-        return $this->repository->listByCompany($companyId);
+        return $this->repository->listByCompany($companyId, $perPage);
     }
 
     public function findForCompany(int $endpointId, int $companyId): WebhookEndpoint

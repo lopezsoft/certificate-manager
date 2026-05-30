@@ -3,6 +3,7 @@
 namespace App\Webhooks\Contracts;
 
 use App\Webhooks\Models\WebhookEndpoint;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 interface WebhookRepositoryContract
@@ -17,7 +18,7 @@ interface WebhookRepositoryContract
 
     public function delete(int $id): void;
 
-    public function listByCompany(int $companyId): Collection;
+    public function listByCompany(int $companyId, int $perPage = 15): LengthAwarePaginator;
 
     public function countByCompany(int $companyId): int;
 }

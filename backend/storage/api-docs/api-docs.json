@@ -4135,7 +4135,7 @@
                     "Webhooks"
                 ],
                 "summary": "Historial de entregas de un webhook",
-                "description": "Retorna el historial paginado de todos los intentos de entrega para un endpoint webhook específico. Incluye el estado (delivered/failed/pending), el código HTTP de respuesta y el payload enviado.",
+                "description": "Retorna el historial paginado de todos los intentos de entrega para un endpoint webhook específico.",
                 "operationId": "067461ae7dcfcd0c9c6057f0bcea014d",
                 "parameters": [
                     {
@@ -4164,7 +4164,10 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "data": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "dataRecords": {
                                             "properties": {
                                                 "data": {
                                                     "type": "array",
@@ -4177,6 +4180,10 @@
                                                 }
                                             },
                                             "type": "object"
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
                                         }
                                     },
                                     "type": "object"
@@ -4213,7 +4220,11 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "data": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tipos de evento disponibles"
+                                        },
+                                        "dataRecords": {
                                             "type": "array",
                                             "items": {
                                                 "type": "string"
@@ -4224,8 +4235,14 @@
                                                 "certificate_request.ai_processed",
                                                 "certificate_request.file_uploaded",
                                                 "certificate_request.deleted",
-                                                "certificate.expiring"
+                                                "certificate.expiring",
+                                                "payment.approved",
+                                                "payment.failed"
                                             ]
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
                                         }
                                     },
                                     "type": "object"
@@ -4250,20 +4267,45 @@
                     "Webhooks"
                 ],
                 "summary": "Listar webhooks de la compañía",
-                "description": "Retorna todos los endpoints webhook configurados por la compañía autenticada.",
+                "description": "Retorna los endpoints webhook configurados por la compañía autenticada, paginados.",
                 "operationId": "9c13b981583be96b1e7bcc059ceef6f2",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Registros por página (default: 15)",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Lista de webhooks",
+                        "description": "Lista paginada de webhooks",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/WebhookEndpoint"
-                                            }
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/WebhookEndpoint"
+                                                    }
+                                                },
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/PaginationMeta"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
                                         }
                                     },
                                     "type": "object"
@@ -4337,8 +4379,15 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "data": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "dataRecords": {
                                             "$ref": "#/components/schemas/WebhookEndpoint"
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
                                         }
                                     },
                                     "type": "object"
@@ -4347,14 +4396,7 @@
                         }
                     },
                     "422": {
-                        "description": "Validación fallida (URL inválida, evento desconocido, límite alcanzado)",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ApiErrorResponse"
-                                }
-                            }
-                        }
+                        "description": "Validación fallida"
                     },
                     "401": {
                         "description": "No autenticado"
@@ -4391,8 +4433,15 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "data": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "dataRecords": {
                                             "$ref": "#/components/schemas/WebhookEndpoint"
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
                                         }
                                     },
                                     "type": "object"
@@ -4418,7 +4467,7 @@
                     "Webhooks"
                 ],
                 "summary": "Actualizar webhook",
-                "description": "Actualiza la URL, los eventos suscritos, el estado activo/inactivo o la descripción. Todos los campos son opcionales.",
+                "description": "Actualiza nombre, URL, eventos, estado o descripción. Todos los campos son opcionales.",
                 "operationId": "a2309314e5fb571e00563f03f6e92227",
                 "parameters": [
                     {
@@ -4476,8 +4525,15 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "data": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "dataRecords": {
                                             "$ref": "#/components/schemas/WebhookEndpoint"
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
                                         }
                                     },
                                     "type": "object"
@@ -4486,14 +4542,7 @@
                         }
                     },
                     "422": {
-                        "description": "Validación fallida",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ApiErrorResponse"
-                                }
-                            }
-                        }
+                        "description": "Validación fallida"
                     },
                     "404": {
                         "description": "No encontrado"
@@ -4525,8 +4574,24 @@
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "Webhook eliminado"
+                    "200": {
+                        "description": "Webhook eliminado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "404": {
                         "description": "No encontrado"
@@ -4567,12 +4632,24 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/WebhookEndpoint"
+                                        "message": {
+                                            "type": "string"
                                         },
-                                        "secret": {
-                                            "type": "string",
-                                            "example": "xK9mP2qL7nR4tY1uI8oP3aS6dF0gH5jK"
+                                        "dataRecords": {
+                                            "properties": {
+                                                "endpoint": {
+                                                    "$ref": "#/components/schemas/WebhookEndpoint"
+                                                },
+                                                "secret": {
+                                                    "type": "string",
+                                                    "example": "xK9mP2qL7nR4tY1uI8oP3aS6dF0gH5jK"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
                                         }
                                     },
                                     "type": "object"
