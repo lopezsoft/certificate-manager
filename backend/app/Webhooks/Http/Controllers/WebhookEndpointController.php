@@ -3,6 +3,7 @@
 namespace App\Webhooks\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Company\CompanyQueries;
 use App\Webhooks\Enums\WebhookEventType;
 use App\Webhooks\Http\Requests\CreateWebhookEndpointRequest;
 use App\Webhooks\Http\Requests\UpdateWebhookEndpointRequest;
@@ -59,7 +60,7 @@ class WebhookEndpointController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $endpoints = $this->service->listForCompany($request->user()->company_id);
+        $endpoints = $this->service->listForCompany(CompanyQueries::getCompany()->id);
 
         return response()->json(['data' => $endpoints]);
     }
@@ -90,7 +91,7 @@ class WebhookEndpointController extends Controller
     public function store(CreateWebhookEndpointRequest $request): JsonResponse
     {
         $endpoint = $this->service->create(
-            $request->user()->company_id,
+            CompanyQueries::getCompany()->id,
             $request->validated(),
         );
 
@@ -111,7 +112,7 @@ class WebhookEndpointController extends Controller
      */
     public function show(Request $request, int $id): JsonResponse
     {
-        $endpoint = $this->service->findForCompany($id, $request->user()->company_id);
+        $endpoint = $this->service->findForCompany($id, CompanyQueries::getCompany()->id);
 
         return response()->json(['data' => $endpoint]);
     }
@@ -142,7 +143,7 @@ class WebhookEndpointController extends Controller
     {
         $endpoint = $this->service->update(
             $id,
-            $request->user()->company_id,
+            CompanyQueries::getCompany()->id,
             $request->validated(),
         );
 
@@ -163,7 +164,7 @@ class WebhookEndpointController extends Controller
      */
     public function destroy(Request $request, int $id): JsonResponse
     {
-        $this->service->delete($id, $request->user()->company_id);
+        $this->service->delete($id, CompanyQueries::getCompany()->id);
 
         return response()->json(null, 204);
     }
@@ -190,7 +191,7 @@ class WebhookEndpointController extends Controller
      */
     public function rotateSecret(Request $request, int $id): JsonResponse
     {
-        $endpoint = $this->service->rotateSecret($id, $request->user()->company_id);
+        $endpoint = $this->service->rotateSecret($id, CompanyQueries::getCompany()->id);
 
         return response()->json([
             'data'   => $endpoint,
