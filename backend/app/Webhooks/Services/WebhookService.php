@@ -22,6 +22,7 @@ class WebhookService
 
         return $this->repository->create([
             'company_id'  => $companyId,
+            'name'        => $data['name'],
             'url'         => $data['url'],
             'secret'      => Str::random(40),
             'events'      => $data['events'],
