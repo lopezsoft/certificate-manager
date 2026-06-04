@@ -52,6 +52,7 @@ Route::group(['prefix' => 'v1'], function () {
                 Route::get('/', 'getCertificateRequest');
                 Route::get('/all', 'getAllCertificateRequest');
                 Route::get('/lookup/{dni}', 'lookupByDni');
+                Route::get('/stats/{companyId}', 'getStatsByCompany');
                 Route::get('/{id}', 'getCertificateRequestById');
                 Route::put('/{id}', 'updateCertificateRequest');
                 Route::put('/{id}/status', 'updateCertificateRequestStatus');

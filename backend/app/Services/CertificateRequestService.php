@@ -11,6 +11,7 @@ use App\Commands\Certificate\UpdateCertificateStatusCommand;
 use App\Common\HttpResponseMessages;
 use App\Common\MessageExceptionResponse;
 use App\Contracts\CertificateRequestRepositoryContract;
+use App\Models\Company;
 use App\DTOs\CertificateRequestFiltersDTO;
 use App\Handlers\Certificate\CreateCertificateRequestHandler;
 use App\Handlers\Certificate\DeleteCertificateRequestHandler;
@@ -180,6 +181,70 @@ class CertificateRequestService
                     'legal_representative' => $certificate->legal_representative,
                     'life'                 => $certificate->life,
                     'postal_code'          => $certificate->postal_code ?? null,
+                ],
+            ]);
+        } catch (Exception $e) {
+            return MessageExceptionResponse::response($e);
+        }
+    }
+
+    /**
+     * Genera estadísticas de solicitudes de certificado por año para una empresa.
+     *
+     * Retorna el total de solicitudes por año y el desglose por estado,
+     * ordenado del año más reciente al más antiguo.
+     */
+    public function getStatsByCompany(int $companyId): JsonResponse
+    {
+        try {
+            $company = Company::query()->where('id', $companyId)->first();
+
+            if (!$company) {
+                return HttpResponseMessages::getResponse404([
+                    'message' => 'La empresa no existe.',
+                ]);
+            }
+
+            // Totales por año
+            $byYear = \App\Models\CertificateRequest::query()
+                ->where('company_id', $companyId)
+                ->selectRaw('YEAR(created_at) as year, COUNT(*) as total')
+                ->groupByRaw('YEAR(created_at)')
+                ->orderByDesc('year')
+                ->get();
+
+            // Desglose por año y estado
+            $byYearAndStatus = \App\Models\CertificateRequest::query()
+                ->where('company_id', $companyId)
+                ->selectRaw('YEAR(created_at) as year, request_status, COUNT(*) as total')
+                ->groupByRaw('YEAR(created_at), request_status')
+                ->orderByDesc('year')
+                ->get();
+
+            // Armar estructura: { year, total, statuses: { STATUS: count, ... } }
+            $stats = $byYear->map(function ($row) use ($byYearAndStatus) {
+                $statuses = $byYearAndStatus
+                    ->where('year', $row->year)
+                    ->pluck('total', 'request_status')
+                    ->toArray();
+
+                return [
+                    'year'     => (int) $row->year,
+                    'total'    => (int) $row->total,
+                    'statuses' => $statuses,
+                ];
+            });
+
+            // Total global
+            $grandTotal = $byYear->sum('total');
+
+            return HttpResponseMessages::getResponse([
+                'message'     => 'Estadísticas de solicitudes por año',
+                'dataRecords' => [
+                    'company_id'   => $companyId,
+                    'company_name' => $company->company_name,
+                    'grand_total'  => (int) $grandTotal,
+                    'years'        => $stats->values(),
                 ],
             ]);
         } catch (Exception $e) {

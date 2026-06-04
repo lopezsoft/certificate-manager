@@ -225,4 +225,44 @@ class CertificateRequestController extends Controller
     {
         return $this->service->lookupByDni($dni);
     }
+
+    /**
+     * @OA\Get(
+     *     path="/certificate-request/stats/{companyId}",
+     *     tags={"Solicitudes de Certificado"},
+     *     summary="Estadísticas de solicitudes por año",
+     *     description="Genera estadísticas de las solicitudes de certificado de una empresa agrupadas por año, con desglose por estado.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="companyId", in="path", required=true, description="ID de la empresa", @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Estadísticas generadas",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Estadísticas de solicitudes por año"),
+     *             @OA\Property(property="dataRecords", type="object",
+     *                 @OA\Property(property="company_id", type="integer", example=1),
+     *                 @OA\Property(property="company_name", type="string", example="LOPEZSOFT SAS"),
+     *                 @OA\Property(property="grand_total", type="integer", example=150),
+     *                 @OA\Property(property="years", type="array", @OA\Items(type="object",
+     *                     @OA\Property(property="year", type="integer", example=2026),
+     *                     @OA\Property(property="total", type="integer", example=85),
+     *                     @OA\Property(property="statuses", type="object",
+     *                         @OA\Property(property="PROCESSED", type="integer", example=50),
+     *                         @OA\Property(property="SENT", type="integer", example=20),
+     *                         @OA\Property(property="REJECTED", type="integer", example=10),
+     *                         @OA\Property(property="DRAFT", type="integer", example=5)
+     *                     )
+     *                 ))
+     *             ),
+     *             @OA\Property(property="success", type="boolean", example=true)
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Empresa no encontrada"),
+     *     @OA\Response(response=401, description="No autenticado")
+     * )
+     */
+    public function getStatsByCompany(int $companyId): JsonResponse
+    {
+        return $this->service->getStatsByCompany($companyId);
+    }
 }

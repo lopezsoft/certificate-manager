@@ -1637,6 +1637,114 @@
                 ]
             }
         },
+        "/certificate-request/stats/{companyId}": {
+            "get": {
+                "tags": [
+                    "Solicitudes de Certificado"
+                ],
+                "summary": "Estadísticas de solicitudes por año",
+                "description": "Genera estadísticas de las solicitudes de certificado de una empresa agrupadas por año, con desglose por estado.",
+                "operationId": "37be4ff2a4ddf6d3cbc2e5c96cad26c8",
+                "parameters": [
+                    {
+                        "name": "companyId",
+                        "in": "path",
+                        "description": "ID de la empresa",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Estadísticas generadas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Estadísticas de solicitudes por año"
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "company_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "company_name": {
+                                                    "type": "string",
+                                                    "example": "LOPEZSOFT SAS"
+                                                },
+                                                "grand_total": {
+                                                    "type": "integer",
+                                                    "example": 150
+                                                },
+                                                "years": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "year": {
+                                                                "type": "integer",
+                                                                "example": 2026
+                                                            },
+                                                            "total": {
+                                                                "type": "integer",
+                                                                "example": 85
+                                                            },
+                                                            "statuses": {
+                                                                "properties": {
+                                                                    "PROCESSED": {
+                                                                        "type": "integer",
+                                                                        "example": 50
+                                                                    },
+                                                                    "SENT": {
+                                                                        "type": "integer",
+                                                                        "example": 20
+                                                                    },
+                                                                    "REJECTED": {
+                                                                        "type": "integer",
+                                                                        "example": 10
+                                                                    },
+                                                                    "DRAFT": {
+                                                                        "type": "integer",
+                                                                        "example": 5
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Empresa no encontrada"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/certificate-request/{id}/files": {
             "post": {
                 "tags": [
