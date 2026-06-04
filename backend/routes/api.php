@@ -51,6 +51,7 @@ Route::group(['prefix' => 'v1'], function () {
                 Route::post('/', 'createCertificateRequest')->middleware(['throttle:certificate-create', 'validate.mime']);
                 Route::get('/', 'getCertificateRequest');
                 Route::get('/all', 'getAllCertificateRequest');
+                Route::get('/lookup/{dni}', 'lookupByDni');
                 Route::get('/{id}', 'getCertificateRequestById');
                 Route::put('/{id}', 'updateCertificateRequest');
                 Route::put('/{id}/status', 'updateCertificateRequestStatus');

@@ -185,4 +185,44 @@ class CertificateRequestController extends Controller
     {
         return $this->service->deleteCertificateRequest($id);
     }
+
+    /**
+     * @OA\Get(
+     *     path="/certificate-request/lookup/{dni}",
+     *     tags={"Solicitudes de Certificado"},
+     *     summary="Consultar última solicitud por NIT",
+     *     description="Busca la solicitud más reciente con el NIT proporcionado dentro de la empresa autenticada. Útil para autocompletar el formulario de nueva solicitud.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="dni", in="path", required=true, description="NIT/Cédula a consultar", @OA\Schema(type="string", example="901091403")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Datos de la última solicitud encontrada",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Datos de la última solicitud encontrada"),
+     *             @OA\Property(property="dataRecords", type="object",
+     *                 @OA\Property(property="city_id", type="integer", example=149),
+     *                 @OA\Property(property="identity_document_id", type="integer", example=3),
+     *                 @OA\Property(property="type_organization_id", type="integer", example=1),
+     *                 @OA\Property(property="dni", type="string", example="901091403"),
+     *                 @OA\Property(property="dv", type="string", example="2"),
+     *                 @OA\Property(property="document_number", type="string", example="1234567890"),
+     *                 @OA\Property(property="company_name", type="string", example="LOPEZSOFT SAS"),
+     *                 @OA\Property(property="address", type="string", example="Calle 66 # 1823"),
+     *                 @OA\Property(property="phone", type="string", example="3108435431"),
+     *                 @OA\Property(property="mobile", type="string", nullable=true),
+     *                 @OA\Property(property="legal_representative", type="string", example="LEWIS OSWALDO LOPEZ GOMEZ"),
+     *                 @OA\Property(property="life", type="integer", example=1),
+     *                 @OA\Property(property="postal_code", type="string", nullable=true)
+     *             ),
+     *             @OA\Property(property="success", type="boolean", example=true)
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="No se encontraron solicitudes previas para ese NIT"),
+     *     @OA\Response(response=401, description="No autenticado")
+     * )
+     */
+    public function lookupByDni(string $dni): JsonResponse
+    {
+        return $this->service->lookupByDni($dni);
+    }
 }

@@ -1525,6 +1525,118 @@
                 ]
             }
         },
+        "/certificate-request/lookup/{dni}": {
+            "get": {
+                "tags": [
+                    "Solicitudes de Certificado"
+                ],
+                "summary": "Consultar última solicitud por NIT",
+                "description": "Busca la solicitud más reciente con el NIT proporcionado dentro de la empresa autenticada. Útil para autocompletar el formulario de nueva solicitud.",
+                "operationId": "c092c3c0bce9e2ed7335ab9e19827841",
+                "parameters": [
+                    {
+                        "name": "dni",
+                        "in": "path",
+                        "description": "NIT/Cédula a consultar",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "901091403"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Datos de la última solicitud encontrada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Datos de la última solicitud encontrada"
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "city_id": {
+                                                    "type": "integer",
+                                                    "example": 149
+                                                },
+                                                "identity_document_id": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "type_organization_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "dni": {
+                                                    "type": "string",
+                                                    "example": "901091403"
+                                                },
+                                                "dv": {
+                                                    "type": "string",
+                                                    "example": "2"
+                                                },
+                                                "document_number": {
+                                                    "type": "string",
+                                                    "example": "1234567890"
+                                                },
+                                                "company_name": {
+                                                    "type": "string",
+                                                    "example": "LOPEZSOFT SAS"
+                                                },
+                                                "address": {
+                                                    "type": "string",
+                                                    "example": "Calle 66 # 1823"
+                                                },
+                                                "phone": {
+                                                    "type": "string",
+                                                    "example": "3108435431"
+                                                },
+                                                "mobile": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "legal_representative": {
+                                                    "type": "string",
+                                                    "example": "LEWIS OSWALDO LOPEZ GOMEZ"
+                                                },
+                                                "life": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "postal_code": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No se encontraron solicitudes previas para ese NIT"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/certificate-request/{id}/files": {
             "post": {
                 "tags": [

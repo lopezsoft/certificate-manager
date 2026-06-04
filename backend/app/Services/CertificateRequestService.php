@@ -143,4 +143,50 @@ class CertificateRequestService
             return MessageExceptionResponse::response($e);
         }
     }
+
+    /**
+     * Busca la última solicitud de certificado por DNI (NIT) dentro de la empresa autenticada.
+     *
+     * Permite al frontend autocompletar el formulario de nueva solicitud con los datos
+     * del snapshot más reciente para ese NIT.
+     */
+    public function lookupByDni(string $dni): JsonResponse
+    {
+        try {
+            $company = CompanyQueries::getCompany();
+
+            $certificate = \App\Models\CertificateRequest::query()
+                ->where('company_id', $company->id)
+                ->where('dni', $dni)
+                ->orderByDesc('created_at')
+                ->first();
+
+            if (!$certificate) {
+                return HttpResponseMessages::getResponse404([
+                    'message' => 'No se encontraron solicitudes previas para el NIT proporcionado.',
+                ]);
+            }
+
+            return HttpResponseMessages::getResponse([
+                'message'     => 'Datos de la última solicitud encontrada',
+                'dataRecords' => [
+                    'city_id'              => $certificate->city_id,
+                    'identity_document_id' => $certificate->identity_document_id,
+                    'type_organization_id' => $certificate->type_organization_id,
+                    'dni'                  => $certificate->dni,
+                    'dv'                   => $certificate->dv,
+                    'document_number'      => $certificate->document_number,
+                    'company_name'         => $certificate->company_name,
+                    'address'              => $certificate->address,
+                    'phone'                => $certificate->phone,
+                    'mobile'               => $certificate->mobile,
+                    'legal_representative' => $certificate->legal_representative,
+                    'life'                 => $certificate->life,
+                    'postal_code'          => $certificate->postal_code ?? null,
+                ],
+            ]);
+        } catch (Exception $e) {
+            return MessageExceptionResponse::response($e);
+        }
+    }
 }
