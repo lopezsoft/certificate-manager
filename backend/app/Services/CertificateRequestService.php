@@ -244,7 +244,7 @@ class CertificateRequestService
                     'company_id'   => $companyId,
                     'company_name' => $company->company_name,
                     'grand_total'  => (int) $grandTotal,
-                    'years'        => $stats->values(),
+                    'data'         => $stats->values(),
                 ],
             ]);
         } catch (Exception $e) {
