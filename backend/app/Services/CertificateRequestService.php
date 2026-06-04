@@ -145,18 +145,15 @@ class CertificateRequestService
     }
 
     /**
-     * Busca la última solicitud de certificado por DNI (NIT) dentro de la empresa autenticada.
+     * Busca la última solicitud de certificado por DNI (NIT) en toda la plataforma.
      *
      * Permite al frontend autocompletar el formulario de nueva solicitud con los datos
-     * del snapshot más reciente para ese NIT.
+     * del snapshot más reciente para ese NIT, sin importar qué empresa lo haya creado.
      */
     public function lookupByDni(string $dni): JsonResponse
     {
         try {
-            $company = CompanyQueries::getCompany();
-
             $certificate = \App\Models\CertificateRequest::query()
-                ->where('company_id', $company->id)
                 ->where('dni', $dni)
                 ->orderByDesc('created_at')
                 ->first();
