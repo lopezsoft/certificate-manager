@@ -238,13 +238,19 @@ class CertificateRequestService
             // Total global
             $grandTotal = $byYear->sum('total');
 
+            // Estado de cuota
+            $quotaService = app(\App\Quotas\Services\QuotaService::class);
+            $quotaStatus  = $quotaService->getQuotaStatus($companyId);
+
             return HttpResponseMessages::getResponse([
                 'message'     => 'Estadísticas de solicitudes por año',
                 'dataRecords' => [
-                    'company_id'   => $companyId,
-                    'company_name' => $company->company_name,
-                    'grand_total'  => (int) $grandTotal,
-                    'data'         => $stats->values(),
+                    'company_id'    => $companyId,
+                    'company_name'  => $company->company_name,
+                    'has_agreement' => (bool) ($company->has_agreement ?? false),
+                    'grand_total'   => (int) $grandTotal,
+                    'quota'         => $quotaStatus,
+                    'data'          => $stats->values(),
                 ],
             ]);
         } catch (Exception $e) {
