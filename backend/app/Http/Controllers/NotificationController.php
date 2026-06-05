@@ -51,11 +51,19 @@ class NotificationController extends Controller
                       ->where('expiration_date', '<=', $threshold);
                 $message = 'Certificados próximos a vencer';
             } else {
-                // Negativo: certificados que vencieron en los últimos N días
+                // Negativo: certificados que vencieron en los últimos N días SIN renovar
                 $threshold = now()->subDays(abs($days));
                 $query->where('expiration_date', '<', now())
-                      ->where('expiration_date', '>=', $threshold);
-                $message = 'Certificados vencidos en los últimos ' . abs($days) . ' días';
+                      ->where('expiration_date', '>=', $threshold)
+                      ->whereNotExists(function ($sub) {
+                          $sub->select(\Illuminate\Support\Facades\DB::raw(1))
+                              ->from('certificate_requests as renewed')
+                              ->whereColumn('renewed.company_id', 'certificate_requests.company_id')
+                              ->whereColumn('renewed.dni', 'certificate_requests.dni')
+                              ->whereColumn('renewed.created_at', '>', 'certificate_requests.created_at')
+                              ->where('renewed.request_status', CertificateRequestStatusEnum::PROCESSED->value);
+                      });
+                $message = 'Certificados vencidos sin renovar en los últimos ' . abs($days) . ' días';
             }
 
             $query->orderBy('expiration_date', 'asc');
