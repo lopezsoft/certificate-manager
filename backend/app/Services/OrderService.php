@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Quotas\Services;
+namespace App\Services;
 
-use App\Quotas\Models\CertificateOrder;
+use App\Models\CertificateOrder;
 use Illuminate\Support\Str;
 
 /**
@@ -39,4 +39,3 @@ class OrderService
         ]);
     }
 }
-

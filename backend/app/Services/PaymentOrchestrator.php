@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Quotas\Services;
+namespace App\Services;
 
 use App\Payments\Contracts\PaymentGatewayContract;
 use App\Payments\DTOs\CreateTransactionRequest;
 use App\Payments\Models\PaymentTransaction;
-use App\Quotas\Models\CertificateOrder;
-use App\Quotas\Models\CertificateOrderItem;
+use App\Models\CertificateOrder;
+use App\Models\CertificateOrderItem;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Quotas\Enums;
+namespace App\Enums;
 
 enum OrderStatusEnum: string
 {
@@ -14,4 +14,3 @@ enum OrderStatusEnum: string
         return $this === self::PAID;
     }
 }
-

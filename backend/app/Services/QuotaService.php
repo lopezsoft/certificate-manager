@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Quotas\Services;
+namespace App\Services;
 
-use App\Quotas\Enums\BillingTypeEnum;
-use App\Quotas\Enums\QuotaStatusEnum;
-use App\Quotas\Models\CertificateQuota;
+use App\Enums\BillingTypeEnum;
+use App\Enums\QuotaStatusEnum;
+use App\Models\CertificateQuota;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -197,4 +197,3 @@ class QuotaService
             ->update(['status' => QuotaStatusEnum::EXPIRED->value]);
     }
 }
-

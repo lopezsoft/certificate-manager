@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Quotas\Http\Controllers;
+namespace App\Http\Controllers;
 
 use App\Common\HttpResponseMessages;
 use App\Common\MessageExceptionResponse;
-use App\Http\Controllers\Controller;
-use App\Quotas\Services\PricingService;
+use App\Services\PricingService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

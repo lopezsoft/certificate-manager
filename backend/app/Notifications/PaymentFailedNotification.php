@@ -3,7 +3,7 @@
 namespace App\Notifications;
 
 use App\Payments\Models\PaymentTransaction;
-use App\Quotas\Models\CertificateOrder;
+use App\Models\CertificateOrder;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;

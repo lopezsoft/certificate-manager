@@ -13,7 +13,7 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        \App\Quotas\Commands\ExpireQuotasCommand::class,
+        \App\Console\Commands\ExpireQuotasCommand::class,
     ];
 
     /**

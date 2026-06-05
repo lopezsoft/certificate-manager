@@ -28,11 +28,11 @@ Route::group(['prefix' => 'v1'], function () {
     Route::group(['middleware' => 'auth:api'], function () {
 
         // ── Pricing ───────────────────────────────────────────────
-        Route::get('pricing', [\App\Quotas\Http\Controllers\PricingController::class, 'index'])
+        Route::get('pricing', [\App\Http\Controllers\PricingController::class, 'index'])
             ->name('v1.pricing');
 
         // ── Estado de cupos (usuario autenticado) ────────────────
-        Route::get('quota/status', [\App\Quotas\Http\Controllers\QuotaStatusController::class, '__invoke'])
+        Route::get('quota/status', [\App\Http\Controllers\QuotaStatusController::class, '__invoke'])
             ->name('v1.quota.status');
 
         Route::apiResource('crud', 'TableCrudController');
@@ -166,7 +166,7 @@ Route::group(['prefix' => 'v1'], function () {
 
         // ── Órdenes WOMPI (prepaid) — movidas desde v2 ────────────────────
         Route::prefix('orders')->name('v1.orders.')->group(function () {
-            Route::controller('\\' . \App\Quotas\Http\Controllers\OrderController::class)->group(function () {
+            Route::controller('OrderController')->group(function () {
                 Route::get('/',          'index')->name('index');
                 Route::post('/',         'store')->name('store');
                 Route::get('/{id}',      'show')->name('show');
@@ -176,7 +176,7 @@ Route::group(['prefix' => 'v1'], function () {
 
         // ── Admin: gestión de cuotas POSTPAID — solo administradores ──────
         Route::prefix('admin/quotas')->middleware('admin')->name('v1.admin.quotas.')->group(function () {
-            Route::controller('\\' . \App\Quotas\Http\Controllers\QuotaController::class)->group(function () {
+            Route::controller('QuotaController')->group(function () {
                 Route::get('/',             'index')->name('index');
                 Route::post('/',            'store')->name('store');
                 Route::get('/{id}',         'show')->name('show');

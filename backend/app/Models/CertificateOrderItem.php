@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Quotas\Models;
+namespace App\Models;
 
 use App\Models\CertificateRequest;
 use Illuminate\Database\Eloquent\Model;
@@ -36,4 +36,3 @@ class CertificateOrderItem extends Model
         return $this->status === 'USED';
     }
 }
-

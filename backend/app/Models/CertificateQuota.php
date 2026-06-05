@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Quotas\Models;
+namespace App\Models;
 
 use App\Models\Company;
 use App\Models\PricingTier;
 use App\Models\User;
-use App\Quotas\Enums\QuotaStatusEnum;
+use App\Enums\QuotaStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -65,4 +65,3 @@ class CertificateQuota extends Model
             && $this->period_end->isFuture();
     }
 }
-

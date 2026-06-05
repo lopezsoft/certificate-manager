@@ -1,10 +1,9 @@
 <?php
 
-namespace App\Quotas\Http\Controllers;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Quotas\Models\CertificateQuota;
-use App\Quotas\Services\QuotaService;
+use App\Models\CertificateQuota;
+use App\Services\QuotaService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

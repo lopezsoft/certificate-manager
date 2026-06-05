@@ -12,7 +12,7 @@ use App\Models\CertificateRequest;
 use App\Models\ChangeHistory;
 use App\Models\FileManager;
 use App\Notifications\CertificateRequestCreateNotification;
-use App\Quotas\Services\QuotaService;
+use App\Services\QuotaService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;

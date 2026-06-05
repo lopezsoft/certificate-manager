@@ -2,13 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Quotas\Http\Controllers;
+namespace App\Http\Controllers;
 
 use App\Common\HttpResponseMessages;
 use App\Common\MessageExceptionResponse;
-use App\Http\Controllers\Controller;
 use App\Modules\Company\CompanyQueries;
-use App\Quotas\Services\QuotaService;
+use App\Services\QuotaService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 

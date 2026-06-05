@@ -3299,6 +3299,628 @@
                 ]
             }
         },
+        "/orders": {
+            "get": {
+                "tags": [
+                    "Órdenes"
+                ],
+                "summary": "Listar órdenes de compra de la empresa",
+                "operationId": "325fd3d55bbe9bb39645269928fa4983",
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de órdenes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Órdenes"
+                ],
+                "summary": "Crear orden de compra de certificados",
+                "description": "Crea una orden PENDING y devuelve los datos necesarios para el widget de pago.",
+                "operationId": "445bab4f7dc9ea6fcd54f286c0209478",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "quantity",
+                                    "vigencia"
+                                ],
+                                "properties": {
+                                    "quantity": {
+                                        "description": "Cantidad de certificados",
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "example": 5
+                                    },
+                                    "vigencia": {
+                                        "description": "Vigencia en años",
+                                        "type": "integer",
+                                        "enum": [
+                                            1,
+                                            2
+                                        ],
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Orden creada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "order_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "total_amount": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 743750
+                                                },
+                                                "provider_reference": {
+                                                    "type": "string",
+                                                    "example": "ORD-ABCD1234EFGH"
+                                                },
+                                                "payment_provider": {
+                                                    "type": "string",
+                                                    "example": "WOMPI"
+                                                },
+                                                "acceptance_token": {
+                                                    "type": "string"
+                                                },
+                                                "acceptance_url": {
+                                                    "type": "string",
+                                                    "format": "uri"
+                                                },
+                                                "integrity_hash": {
+                                                    "description": "SHA-256 para integridad del widget",
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Parámetros inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/orders/{id}": {
+            "get": {
+                "tags": [
+                    "Órdenes"
+                ],
+                "summary": "Ver detalle de una orden",
+                "operationId": "f088d34a2737782215f435f854e31de5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalle de la orden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CertificateOrder"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Orden no encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/orders/{id}/pay": {
+            "post": {
+                "tags": [
+                    "Órdenes"
+                ],
+                "summary": "Ejecutar pago de una orden",
+                "description": "Crea la transacción de pago. El estado final llega asíncronamente por webhook.",
+                "operationId": "c0443b25eb5b6b180b9d15436d7d1315",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "payment_source_id",
+                                    "acceptance_token",
+                                    "payment_method"
+                                ],
+                                "properties": {
+                                    "payment_source_id": {
+                                        "type": "string",
+                                        "example": "tok_test_XXXX"
+                                    },
+                                    "acceptance_token": {
+                                        "type": "string"
+                                    },
+                                    "payment_method": {
+                                        "type": "string",
+                                        "enum": [
+                                            "CARD",
+                                            "NEQUI",
+                                            "PSE",
+                                            "BANCOLOMBIA_TRANSFER"
+                                        ],
+                                        "example": "CARD"
+                                    },
+                                    "installments": {
+                                        "type": "integer",
+                                        "maximum": 36,
+                                        "minimum": 1,
+                                        "example": 1,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Transacción iniciada"
+                    },
+                    "404": {
+                        "description": "Orden no encontrada o no está PENDING"
+                    },
+                    "502": {
+                        "description": "Error al comunicarse con la pasarela"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/pricing": {
+            "get": {
+                "tags": [
+                    "Precios"
+                ],
+                "summary": "Consultar tarifas de certificados",
+                "description": "Devuelve los rangos de precios desde la base de datos (pricing_tiers). Si se pasan quantity y vigencia, calcula el precio exacto.",
+                "operationId": "4d6527b3a7d4114c7f096f1caa2f9605",
+                "parameters": [
+                    {
+                        "name": "quantity",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "vigencia",
+                        "in": "query",
+                        "description": "Años: 1 o 2",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                1,
+                                2
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tarifas obtenidas"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    },
+                    "422": {
+                        "description": "Parámetros inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/quotas": {
+            "get": {
+                "tags": [
+                    "Cupos Admin"
+                ],
+                "summary": "Listar todos los cupos (admin)",
+                "description": "GET /admin/quotas — Listar todos los cupos",
+                "operationId": "e119093fefee20981836f60f4a15b419",
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de cupos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No es administrador"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Cupos Admin"
+                ],
+                "summary": "Asignar cupo POSTPAID a una empresa",
+                "description": "POST /admin/quotas — Asignar cupo POSTPAID a empresa",
+                "operationId": "55b06febdf1d059a9f9f02e82bdfe19e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "company_id",
+                                    "quantity",
+                                    "period_start",
+                                    "period_end"
+                                ],
+                                "properties": {
+                                    "company_id": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "pricing_tier_id": {
+                                        "description": "Rango de precio asociado (FK a pricing_tiers)",
+                                        "type": "integer",
+                                        "example": 2,
+                                        "nullable": true
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "example": 50
+                                    },
+                                    "period_start": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-05-01"
+                                    },
+                                    "period_end": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-05-31"
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Cupo mensual mayo 2026",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Cupo asignado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CertificateQuota"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No es administrador"
+                    },
+                    "422": {
+                        "description": "Error de validación"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/quotas/{id}": {
+            "get": {
+                "tags": [
+                    "Cupos Admin"
+                ],
+                "summary": "Ver detalle de un cupo",
+                "description": "GET /admin/quotas/{id} — Ver detalle de un cupo",
+                "operationId": "ff993180b8520b7ab4d6ee67b5ecb300",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalle del cupo",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CertificateQuota"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Cupo no encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/quotas/company/{id}": {
+            "get": {
+                "tags": [
+                    "Cupos Admin"
+                ],
+                "summary": "Estado y historial de cupos de una empresa",
+                "description": "GET /admin/quotas/company/{id} — Estado de cupos de una empresa",
+                "operationId": "dc8fcc5d3fd28a2b23151c3e7a8513ff",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la empresa",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 10
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Estado de cupos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "properties": {
+                                                        "allocated": {
+                                                            "type": "integer",
+                                                            "example": 50
+                                                        },
+                                                        "used": {
+                                                            "type": "integer",
+                                                            "example": 12
+                                                        },
+                                                        "remaining": {
+                                                            "type": "integer",
+                                                            "example": 38
+                                                        },
+                                                        "expires_at": {
+                                                            "type": "string",
+                                                            "format": "date",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "history": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/CertificateQuota"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/quota/status": {
+            "get": {
+                "tags": [
+                    "Cupos"
+                ],
+                "summary": "Consultar disponibilidad de certificados",
+                "description": "Retorna el estado de cupos de la empresa del usuario autenticado. Incluye cupos POSTPAID (asignados por admin) y PREPAID (comprados vía WOMPI). El campo 'has_quota' indica si la empresa puede crear nuevas solicitudes.",
+                "operationId": "quotaStatus",
+                "responses": {
+                    "200": {
+                        "description": "Estado de cupos obtenido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Estado de cupos obtenido exitosamente"
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "has_quota": {
+                                                    "description": "true si la empresa puede crear solicitudes",
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "prepaid_items_available": {
+                                                    "description": "Certificados PREPAID pendientes de usar",
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "postpaid": {
+                                                    "properties": {
+                                                        "allocated": {
+                                                            "type": "integer",
+                                                            "example": 50
+                                                        },
+                                                        "used": {
+                                                            "type": "integer",
+                                                            "example": 12
+                                                        },
+                                                        "remaining": {
+                                                            "type": "integer",
+                                                            "example": 38
+                                                        },
+                                                        "expires_at": {
+                                                            "type": "string",
+                                                            "format": "date",
+                                                            "example": "2026-05-31"
+                                                        },
+                                                        "status": {
+                                                            "type": "string",
+                                                            "example": "ACTIVE"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    },
+                    "404": {
+                        "description": "Empresa no encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/settings/reports": {
             "get": {
                 "tags": [
@@ -3834,628 +4456,6 @@
                         "description": "Firma HMAC inválida"
                     }
                 }
-            }
-        },
-        "/orders": {
-            "get": {
-                "tags": [
-                    "Órdenes"
-                ],
-                "summary": "Listar órdenes de compra de la empresa",
-                "operationId": "86ae51fa52ae3db91fe22eaf43d668bc",
-                "responses": {
-                    "200": {
-                        "description": "Lista paginada de órdenes",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "post": {
-                "tags": [
-                    "Órdenes"
-                ],
-                "summary": "Crear orden de compra de certificados",
-                "description": "Crea una orden PENDING y devuelve los datos necesarios para el widget de pago.",
-                "operationId": "0870b2611417f7e6260e1f5391c4c151",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "quantity",
-                                    "vigencia"
-                                ],
-                                "properties": {
-                                    "quantity": {
-                                        "description": "Cantidad de certificados",
-                                        "type": "integer",
-                                        "minimum": 1,
-                                        "example": 5
-                                    },
-                                    "vigencia": {
-                                        "description": "Vigencia en años",
-                                        "type": "integer",
-                                        "enum": [
-                                            1,
-                                            2
-                                        ],
-                                        "example": 1
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Orden creada",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "properties": {
-                                                "order_id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "total_amount": {
-                                                    "type": "number",
-                                                    "format": "float",
-                                                    "example": 743750
-                                                },
-                                                "provider_reference": {
-                                                    "type": "string",
-                                                    "example": "ORD-ABCD1234EFGH"
-                                                },
-                                                "payment_provider": {
-                                                    "type": "string",
-                                                    "example": "WOMPI"
-                                                },
-                                                "acceptance_token": {
-                                                    "type": "string"
-                                                },
-                                                "acceptance_url": {
-                                                    "type": "string",
-                                                    "format": "uri"
-                                                },
-                                                "integrity_hash": {
-                                                    "description": "SHA-256 para integridad del widget",
-                                                    "type": "string"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Parámetros inválidos"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/orders/{id}": {
-            "get": {
-                "tags": [
-                    "Órdenes"
-                ],
-                "summary": "Ver detalle de una orden",
-                "operationId": "6576e0d2293c940a998bf599151fba57",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        },
-                        "example": 1
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Detalle de la orden",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/CertificateOrder"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Orden no encontrada"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/orders/{id}/pay": {
-            "post": {
-                "tags": [
-                    "Órdenes"
-                ],
-                "summary": "Ejecutar pago de una orden",
-                "description": "Crea la transacción de pago. El estado final llega asíncronamente por webhook.",
-                "operationId": "754ab033017a56eac52f15e4ec8bf24f",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        },
-                        "example": 1
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "payment_source_id",
-                                    "acceptance_token",
-                                    "payment_method"
-                                ],
-                                "properties": {
-                                    "payment_source_id": {
-                                        "type": "string",
-                                        "example": "tok_test_XXXX"
-                                    },
-                                    "acceptance_token": {
-                                        "type": "string"
-                                    },
-                                    "payment_method": {
-                                        "type": "string",
-                                        "enum": [
-                                            "CARD",
-                                            "NEQUI",
-                                            "PSE",
-                                            "BANCOLOMBIA_TRANSFER"
-                                        ],
-                                        "example": "CARD"
-                                    },
-                                    "installments": {
-                                        "type": "integer",
-                                        "maximum": 36,
-                                        "minimum": 1,
-                                        "example": 1,
-                                        "nullable": true
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Transacción iniciada"
-                    },
-                    "404": {
-                        "description": "Orden no encontrada o no está PENDING"
-                    },
-                    "502": {
-                        "description": "Error al comunicarse con la pasarela"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/pricing": {
-            "get": {
-                "tags": [
-                    "Precios"
-                ],
-                "summary": "Consultar tarifas de certificados",
-                "description": "Devuelve los rangos de precios desde la base de datos (pricing_tiers). Si se pasan quantity y vigencia, calcula el precio exacto.",
-                "operationId": "459efc80623373f57729a31cc17db771",
-                "parameters": [
-                    {
-                        "name": "quantity",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "minimum": 1
-                        }
-                    },
-                    {
-                        "name": "vigencia",
-                        "in": "query",
-                        "description": "Años: 1 o 2",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "enum": [
-                                1,
-                                2
-                            ]
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Tarifas obtenidas"
-                    },
-                    "401": {
-                        "description": "No autenticado"
-                    },
-                    "422": {
-                        "description": "Parámetros inválidos"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/admin/quotas": {
-            "get": {
-                "tags": [
-                    "Cupos Admin"
-                ],
-                "summary": "Listar todos los cupos (admin)",
-                "description": "GET /admin/quotas — Listar todos los cupos",
-                "operationId": "9a92c1f75ebbf22d954da20c23d8bd2c",
-                "responses": {
-                    "200": {
-                        "description": "Lista paginada de cupos",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "No es administrador"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "post": {
-                "tags": [
-                    "Cupos Admin"
-                ],
-                "summary": "Asignar cupo POSTPAID a una empresa",
-                "description": "POST /admin/quotas — Asignar cupo POSTPAID a empresa",
-                "operationId": "f59beb9ab9d6700331213d82b396c05a",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "company_id",
-                                    "quantity",
-                                    "period_start",
-                                    "period_end"
-                                ],
-                                "properties": {
-                                    "company_id": {
-                                        "type": "integer",
-                                        "example": 10
-                                    },
-                                    "pricing_tier_id": {
-                                        "description": "Rango de precio asociado (FK a pricing_tiers)",
-                                        "type": "integer",
-                                        "example": 2,
-                                        "nullable": true
-                                    },
-                                    "quantity": {
-                                        "type": "integer",
-                                        "minimum": 1,
-                                        "example": 50
-                                    },
-                                    "period_start": {
-                                        "type": "string",
-                                        "format": "date",
-                                        "example": "2026-05-01"
-                                    },
-                                    "period_end": {
-                                        "type": "string",
-                                        "format": "date",
-                                        "example": "2026-05-31"
-                                    },
-                                    "notes": {
-                                        "type": "string",
-                                        "example": "Cupo mensual mayo 2026",
-                                        "nullable": true
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Cupo asignado",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/CertificateQuota"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "No es administrador"
-                    },
-                    "422": {
-                        "description": "Error de validación"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/admin/quotas/{id}": {
-            "get": {
-                "tags": [
-                    "Cupos Admin"
-                ],
-                "summary": "Ver detalle de un cupo",
-                "description": "GET /admin/quotas/{id} — Ver detalle de un cupo",
-                "operationId": "4df57555f5a2be420250ce356362e958",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        },
-                        "example": 1
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Detalle del cupo",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/CertificateQuota"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Cupo no encontrado"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/admin/quotas/company/{id}": {
-            "get": {
-                "tags": [
-                    "Cupos Admin"
-                ],
-                "summary": "Estado y historial de cupos de una empresa",
-                "description": "GET /admin/quotas/company/{id} — Estado de cupos de una empresa",
-                "operationId": "c72d0215ee321cd2648eef36756ccee7",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID de la empresa",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        },
-                        "example": 10
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Estado de cupos",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "properties": {
-                                                "status": {
-                                                    "properties": {
-                                                        "allocated": {
-                                                            "type": "integer",
-                                                            "example": 50
-                                                        },
-                                                        "used": {
-                                                            "type": "integer",
-                                                            "example": 12
-                                                        },
-                                                        "remaining": {
-                                                            "type": "integer",
-                                                            "example": 38
-                                                        },
-                                                        "expires_at": {
-                                                            "type": "string",
-                                                            "format": "date",
-                                                            "nullable": true
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                },
-                                                "history": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "$ref": "#/components/schemas/CertificateQuota"
-                                                    }
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/quota/status": {
-            "get": {
-                "tags": [
-                    "Cupos"
-                ],
-                "summary": "Consultar disponibilidad de certificados",
-                "description": "Retorna el estado de cupos de la empresa del usuario autenticado. Incluye cupos POSTPAID (asignados por admin) y PREPAID (comprados vía WOMPI). El campo 'has_quota' indica si la empresa puede crear nuevas solicitudes.",
-                "operationId": "quotaStatus",
-                "responses": {
-                    "200": {
-                        "description": "Estado de cupos obtenido",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Estado de cupos obtenido exitosamente"
-                                        },
-                                        "dataRecords": {
-                                            "properties": {
-                                                "has_quota": {
-                                                    "description": "true si la empresa puede crear solicitudes",
-                                                    "type": "boolean",
-                                                    "example": true
-                                                },
-                                                "prepaid_items_available": {
-                                                    "description": "Certificados PREPAID pendientes de usar",
-                                                    "type": "integer",
-                                                    "example": 5
-                                                },
-                                                "postpaid": {
-                                                    "properties": {
-                                                        "allocated": {
-                                                            "type": "integer",
-                                                            "example": 50
-                                                        },
-                                                        "used": {
-                                                            "type": "integer",
-                                                            "example": 12
-                                                        },
-                                                        "remaining": {
-                                                            "type": "integer",
-                                                            "example": 38
-                                                        },
-                                                        "expires_at": {
-                                                            "type": "string",
-                                                            "format": "date",
-                                                            "example": "2026-05-31"
-                                                        },
-                                                        "status": {
-                                                            "type": "string",
-                                                            "example": "ACTIVE"
-                                                        }
-                                                    },
-                                                    "type": "object",
-                                                    "nullable": true
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "No autenticado"
-                    },
-                    "404": {
-                        "description": "Empresa no encontrada"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
             }
         },
         "/webhooks/{id}/deliveries": {

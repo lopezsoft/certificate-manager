@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Quotas\Services;
+namespace App\Services;
 
 use App\Models\PricingTier;
 
@@ -111,4 +111,3 @@ class PricingService
         }
     }
 }
-

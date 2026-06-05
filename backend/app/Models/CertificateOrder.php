@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Quotas\Models;
+namespace App\Models;
 
 use App\Models\Company;
 use App\Models\User;
-use App\Quotas\Enums\OrderStatusEnum;
+use App\Enums\OrderStatusEnum;
 use App\Payments\Models\PaymentTransaction;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -69,4 +69,3 @@ class CertificateOrder extends Model
         return OrderStatusEnum::from($this->status);
     }
 }
-

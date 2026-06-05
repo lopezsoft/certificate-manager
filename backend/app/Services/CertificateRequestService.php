@@ -239,7 +239,7 @@ class CertificateRequestService
             $grandTotal = $byYear->sum('total');
 
             // Estado de cuota
-            $quotaService = app(\App\Quotas\Services\QuotaService::class);
+            $quotaService = app(\App\Services\QuotaService::class);
             $quotaStatus  = $quotaService->getQuotaStatus($companyId);
 
             return HttpResponseMessages::getResponse([

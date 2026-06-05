@@ -2,13 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Quotas\Http\Controllers;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Payments\Contracts\PaymentGatewayContract;
-use App\Quotas\Models\CertificateOrder;
-use App\Quotas\Services\OrderService;
-use App\Quotas\Services\PaymentOrchestrator;
+use App\Models\CertificateOrder;
+use App\Services\OrderService;
+use App\Services\PaymentOrchestrator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

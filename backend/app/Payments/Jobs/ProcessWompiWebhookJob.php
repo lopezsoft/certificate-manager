@@ -2,7 +2,7 @@
 
 namespace App\Payments\Jobs;
 
-use App\Quotas\Services\PaymentOrchestrator;
+use App\Services\PaymentOrchestrator;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;

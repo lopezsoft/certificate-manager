@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Payments\Models;
 
 use App\Payments\Enums\PaymentStatusEnum;
-use App\Quotas\Models\CertificateOrder;
+use App\Models\CertificateOrder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 

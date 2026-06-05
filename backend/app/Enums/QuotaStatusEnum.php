@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Quotas\Enums;
+namespace App\Enums;
 
 enum QuotaStatusEnum: string
 {
@@ -13,4 +13,3 @@ enum QuotaStatusEnum: string
         return $this === self::ACTIVE;
     }
 }
-

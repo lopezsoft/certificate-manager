@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Quotas\Commands;
+namespace App\Console\Commands;
 
-use App\Quotas\Services\QuotaService;
+use App\Services\QuotaService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -31,4 +31,3 @@ class ExpireQuotasCommand extends Command
         return self::SUCCESS;
     }
 }
-
