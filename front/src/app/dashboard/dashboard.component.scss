@@ -1,5 +1,5 @@
 // ── Dashboard Custom Tabs ──────────────────────────────────────
-// Pestañas premium con gradientes, animaciones y diseño moderno
+// Mobile-first: íconos compactos → texto + íconos en tablet → full premium en desktop
 
 $tab-primary: #2556a3;
 $tab-primary-light: #3a6fbd;
@@ -10,30 +10,44 @@ $tab-transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 
 .dashboard-tabs {
   position: relative;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 
+  @media (min-width: 768px) {
+    margin-bottom: 1.5rem;
+  }
+
+  // ── Nav container ──
   &__nav {
     display: flex;
     gap: 0;
     background: linear-gradient(135deg, darken($tab-bg, 2%) 0%, $tab-bg 100%);
     border-radius: $tab-radius $tab-radius 0 0;
-    padding: 6px 6px 0;
+    padding: 4px 4px 0;
     border-bottom: 2px solid rgba($tab-primary, 0.1);
     overflow-x: auto;
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
 
     &::-webkit-scrollbar {
       display: none;
     }
+
+    @media (min-width: 576px) {
+      padding: 6px 6px 0;
+    }
   }
 
+  // ── Tab button ──
   &__tab {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px 24px;
-    font-size: 0.875rem;
+    justify-content: center;
+    gap: 0;
+    // Mobile: compact, equal width
+    flex: 1;
+    padding: 10px 8px;
+    font-size: 0.75rem;
     font-weight: 600;
     color: #6e6b7b;
     background: transparent;
@@ -43,7 +57,24 @@ $tab-transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
     transition: $tab-transition;
     letter-spacing: 0.02em;
+    min-width: 0;
 
+    // Tablet+: show text, add gap
+    @media (min-width: 576px) {
+      flex: none;
+      gap: 6px;
+      padding: 10px 16px;
+      font-size: 0.8rem;
+    }
+
+    // Desktop: full padding
+    @media (min-width: 768px) {
+      gap: 8px;
+      padding: 12px 24px;
+      font-size: 0.875rem;
+    }
+
+    // Indicator line
     &::after {
       content: '';
       position: absolute;
@@ -68,7 +99,11 @@ $tab-transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
       box-shadow: 0 -2px 8px rgba($tab-primary, 0.08);
 
       &::after {
-        width: 60%;
+        width: 50%;
+
+        @media (min-width: 576px) {
+          width: 60%;
+        }
       }
 
       .dashboard-tabs__icon {
@@ -79,43 +114,91 @@ $tab-transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
 
+  // ── Icon ──
   &__icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    font-size: 0.8rem;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    font-size: 0.75rem;
     background: rgba(#6e6b7b, 0.08);
     color: #6e6b7b;
     transition: $tab-transition;
+    flex-shrink: 0;
+
+    @media (min-width: 576px) {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+    }
   }
 
+  // ── Label (hidden on mobile) ──
+  &__label {
+    display: none;
+
+    @media (min-width: 576px) {
+      display: inline;
+    }
+  }
+
+  // ── Badge ──
   &__badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 20px;
-    height: 20px;
-    padding: 0 6px;
-    font-size: 0.7rem;
     font-weight: 700;
     border-radius: 10px;
     background: linear-gradient(135deg, #ea5455, #ff6b6b);
     color: #fff;
     animation: pulse-badge 2s ease-in-out infinite;
+
+    // Mobile: small dot overlay
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 0.6rem;
+    position: absolute;
+    top: 4px;
+    right: 4px;
+
+    // Tablet+: inline
+    @media (min-width: 576px) {
+      position: static;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 6px;
+      font-size: 0.7rem;
+    }
   }
 
+  // ── Content ──
   &__content {
     background: #fff;
     border-radius: 0 0 $tab-radius $tab-radius;
-    min-height: 200px;
+    min-height: 150px;
+
+    @media (min-width: 768px) {
+      min-height: 200px;
+    }
   }
 
+  // ── Panel ──
   &__panel {
     display: none;
     animation: fadeSlideIn 0.4s ease-out;
+    padding: 12px 8px;
+
+    @media (min-width: 576px) {
+      padding: 16px 12px;
+    }
+
+    @media (min-width: 768px) {
+      padding: 0;
+    }
 
     &--active {
       display: block;
@@ -137,4 +220,292 @@ $tab-transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 @keyframes pulse-badge {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.1); }
+}
+
+// ── Dashboard Premium Tables ─────────────────────────────────────
+// Tablas profesionales con efecto glassmorphism, hover glow y tipografía refinada
+
+$table-primary: #2556a3;
+$table-accent: #7367f0;
+$table-border: rgba(#d4d8dd, 0.5);
+$table-hover-bg: rgba($table-primary, 0.035);
+$table-stripe-bg: rgba(#f4f5f7, 0.6);
+$table-radius: 10px;
+$table-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+
+.dashboard-tabs__panel {
+
+  // Card contenedora
+  .card {
+    border: none;
+    border-radius: $table-radius;
+    box-shadow: $table-shadow, 0 0 0 1px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+
+    .card-header {
+      position: relative;
+      background: #fff;
+      border-bottom: 1px solid rgba(#e0e3e8, 0.7);
+      padding: 14px 20px;
+
+      // Accent stripe izquierdo
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(180deg, $table-primary, $table-accent);
+        border-radius: $table-radius 0 0 0;
+      }
+
+      // Título
+      .card-title,
+      h5, h6 {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #2d2d3f;
+        letter-spacing: 0.01em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        i {
+          font-size: 0.85rem;
+        }
+      }
+    }
+
+    .card-body {
+      padding: 16px 20px;
+    }
+  }
+
+  // ── Grupo de acciones del header (dias + exportar) ──
+  .d-flex.gap-50 {
+    gap: 12px !important;
+  }
+
+  // Botones de exportación — nunca apilar
+  .btn-group.btn-group-sm {
+    flex-shrink: 0;
+    flex-wrap: nowrap;
+
+    .btn {
+      padding: 6px 10px;
+      font-size: 0.78rem;
+      border-radius: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 34px;
+      gap: 4px;
+      transition: all 0.2s ease;
+
+      &:first-child {
+        border-radius: 6px 0 0 6px;
+      }
+
+      &:last-child {
+        border-radius: 0 6px 6px 0;
+      }
+
+      &:only-child {
+        border-radius: 6px;
+      }
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      &:active {
+        transform: translateY(0);
+        box-shadow: none;
+      }
+    }
+  }
+
+  // Tabla principal
+  .table {
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.82rem;
+
+    // Header — glassmorphism
+    thead {
+      th {
+        background: linear-gradient(180deg, #f0f2f6 0%, #e8ebf0 100%);
+        color: #444;
+        font-weight: 700;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding: 10px 14px;
+        border-bottom: 2px solid rgba($table-primary, 0.12);
+        border-top: none;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        white-space: nowrap;
+
+        &:first-child {
+          border-radius: $table-radius 0 0 0;
+        }
+
+        &:last-child {
+          border-radius: 0 $table-radius 0 0;
+        }
+      }
+    }
+
+    // Body rows
+    tbody {
+      tr {
+        transition: all 0.25s ease;
+        border-left: 3px solid transparent;
+
+        &:nth-child(even) {
+          background-color: $table-stripe-bg;
+        }
+
+        &:hover {
+          background-color: $table-hover-bg;
+          border-left-color: $table-primary;
+          box-shadow: inset 0 0 0 1px rgba($table-primary, 0.06);
+          transform: scale(1.002);
+        }
+
+        td {
+          padding: 10px 14px;
+          vertical-align: middle;
+          border-color: rgba(#e8e8e8, 0.6);
+          color: #5e5873;
+          line-height: 1.45;
+
+          strong {
+            color: #3b3b4f;
+            font-weight: 600;
+          }
+
+          small.text-muted {
+            font-size: 0.72rem;
+            opacity: 0.75;
+          }
+        }
+      }
+    }
+
+    // Footer
+    tfoot {
+      tr {
+        background: linear-gradient(180deg, #f5f6fa 0%, #eef0f5 100%);
+
+        td {
+          padding: 10px 14px;
+          font-weight: 600;
+          color: #444;
+          border-top: 2px solid rgba($table-primary, 0.1);
+        }
+      }
+    }
+  }
+
+  // ── Badge de urgencia / estado refinado ──
+  .badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 5px 10px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+    }
+  }
+
+  // ── Alert states refinados ──
+  .alert {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+
+    &.alert-success {
+      background: linear-gradient(135deg, rgba(#28c76f, 0.08), rgba(#28c76f, 0.04));
+      border-left: 3px solid #28c76f;
+      color: #1e7e4a;
+    }
+
+    &.alert-warning {
+      background: linear-gradient(135deg, rgba(#ff9f43, 0.08), rgba(#ff9f43, 0.04));
+      border-left: 3px solid #ff9f43;
+      color: #b06e1d;
+    }
+
+    &.alert-danger {
+      background: linear-gradient(135deg, rgba(#ea5455, 0.08), rgba(#ea5455, 0.04));
+      border-left: 3px solid #ea5455;
+      color: #c03e3f;
+    }
+
+    &.alert-info {
+      background: linear-gradient(135deg, rgba(#00cfe8, 0.08), rgba(#00cfe8, 0.04));
+      border-left: 3px solid #00cfe8;
+      color: #0a8ea0;
+    }
+  }
+
+
+  // ── Table responsive container ──
+  .table-responsive {
+    border-radius: 0 0 $table-radius $table-radius;
+    overflow: hidden;
+
+    &::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba($table-primary, 0.2);
+      border-radius: 3px;
+
+      &:hover {
+        background: rgba($table-primary, 0.35);
+      }
+    }
+  }
+}
+
+// ── Animación de entrada para filas ──
+@keyframes rowFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.dashboard-tabs__panel--active {
+  .table tbody tr {
+    animation: rowFadeIn 0.35s ease-out both;
+
+    @for $i from 1 through 20 {
+      &:nth-child(#{$i}) {
+        animation-delay: #{$i * 0.03}s;
+      }
+    }
+  }
 }

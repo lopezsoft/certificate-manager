@@ -15,7 +15,7 @@ import {ConsumeByYear} from "../models/dashboard-model";
 import {CertificateRequestStats, YearlyStats} from "../models/certificate-stats.model";
 import {CustomerService} from "../services/companies/customers.service";
 import {CertificateNotificationService} from "../services/certificate-notification.service";
-import {ExpiringCertificate, UrgencyLevel} from "../interfaces";
+import {ExpiringCertificate, ExpiringByCompany, UrgencyLevel} from "../interfaces";
 import {Subject} from "rxjs";
 import {takeUntil} from "rxjs/operators";
 import {ApexOptions} from "ng-apexcharts";
@@ -71,6 +71,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
   protected expiredError = false;
   protected expiredDays = -30;
 
+  // ── Vista agrupada por empresa (solo admin) ──
+  protected expiringByCompany: ExpiringByCompany[] = [];
+  protected expiringByCompanyTotal = 0;
+  protected expiringByCompanyLoading = false;
+  protected expiredByCompany: ExpiringByCompany[] = [];
+  protected expiredByCompanyTotal = 0;
+  protected expiredByCompanyLoading = false;
+
   protected months = [
     { name: 'todos', value: 0 },
     { name: 'Enero', value: 1 },
@@ -118,6 +126,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.loadCompanyStats();
       this.loadExpiringCerts();
       this.loadExpiredCerts();
+      if (this._token.isAdmin()) {
+        this.loadExpiringByCompany();
+        this.loadExpiredByCompany();
+      }
     }
 
     this.autoRefresh.getRefreshTrigger$()
@@ -387,6 +399,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }));
   }
 
+  protected getQuotaUsagePercent(): number {
+    const postpaid = this.companyStats?.quota?.postpaid;
+    if (!postpaid || postpaid.allocated === 0) { return 0; }
+    return (postpaid.used / postpaid.allocated) * 100;
+  }
+
   private buildCompanyBarChart(data: CertificateRequestStats): void {
     const years = data.data.map((d) => String(d.year));
     const totals = data.data.map((d) => d.total);
@@ -476,6 +494,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.expiringError = true;
         },
       });
+    if (this._token.isAdmin()) {
+      this.loadExpiringByCompany();
+    }
   }
 
   protected getUrgencyClass(level: UrgencyLevel): string {
@@ -525,6 +546,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.expiredError = true;
         },
       });
+    if (this._token.isAdmin()) {
+      this.loadExpiredByCompany();
+    }
   }
 
   protected exportExpiredData(format: 'csv' | 'json' | 'excel'): void {
@@ -558,6 +582,66 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (absDays === 0) return 'HOY';
     if (absDays === 1) return 'AYER';
     return `HACE ${absDays} DÍAS`;
+  }
+
+  // ── Vista agrupada por empresa (admin) ──────────────────────
+
+  protected loadExpiringByCompany(days?: number): void {
+    if (days !== undefined) {
+      this.expiringDays = days;
+    }
+    this.expiringByCompanyLoading = true;
+    this.certNotification.getExpiringByCompany(this.expiringDays)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          this.expiringByCompany = result.data;
+          this.expiringByCompanyTotal = result.total;
+          this.expiringByCompanyLoading = false;
+        },
+        error: () => {
+          this.expiringByCompany = [];
+          this.expiringByCompanyTotal = 0;
+          this.expiringByCompanyLoading = false;
+        },
+      });
+  }
+
+  protected loadExpiredByCompany(days?: number): void {
+    if (days !== undefined) {
+      this.expiredDays = days;
+    }
+    this.expiredByCompanyLoading = true;
+    this.certNotification.getExpiringByCompany(this.expiredDays)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          this.expiredByCompany = result.data;
+          this.expiredByCompanyTotal = result.total;
+          this.expiredByCompanyLoading = false;
+        },
+        error: () => {
+          this.expiredByCompany = [];
+          this.expiredByCompanyTotal = 0;
+          this.expiredByCompanyLoading = false;
+        },
+      });
+  }
+
+  protected exportByCompanyData(data: ExpiringByCompany[], filename: string, format: 'csv' | 'json' | 'excel'): void {
+    const columns = [
+      { key: 'company_name', label: 'Empresa' },
+      { key: 'email', label: 'Email' },
+      { key: 'has_agreement', label: 'Convenio' },
+      { key: 'total', label: 'Total Certificados' },
+      { key: 'most_urgent_days', label: 'Días más urgente' },
+      { key: 'urgency_level', label: 'Urgencia' },
+    ];
+    switch (format) {
+      case 'csv': this.exportService.exportToCSV(data, columns, { filename }); break;
+      case 'json': this.exportService.exportToJSON(data, filename); break;
+      case 'excel': this.exportService.exportToExcel(data, columns, { filename }); break;
+    }
   }
 
   ngOnDestroy(): void {

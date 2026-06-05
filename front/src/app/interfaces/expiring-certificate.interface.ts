@@ -26,3 +26,17 @@ export interface ExpiringCertificatesResponse {
   total: number;
   dataRecords: ExpiringCertificate[];
 }
+
+/**
+ * Vista agrupada por empresa — solo admin.
+ * Endpoint: GET /api/v1/admin/certificates/expiring-by-company?days=N
+ */
+export interface ExpiringByCompany {
+  company_id: number;
+  company_name: string;
+  email: string;
+  has_agreement: boolean;
+  total: number;
+  most_urgent_days: number;
+  urgency_level: UrgencyLevel;
+}
