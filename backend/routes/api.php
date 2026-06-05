@@ -171,8 +171,8 @@ Route::group(['prefix' => 'v1'], function () {
             });
         });
 
-        // ── Admin: gestión de cuotas POSTPAID — movido desde v2 ───────────
-        Route::prefix('admin/quotas')->name('v1.admin.quotas.')->group(function () {
+        // ── Admin: gestión de cuotas POSTPAID — solo administradores ──────
+        Route::prefix('admin/quotas')->middleware('admin')->name('v1.admin.quotas.')->group(function () {
             Route::controller('\\' . \App\Quotas\Http\Controllers\QuotaController::class)->group(function () {
                 Route::get('/',             'index')->name('index');
                 Route::post('/',            'store')->name('store');
