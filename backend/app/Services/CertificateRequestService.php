@@ -208,16 +208,16 @@ class CertificateRequestService
             // Totales por año
             $byYear = \App\Models\CertificateRequest::query()
                 ->where('company_id', $companyId)
-                ->selectRaw('YEAR(created_at) as year, COUNT(*) as total')
-                ->groupByRaw('YEAR(created_at)')
+                ->selectRaw('YEAR(updated_at) as year, COUNT(*) as total')
+                ->groupByRaw('YEAR(updated_at)')
                 ->orderByDesc('year')
                 ->get();
 
             // Desglose por año y estado
             $byYearAndStatus = \App\Models\CertificateRequest::query()
                 ->where('company_id', $companyId)
-                ->selectRaw('YEAR(created_at) as year, request_status, COUNT(*) as total')
-                ->groupByRaw('YEAR(created_at), request_status')
+                ->selectRaw('YEAR(updated_at) as year, request_status, COUNT(*) as total')
+                ->groupByRaw('YEAR(updated_at), request_status')
                 ->orderByDesc('year')
                 ->get();
 

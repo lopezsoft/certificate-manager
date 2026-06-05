@@ -511,7 +511,7 @@ class ProcessCertificateJob implements ShouldQueue
     public static function processRecentCertificates(int $days = 7, int $userId = 1, int $limit = 10, array $options = []): void
     {
         try {
-            $certificateRequests = CertificateRequest::where('created_at', '>=', now()->subDays($days))
+            $certificateRequests = CertificateRequest::where('updated_at', '>=', now()->subDays($days))
                 ->whereDoesntHave('documentAnalysisResults') // Only process unanalyzed ones
                 ->limit($limit)
                 ->pluck('id')

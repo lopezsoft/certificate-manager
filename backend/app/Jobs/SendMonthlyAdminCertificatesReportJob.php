@@ -128,9 +128,9 @@ class SendMonthlyAdminCertificatesReportJob implements ShouldQueue
     private function generateAdminReportData(): array
     {
         // Obtener todos los certificados del periodo
-        $certificates = CertificateRequest::whereBetween('created_at', [$this->startDate, $this->endDate])
+        $certificates = CertificateRequest::whereBetween('updated_at', [$this->startDate, $this->endDate])
             ->with(['company', 'identity', 'organization', 'city'])
-            ->orderBy('created_at', 'desc')
+            ->orderBy('updated_at', 'desc')
             ->get();
 
         // Agrupar por empresa
