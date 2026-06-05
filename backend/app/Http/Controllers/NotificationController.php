@@ -38,15 +38,27 @@ class NotificationController extends Controller
     public function expiring(Request $request): JsonResponse
     {
         try {
-            $days      = (int) $request->input('days', config('certificate.notification_days', 30));
-            $threshold = now()->addDays($days);
+            $days = (int) $request->input('days', config('certificate.notification_days', 30));
 
             $query = CertificateRequest::with(['company', 'city'])
                 ->whereNotNull('expiration_date')
-                ->where('request_status', CertificateRequestStatusEnum::PROCESSED->value)
-                ->where('expiration_date', '>', now())
-                ->where('expiration_date', '<=', $threshold)
-                ->orderBy('expiration_date', 'asc');
+                ->where('request_status', CertificateRequestStatusEnum::PROCESSED->value);
+
+            if ($days >= 0) {
+                // Positivo: certificados que vencen en los próximos N días
+                $threshold = now()->addDays($days);
+                $query->where('expiration_date', '>', now())
+                      ->where('expiration_date', '<=', $threshold);
+                $message = 'Certificados próximos a vencer';
+            } else {
+                // Negativo: certificados que vencieron en los últimos N días
+                $threshold = now()->subDays(abs($days));
+                $query->where('expiration_date', '<', now())
+                      ->where('expiration_date', '>=', $threshold);
+                $message = 'Certificados vencidos en los últimos ' . abs($days) . ' días';
+            }
+
+            $query->orderBy('expiration_date', 'asc');
 
             // Si el usuario no es admin, filtra solo los de su empresa
             $user = Auth::user();
@@ -75,7 +87,7 @@ class NotificationController extends Controller
             });
 
             return HttpResponseMessages::getResponse([
-                'message'      => 'Certificados próximos a vencer',
+                'message'      => $message,
                 'total'        => $certificates->count(),
                 'dataRecords'  => $certificates,
             ]);
