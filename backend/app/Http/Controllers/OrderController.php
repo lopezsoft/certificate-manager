@@ -248,4 +248,36 @@ class OrderController extends Controller
             return MessageExceptionResponse::response($e);
         }
     }
+
+    /**
+     * @OA\Delete(
+     *     path="/orders/{id}",
+     *     tags={"Órdenes"},
+     *     summary="Eliminar una orden PENDING",
+     *     description="Solo permite eliminar órdenes en estado PENDING. Órdenes pagadas o procesadas no pueden eliminarse.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *     @OA\Response(response=200, description="Orden eliminada correctamente"),
+     *     @OA\Response(response=404, description="Orden no encontrada o no está en estado PENDING")
+     * )
+     */
+    public function destroy(int $id): JsonResponse
+    {
+        try {
+            $companyId = CompanyQueries::getCompany()->id;
+            $order = CertificateOrder::where('company_id', $companyId)
+                ->where('status', 'PENDING')
+                ->findOrFail($id);
+
+            $order->items()->delete();
+            $order->transactions()->delete();
+            $order->delete();
+
+            return HttpResponseMessages::getResponse([
+                'message' => 'Orden eliminada correctamente',
+            ]);
+        } catch (\Exception $e) {
+            return MessageExceptionResponse::response($e);
+        }
+    }
 }

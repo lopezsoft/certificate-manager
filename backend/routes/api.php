@@ -172,6 +172,7 @@ Route::group(['prefix' => 'v1'], function () {
                 Route::get('/{id}',      'show')->name('show');
                 Route::post('/{id}/pay', 'pay')->name('pay');
                 Route::post('/{id}/retry', 'retry')->name('retry');
+                Route::delete('/{id}', 'destroy')->name('destroy');
             });
         });
 
