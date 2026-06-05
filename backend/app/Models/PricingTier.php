@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Quotas\Models\CertificateQuota;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -22,6 +23,7 @@ class PricingTier extends Model
 
     protected $fillable = [
         'code',
+        'user_type_id',
         'name',
         'min_quantity',
         'max_quantity',
@@ -32,6 +34,7 @@ class PricingTier extends Model
     ];
 
     protected $casts = [
+        'user_type_id' => 'integer',
         'min_quantity' => 'integer',
         'max_quantity' => 'integer',
         'price_1yr'    => 'decimal:2',
@@ -39,6 +42,11 @@ class PricingTier extends Model
         'is_active'    => 'boolean',
         'sort_order'   => 'integer',
     ];
+
+    public function userType(): BelongsTo
+    {
+        return $this->belongsTo(UserType::class, 'user_type_id');
+    }
 
     public function certificateQuotas(): HasMany
     {
