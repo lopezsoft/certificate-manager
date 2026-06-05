@@ -167,12 +167,12 @@ Route::group(['prefix' => 'v1'], function () {
         // ── Órdenes WOMPI (prepaid) — movidas desde v2 ────────────────────
         Route::prefix('orders')->name('v1.orders.')->group(function () {
             Route::controller('OrderController')->group(function () {
-                Route::get('/',          'index')->name('index');
-                Route::post('/',         'store')->name('store');
-                Route::get('/{id}',      'show')->name('show');
-                Route::post('/{id}/pay', 'pay')->name('pay');
-                Route::post('/{id}/retry', 'retry')->name('retry');
-                Route::delete('/{id}', 'destroy')->name('destroy');
+                Route::get('/',             'index')->name('index');
+                Route::post('/',            'store')->name('store');
+                Route::get('/{uuid}',       'show')->name('show');
+                Route::post('/{uuid}/pay',  'pay')->name('pay');
+                Route::post('/{uuid}/retry', 'retry')->name('retry');
+                Route::delete('/{uuid}',    'destroy')->name('destroy');
             });
         });
 

@@ -99,7 +99,7 @@ class OrderController extends Controller
 
             return HttpResponseMessages::getResponse([
                 'data' => [
-                    'order_id'           => $order->id,
+                    'order_id'           => $order->uuid,
                     'total_amount'       => $order->total_amount,
                     'provider_reference' => $order->provider_reference,
                     'payment_provider'   => $order->payment_provider,
@@ -120,27 +120,27 @@ class OrderController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/orders/{id}",
+     *     path="/orders/{uuid}",
      *     tags={"Órdenes"},
      *     summary="Ver detalle de una orden",
      *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *     @OA\Parameter(name="uuid", in="path", required=true, @OA\Schema(type="string", format="uuid")),
      *     @OA\Response(response=200, description="Detalle de la orden",
      *         @OA\JsonContent(@OA\Property(property="data", ref="#/components/schemas/CertificateOrder"))
      *     ),
      *     @OA\Response(response=404, description="Orden no encontrada")
      * )
      */
-    public function show(int $id): JsonResponse
+    public function show(string $uuid): JsonResponse
     {
         try {
             $companyId = CompanyQueries::getCompany()->id;
             $order = CertificateOrder::where('company_id', $companyId)
                 ->with(['items', 'latestTransaction'])
-                ->findOrFail($id);
+                ->where('uuid', $uuid)->firstOrFail();
 
             return HttpResponseMessages::getResponse([
-                'dataRecord' => [
+                'dataRecords' => [
                     'data' => $order,
                 ]
             ]);
@@ -152,12 +152,12 @@ class OrderController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/orders/{id}/pay",
+     *     path="/orders/{uuid}/pay",
      *     tags={"Órdenes"},
      *     summary="Ejecutar pago de una orden",
      *     description="Crea la transacción de pago. El estado final llega asíncronamente por webhook.",
      *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *     @OA\Parameter(name="uuid", in="path", required=true, @OA\Schema(type="string", format="uuid")),
      *     @OA\RequestBody(required=true, @OA\JsonContent(
      *         required={"payment_source_id","acceptance_token","payment_method"},
      *         @OA\Property(property="payment_source_id", type="string", example="tok_test_XXXX"),
@@ -170,7 +170,7 @@ class OrderController extends Controller
      *     @OA\Response(response=502, description="Error al comunicarse con la pasarela")
      * )
      */
-    public function pay(Request $request, int $id): JsonResponse
+    public function pay(Request $request, string $uuid): JsonResponse
     {
         $data = $request->validate([
             'payment_source_id' => ['required', 'string'],
@@ -179,12 +179,11 @@ class OrderController extends Controller
             'installments'      => ['nullable', 'integer', 'min:1', 'max:36'],
         ]);
 
-
         try {
             $companyId = CompanyQueries::getCompany()->id;
             $order = CertificateOrder::where('company_id', $companyId)
                 ->where('status', 'PENDING')
-                ->findOrFail($id);
+                ->where('uuid', $uuid)->firstOrFail();
 
             $transaction = $this->orchestrator->initiatePayment(
                 order:           $order,
@@ -208,30 +207,30 @@ class OrderController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/orders/{id}/retry",
+     *     path="/orders/{uuid}/retry",
      *     tags={"Órdenes"},
      *     summary="Reintentar pago de una orden PENDING",
      *     description="Devuelve tokens frescos para abrir el widget de pago en una orden PENDING existente.",
      *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *     @OA\Parameter(name="uuid", in="path", required=true, @OA\Schema(type="string", format="uuid")),
      *     @OA\Response(response=200, description="Datos frescos para el widget de pago"),
      *     @OA\Response(response=404, description="Orden no encontrada o no está en estado PENDING")
      * )
      */
-    public function retry(int $id): JsonResponse
+    public function retry(string $uuid): JsonResponse
     {
         try {
             $companyId = CompanyQueries::getCompany()->id;
             $order = CertificateOrder::where('company_id', $companyId)
                 ->where('status', 'PENDING')
-                ->findOrFail($id);
+                ->where('uuid', $uuid)->firstOrFail();
 
             $acceptanceDto = $this->gateway->getAcceptanceToken();
             $totalInCents  = (int) round((float) $order->total_amount * 100);
 
             return HttpResponseMessages::getResponse([
                 'data' => [
-                    'order_id'           => $order->id,
+                    'order_id'           => $order->uuid,
                     'total_amount'       => $order->total_amount,
                     'provider_reference' => $order->provider_reference,
                     'payment_provider'   => $order->payment_provider,
@@ -251,23 +250,23 @@ class OrderController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/orders/{id}",
+     *     path="/orders/{uuid}",
      *     tags={"Órdenes"},
      *     summary="Eliminar una orden PENDING",
      *     description="Solo permite eliminar órdenes en estado PENDING. Órdenes pagadas o procesadas no pueden eliminarse.",
      *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *     @OA\Parameter(name="uuid", in="path", required=true, @OA\Schema(type="string", format="uuid")),
      *     @OA\Response(response=200, description="Orden eliminada correctamente"),
      *     @OA\Response(response=404, description="Orden no encontrada o no está en estado PENDING")
      * )
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(string $uuid): JsonResponse
     {
         try {
             $companyId = CompanyQueries::getCompany()->id;
             $order = CertificateOrder::where('company_id', $companyId)
                 ->where('status', 'PENDING')
-                ->findOrFail($id);
+                ->where('uuid', $uuid)->firstOrFail();
 
             $order->items()->delete();
             $order->transactions()->delete();
