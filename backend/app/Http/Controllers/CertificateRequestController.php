@@ -263,6 +263,10 @@ class CertificateRequestController extends Controller
      */
     public function getStatsByCompany(int $companyId): JsonResponse
     {
+        if ($companyId === 0) {
+            $companyId = \App\Modules\Company\CompanyQueries::getCompany()->id;
+        }
+
         return $this->service->getStatsByCompany($companyId);
     }
 }
