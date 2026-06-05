@@ -23,7 +23,7 @@ class OrderService
     {
         $pricing = $this->pricingService->calculatePrice($quantity, $vigencia, $userTypeId);
 
-        return CertificateOrder::create([
+        $order = CertificateOrder::create([
             'company_id'         => $companyId,
             'user_id'            => $userId,
             'quantity'           => $quantity,
@@ -37,5 +37,8 @@ class OrderService
             'payment_provider'   => config('payments.default_provider', 'WOMPI'),
             'provider_reference' => 'ORD-' . strtoupper(Str::random(12)),
         ]);
+
+        // Refrescar para obtener el UUID generado por el trigger de BD
+        return $order->refresh();
     }
 }

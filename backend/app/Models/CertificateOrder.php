@@ -43,17 +43,6 @@ class CertificateOrder extends Model
         'total_amount' => 'decimal:2',
     ];
 
-    protected static function boot(): void
-    {
-        parent::boot();
-
-        static::creating(function (self $model) {
-            if (empty($model->uuid)) {
-                $model->uuid = (string) Str::uuid();
-            }
-        });
-    }
-
     /**
      * El frontend identifica órdenes por UUID, no por ID secuencial.
      */
