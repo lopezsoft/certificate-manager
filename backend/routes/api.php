@@ -143,6 +143,7 @@ Route::group(['prefix' => 'v1'], function () {
             Route::controller('NotificationController')->group(function () {
                 Route::post('/certificates/notify-now', 'triggerNow')
                     ->middleware('throttle:1,5');
+                Route::get('/certificates/expiring-by-company', 'expiringByCompany');
             });
         });
 

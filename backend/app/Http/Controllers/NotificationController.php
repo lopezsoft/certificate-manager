@@ -68,12 +68,9 @@ class NotificationController extends Controller
 
             $query->orderBy('expiration_date', 'asc');
 
-            // Si el usuario no es admin, filtra solo los de su empresa
-            $user = Auth::user();
-            if (!$user->is_admin) {
-                $company = CompanyQueries::getCompany();
-                $query->where('company_id', $company->id);
-            }
+            // Siempre filtra por la empresa del usuario autenticado
+            $company = CompanyQueries::getCompany();
+            $query->where('company_id', $company->id);
 
             $certificates = $query->get()->map(function ($cert) {
                 $daysLeft = now()->diffInDays(Carbon::parse($cert->expiration_date), false);
@@ -240,6 +237,79 @@ class NotificationController extends Controller
             return HttpResponseMessages::getResponse([
                 'message'              => 'Jobs de notificación despachados correctamente',
                 'include_admin_report' => $includeAdminReport,
+            ]);
+        } catch (Exception $e) {
+            return HttpResponseMessages::getResponse500(['message' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * GET /admin/certificates/expiring-by-company — Vista agrupada por empresa (solo admin)
+     *
+     * @OA\Get(
+     *     path="/admin/certificates/expiring-by-company",
+     *     tags={"Notificaciones"},
+     *     summary="Empresas con certificados próximos a vencer (admin)",
+     *     description="Vista agrupada por empresa de certificados próximos a vencer o vencidos sin renovar. Solo administradores.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="days", in="query", description="Días de antelación (positivo) o vencidos (negativo). Default: 30", @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Lista agrupada por empresa"),
+     *     @OA\Response(response=403, description="Se requieren permisos de administrador")
+     * )
+     */
+    public function expiringByCompany(Request $request): JsonResponse
+    {
+        try {
+            $days = (int) $request->input('days', config('certificate.notification_days', 30));
+
+            $query = CertificateRequest::with(['company'])
+                ->whereNotNull('expiration_date')
+                ->where('request_status', CertificateRequestStatusEnum::PROCESSED->value);
+
+            if ($days >= 0) {
+                $threshold = now()->addDays($days);
+                $query->where('expiration_date', '>', now())
+                      ->where('expiration_date', '<=', $threshold);
+                $message = 'Empresas con certificados próximos a vencer';
+            } else {
+                $threshold = now()->subDays(abs($days));
+                $query->where('expiration_date', '<', now())
+                      ->where('expiration_date', '>=', $threshold)
+                      ->whereNotExists(function ($sub) {
+                          $sub->select(\Illuminate\Support\Facades\DB::raw(1))
+                              ->from('certificate_requests as renewed')
+                              ->whereColumn('renewed.company_id', 'certificate_requests.company_id')
+                              ->whereColumn('renewed.dni', 'certificate_requests.dni')
+                              ->whereColumn('renewed.updated_at', '>', 'certificate_requests.updated_at')
+                              ->where('renewed.request_status', CertificateRequestStatusEnum::PROCESSED->value);
+                      });
+                $message = 'Empresas con certificados vencidos sin renovar';
+            }
+
+            $certificates = $query->get();
+
+            // Agrupar por empresa
+            $grouped = $certificates->groupBy('company_id')->map(function ($certs) {
+                $company = $certs->first()->company;
+                $mostUrgentDays = $certs->map(function ($cert) {
+                    return now()->diffInDays(Carbon::parse($cert->expiration_date), false);
+                })->min();
+
+                return [
+                    'company_id'        => $company->id ?? null,
+                    'company_name'      => $company->company_name ?? 'N/A',
+                    'email'             => $company->email ?? null,
+                    'has_agreement'     => (bool) ($company->has_agreement ?? false),
+                    'total'             => $certs->count(),
+                    'most_urgent_days'  => $mostUrgentDays,
+                    'urgency_level'     => $this->getUrgencyLevel($mostUrgentDays),
+                ];
+            })->sortBy('most_urgent_days')->values();
+
+            return HttpResponseMessages::getResponse([
+                'message'     => $message,
+                'total'       => $grouped->count(),
+                'dataRecords' => $grouped,
             ]);
         } catch (Exception $e) {
             return HttpResponseMessages::getResponse500(['message' => $e->getMessage()]);

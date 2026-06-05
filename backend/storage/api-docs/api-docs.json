@@ -3266,6 +3266,39 @@
                 ]
             }
         },
+        "/admin/certificates/expiring-by-company": {
+            "get": {
+                "tags": [
+                    "Notificaciones"
+                ],
+                "summary": "Empresas con certificados próximos a vencer (admin)",
+                "description": "Vista agrupada por empresa de certificados próximos a vencer o vencidos sin renovar. Solo administradores.",
+                "operationId": "7588659d75ad8e97c4dc94c0273e9fc5",
+                "parameters": [
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "description": "Días de antelación (positivo) o vencidos (negativo). Default: 30",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista agrupada por empresa"
+                    },
+                    "403": {
+                        "description": "Se requieren permisos de administrador"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/settings/reports": {
             "get": {
                 "tags": [
