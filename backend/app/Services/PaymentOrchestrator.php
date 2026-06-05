@@ -83,26 +83,52 @@ class PaymentOrchestrator
 
         $providerTxId = $txData['id'] ?? null;
         $status       = $txData['status'] ?? null;
+        $reference    = $txData['reference'] ?? null;
 
-        if (! $providerTxId || ! $status) return;
+        if (! $providerTxId || ! $status || ! $reference) return;
 
-        DB::transaction(function () use ($txData, $providerTxId, $status) {
+        DB::transaction(function () use ($txData, $providerTxId, $status, $reference) {
+            // Buscar transacción existente (flujo /pay) o la orden por reference (flujo widget)
             $transaction = PaymentTransaction::where('provider_transaction_id', $providerTxId)
                 ->lockForUpdate()
                 ->first();
 
-            if (! $transaction) {
-                Log::warning('[PAYMENT] Webhook: transacción no encontrada.', ['provider_id' => $providerTxId]);
-                return;
+            if ($transaction) {
+                // Flujo /pay: actualizar transacción existente
+                $transaction->update([
+                    'status'               => $status,
+                    'provider_raw_response' => $txData,
+                    'paid_at'              => $status === 'APPROVED' ? now() : null,
+                ]);
+                $order = $transaction->order;
+            } else {
+                // Flujo widget: buscar orden por provider_reference y crear transacción
+                $order = CertificateOrder::where('provider_reference', $reference)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $order) {
+                    Log::warning('[PAYMENT] Webhook: orden no encontrada.', [
+                        'reference'   => $reference,
+                        'provider_id' => $providerTxId,
+                    ]);
+                    return;
+                }
+
+                PaymentTransaction::create([
+                    'certificate_order_id'    => $order->id,
+                    'payment_provider'        => $order->payment_provider ?? 'WOMPI',
+                    'provider_transaction_id' => $providerTxId,
+                    'provider_reference'      => $reference,
+                    'status'                  => $status,
+                    'amount'                  => (float) ($txData['amount_in_cents'] ?? 0) / 100,
+                    'currency'                => $txData['currency'] ?? $order->currency,
+                    'payment_method_type'     => $txData['payment_method_type'] ?? null,
+                    'provider_raw_response'   => $txData,
+                    'paid_at'                 => $status === 'APPROVED' ? now() : null,
+                ]);
             }
 
-            $transaction->update([
-                'status'               => $status,
-                'provider_raw_response' => $txData,
-                'paid_at'              => $status === 'APPROVED' ? now() : null,
-            ]);
-
-            $order = $transaction->order;
             $order->update([
                 'status'         => $status === 'APPROVED' ? 'PAID' : ($status === 'DECLINED' ? 'FAILED' : $order->status),
                 'payment_method' => $txData['payment_method_type'] ?? $order->payment_method,
