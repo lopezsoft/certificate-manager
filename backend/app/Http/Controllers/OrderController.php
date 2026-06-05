@@ -205,4 +205,47 @@ class OrderController extends Controller
             return MessageExceptionResponse::response($e);
         }
     }
+
+    /**
+     * @OA\Post(
+     *     path="/orders/{id}/retry",
+     *     tags={"Órdenes"},
+     *     summary="Reintentar pago de una orden PENDING",
+     *     description="Devuelve tokens frescos para abrir el widget de pago en una orden PENDING existente.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *     @OA\Response(response=200, description="Datos frescos para el widget de pago"),
+     *     @OA\Response(response=404, description="Orden no encontrada o no está en estado PENDING")
+     * )
+     */
+    public function retry(int $id): JsonResponse
+    {
+        try {
+            $companyId = CompanyQueries::getCompany()->id;
+            $order = CertificateOrder::where('company_id', $companyId)
+                ->where('status', 'PENDING')
+                ->findOrFail($id);
+
+            $acceptanceDto = $this->gateway->getAcceptanceToken();
+            $totalInCents  = (int) round((float) $order->total_amount * 100);
+
+            return HttpResponseMessages::getResponse([
+                'data' => [
+                    'order_id'           => $order->id,
+                    'total_amount'       => $order->total_amount,
+                    'provider_reference' => $order->provider_reference,
+                    'payment_provider'   => $order->payment_provider,
+                    'acceptance_token'   => $acceptanceDto->token,
+                    'acceptance_url'     => $acceptanceDto->permalink,
+                    'integrity_hash'     => $this->gateway->generateIntegrityHash(
+                        $order->provider_reference,
+                        $totalInCents,
+                        $order->currency,
+                    ),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return MessageExceptionResponse::response($e);
+        }
+    }
 }

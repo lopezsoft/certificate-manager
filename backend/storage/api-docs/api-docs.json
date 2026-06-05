@@ -3547,6 +3547,40 @@
                 ]
             }
         },
+        "/orders/{id}/retry": {
+            "post": {
+                "tags": [
+                    "Órdenes"
+                ],
+                "summary": "Reintentar pago de una orden PENDING",
+                "description": "Devuelve tokens frescos para abrir el widget de pago en una orden PENDING existente.",
+                "operationId": "70f28a26f4f24028b31527aab7d6c810",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Datos frescos para el widget de pago"
+                    },
+                    "404": {
+                        "description": "Orden no encontrada o no está en estado PENDING"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/pricing": {
             "get": {
                 "tags": [
