@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Common\HttpResponseMessages;
 use App\Payments\Contracts\PaymentGatewayContract;
 use App\Models\CertificateOrder;
 use App\Services\OrderService;
 use App\Services\PaymentOrchestrator;
+use App\Modules\Company\CompanyQueries;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -38,12 +40,15 @@ class OrderController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $orders = CertificateOrder::where('company_id', $request->user()->company_id)
+        $companyId = CompanyQueries::getCompany()->id;
+        $orders = CertificateOrder::where('company_id', $companyId)
             ->with('latestTransaction')
             ->orderByDesc('id')
             ->paginate(15);
 
-        return response()->json(['data' => $orders]);
+        return HttpResponseMessages::getResponse([
+            'dataRecords' => $orders
+        ]);
     }
 
     /**
@@ -81,7 +86,7 @@ class OrderController extends Controller
 
         $user  = $request->user();
         $order = $this->orderService->createOrder(
-            companyId:  $user->company_id,
+            companyId:  CompanyQueries::getCompany()->id,
             userId:     $user->id,
             quantity:   $data['quantity'],
             vigencia:   $data['vigencia'],
@@ -123,7 +128,8 @@ class OrderController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $order = CertificateOrder::where('company_id', request()->user()->company_id)
+        $companyId = CompanyQueries::getCompany()->id;
+        $order = CertificateOrder::where('company_id', $companyId)
             ->with(['items', 'latestTransaction'])
             ->findOrFail($id);
 
@@ -159,7 +165,8 @@ class OrderController extends Controller
             'installments'      => ['nullable', 'integer', 'min:1', 'max:36'],
         ]);
 
-        $order = CertificateOrder::where('company_id', $request->user()->company_id)
+        $companyId = CompanyQueries::getCompany()->id;
+        $order = CertificateOrder::where('company_id', $companyId)
             ->where('status', 'PENDING')
             ->findOrFail($id);
 
