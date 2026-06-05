@@ -83,7 +83,24 @@ export default class TokenService {
     user.lastName = data.lastName;
     user.token = ts.currentUser.token;
     user.id = data.id;
-    user.role = data.role;
+    const token = ts.getToken();
+     switch (token.user.type_id) {
+          case 2:
+            user.role = Role.Software;
+            break;
+          case 3:
+            user.role = Role.Server;
+            break;
+          case 4:
+            user.role = Role.Partner;
+            break;
+          case 5:
+            user.role = Role.Reseller;
+            break;
+          default:
+            user.role = Role.Admin;
+            break;
+        }
     localStorage.removeItem('currentUser');
     localStorage.setItem('currentUser', JSON.stringify(user));
     ts.currentUser = JSON.parse(localStorage.getItem('currentUser') || '');

@@ -76,8 +76,15 @@ class Login
             return HttpResponseMessages::getResponse([
                 'access_token'  => $tokenResult->accessToken,
                 'user'          => $user,
+                'company'       => (object) [
+                    'has_agreement' => (bool)$company->has_agreement,
+                    'company_type_id' => $company->company_type_id,
+                    'issuance_provider' => $company->issuance_provider,
+                    'company_name' => $company->company_name,
+                    'uuid' => $company->uuid,
+                ],
                 'expires_at'    => Carbon::parse($token->expires_at)->toDateTimeString(),
-                'message'       => 'Bienvenido. Su sesión ha sido iniciada con éxito.'
+                'message'       => 'Inicio de sesión exitoso.'
             ]);
         }catch (Exception $e) {
             return MessageExceptionResponse::response($e);

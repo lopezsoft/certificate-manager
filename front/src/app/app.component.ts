@@ -74,6 +74,14 @@ export class AppComponent implements OnInit, OnDestroy {
     // Get the application main menu
     this.menu = menu;
 
+    // Ocultar "Comprar Certificados" para empresas POSPAGO (has_agreement=true)
+    if (this._token.isAuthenticated() && !this._token.isAdmin()) {
+      const token = this._token.getToken();
+      if (token?.company?.has_agreement) {
+        this.menu = this.menu.filter((item: any) => item.id !== 'orders');
+      }
+    }
+
     // Register the menu to the menu service
     this._coreMenuService.register('main', this.menu);
 

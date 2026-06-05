@@ -40,6 +40,15 @@ export default class AuthGuard {
       }
     }
 
+    // Bloquear acceso a rutas marcadas para empresas con convenio POSPAGO
+    if (route.data?.['blockIfAgreement'] && !this.authService.isAdmin()) {
+      const token = this.authService.getToken();
+      if (token?.company?.has_agreement) {
+        this.router.navigate(['/dashboard']);
+        return false;
+      }
+    }
+
     return true;
   }
 }

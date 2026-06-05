@@ -1,6 +1,56 @@
 @if (_token.isAuthenticated()) {
   <div class="content-wrapper">
     <div class="content-body">
+
+      <!-- ── Tab Navigation ── -->
+      <div class="dashboard-tabs">
+        <nav class="dashboard-tabs__nav">
+          <button class="dashboard-tabs__tab"
+            [class.dashboard-tabs__tab--active]="activeTab === 'overview'"
+            (click)="activeTab = 'overview'">
+            <span class="dashboard-tabs__icon">
+              <i class="fas fa-chart-bar"></i>
+            </span>
+            Resumen
+          </button>
+          <button class="dashboard-tabs__tab"
+            [class.dashboard-tabs__tab--active]="activeTab === 'expiring'"
+            (click)="activeTab = 'expiring'">
+            <span class="dashboard-tabs__icon">
+              <i class="fas fa-clock"></i>
+            </span>
+            Vencimientos
+            @if (expiringTotal > 0) {
+              <span class="dashboard-tabs__badge">{{ expiringTotal }}</span>
+            }
+          </button>
+          <button class="dashboard-tabs__tab"
+            [class.dashboard-tabs__tab--active]="activeTab === 'expired'"
+            (click)="activeTab = 'expired'">
+            <span class="dashboard-tabs__icon">
+              <i class="fas fa-times-circle"></i>
+            </span>
+            Vencidos
+            @if (expiredTotal > 0) {
+              <span class="dashboard-tabs__badge" style="background: linear-gradient(135deg, #82868b, #6e6b7b);">{{ expiredTotal }}</span>
+            }
+          </button>
+          <button class="dashboard-tabs__tab"
+            [class.dashboard-tabs__tab--active]="activeTab === 'analytics'"
+            (click)="activeTab = 'analytics'">
+            <span class="dashboard-tabs__icon">
+              <i class="fas fa-chart-line"></i>
+            </span>
+            Consumo
+          </button>
+        </nav>
+
+        <div class="dashboard-tabs__content">
+
+          <!-- ═══ TAB 1: RESUMEN ═══ -->
+          <div class="dashboard-tabs__panel"
+            [class.dashboard-tabs__panel--active]="activeTab === 'overview'">
+
       <!-- ── Estadísticas de mi empresa ── -->
       @if (companyStatsLoading) {
         <div class="card w-100 mb-2">
@@ -131,6 +181,214 @@
           }
         </section>
       }
+
+          </div><!-- /TAB 1 -->
+
+          <!-- ═══ TAB 2: VENCIMIENTOS ═══ -->
+          <div class="dashboard-tabs__panel"
+            [class.dashboard-tabs__panel--active]="activeTab === 'expiring'">
+
+      <!-- ── Certificados próximos a vencer ── -->
+      <div class="card w-100 mb-2">
+        <div class="card-header py-1 d-flex align-items-center justify-content-between flex-wrap gap-50">
+          <h6 class="card-title mb-0">
+            <i class="fas fa-clock me-50 text-warning"></i>Certificados próximos a vencer
+            @if (expiringTotal > 0) {
+              <span class="badge bg-danger ms-50">{{ expiringTotal }}</span>
+            }
+          </h6>
+          <div class="d-flex align-items-center gap-50 flex-wrap">
+            <div class="btn-group btn-group-sm">
+              @for (d of [30, 60, 90]; track d) {
+                <button class="btn"
+                  [class.btn-primary]="expiringDays === d"
+                  [class.btn-outline-primary]="expiringDays !== d"
+                  (click)="loadExpiringCerts(d)">
+                  {{ d }} días
+                </button>
+              }
+            </div>
+            @if (expiringCerts.length > 0) {
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary btn-sm" (click)="exportExpiringData('csv')" title="Exportar CSV">
+                  <i class="fa fa-download"></i>
+                </button>
+                <button class="btn btn-outline-success btn-sm" (click)="exportExpiringData('excel')" title="Exportar Excel">
+                  <i class="fa fa-file-excel"></i>
+                </button>
+                <button class="btn btn-outline-info btn-sm" (click)="exportExpiringData('json')" title="Exportar JSON">
+                  <i class="fa fa-code"></i>
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+        <div class="card-body pt-50">
+          @if (expiringLoading) {
+            <div class="text-center py-2">
+              <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+              <small class="ms-50 text-muted">Consultando certificados...</small>
+            </div>
+          } @else if (expiringError) {
+            <div class="alert alert-danger py-75 px-1 mb-0">
+              <small>
+                <i class="fas fa-exclamation-circle me-50"></i>
+                Error al consultar certificados por vencer.
+                <a class="alert-link cursor" (click)="loadExpiringCerts()">Reintentar</a>
+              </small>
+            </div>
+          } @else if (expiringCerts.length === 0) {
+            <div class="alert alert-success py-75 px-1 mb-0">
+              <small>
+                <i class="fas fa-check-circle me-50"></i>
+                No hay certificados próximos a vencer en los próximos <strong>{{ expiringDays }}</strong> días.
+              </small>
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-striped table-bordered table-sm mb-0">
+                <thead>
+                  <tr>
+                    <th>Empresa</th>
+                    <th>Representante legal</th>
+                    <th class="text-center">Vencimiento</th>
+                    <th class="text-center">Días</th>
+                    <th class="text-center">Urgencia</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (cert of expiringCerts; track cert.id) {
+                    <tr>
+                      <td>
+                        <strong>{{ cert.company_name }}</strong>
+                        <br>
+                        <small class="text-muted">NIT: {{ cert.dni }}-{{ cert.dv }}</small>
+                      </td>
+                      <td>{{ cert.legal_representative }}</td>
+                      <td class="text-center">{{ cert.expiration_date_formatted }}</td>
+                      <td class="text-center">
+                        <strong [class.text-danger]="cert.days_remaining <= 7"
+                          [class.text-warning]="cert.days_remaining > 7 && cert.days_remaining <= 15">
+                          {{ cert.days_remaining }}
+                        </strong>
+                      </td>
+                      <td class="text-center">
+                        <span class="badge" [ngClass]="getUrgencyClass(cert.urgency_level)">
+                          {{ getUrgencyLabel(cert.urgency_level) }}
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+
+          </div><!-- /TAB 2 -->
+
+          <!-- ═══ TAB 3: VENCIDOS ═══ -->
+          <div class="dashboard-tabs__panel"
+            [class.dashboard-tabs__panel--active]="activeTab === 'expired'">
+
+      <div class="card w-100 mb-2">
+        <div class="card-header py-1 d-flex align-items-center justify-content-between flex-wrap gap-50">
+          <h6 class="card-title mb-0">
+            <i class="fas fa-times-circle me-50 text-secondary"></i>Certificados vencidos
+            @if (expiredTotal > 0) {
+              <span class="badge bg-secondary ms-50">{{ expiredTotal }}</span>
+            }
+          </h6>
+          <div class="d-flex align-items-center gap-50 flex-wrap">
+            <div class="btn-group btn-group-sm">
+              @for (d of [-30, -60, -90]; track d) {
+                <button class="btn"
+                  [class.btn-secondary]="expiredDays === d"
+                  [class.btn-outline-secondary]="expiredDays !== d"
+                  (click)="loadExpiredCerts(d)">
+                  {{ -d }} días
+                </button>
+              }
+            </div>
+            @if (expiredCerts.length > 0) {
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary btn-sm" (click)="exportExpiredData('csv')" title="Exportar CSV">
+                  <i class="fa fa-download"></i>
+                </button>
+                <button class="btn btn-outline-success btn-sm" (click)="exportExpiredData('excel')" title="Exportar Excel">
+                  <i class="fa fa-file-excel"></i>
+                </button>
+                <button class="btn btn-outline-info btn-sm" (click)="exportExpiredData('json')" title="Exportar JSON">
+                  <i class="fa fa-code"></i>
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+        <div class="card-body pt-50">
+          @if (expiredLoading) {
+            <div class="text-center py-2">
+              <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+              <small class="ms-50 text-muted">Consultando certificados vencidos...</small>
+            </div>
+          } @else if (expiredError) {
+            <div class="alert alert-danger py-75 px-1 mb-0">
+              <small>
+                <i class="fas fa-exclamation-circle me-50"></i>
+                Error al consultar certificados vencidos.
+                <a class="alert-link cursor" (click)="loadExpiredCerts()">Reintentar</a>
+              </small>
+            </div>
+          } @else if (expiredCerts.length === 0) {
+            <div class="alert alert-success py-75 px-1 mb-0">
+              <small>
+                <i class="fas fa-check-circle me-50"></i>
+                No hay certificados vencidos en los últimos <strong>{{ -expiredDays }}</strong> días.
+              </small>
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-striped table-bordered table-sm mb-0">
+                <thead>
+                  <tr>
+                    <th>Empresa</th>
+                    <th>Representante legal</th>
+                    <th class="text-center">Vencimiento</th>
+                    <th class="text-center">Venció</th>
+                    <th class="text-center">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (cert of expiredCerts; track cert.id) {
+                    <tr>
+                      <td>
+                        <strong>{{ cert.company_name }}</strong>
+                        <br>
+                        <small class="text-muted">NIT: {{ cert.dni }}-{{ cert.dv }}</small>
+                      </td>
+                      <td>{{ cert.legal_representative }}</td>
+                      <td class="text-center">{{ cert.expiration_date_formatted }}</td>
+                      <td class="text-center">
+                        <small class="text-danger fw-bold">{{ getExpiredLabel(cert.days_remaining) }}</small>
+                      </td>
+                      <td class="text-center">
+                        <span class="badge bg-secondary">VENCIDO</span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+
+          </div><!-- /TAB 3: VENCIDOS -->
+
+          <!-- ═══ TAB 4: CONSUMO ═══ -->
+          <div class="dashboard-tabs__panel"
+            [class.dashboard-tabs__panel--active]="activeTab === 'analytics'">
 
       <!-- Selectores de Año y Mes -->
       <div class="card w-100 mb-2">
@@ -478,6 +736,12 @@
               </div>
             </div>
           </section>
-        </div>
-      </div>
-    }
+
+          </div><!-- /TAB 3: CONSUMO -->
+
+        </div><!-- /tabs content -->
+      </div><!-- /dashboard-tabs -->
+
+    </div>
+  </div>
+}

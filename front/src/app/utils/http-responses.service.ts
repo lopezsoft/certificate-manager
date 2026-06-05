@@ -41,6 +41,11 @@ export class HttpResponsesService {
     return me.http.put<JsonResponse>(`${ me.url }${ query }`, body, { headers : me.getHeaders()});
   }
 
+  patch(query: string, body: any = {}) {
+    const me = this;
+    return me.http.patch<JsonResponse>(`${ me.url }${ query }`, body, { headers : me.getHeaders()});
+  }
+
   get(query: string, exParams: any = {}) {
     const me = this;
     return me.http.get<JsonResponse>(`${me.url}${ query }`, { headers : me.getHeaders(), params: exParams });

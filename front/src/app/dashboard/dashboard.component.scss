@@ -1,0 +1,140 @@
+// ── Dashboard Custom Tabs ──────────────────────────────────────
+// Pestañas premium con gradientes, animaciones y diseño moderno
+
+$tab-primary: #2556a3;
+$tab-primary-light: #3a6fbd;
+$tab-accent: #7367f0;
+$tab-bg: #f8f9fa;
+$tab-radius: 12px;
+$tab-transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+.dashboard-tabs {
+  position: relative;
+  margin-bottom: 1.5rem;
+
+  &__nav {
+    display: flex;
+    gap: 0;
+    background: linear-gradient(135deg, darken($tab-bg, 2%) 0%, $tab-bg 100%);
+    border-radius: $tab-radius $tab-radius 0 0;
+    padding: 6px 6px 0;
+    border-bottom: 2px solid rgba($tab-primary, 0.1);
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  &__tab {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #6e6b7b;
+    background: transparent;
+    border: none;
+    border-radius: $tab-radius $tab-radius 0 0;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: $tab-transition;
+    letter-spacing: 0.02em;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 50%;
+      width: 0;
+      height: 3px;
+      background: linear-gradient(90deg, $tab-primary, $tab-accent);
+      border-radius: 3px 3px 0 0;
+      transition: $tab-transition;
+      transform: translateX(-50%);
+    }
+
+    &:hover:not(.dashboard-tabs__tab--active) {
+      color: $tab-primary;
+      background: rgba($tab-primary, 0.04);
+    }
+
+    &--active {
+      color: $tab-primary;
+      background: #fff;
+      box-shadow: 0 -2px 8px rgba($tab-primary, 0.08);
+
+      &::after {
+        width: 60%;
+      }
+
+      .dashboard-tabs__icon {
+        background: linear-gradient(135deg, $tab-primary, $tab-accent);
+        color: #fff;
+        transform: scale(1.05);
+      }
+    }
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    background: rgba(#6e6b7b, 0.08);
+    color: #6e6b7b;
+    transition: $tab-transition;
+  }
+
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #ea5455, #ff6b6b);
+    color: #fff;
+    animation: pulse-badge 2s ease-in-out infinite;
+  }
+
+  &__content {
+    background: #fff;
+    border-radius: 0 0 $tab-radius $tab-radius;
+    min-height: 200px;
+  }
+
+  &__panel {
+    display: none;
+    animation: fadeSlideIn 0.4s ease-out;
+
+    &--active {
+      display: block;
+    }
+  }
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-badge {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}

@@ -11,6 +11,7 @@ import Swal from 'sweetalert2';
  * Payload pre-llenado para el modal de asignación de cuota admin.
  */
 export interface AdminQuotaPayload {
+  company_id: number;
   pricing_tier_id: number;
   quantity: number;
   period_start: string;
@@ -168,6 +169,7 @@ export class QuotaService implements OnDestroy {
     nextYear.setFullYear(nextYear.getFullYear() + 1);
 
     this.emitAdminQuotaSignal({
+      company_id: 0,
       pricing_tier_id: 1,
       quantity: 10000,
       period_start: this.formatDate(today),
@@ -187,22 +189,37 @@ export class QuotaService implements OnDestroy {
 
   /**
    * SweetAlert para usuarios no-admin.
+   * POSPAGO → mensaje de contacto (no puede comprar)
+   * PREPAGO → botón de compra
    */
   private notifyNoQuota(): void {
-    Swal.fire({
-      title: 'Sin cupos disponibles',
-      html: 'No tiene certificados disponibles para generar solicitudes.<br>Adquiera un nuevo paquete para continuar.',
-      icon: 'warning',
-      confirmButtonText: 'Comprar certificados',
-      showCancelButton: true,
-      cancelButtonText: 'Cerrar',
-      confirmButtonColor: '#2556a3',
-      cancelButtonColor: '#82868b',
-    }).then((result) => {
-      if (result.isConfirmed) {
-        window.location.hash = '#/orders/purchase';
-      }
-    });
+    const token = this.tokenService.getToken();
+    const hasAgreement = token?.company?.has_agreement ?? false;
+
+    if (hasAgreement) {
+      Swal.fire({
+        title: 'Sin cupos disponibles',
+        html: 'Su empresa tiene convenio <strong>POSPAGO</strong>.<br>Contacte al administrador para la asignación de cuota.',
+        icon: 'info',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#2556a3',
+      });
+    } else {
+      Swal.fire({
+        title: 'Sin cupos disponibles',
+        html: 'No tiene certificados disponibles para generar solicitudes.<br>Adquiera un nuevo paquete para continuar.',
+        icon: 'warning',
+        confirmButtonText: 'Comprar certificados',
+        showCancelButton: true,
+        cancelButtonText: 'Cerrar',
+        confirmButtonColor: '#2556a3',
+        cancelButtonColor: '#82868b',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.hash = '#/orders/purchase';
+        }
+      });
+    }
   }
 
   /** Formatea una fecha a YYYY-MM-DD. */

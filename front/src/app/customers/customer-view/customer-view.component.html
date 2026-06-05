@@ -72,9 +72,122 @@
                 </div>
               </div>
             </div>
+            <div class="col-sm-12">
+              <div class="form-group">
+                <label>Estado de la empresa</label>
+                <div class="card-text d-flex align-items-center gap-75">
+                  @if (currentCustomer.active) {
+                    <span class="badge badge-light-success">
+                      <i class="fas fa-check-circle me-50"></i>ACTIVA
+                    </span>
+                    <button class="btn btn-sm btn-outline-danger py-25 px-75"
+                      (click)="toggleActive()">
+                      <i class="fas fa-ban me-25"></i>Desactivar
+                    </button>
+                  } @else {
+                    <span class="badge bg-danger">
+                      <i class="fas fa-times-circle me-50"></i>INACTIVA
+                    </span>
+                    <button class="btn btn-sm btn-outline-success py-25 px-75"
+                      (click)="toggleActive()">
+                      <i class="fas fa-check-circle me-25"></i>Activar
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      <!-- ── Cuota del cliente ── -->
+      @if (stats?.quota) {
+        <div class="card">
+          <div class="card-header py-1 d-flex align-items-center justify-content-between">
+            <h6 class="card-title mb-0">
+              <i class="fas fa-chart-pie me-50"></i>Estado de cupo
+            </h6>
+            @if (stats.quota.has_quota) {
+              <span class="badge badge-light-success text-white">CON CUPO</span>
+            } @else {
+              <span class="badge bg-danger text-white">SIN CUPO</span>
+            }
+          </div>
+          <div class="card-body pt-50">
+            @if (stats.quota.postpaid) {
+              <div class="row">
+                <div class="col-sm-4">
+                  <div class="form-group">
+                    <label class="small text-muted">Asignados</label>
+                    <h5 class="mb-0 fw-bolder text-primary">{{ stats.quota.postpaid.allocated }}</h5>
+                  </div>
+                </div>
+                <div class="col-sm-4">
+                  <div class="form-group">
+                    <label class="small text-muted">Usados</label>
+                    <h5 class="mb-0 fw-bolder text-warning">{{ stats.quota.postpaid.used }}</h5>
+                  </div>
+                </div>
+                <div class="col-sm-4">
+                  <div class="form-group">
+                    <label class="small text-muted">Disponibles</label>
+                    <h5 class="mb-0 fw-bolder text-success">{{ stats.quota.postpaid.remaining }}</h5>
+                  </div>
+                </div>
+              </div>
+              <!-- Barra de progreso -->
+              <div class="progress mt-50" style="height: 8px;">
+                <div class="progress-bar"
+                  [class.bg-success]="getQuotaUsagePercent() < 75"
+                  [class.bg-warning]="getQuotaUsagePercent() >= 75 && getQuotaUsagePercent() < 90"
+                  [class.bg-danger]="getQuotaUsagePercent() >= 90"
+                  role="progressbar"
+                  [style.width.%]="getQuotaUsagePercent()">
+                </div>
+              </div>
+              <div class="d-flex align-items-center justify-content-between mt-50">
+                <small class="text-muted">
+                  {{ getQuotaUsagePercent() | number:'1.0-0' }}% utilizado
+                </small>
+                <small class="text-muted">
+                  <i class="fas fa-calendar-alt me-25"></i>Vence: {{ stats.quota.postpaid.expires_at }}
+                </small>
+              </div>
+            }
+            @if (stats.quota.prepaid_items_available > 0) {
+              <div class="d-flex align-items-center mt-50">
+                <div class="avatar avatar-tag bg-light-info me-75">
+                  <i class="fas fa-shopping-cart text-info"></i>
+                </div>
+                <div>
+                  <small class="text-muted">Certificados prepago disponibles</small>
+                  <h5 class="mb-0 fw-bolder text-info">{{ stats.quota.prepaid_items_available }}</h5>
+                </div>
+              </div>
+            }
+            @if (!stats.quota.has_quota && stats.has_agreement) {
+              <div class="alert alert-warning d-flex align-items-center justify-content-between py-75 px-1 mt-75 mb-0">
+                <small>
+                  <i class="fas fa-exclamation-triangle me-50"></i>
+                  Empresa con convenio <strong>POSPAGO</strong> sin cuota asignada.
+                </small>
+                <button class="btn btn-sm btn-primary py-25 px-75"
+                  (click)="assignQuota()">
+                  <i class="fas fa-plus-circle me-25"></i>Asignar cuota
+                </button>
+              </div>
+            }
+            @if (!stats.quota.has_quota && !stats.has_agreement) {
+              <div class="alert alert-secondary d-flex align-items-center py-75 px-1 mt-75 mb-0">
+                <small>
+                  <i class="fas fa-info-circle me-50"></i>
+                  Empresa <strong>PREPAGO</strong> — Sin certificados disponibles.
+                </small>
+              </div>
+            }
+          </div>
+        </div>
+      }
 
       <!-- ── Cargando ── -->
       @if (loadingStats) {

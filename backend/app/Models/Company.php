@@ -41,7 +41,7 @@ class Company extends CoreModel
     protected $fillable = [
         'country_id', 'city_id', 'identity_document_id', 'type_organization_id',
         'company_name', 'dni', 'dv', 'address', 'city_name',
-        'location', 'postal_code',  'phone', 'email',  'image'
+        'location', 'postal_code',  'phone', 'email',  'image', 'active', 'uuid'
     ];
 
     /**

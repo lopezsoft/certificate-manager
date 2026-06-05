@@ -19,6 +19,17 @@
             </button>
           </div>
         </div>
+        <!-- Switch: Mostrar desactivados -->
+        <div class="d-flex align-items-center mt-50">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="showInactiveToggle"
+              [checked]="showInactive"
+              (change)="onToggleInactive()">
+            <label class="form-check-label small" for="showInactiveToggle">
+              Mostrar clientes desactivados
+            </label>
+          </div>
+        </div>
       </div>
     </div>
     <app-search-data #searchItems
@@ -31,28 +42,41 @@
           (onRefreshPagination)="onRefreshPagination($event)">
         </exodo-pagination>
       </div>
-      @for (item of customer.data; track item; let i = $index) {
+      @for (item of customer.data; track item.id; let i = $index) {
         <div class="col">
           <div class="card cursor layout-content-card single full-height"
-            [ngClass]="{'is-selected': item.checked}"
+            [ngClass]="{'is-selected': item.checked, 'opacity-50': !item.active && showInactive}"
             (click)="onClickItem(item)">
             <div class="card-body">
-              <p class="card-text item-description w-100">
-                {{ item.company_name | uppercase }}
-              </p>
+              <div class="d-flex align-items-center justify-content-between mb-25">
+                <p class="card-text item-description w-100 mb-0">
+                  {{ item.company_name | uppercase }}
+                </p>
+                @if (showInactive && !item.active) {
+                  <span class="badge bg-danger ms-50" style="white-space: nowrap;">INACTIVO</span>
+                }
+              </div>
               <p class="card-text">
                 NIT Nº. {{item.dni}}-{{item.dv}}. Correo: {{item.email}}
               </p>
               <p class="card-text item-description w-100">
                 {{ item.address | uppercase }}
               </p>
-              <div class="card-text d-flex align-items-center gap-50">
-                @if (item.has_agreement) {
-                  <span class="badge badge-light-success">
-                    <i class="fas fa-handshake me-50"></i>POSPAGO
-                  </span>
-                } @else {
-                  <span class="badge badge-light-secondary">PREPAGO</span>
+              <div class="card-text d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-50">
+                  @if (item.has_agreement) {
+                    <span class="badge badge-light-success">
+                      <i class="fas fa-handshake me-50"></i>POSPAGO
+                    </span>
+                  } @else {
+                    <span class="badge badge-light-secondary">PREPAGO</span>
+                  }
+                </div>
+                @if (showInactive && !item.active) {
+                  <button class="btn btn-sm btn-outline-success py-25 px-75"
+                    (click)="onToggleActive(item); $event.stopPropagation()">
+                    <i class="fas fa-check-circle me-25"></i>Activar
+                  </button>
                 }
               </div>
             </div>

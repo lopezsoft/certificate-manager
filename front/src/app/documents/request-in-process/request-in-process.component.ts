@@ -42,6 +42,7 @@ export class RequestInProcessComponent extends BaseComponent  implements OnInit,
   protected readonly statusDocument = DocumentStatusEnumArray;
   protected readonly documentStatusDescription = DocumentStatusDescription;
   protected readonly isAdmin: boolean;
+  protected readonly hasAgreement: boolean;
 
   private quotaSub: Subscription | null = null;
 
@@ -61,6 +62,7 @@ export class RequestInProcessComponent extends BaseComponent  implements OnInit,
   ) {
     super(_token, router, translate);
     this.isAdmin = this._token.isAdmin();
+    this.hasAgreement = this._token.getToken()?.company?.has_agreement ?? false;
     const currentDate = DateManager.currentDate();
     this.modalForm = this.fb.group({
       start_date: [DateManager.oldDate()],
@@ -170,6 +172,7 @@ export class RequestInProcessComponent extends BaseComponent  implements OnInit,
     const nextYear = new Date(today);
     nextYear.setFullYear(nextYear.getFullYear() + 1);
     this.quotaService.emitAdminQuotaSignal({
+      company_id: 0,
       pricing_tier_id: 1,
       quantity: 10000,
       period_start: this.quotaService.formatDate(today),

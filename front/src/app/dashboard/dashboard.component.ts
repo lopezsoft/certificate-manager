@@ -14,6 +14,8 @@ import {AutoRefreshService, RefreshConfig} from "./services/auto-refresh.service
 import {ConsumeByYear} from "../models/dashboard-model";
 import {CertificateRequestStats, YearlyStats} from "../models/certificate-stats.model";
 import {CustomerService} from "../services/companies/customers.service";
+import {CertificateNotificationService} from "../services/certificate-notification.service";
+import {ExpiringCertificate, UrgencyLevel} from "../interfaces";
 import {Subject} from "rxjs";
 import {takeUntil} from "rxjs/operators";
 import {ApexOptions} from "ng-apexcharts";
@@ -31,6 +33,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   protected selectedMonth = new Date().getMonth() + 1;
   protected readonly documentStatusDescription = DocumentStatusDescription;
   protected readonly documentStatusEnum = DocumentStatusEnum;
+  protected activeTab: 'overview' | 'expiring' | 'expired' | 'analytics' = 'overview';
 
   // Propiedades v1.4.0
   private destroy$ = new Subject<void>();
@@ -53,6 +56,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
   protected companyBarChart: ApexOptions = {};
   protected companyDonutChart: ApexOptions = {};
   protected companySelectedYear: YearlyStats | null = null;
+
+  // ── Certificados próximos a vencer ──
+  protected expiringCerts: ExpiringCertificate[] = [];
+  protected expiringTotal = 0;
+  protected expiringLoading = false;
+  protected expiringError = false;
+  protected expiringDays = 30;
+
+  // ── Certificados vencidos ──
+  protected expiredCerts: ExpiringCertificate[] = [];
+  protected expiredTotal = 0;
+  protected expiredLoading = false;
+  protected expiredError = false;
+  protected expiredDays = -30;
 
   protected months = [
     { name: 'todos', value: 0 },
@@ -83,6 +100,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private comparisonService: TemporalComparisonService,
     private autoRefresh: AutoRefreshService,
     private customerService: CustomerService,
+    private certNotification: CertificateNotificationService,
   ) { }
 
   ngOnInit(): void {
@@ -98,6 +116,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.getConsumeDocuments(year, this.selectedMonth);
       this.loadPreviousYearData(year - 1);
       this.loadCompanyStats();
+      this.loadExpiringCerts();
+      this.loadExpiredCerts();
     }
 
     this.autoRefresh.getRefreshTrigger$()
@@ -431,6 +451,113 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       responsive: [{ breakpoint: 576, options: { chart: { height: 220 } } }],
     };
+  }
+
+  // ── Certificados próximos a vencer ──────────────────────────
+
+  protected loadExpiringCerts(days?: number): void {
+    if (days !== undefined) {
+      this.expiringDays = days;
+    }
+    this.expiringLoading = true;
+    this.expiringError = false;
+    this.certNotification.getExpiring(this.expiringDays)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          this.expiringCerts = result.data;
+          this.expiringTotal = result.total;
+          this.expiringLoading = false;
+        },
+        error: () => {
+          this.expiringCerts = [];
+          this.expiringTotal = 0;
+          this.expiringLoading = false;
+          this.expiringError = true;
+        },
+      });
+  }
+
+  protected getUrgencyClass(level: UrgencyLevel): string {
+    const map: Record<UrgencyLevel, string> = {
+      critical: 'bg-danger',
+      high: 'bg-warning text-dark',
+      medium: 'badge-light-warning',
+      low: 'badge-light-success',
+    };
+    return map[level] || 'badge-light-secondary';
+  }
+
+  protected getUrgencyLabel(level: UrgencyLevel): string {
+    const map: Record<UrgencyLevel, string> = {
+      critical: 'CRÍTICO',
+      high: 'ALTO',
+      medium: 'MEDIO',
+      low: 'BAJO',
+    };
+    return map[level] || level.toUpperCase();
+  }
+
+  protected exportExpiringData(format: 'csv' | 'json' | 'excel'): void {
+    this.exportCertsData(this.expiringCerts, `certificados-por-vencer-${this.expiringDays}dias`, format);
+  }
+
+  // ── Certificados vencidos ────────────────────────────────
+
+  protected loadExpiredCerts(days?: number): void {
+    if (days !== undefined) {
+      this.expiredDays = days;
+    }
+    this.expiredLoading = true;
+    this.expiredError = false;
+    this.certNotification.getExpiring(this.expiredDays)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          this.expiredCerts = result.data;
+          this.expiredTotal = result.total;
+          this.expiredLoading = false;
+        },
+        error: () => {
+          this.expiredCerts = [];
+          this.expiredTotal = 0;
+          this.expiredLoading = false;
+          this.expiredError = true;
+        },
+      });
+  }
+
+  protected exportExpiredData(format: 'csv' | 'json' | 'excel'): void {
+    this.exportCertsData(this.expiredCerts, `certificados-vencidos-${Math.abs(this.expiredDays)}dias`, format);
+  }
+
+  /**
+   * Método común para exportar datos de certificados (vencidos o por vencer).
+   */
+  private exportCertsData(data: ExpiringCertificate[], filename: string, format: 'csv' | 'json' | 'excel'): void {
+    const columns = [
+      { key: 'company_name', label: 'Empresa' },
+      { key: 'dni', label: 'NIT' },
+      { key: 'legal_representative', label: 'Representante Legal' },
+      { key: 'city', label: 'Ciudad' },
+      { key: 'email', label: 'Email' },
+      { key: 'phone', label: 'Teléfono' },
+      { key: 'expiration_date_formatted', label: 'Vencimiento' },
+      { key: 'days_remaining', label: 'Días' },
+      { key: 'urgency_level', label: 'Urgencia' },
+    ];
+    switch (format) {
+      case 'csv': this.exportService.exportToCSV(data, columns, { filename }); break;
+      case 'json': this.exportService.exportToJSON(data, filename); break;
+      case 'excel': this.exportService.exportToExcel(data, columns, { filename }); break;
+    }
+  }
+
+  protected getExpiredLabel(daysRemaining: number): string {
+    const absDays = Math.abs(daysRemaining);
+    if (absDays === 0) return 'HOY';
+    if (absDays === 1) return 'AYER';
+    return `HACE ${absDays} DÍAS`;
   }
 
   ngOnDestroy(): void {

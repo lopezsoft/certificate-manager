@@ -1,6 +1,6 @@
 import { Component, OnDestroy } from '@angular/core';
 import { FormatsService } from '../../services/formats.service';
-import { HttpResponsesService } from '../../utils';
+import { HttpResponsesService, MessagesService } from '../../utils';
 import { CustomerService } from '../../services/companies/customers.service';
 import { Company } from '../../models/companies-model';
 import { CertificateRequestStats, YearlyStats } from '../../models/certificate-stats.model';
@@ -8,6 +8,7 @@ import { DocumentStatusDescription } from '../../common/enums/DocumentStatus';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { Subscription } from 'rxjs';
 import { ApexOptions } from 'ng-apexcharts';
+import { QuotaService } from '../../services/quota.service';
 
 /**
  * Colores extraídos de document-status.styles.scss — se usan SOLO para los charts.
@@ -61,6 +62,8 @@ export class CustomerViewComponent implements OnDestroy {
     public format: FormatsService,
     protected http: HttpResponsesService,
     public customer: CustomerService,
+    private msg: MessagesService,
+    private quotaService: QuotaService,
   ) {}
 
   public get currentCustomer(): Company {
@@ -110,6 +113,57 @@ export class CustomerViewComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.statsSub?.unsubscribe();
+  }
+
+  /** Toggle active/inactive de la empresa actual */
+  toggleActive(): void {
+    const company = this.currentCustomer;
+    if (!company) { return; }
+    const action = company.active ? 'desactivar' : 'activar';
+    this.msg.confirm(
+      `${action.charAt(0).toUpperCase() + action.slice(1)} empresa`,
+      `¿Está seguro de que desea ${action} a <strong>${company.company_name}</strong>?`,
+    ).then((result) => {
+      if (result.isConfirmed) {
+        this.customer.toggleActive(company.id).subscribe({
+          next: (resp: any) => {
+            company.active = !company.active;
+            this.msg.toastMessage(
+              'Operación exitosa',
+              resp.message || `Empresa ${action}da correctamente.`,
+              1
+            );
+          },
+          error: () => {
+            this.msg.toastMessage('Error', `No se pudo ${action} la empresa.`, 3);
+          }
+        });
+      }
+    });
+  }
+
+  /** Porcentaje de uso de cuota postpaid (para progress bar) */
+  getQuotaUsagePercent(): number {
+    const postpaid = this.stats?.quota?.postpaid;
+    if (!postpaid || postpaid.allocated === 0) { return 0; }
+    return (postpaid.used / postpaid.allocated) * 100;
+  }
+
+  /** Abre el modal de asignación de cuota para esta empresa */
+  assignQuota(): void {
+    const company = this.currentCustomer;
+    if (!company) { return; }
+    const today = new Date();
+    const nextYear = new Date(today);
+    nextYear.setFullYear(nextYear.getFullYear() + 1);
+    this.quotaService.emitAdminQuotaSignal({
+      company_id: company.id,
+      pricing_tier_id: 1,
+      quantity: 10000,
+      period_start: this.quotaService.formatDate(today),
+      period_end: this.quotaService.formatDate(nextYear),
+      notes: `Cuota asignada a ${company.company_name}`,
+    });
   }
 
   // ─── Chart Builders ──────────────────────────────────────────

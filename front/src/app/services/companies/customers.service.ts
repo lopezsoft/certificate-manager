@@ -43,4 +43,12 @@ export class CustomerService {
     return this.http.get(`/certificate-request/stats/${companyId}`)
       .pipe(map((resp: any) => resp.dataRecords));
   }
+
+  /**
+   * Toggle active/inactive para una empresa.
+   * PATCH /company/{id}/toggle-active
+   */
+  toggleActive(companyId: number): Observable<any> {
+    return this.http.patch(`/company/${companyId}/toggle-active`, {});
+  }
 }

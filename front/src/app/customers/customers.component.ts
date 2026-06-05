@@ -33,6 +33,10 @@ export class CustomersComponent extends BaseComponent  implements OnInit, AfterV
   software: SoftwareTest;
   public title = 'Lista de Clientes';
   protected isClicked = false;
+
+  /** Mostrar clientes desactivados */
+  protected showInactive = false;
+
   constructor(
       public msg: MessagesService,
       public api: HttpResponsesService,
@@ -56,11 +60,13 @@ export class CustomersComponent extends BaseComponent  implements OnInit, AfterV
   ngAfterViewInit(): void {
     this.onSearch();
   }
+
   protected onRefreshPagination($event: number) {
     this.onSearch({
       page: $event,
     });
   }
+
   protected onSearch(query: any = {}): void {
     this.mask.showBlockUI('Cargando datos...');
     if (this.customer.currentCustomer) {
@@ -69,7 +75,7 @@ export class CustomersComponent extends BaseComponent  implements OnInit, AfterV
     }
     this.isClicked = false;
     query.limit   = 30;
-    query.active  = true;
+    query.where   = JSON.stringify({active: this.showInactive ? false : true});
     this.customer.getData(query).subscribe({
       next: () => {
         this.mask.hideBlockUI();
@@ -103,6 +109,41 @@ export class CustomersComponent extends BaseComponent  implements OnInit, AfterV
     currentProduct.checked = false;
     this.customer.currentCustomer = null;
   }
+
+  /** Toggle del switch: mostrar activos / inactivos */
+  protected onToggleInactive(): void {
+    this.showInactive = !this.showInactive;
+    this.onSearch();
+  }
+
+  /** Activar o desactivar una empresa (PATCH toggle-active) */
+  protected onToggleActive(company: Company): void {
+    const action = company.active ? 'desactivar' : 'activar';
+    this.msg.confirm(
+      `${action.charAt(0).toUpperCase() + action.slice(1)} empresa`,
+      `¿Está seguro de que desea ${action} a <strong>${company.company_name}</strong>?`,
+    ).then((result) => {
+      if (result.isConfirmed) {
+        this.mask.showBlockUI(`${action.charAt(0).toUpperCase() + action.slice(1)}ndo empresa...`);
+        this.customer.toggleActive(company.id).subscribe({
+          next: (resp: any) => {
+            this.mask.hideBlockUI();
+            this.msg.toastMessage(
+              'Operación exitosa',
+              resp.message || `Empresa ${action}da correctamente.`,
+              1
+            );
+            this.onSearch();
+          },
+          error: () => {
+            this.mask.hideBlockUI();
+            this.msg.toastMessage('Error', `No se pudo ${action} la empresa.`, 3);
+          }
+        });
+      }
+    });
+  }
+
   private setPagination() {
     this.pagination.setPagination(this.customer.dataRecords);
   }

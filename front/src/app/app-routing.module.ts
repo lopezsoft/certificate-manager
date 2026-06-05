@@ -45,7 +45,7 @@ const routes: Routes = [
     path: 'orders',
     loadChildren: () => import('./orders/orders.module').then(m => m.OrdersModule),
     canActivate: [AuthGuard],
-    data: { roles: [Role.Server, Role.Software, Role.Partner, Role.Reseller] },
+    data: { roles: [Role.Server, Role.Software, Role.Partner, Role.Reseller], blockIfAgreement: true },
   },
   {
     path: 'changes-history',

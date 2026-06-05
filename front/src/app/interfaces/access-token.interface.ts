@@ -1,11 +1,12 @@
 import {Users} from "../models/users-model";
 
 export interface  Company {
-  company_name: string;
-  email: string;
-  id: number;
-  image: string;
-  trade_name: string;
+  uuid            : string;
+  company_name    : string;
+  email           : string;
+  has_agreement   : boolean;
+  company_type_id : number;
+  issuance_provider: string;
 }
 
 export interface AccessToken {
@@ -13,6 +14,6 @@ export interface AccessToken {
   expires_at    : string;
   success       : boolean;
   token_type    : string;
-  company       : Company[];
+  company       : Company;
   user          : Users;
 }
