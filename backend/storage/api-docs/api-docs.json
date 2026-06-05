@@ -906,6 +906,7 @@
                         "application/json": {
                             "schema": {
                                 "required": [
+                                    "type_id",
                                     "city_id",
                                     "first_name",
                                     "last_name",
@@ -916,6 +917,11 @@
                                     "dni"
                                 ],
                                 "properties": {
+                                    "type_id": {
+                                        "description": "Tipo de usuario: 2=Casa de Software, 3=Arrendamiento en Servidor, 4=Partner",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
                                     "city_id": {
                                         "description": "ID de la ciudad (ver /cities)",
                                         "type": "integer",

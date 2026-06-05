@@ -12,7 +12,7 @@ class CreatedUser
             'first_name'    => $request->first_name,
             'last_name'     => $request->last_name,
             'email'         => $request->email,
-            'type_id'       => $request->type_id ?? 2,
+            'type_id'       => $request->type_id,
             'password'      => Hash::make($request->password),
             'active'        => 1,
         ]);

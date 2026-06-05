@@ -18,7 +18,9 @@ class Login
     public static function userTypes(): JsonResponse
     {
         return HttpResponseMessages::getResponse([
-            'records'                   => UserType::get()
+            'dataRecords' => UserType::where('id', '!=', 1)
+                ->where('active', 1)
+                ->get(),
         ]);
     }
     public static function login(Request $request): JsonResponse

@@ -28,7 +28,8 @@ class RegisteredUserController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"city_id","first_name","last_name","company_name","email","password","password_confirmation","dni"},
+     *             required={"type_id","city_id","first_name","last_name","company_name","email","password","password_confirmation","dni"},
+     *             @OA\Property(property="type_id", type="integer", example=2, description="Tipo de usuario: 2=Casa de Software, 3=Arrendamiento en Servidor, 4=Partner"),
      *             @OA\Property(property="city_id", type="integer", example=149, description="ID de la ciudad (ver /cities)"),
      *             @OA\Property(property="first_name", type="string", maxLength=100, example="Juan"),
      *             @OA\Property(property="last_name", type="string", maxLength=100, example="Pérez"),
@@ -48,6 +49,9 @@ class RegisteredUserController extends Controller
     public function store(Request $request): JsonResponse
     {
         $messagesValidate = [
+            'type_id.required'       => 'El tipo de usuario es requerido',
+            'type_id.exists'         => 'El tipo de usuario no es válido',
+            'type_id.not_in'         => 'El tipo de usuario seleccionado no está permitido para registro',
             'city_id.required'       => 'La ciudad es requerida',
             'first_name.required'   => 'El nombre es requerido',
             'last_name.required'    => 'El apellido es requerido',
@@ -60,6 +64,7 @@ class RegisteredUserController extends Controller
         ];
 
         $request->validate([
+            'type_id'       => ['required', 'integer', 'exists:user_types,id', 'not_in:1'],
             'city_id'       => ['required', 'integer', 'exists:cities,id'],
             'first_name'    => ['required', 'string', 'max:100'],
             'last_name'     => ['required', 'string', 'max:100'],
