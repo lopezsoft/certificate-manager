@@ -82,10 +82,11 @@ class OrderController extends Controller
 
         $user  = $request->user();
         $order = $this->orderService->createOrder(
-            companyId: $user->company_id,
-            userId:    $user->id,
-            quantity:  $data['quantity'],
-            vigencia:  $data['vigencia'],
+            companyId:  $user->company_id,
+            userId:     $user->id,
+            quantity:   $data['quantity'],
+            vigencia:   $data['vigencia'],
+            userTypeId: (int) $user->type_id,
         );
 
         $acceptanceDto = $this->gateway->getAcceptanceToken();

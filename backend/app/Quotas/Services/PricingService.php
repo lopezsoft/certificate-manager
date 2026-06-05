@@ -20,11 +20,11 @@ class PricingService
      *
      * @throws \InvalidArgumentException si los parámetros son inválidos
      */
-    public function calculatePrice(int $quantity, int $vigenciaYears): array
+    public function calculatePrice(int $quantity, int $vigenciaYears, int $userTypeId): array
     {
         $this->validateInputs($quantity, $vigenciaYears);
 
-        $tierModel = $this->getTierModelForQuantity($quantity);
+        $tierModel = $this->getTierModelForQuantity($quantity, $userTypeId);
         $unitPrice = (int) $tierModel->getPriceForVigencia($vigenciaYears);
         
         $subtotal  = $unitPrice * $quantity;
@@ -48,13 +48,15 @@ class PricingService
      * Devuelve todos los rangos de precio con su tabla completa desde la base de datos.
      * Útil para el endpoint privado GET /v1/pricing.
      */
-    public function getActiveTiers(): array
+    public function getActiveTiers(int $userTypeId): array
     {
         return PricingTier::where('is_active', true)
+            ->where('user_type_id', $userTypeId)
             ->orderBy('sort_order')
             ->get()
             ->map(fn($tier) => [
                 'tier'      => $tier->code,
+                'name'      => $tier->name,
                 'min'       => $tier->min_quantity,
                 'max'       => $tier->max_quantity,
                 'price_1yr' => (int) $tier->price_1yr,
@@ -76,13 +78,14 @@ class PricingService
     /**
      * Devuelve el modelo PricingTier correspondiente a la cantidad.
      */
-    private function getTierModelForQuantity(int $quantity): PricingTier
+    private function getTierModelForQuantity(int $quantity, int $userTypeId): PricingTier
     {
         if ($quantity < 1) {
             throw new \InvalidArgumentException('La cantidad de certificados debe ser al menos 1.');
         }
 
         $tier = PricingTier::where('is_active', true)
+            ->where('user_type_id', $userTypeId)
             ->where('min_quantity', '<=', $quantity)
             ->where(function ($query) use ($quantity) {
                 $query->where('max_quantity', '>=', $quantity)

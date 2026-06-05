@@ -19,9 +19,9 @@ class OrderService
     /**
      * Crea una CertificateOrder PENDING con precios calculados.
      */
-    public function createOrder(int $companyId, int $userId, int $quantity, int $vigencia): CertificateOrder
+    public function createOrder(int $companyId, int $userId, int $quantity, int $vigencia, int $userTypeId): CertificateOrder
     {
-        $pricing = $this->pricingService->calculatePrice($quantity, $vigencia);
+        $pricing = $this->pricingService->calculatePrice($quantity, $vigencia, $userTypeId);
 
         return CertificateOrder::create([
             'company_id'         => $companyId,

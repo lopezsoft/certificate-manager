@@ -40,8 +40,9 @@ class PricingController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $quantity = $request->query('quantity');
-            $vigencia = $request->query('vigencia');
+            $userTypeId = (int) $request->user()->type_id;
+            $quantity   = $request->query('quantity');
+            $vigencia   = $request->query('vigencia');
 
             if ($quantity !== null && $vigencia !== null) {
                 $validated = $request->validate([
@@ -52,6 +53,7 @@ class PricingController extends Controller
                 $price = $this->pricingService->calculatePrice(
                     (int) $validated['quantity'],
                     (int) $validated['vigencia'],
+                    $userTypeId,
                 );
 
                 return HttpResponseMessages::getResponse([
@@ -62,7 +64,7 @@ class PricingController extends Controller
 
             return HttpResponseMessages::getResponse([
                 'message'     => 'Tarifas obtenidas exitosamente',
-                'dataRecords' => $this->pricingService->getActiveTiers(),
+                'dataRecords' => $this->pricingService->getActiveTiers($userTypeId),
             ]);
         } catch (\InvalidArgumentException $e) {
             return HttpResponseMessages::getResponse422(['message' => $e->getMessage()]);
