@@ -60,7 +60,7 @@ class NotificationController extends Controller
                               ->from('certificate_requests as renewed')
                               ->whereColumn('renewed.company_id', 'certificate_requests.company_id')
                               ->whereColumn('renewed.dni', 'certificate_requests.dni')
-                              ->whereColumn('renewed.created_at', '>', 'certificate_requests.created_at')
+                              ->whereColumn('renewed.updated_at', '>', 'certificate_requests.updated_at')
                               ->where('renewed.request_status', CertificateRequestStatusEnum::PROCESSED->value);
                       });
                 $message = 'Certificados vencidos sin renovar en los últimos ' . abs($days) . ' días';
