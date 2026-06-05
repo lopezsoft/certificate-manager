@@ -46,6 +46,15 @@
               <p class="card-text item-description w-100">
                 {{ item.address | uppercase }}
               </p>
+              <div class="card-text d-flex align-items-center gap-50">
+                @if (item.has_agreement) {
+                  <span class="badge badge-light-success">
+                    <i class="fas fa-handshake me-50"></i>POSPAGO
+                  </span>
+                } @else {
+                  <span class="badge badge-light-secondary">PREPAGO</span>
+                }
+              </div>
             </div>
           </div>
         </div>

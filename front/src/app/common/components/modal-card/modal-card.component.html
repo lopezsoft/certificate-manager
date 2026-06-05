@@ -1,0 +1,38 @@
+@if (visible) {
+  <div class="modal-card-backdrop" [@fadeInOut]>
+    <div class="modal-card-container" [ngClass]="'modal-card-' + size">
+      <div class="card mb-0">
+        <span class="close-button" (click)="close()">
+          <i class="fas fa-times"></i>
+        </span>
+        @if (title) {
+          <div class="card-header py-1">
+            <h6 class="card-title mb-0">{{ title }}</h6>
+          </div>
+        }
+        <div class="card-body">
+          <ng-content></ng-content>
+        </div>
+        @if (showFooter) {
+          <div class="card-footer d-flex justify-content-end gap-50 py-1">
+            <button
+              class="btn btn-outline-secondary btn-sm"
+              (click)="close()"
+              [disabled]="loading">
+              {{ cancelText }}
+            </button>
+            <button
+              class="btn btn-primary btn-sm"
+              (click)="confirm()"
+              [disabled]="loading">
+              @if (loading) {
+                <span class="spinner-border spinner-border-sm me-50" role="status"></span>
+              }
+              {{ confirmText }}
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}

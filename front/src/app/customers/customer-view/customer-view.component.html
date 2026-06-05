@@ -56,6 +56,22 @@
                 </div>
               </div>
             </div>
+            <div class="col-sm-12">
+              <div class="form-group">
+                <label>Tipo de convenio</label>
+                <div class="card-text">
+                  @if (currentCustomer.has_agreement) {
+                    <span class="badge badge-light-success">
+                      <i class="fas fa-handshake me-50"></i>POSPAGO
+                    </span>
+                  } @else {
+                    <span class="badge badge-light-secondary">
+                      <i class="fas fa-credit-card me-50"></i>PREPAGO
+                    </span>
+                  }
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

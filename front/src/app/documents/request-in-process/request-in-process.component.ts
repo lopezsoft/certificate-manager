@@ -19,6 +19,8 @@ import {
   DocumentStatusDescription,
   DocumentStatusEnumArray
 } from "../../common/enums/DocumentStatus";
+import {QuotaService} from "../../services/quota.service";
+import {Subscription} from "rxjs";
 
 @Component({
     selector: 'app-request-in-process',
@@ -39,6 +41,10 @@ export class RequestInProcessComponent extends BaseComponent  implements OnInit,
   protected isClicked = false;
   protected readonly statusDocument = DocumentStatusEnumArray;
   protected readonly documentStatusDescription = DocumentStatusDescription;
+  protected readonly isAdmin: boolean;
+
+  private quotaSub: Subscription | null = null;
+
   constructor(
       public msg: MessagesService,
       public api: HttpResponsesService,
@@ -51,8 +57,10 @@ export class RequestInProcessComponent extends BaseComponent  implements OnInit,
       public shipping: ShippingService,
       private mask: LoadMaskService,
       public format: FormatsService,
+      public quotaService: QuotaService,
   ) {
     super(_token, router, translate);
+    this.isAdmin = this._token.isAdmin();
     const currentDate = DateManager.currentDate();
     this.modalForm = this.fb.group({
       start_date: [DateManager.oldDate()],
@@ -62,6 +70,7 @@ export class RequestInProcessComponent extends BaseComponent  implements OnInit,
   }
 
   ngOnInit(): void {
+    this.quotaSub = this.quotaService.quotaStatus$.subscribe();
   }
 
   ngAfterViewInit(): void {
@@ -124,8 +133,6 @@ export class RequestInProcessComponent extends BaseComponent  implements OnInit,
       this.currentTypePersons = null;
     }
     this.modalForm.reset();
-    this.modalForm.get('document_type').setValue(0);
-    this.modalForm.get('document_status').setValue(-1);
     this.modalForm.get('start_date').setValue(DateManager.oldDate());
     this.modalForm.get('end_date').setValue(DateManager.currentDate());
   }
@@ -135,10 +142,39 @@ export class RequestInProcessComponent extends BaseComponent  implements OnInit,
 
   ngOnDestroy(): void {
     clearInterval(this.interval);
+    this.quotaSub?.unsubscribe();
   }
 
-
   protected onNewDocument() {
+    if (!this.quotaService.hasQuota) {
+      if (this.isAdmin) {
+        this.openQuotaModal();
+      } else {
+        this.msg.toastMessage(
+          'Sin cupos disponibles',
+          'No tiene certificados disponibles. Será redirigido al módulo de compra.',
+          3
+        );
+        setTimeout(() => {
+          this.router.navigate(['/orders/purchase']);
+        }, 2000);
+      }
+      return;
+    }
     this.router.navigate(['requests/list/create']);
+  }
+
+  protected openQuotaModal(): void {
+    this.quotaService.resetNotification();
+    const today = new Date();
+    const nextYear = new Date(today);
+    nextYear.setFullYear(nextYear.getFullYear() + 1);
+    this.quotaService.emitAdminQuotaSignal({
+      pricing_tier_id: 1,
+      quantity: 10000,
+      period_start: this.quotaService.formatDate(today),
+      period_end: this.quotaService.formatDate(nextYear),
+      notes: 'Cuota incluida — Administrador del sistema',
+    });
   }
 }

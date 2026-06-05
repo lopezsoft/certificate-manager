@@ -1,13 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { QuotaService } from '../../services/quota.service';
 import { QuotaStatus } from '../../interfaces/quota.interface';
-import { DebugService } from '../../utils/debug.service';
+import { Subscription } from 'rxjs';
 
 /**
  * QuotaBannerComponent — Banner reutilizable que muestra el estado de cupo.
  *
- * Se usa en dashboard, certificate-request y cualquier vista
- * que necesite mostrar la disponibilidad de certificados.
+ * Se suscribe al observable global `QuotaService.quotaStatus$`
+ * sin hacer llamadas HTTP propias.
  */
 @Component({
     selector: 'app-quota-banner',
@@ -15,44 +15,38 @@ import { DebugService } from '../../utils/debug.service';
     styleUrl: './quota-banner.component.scss',
     standalone: false
 })
-export class QuotaBannerComponent implements OnInit {
+export class QuotaBannerComponent implements OnInit, OnDestroy {
 
   quota: QuotaStatus | null = null;
   loading = true;
   error = false;
 
+  private quotaSub: Subscription | null = null;
+
   constructor(
-    private quotaService: QuotaService,
-    private debug: DebugService,
+    public quotaService: QuotaService,
   ) {}
 
   ngOnInit(): void {
-    this.loadQuota();
-  }
-
-  loadQuota(): void {
-    this.loading = true;
-    this.error = false;
-    this.quotaService.getQuotaStatus().subscribe({
-      next: (quota) => {
-        this.quota = quota;
+    this.quotaSub = this.quotaService.quotaStatus$.subscribe((status) => {
+      if (status) {
+        this.quota = status;
         this.loading = false;
-      },
-      error: (err) => {
-        this.debug.error('QuotaBannerComponent', 'Error al obtener cupo', err);
-        this.loading = false;
-        this.error = true;
+        this.error = false;
       }
     });
   }
 
+  ngOnDestroy(): void {
+    this.quotaSub?.unsubscribe();
+  }
+
   get totalAvailable(): number {
-    if (!this.quota) return 0;
-    return this.quota.prepaid_items_available + (this.quota.postpaid?.remaining ?? 0);
+    return this.quotaService.totalAvailable;
   }
 
   get hasQuota(): boolean {
-    return this.quota?.has_quota ?? false;
+    return this.quotaService.hasQuota;
   }
 
   get postpaidExpiresAt(): string | null {

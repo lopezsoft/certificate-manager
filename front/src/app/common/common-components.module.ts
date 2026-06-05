@@ -10,6 +10,7 @@ import {SearchDataComponent} from "./components/search-data/search-data.componen
 import {TimeLineComponent} from "./components/time-line/time-line.component";
 import {DocumentViewerComponent} from "./components/document-viewer/document-viewer.component";
 import {CamerfirmaInfoComponent} from "./components/camerfirma-info/camerfirma-info.component";
+import {ModalCardComponent} from "./components/modal-card/modal-card.component";
 @NgModule({
   declarations: [
     NotificationCardComponent,
@@ -20,7 +21,8 @@ import {CamerfirmaInfoComponent} from "./components/camerfirma-info/camerfirma-i
     SearchDataComponent,
     TimeLineComponent,
     DocumentViewerComponent,
-    CamerfirmaInfoComponent
+    CamerfirmaInfoComponent,
+    ModalCardComponent
   ],
   imports: [
     CommonModule,
@@ -35,7 +37,8 @@ import {CamerfirmaInfoComponent} from "./components/camerfirma-info/camerfirma-i
     SearchDataComponent,
     TimeLineComponent,
     DocumentViewerComponent,
-    CamerfirmaInfoComponent
+    CamerfirmaInfoComponent,
+    ModalCardComponent
   ]
 })
 export class CommonComponentsModule { }

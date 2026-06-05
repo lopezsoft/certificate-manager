@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import  AuthGuard  from './guards/auth.guard';
 import {ErrorComponent} from "./main/pages/miscellaneous/error/error.component";
+import { Role } from './auth/models';
 
 const routes: Routes = [
   {
@@ -23,10 +24,11 @@ const routes: Routes = [
     loadChildren: () => import('./documents/documents.module').then((m) => m.DocumentsModule),
     canActivate: [AuthGuard],
   },
- {
+  {
     path: 'customers',
     loadChildren: () => import('./customers/customers.module').then((m) => m.CustomersModule),
     canActivate: [AuthGuard],
+    data: { roles: [Role.Admin] },
   },
   {
     path: 'profile',
@@ -37,11 +39,13 @@ const routes: Routes = [
     path: 'settings',
     loadChildren: () => import('./settings/settings.module').then((m) => m.SettingsModule),
     canActivate: [AuthGuard],
+    data: { roles: [Role.Admin] },
   },
   {
     path: 'orders',
     loadChildren: () => import('./orders/orders.module').then(m => m.OrdersModule),
     canActivate: [AuthGuard],
+    data: { roles: [Role.Server, Role.Software, Role.Partner, Role.Reseller] },
   },
   {
     path: 'changes-history',

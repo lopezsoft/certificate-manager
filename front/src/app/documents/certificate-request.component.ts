@@ -17,7 +17,7 @@ import {DateManager} from "../common/class/date-manager";
 import {CertificateRequest} from "../interfaces/file-manager.interface";
 import {DocumentStatusDescription, DocumentStatusEnumArray} from "../common/enums/DocumentStatus";
 import {QuotaService} from "../services/quota.service";
-import {QuotaStatus} from "../interfaces/quota.interface";
+import {Subscription} from "rxjs";
 
 @Component({
     selector: 'app-certificate-request',
@@ -38,8 +38,10 @@ export class CertificateRequestComponent extends BaseComponent  implements OnIni
   public statusDocument = DocumentStatusEnumArray;
   protected currentTypePersons: any;
   protected isClicked = false;
-  quotaStatus: QuotaStatus | null = null;
-  quotaLoading = true;
+  protected readonly isAdmin: boolean;
+
+  private quotaSub: Subscription | null = null;
+
   constructor(
       public msg: MessagesService,
       public api: HttpResponsesService,
@@ -52,9 +54,10 @@ export class CertificateRequestComponent extends BaseComponent  implements OnIni
       public shipping: ShippingService,
       private mask: LoadMaskService,
       public format: FormatsService,
-      private quotaService: QuotaService,
+      public quotaService: QuotaService,
   ) {
     super(_token, router, translate);
+    this.isAdmin = this._token.isAdmin();
     const currentDate = DateManager.currentDate();
     this.modalForm = this.fb.group({
       start_date: [DateManager.oldDate()],
@@ -64,20 +67,9 @@ export class CertificateRequestComponent extends BaseComponent  implements OnIni
   }
 
   ngOnInit(): void {
-    this.loadQuota();
-  }
-
-  private loadQuota(): void {
-    this.quotaLoading = true;
-    this.quotaService.getQuotaStatus().subscribe({
-      next: (quota) => {
-        this.quotaStatus = quota;
-        this.quotaLoading = false;
-      },
-      error: () => {
-        this.quotaLoading = false;
-      }
-    });
+    // Ya no se consulta cupo aquí — viene del polling global en AppComponent.
+    // Suscribirse al observable reactivo para refrescar la vista.
+    this.quotaSub = this.quotaService.quotaStatus$.subscribe();
   }
 
   ngAfterViewInit(): void {
@@ -149,20 +141,43 @@ export class CertificateRequestComponent extends BaseComponent  implements OnIni
 
   ngOnDestroy(): void {
     clearInterval(this.interval);
+    this.quotaSub?.unsubscribe();
   }
 
   protected onNewDocument() {
-    if (this.quotaStatus && !this.quotaStatus.has_quota) {
-      this.msg.toastMessage(
-        'Sin cupos disponibles',
-        'No tiene certificados disponibles. Será redirigido al módulo de compra.',
-        3
-      );
-      setTimeout(() => {
-        this.router.navigate(['/orders/purchase']);
-      }, 2000);
+    if (!this.quotaService.hasQuota) {
+      if (this.isAdmin) {
+        this.openQuotaModal();
+      } else {
+        this.msg.toastMessage(
+          'Sin cupos disponibles',
+          'No tiene certificados disponibles. Será redirigido al módulo de compra.',
+          3
+        );
+        setTimeout(() => {
+          this.router.navigate(['/orders/purchase']);
+        }, 2000);
+      }
       return;
     }
     this.router.navigate(['requests/list/create']);
+  }
+
+  /**
+   * Emite la señal para que AppComponent abra el modal de asignación de cuota.
+   */
+  protected openQuotaModal(): void {
+    this.quotaService.resetNotification();
+    // Forzar re-emisión de la señal
+    const today = new Date();
+    const nextYear = new Date(today);
+    nextYear.setFullYear(nextYear.getFullYear() + 1);
+    this.quotaService.emitAdminQuotaSignal({
+      pricing_tier_id: 1,
+      quantity: 10000,
+      period_start: this.quotaService.formatDate(today),
+      period_end: this.quotaService.formatDate(nextYear),
+      notes: 'Cuota incluida — Administrador del sistema',
+    });
   }
 }

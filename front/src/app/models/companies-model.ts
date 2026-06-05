@@ -25,6 +25,9 @@ export interface Company {
   postal_code: string;
   type_organization_id: number;
   web: string;
+  has_agreement: boolean;
+  issuance_provider: string;
+  company_type_id: string;
   checked?: boolean;
 }
 

@@ -23,6 +23,8 @@ import {GlobalSettingsService} from "./services/global-settings.service";
 import TokenService from './utils/token.service';
 import {DocumentViewerState} from "./interfaces/file-manager.interface";
 import {DocumentViewerService} from "./services/document-viewer.service";
+import {QuotaService, AdminQuotaPayload} from "./services/quota.service";
+import {MessagesService} from "./utils";
 
 @Component({
     selector: 'app-root',
@@ -41,6 +43,12 @@ export class AppComponent implements OnInit, OnDestroy {
 
   // protected
   protected canShowAppSupport = false;
+
+  // ── Admin Quota Modal ──
+  showQuotaModal = false;
+  quotaModalPayload: AdminQuotaPayload | null = null;
+  quotaModalSaving = false;
+
   // Private
   private _unsubscribeAll: Subject<any>;
 
@@ -57,7 +65,9 @@ export class AppComponent implements OnInit, OnDestroy {
     private _translateService: TranslateService,
     public _globalSettings: GlobalSettingsService,
     public _token: TokenService,
-    private documentViewerService: DocumentViewerService
+    private documentViewerService: DocumentViewerService,
+    private quotaService: QuotaService,
+    private msg: MessagesService,
   ) {
 
     this.viewerState$ = this.documentViewerService.state$;
@@ -95,6 +105,16 @@ export class AppComponent implements OnInit, OnDestroy {
       const token = this._token.getToken();
       const user = token.user;
       this.canShowAppSupport = (user && ((user.type_id === 1) || (user && user.type_id === 2)));
+      // Iniciar polling global de cupo tras autenticación
+      this.quotaService.startPolling();
+
+      // Escuchar señal de cupo admin para abrir modal
+      this.quotaService.adminQuotaNeeded$
+        .pipe(takeUntil(this._unsubscribeAll))
+        .subscribe((payload) => {
+          this.quotaModalPayload = { ...payload };
+          this.showQuotaModal = true;
+        });
     }
     // Init wave effect (Ripple effect)
     Waves.init();
@@ -254,6 +274,7 @@ export class AppComponent implements OnInit, OnDestroy {
     // Unsubscribe from all subscriptions
     this._unsubscribeAll.next(true);
     this._unsubscribeAll.complete();
+    this.quotaService.stopPolling();
   }
 
   // Public methods
@@ -270,5 +291,31 @@ export class AppComponent implements OnInit, OnDestroy {
 
   closeViewer(): void {
     this.documentViewerService.close();
+  }
+
+  // ── Admin Quota Modal ──
+
+  closeQuotaModal(): void {
+    this.showQuotaModal = false;
+    this.quotaModalPayload = null;
+  }
+
+  confirmQuotaModal(): void {
+    if (!this.quotaModalPayload) { return; }
+    this.quotaModalSaving = true;
+    this.quotaService.assignAdminQuota(this.quotaModalPayload).subscribe({
+      next: () => {
+        this.quotaModalSaving = false;
+        this.showQuotaModal = false;
+        this.quotaModalPayload = null;
+        this.msg.toastMessage('Cuota asignada', 'Cuota de administrador asignada exitosamente.', 0);
+        this.quotaService.resetNotification();
+        this.quotaService.getQuotaStatus().subscribe();
+      },
+      error: () => {
+        this.quotaModalSaving = false;
+        this.msg.toastMessage('Error', 'No se pudo asignar la cuota.', 4);
+      },
+    });
   }
 }

@@ -7,26 +7,47 @@
         <h6 class="card-title mb-0">{{title | uppercase}}</h6>
       </div>
       <div class="card-body">
-        <!-- Banner de cupo -->
-        @if (!quotaLoading && quotaStatus) {
+        <!-- Banner de cupo (reactivo desde QuotaService global) -->
+        @if (quotaService.currentQuota; as quota) {
           <div class="mb-25">
-            @if (quotaStatus.has_quota) {
+            @if (quota.has_quota) {
               <div class="alert alert-success py-1 px-2 mb-2 d-flex align-items-center">
                 <i class="fas fa-check-circle me-2"></i>
                 <small>
-                  <strong>{{ quotaStatus.prepaid_items_available + (quotaStatus.postpaid?.remaining || 0) }}</strong>
+                  <strong>{{ quotaService.totalAvailable }}</strong>
                   certificado(s) disponible(s)
                 </small>
               </div>
             }
-            @if (!quotaStatus.has_quota) {
-              <div class="alert alert-warning py-1 px-2 mb-2">
-                <small>
-                  <i class="fas fa-exclamation-triangle me-1"></i>
-                  Sin cupos.
-                  <a routerLink="/orders/purchase" class="alert-link">Comprar</a>
-                </small>
-              </div>
+            @if (!quota.has_quota) {
+              @if (isAdmin) {
+                <div class="card bg-light-warning border border-warning mb-1">
+                  <div class="card-body p-1">
+                    <div class="d-flex align-items-center justify-content-between">
+                      <div class="d-flex align-items-center">
+                        <div class="avatar avatar-tag bg-warning me-1">
+                          <i class="fas fa-exclamation-triangle text-white"></i>
+                        </div>
+                        <div>
+                          <h6 class="mb-0">Sin cupos vigentes</h6>
+                          <small class="text-muted">Asigne una cuota para continuar generando solicitudes.</small>
+                        </div>
+                      </div>
+                      <button class="btn btn-primary btn-sm" (click)="openQuotaModal()">
+                        <i class="fas fa-plus-circle me-50"></i>Asignar cuota
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              } @else {
+                <div class="alert alert-warning py-1 px-2 mb-2">
+                  <small>
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    Sin cupos.
+                    <a routerLink="/orders/purchase" class="alert-link">Comprar</a>
+                  </small>
+                </div>
+              }
             }
           </div>
         }
@@ -45,7 +66,8 @@
               (click)="onNewDocument()"
               appCustomTooltip="Nueva solicitud"
               tooltipDirection="left"
-              class="btn custom-button fas-fa-ok me-50">
+              class="btn custom-button fas-fa-ok me-50"
+              [disabled]="!quotaService.hasQuota">
               <i class="fas fa-plus-square fas-fa-18 fas-fa-ok"></i>
               {{ 'buttons.new' | translate }}
             </button>

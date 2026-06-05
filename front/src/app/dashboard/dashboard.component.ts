@@ -4,7 +4,7 @@ import TokenService from "../utils/token.service";
 import {DashboardService} from "../services/dashboard.service";
 import {FormatsService} from "../services/formats.service";
 import {DocumentStatusDescription, DocumentStatusEnum} from "../common/enums/DocumentStatus";
-import {ChartDataTransformerService, MonthlyTrendData} from "./services/chart-data-transformer.service";
+import {ChartDataTransformerService} from "./services/chart-data-transformer.service";
 import {DashboardMetricsService, DashboardKPIs} from "./services/dashboard-metrics.service";
 import {DataExportService} from "./services/data-export.service";
 import {ChartConfigurationService} from "./services/chart-configuration.service";
@@ -12,8 +12,11 @@ import {DashboardFilterService, FilterOptions} from "./services/dashboard-filter
 import {TemporalComparisonService, YearComparison, CompanyComparison} from "./services/temporal-comparison.service";
 import {AutoRefreshService, RefreshConfig} from "./services/auto-refresh.service";
 import {ConsumeByYear} from "../models/dashboard-model";
+import {CertificateRequestStats, YearlyStats} from "../models/certificate-stats.model";
+import {CustomerService} from "../services/companies/customers.service";
 import {Subject} from "rxjs";
 import {takeUntil} from "rxjs/operators";
+import {ApexOptions} from "ng-apexcharts";
 
 @Component({
     selector: 'app-dashboard',
@@ -28,8 +31,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   protected selectedMonth = new Date().getMonth() + 1;
   protected readonly documentStatusDescription = DocumentStatusDescription;
   protected readonly documentStatusEnum = DocumentStatusEnum;
-  
-  // Nuevas propiedades para funcionalidades v1.4.0
+
+  // Propiedades v1.4.0
   private destroy$ = new Subject<void>();
   protected yearlyKPIs: DashboardKPIs | null = null;
   protected monthlyKPIs: DashboardKPIs | null = null;
@@ -42,61 +45,31 @@ export class DashboardComponent implements OnInit, OnDestroy {
   protected refreshConfig: RefreshConfig = { enabled: false, intervalSeconds: 300 };
   protected countdown: string = '0:00';
   protected availableLifespans: number[] = [];
-  
+
+  // ── Stats de la empresa en sesión ──
+  protected companyStats: CertificateRequestStats | null = null;
+  protected companyStatsLoading = false;
+  protected companyStatsError = false;
+  protected companyBarChart: ApexOptions = {};
+  protected companyDonutChart: ApexOptions = {};
+  protected companySelectedYear: YearlyStats | null = null;
+
   protected months = [
-    {
-      name: 'todos',
-      value: 0
-    },
-    {
-      name: 'Enero',
-      value: 1
-    },
-    {
-      name: 'Febrero',
-      value: 2
-    },
-    {
-      name: 'Marzo',
-      value: 3
-    },
-    {
-      name: 'Abril',
-      value: 4
-    },
-    {
-      name: 'Mayo',
-      value: 5
-    },
-    {
-      name: 'Junio',
-      value: 6
-    },
-    {
-      name: 'Julio',
-      value: 7
-    },
-    {
-      name: 'Agosto',
-      value: 8
-    },
-    {
-      name: 'Septiembre',
-      value: 9
-    },
-    {
-      name: 'Octubre',
-      value: 10
-    },
-    {
-      name: 'Noviembre',
-      value: 11
-    },
-    {
-      name: 'Diciembre',
-      value: 12
-    }
+    { name: 'todos', value: 0 },
+    { name: 'Enero', value: 1 },
+    { name: 'Febrero', value: 2 },
+    { name: 'Marzo', value: 3 },
+    { name: 'Abril', value: 4 },
+    { name: 'Mayo', value: 5 },
+    { name: 'Junio', value: 6 },
+    { name: 'Julio', value: 7 },
+    { name: 'Agosto', value: 8 },
+    { name: 'Septiembre', value: 9 },
+    { name: 'Octubre', value: 10 },
+    { name: 'Noviembre', value: 11 },
+    { name: 'Diciembre', value: 12 }
   ];
+
   constructor(
     public _settings: SettingsService,
     public _token: TokenService,
@@ -108,13 +81,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private chartConfig: ChartConfigurationService,
     private filterService: DashboardFilterService,
     private comparisonService: TemporalComparisonService,
-    private autoRefresh: AutoRefreshService
+    private autoRefresh: AutoRefreshService,
+    private customerService: CustomerService,
   ) { }
 
   ngOnInit(): void {
     this._settings.getSettings();
 
-    // Get the last 4 years
     const currentYear = new Date().getFullYear();
     for (let i = 0; i < 2; i++) {
       this.years.push(currentYear - i);
@@ -124,9 +97,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       const year = new Date().getFullYear();
       this.getConsumeDocuments(year, this.selectedMonth);
       this.loadPreviousYearData(year - 1);
+      this.loadCompanyStats();
     }
 
-    // Suscribirse al auto-refresh
     this.autoRefresh.getRefreshTrigger$()
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.refreshDashboardData());
@@ -137,7 +110,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.refreshConfig = config;
       });
 
-    // Suscribirse al countdown
     this.autoRefresh.getCountdown$()
       .pipe(takeUntil(this.destroy$))
       .subscribe(countdown => {
@@ -151,9 +123,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       });
   }
 
-
   protected getConsumeDocuments(year: number, month: number) {
-      // Cargar datos del año
       this.dbs.http.get(`/consume/${year}`)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
@@ -166,7 +136,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
           }
         });
 
-      // Cargar datos del mes (para la tabla)
       this.dbs.http.get(`/consume/${year}/${month}`)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
@@ -183,7 +152,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
           }
         });
 
-      // Cargar datos de TODOS los meses para el gráfico de tendencias
       this.dbs.http.get(`/consume/${year}/0`)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
@@ -209,8 +177,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return acc + curr.total;
     }, 0);
   }
-
-  // Nuevos métodos para funcionalidades v1.4.0
 
   protected loadPreviousYearData(year: number): void {
     this.dbs.http.get(`/consume/${year}`)
@@ -245,14 +211,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   protected applyFilters(): void {
     if (this.dbs.consumeByYear) {
       this.filteredYearlyData = this.filterService.filterYearlyData(
-        this.dbs.consumeByYear, 
+        this.dbs.consumeByYear,
         this.filters
       );
-      
-      // Actualizar vigencias disponibles
       this.availableLifespans = this.filterService.getUniqueLifespans(this.dbs.consumeByYear);
-      
-      // Recalcular KPIs con datos filtrados
       if (this.filteredYearlyData.length > 0) {
         this.yearlyKPIs = this.metricsService.calculateKPIs(this.filteredYearlyData);
       } else {
@@ -277,7 +239,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.previousYearData,
         this.selectedYear
       );
-
       this.companyComparison = this.comparisonService.compareActiveCompanies(
         this.dbs.consumeByYear,
         this.previousYearData
@@ -289,15 +250,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const chartData = data || this.dbs.consumeByYearAndMonth;
     if (chartData && chartData.length > 0) {
       const trendData = this.chartTransformer.groupByMonth(chartData);
-      
       const months = trendData.map(d => d.month);
       const processed = trendData.map(d => d.processed);
       const processing = trendData.map(d => d.processing);
-      
       if (!this.trendChartOptions) {
         this.trendChartOptions = this.chartConfig.getTrendLineChartConfig();
       }
-      
       this.trendChartOptions = this.chartConfig.updateLineChartData(
         this.trendChartOptions,
         months,
@@ -323,34 +281,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   protected exportYearlyData(format: 'csv' | 'json' | 'excel'): void {
-    const data = this.filteredYearlyData.length > 0 
-      ? this.filteredYearlyData 
+    const data = this.filteredYearlyData.length > 0
+      ? this.filteredYearlyData
       : this.dbs.consumeByYear;
-
     const columns = [
       { key: 'company_name', label: 'Empresa' },
       { key: 'total', label: 'Total Certificados' },
       { key: 'request_status', label: 'Estado' }
     ];
-
     const filename = `certificados-${this.selectedYear}`;
-
     switch (format) {
-      case 'csv':
-        this.exportService.exportToCSV(data, columns, { filename });
-        break;
-      case 'json':
-        this.exportService.exportToJSON(data, filename);
-        break;
-      case 'excel':
-        this.exportService.exportToExcel(data, columns, { filename });
-        break;
+      case 'csv': this.exportService.exportToCSV(data, columns, { filename }); break;
+      case 'json': this.exportService.exportToJSON(data, filename); break;
+      case 'excel': this.exportService.exportToExcel(data, columns, { filename }); break;
     }
   }
 
   protected exportMonthlyData(format: 'csv' | 'json' | 'excel'): void {
     const data = this.dbs.consumeByYearAndMonth;
-
     const columns = [
       { key: 'company_name', label: 'Empresa' },
       { key: 'nyear', label: 'Año' },
@@ -359,22 +307,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       { key: 'life', label: 'Vigencia (años)' },
       { key: 'request_status', label: 'Estado' }
     ];
-
-    const monthName = this.selectedMonth > 0 
+    const monthName = this.selectedMonth > 0
       ? this.months.find(m => m.value === this.selectedMonth)?.name || 'todos'
       : 'todos';
     const filename = `certificados-${this.selectedYear}-${monthName}`;
-
     switch (format) {
-      case 'csv':
-        this.exportService.exportToCSV(data, columns, { filename });
-        break;
-      case 'json':
-        this.exportService.exportToJSON(data, filename);
-        break;
-      case 'excel':
-        this.exportService.exportToExcel(data, columns, { filename });
-        break;
+      case 'csv': this.exportService.exportToCSV(data, columns, { filename }); break;
+      case 'json': this.exportService.exportToJSON(data, filename); break;
+      case 'excel': this.exportService.exportToExcel(data, columns, { filename }); break;
     }
   }
 
@@ -388,6 +328,109 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   protected formatVariation(value: number): string {
     return this.comparisonService.formatVariation(value);
+  }
+
+  // ─── Stats empresa en sesión ───────────────────────────────────
+
+  private loadCompanyStats(): void {
+    this.companyStatsLoading = true;
+    this.companyStatsError = false;
+    this.customerService.getStats(0)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          this.companyStats = data;
+          this.companyStatsLoading = false;
+          this.buildCompanyBarChart(data);
+          if (data?.data?.length) {
+            this.selectCompanyYear(data.data[0]);
+          }
+        },
+        error: () => {
+          this.companyStatsLoading = false;
+          this.companyStatsError = true;
+        },
+      });
+  }
+
+  protected selectCompanyYear(year: YearlyStats): void {
+    this.companySelectedYear = year;
+    this.buildCompanyDonutChart(year);
+  }
+
+  protected getCompanyStatusEntries(): { key: string; value: number; label: string }[] {
+    if (!this.companySelectedYear?.statuses) { return []; }
+    return Object.entries(this.companySelectedYear.statuses).map(([key, value]) => ({
+      key,
+      value,
+      label: this.documentStatusDescription[key] || key,
+    }));
+  }
+
+  private buildCompanyBarChart(data: CertificateRequestStats): void {
+    const years = data.data.map((d) => String(d.year));
+    const totals = data.data.map((d) => d.total);
+    this.companyBarChart = {
+      series: [{ name: 'Total Solicitudes', data: totals }],
+      chart: {
+        type: 'bar', height: 240, toolbar: { show: false }, fontFamily: 'inherit',
+        events: {
+          dataPointSelection: (_e: any, _chart: any, opts: any) => {
+            const idx = opts.dataPointIndex;
+            if (data.data[idx]) { this.selectCompanyYear(data.data[idx]); }
+          },
+        },
+      },
+      plotOptions: { bar: { borderRadius: 4, columnWidth: '50%' } },
+      colors: ['#2556a3'],
+      dataLabels: { enabled: true, style: { fontSize: '12px', fontWeight: 600 } },
+      xaxis: {
+        categories: years,
+        labels: { style: { fontSize: '12px', colors: '#6e6b7b' } },
+        axisBorder: { show: false },
+      },
+      yaxis: { labels: { style: { fontSize: '11px', colors: '#6e6b7b' } } },
+      legend: { show: false },
+      grid: { strokeDashArray: 4, borderColor: '#ebe9f1', padding: { top: -15, bottom: -10 } },
+      tooltip: { y: { formatter: (val: number) => `${val} solicitudes` } },
+    };
+  }
+
+  private buildCompanyDonutChart(year: YearlyStats): void {
+    const statusColors: { [key: string]: string } = {
+      DRAFT: '#7C7C7C', SENT: '#2980B9', PENDING: '#F39C12',
+      ACCEPTED: '#10572d', PROCESSING: '#F39C12', PROCESSED: '#085d2c', REJECTED: '#D35400',
+    };
+    const labels = Object.keys(year.statuses).map((k) => this.documentStatusDescription[k] || k);
+    const series = Object.values(year.statuses);
+    const colors = Object.keys(year.statuses).map((k) => statusColors[k] || '#82868b');
+    this.companyDonutChart = {
+      series, labels, colors,
+      chart: { type: 'donut', height: 260, fontFamily: 'inherit' },
+      legend: { position: 'bottom', fontSize: '12px' },
+      dataLabels: {
+        enabled: true,
+        formatter: (val: number) => `${val.toFixed(0)}%`,
+        style: { fontSize: '11px' },
+      },
+      plotOptions: {
+        pie: {
+          donut: {
+            size: '60%',
+            labels: {
+              show: true,
+              name: { show: true, fontSize: '14px', color: '#5e5873' },
+              value: { show: true, fontSize: '20px', fontWeight: 700, color: '#5e5873' },
+              total: {
+                show: true, label: 'Total', fontSize: '13px', color: '#6e6b7b',
+                formatter: (w: any) => w.globals.seriesTotals.reduce((a: number, b: number) => a + b, 0).toString(),
+              },
+            },
+          },
+        },
+      },
+      responsive: [{ breakpoint: 576, options: { chart: { height: 220 } } }],
+    };
   }
 
   ngOnDestroy(): void {
