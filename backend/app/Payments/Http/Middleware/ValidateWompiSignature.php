@@ -22,9 +22,11 @@ class ValidateWompiSignature
 
     public function handle(Request $request, Closure $next): Response
     {
-        $checksum  = $request->header('X-Event-Checksum', '');
-        $timestamp = $request->header('X-Event-Timestamp', '');
         $payload   = $request->getContent();
+        $data      = json_decode($payload, true);
+        
+        $checksum  = $data['signature']['checksum'] ?? '';
+        $timestamp = (string) ($data['timestamp'] ?? '');
 
         if (empty($checksum)) {
             Log::warning('[WOMPI-WEBHOOK] Petición sin checksum — rechazada.');
