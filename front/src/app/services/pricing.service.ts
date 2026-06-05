@@ -27,8 +27,8 @@ export class PricingService {
    */
   getTiers(): Observable<PricingTier[]> {
     return this.http.get('/pricing').pipe(
-      map((res: any) => {
-        const tiers = res.dataRecords as PricingTier[];
+      map((res) => {
+        const tiers = res.dataRecords.data;
         this.debug.log('PricingService', 'Tarifas obtenidas', tiers);
         return tiers;
       }),
@@ -43,7 +43,7 @@ export class PricingService {
   calculatePrice(quantity: number, vigencia: number): Observable<PricingCalculation> {
     return this.http.get('/pricing', { quantity, vigencia }).pipe(
       map((res: any) => {
-        const calc = res.dataRecords as PricingCalculation;
+        const calc = res.dataRecords.data as PricingCalculation;
         this.debug.log('PricingService', 'Precio calculado', calc);
         return calc;
       }),

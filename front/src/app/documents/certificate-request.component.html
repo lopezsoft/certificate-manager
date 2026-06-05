@@ -47,12 +47,25 @@
                   </small>
                 </div>
               } @else {
-                <div class="alert alert-warning py-1 px-2 mb-2">
-                  <small>
-                    <i class="fas fa-exclamation-triangle me-1"></i>
-                    Sin cupos.
-                    <a routerLink="/orders/purchase" class="alert-link">Comprar</a>
-                  </small>
+                <div class="card border mb-1" style="border-color: rgba(37, 86, 163, 0.25) !important; background: linear-gradient(135deg, #f0f5fb, #e8f0fa);">
+                  <div class="card-body p-1">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-50">
+                      <div class="d-flex align-items-center">
+                        <div class="avatar avatar-tag me-1" style="background: linear-gradient(135deg, #2556a3, #1d4688);">
+                          <i class="fas fa-shopping-cart text-white"></i>
+                        </div>
+                        <div>
+                          <h6 class="mb-0" style="color: #2d2d3f;">Sin cupos disponibles</h6>
+                          <small class="text-muted">Adquiera certificados para crear solicitudes</small>
+                        </div>
+                      </div>
+                      <a routerLink="/orders/purchase"
+                        class="btn btn-sm text-white d-flex align-items-center gap-50"
+                        style="background: linear-gradient(135deg, #2556a3, #1d4688); border: none; border-radius: 8px; padding: 6px 14px; font-weight: 600; font-size: 0.8rem;">
+                        <i class="fas fa-cart-plus"></i>Comprar certificados
+                      </a>
+                    </div>
+                  </div>
                 </div>
               }
             }

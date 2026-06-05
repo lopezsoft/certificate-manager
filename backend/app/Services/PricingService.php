@@ -26,18 +26,18 @@ class PricingService
 
         $tierModel = $this->getTierModelForQuantity($quantity, $userTypeId);
         $unitPrice = (int) $tierModel->getPriceForVigencia($vigenciaYears);
-        
+
         $subtotal  = $unitPrice * $quantity;
-        $taxPct    = (int) config('wompi.tax_percentage', 19);
-        $taxAmount = (int) round($subtotal * ($taxPct / 100));
-        $total     = $subtotal + $taxAmount;
+        $taxPct    = 1 + (int) config('wompi.tax_percentage', 19) / 100;
+        $taxAmount = (float) $subtotal - round($subtotal / $taxPct);
+        $total     = $subtotal; // EL IVA está incluido en el precio
 
         return [
             'tier'       => $tierModel->code,
             'unit_price' => $unitPrice,
             'quantity'   => $quantity,
             'vigencia'   => $vigenciaYears,
-            'subtotal'   => $subtotal,
+            'subtotal'   => $subtotal - $taxAmount,
             'tax_amount' => $taxAmount,
             'total'      => $total,
             'currency'   => config('wompi.currency', 'COP'),

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Common\HttpResponseMessages;
+use App\Common\MessageExceptionResponse;
 use App\Payments\Contracts\PaymentGatewayContract;
 use App\Models\CertificateOrder;
 use App\Services\OrderService;
@@ -83,34 +84,38 @@ class OrderController extends Controller
             'quantity' => ['required', 'integer', 'min:1'],
             'vigencia' => ['required', 'integer', 'in:1,2'],
         ]);
+        try {
+            $user  = $request->user();
+            $order = $this->orderService->createOrder(
+                companyId:  CompanyQueries::getCompany()->id,
+                userId:     $user->id,
+                quantity:   $data['quantity'],
+                vigencia:   $data['vigencia'],
+                userTypeId: (int) $user->type_id,
+            );
 
-        $user  = $request->user();
-        $order = $this->orderService->createOrder(
-            companyId:  CompanyQueries::getCompany()->id,
-            userId:     $user->id,
-            quantity:   $data['quantity'],
-            vigencia:   $data['vigencia'],
-            userTypeId: (int) $user->type_id,
-        );
+            $acceptanceDto = $this->gateway->getAcceptanceToken();
+            $totalInCents  = (int) round((float) $order->total_amount * 100);
 
-        $acceptanceDto = $this->gateway->getAcceptanceToken();
-        $totalInCents  = (int) round((float) $order->total_amount * 100);
+            return HttpResponseMessages::getResponse([
+                'data' => [
+                    'order_id'           => $order->id,
+                    'total_amount'       => $order->total_amount,
+                    'provider_reference' => $order->provider_reference,
+                    'payment_provider'   => $order->payment_provider,
+                    'acceptance_token'   => $acceptanceDto->token,
+                    'acceptance_url'     => $acceptanceDto->permalink,
+                    'integrity_hash'     => $this->gateway->generateIntegrityHash(
+                        $order->provider_reference,
+                        $totalInCents,
+                        $order->currency,
+                    ),
+                ],
+            ]);
 
-        return response()->json([
-            'data' => [
-                'order_id'           => $order->id,
-                'total_amount'       => $order->total_amount,
-                'provider_reference' => $order->provider_reference,
-                'payment_provider'   => $order->payment_provider,
-                'acceptance_token'   => $acceptanceDto->token,
-                'acceptance_url'     => $acceptanceDto->permalink,
-                'integrity_hash'     => $this->gateway->generateIntegrityHash(
-                    $order->provider_reference,
-                    $totalInCents,
-                    $order->currency,
-                ),
-            ],
-        ], 201);
+        } catch (\Exception $e) {
+            return MessageExceptionResponse::response($e);
+        }
     }
 
     /**
@@ -128,12 +133,21 @@ class OrderController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $companyId = CompanyQueries::getCompany()->id;
-        $order = CertificateOrder::where('company_id', $companyId)
-            ->with(['items', 'latestTransaction'])
-            ->findOrFail($id);
+        try {
+            $companyId = CompanyQueries::getCompany()->id;
+            $order = CertificateOrder::where('company_id', $companyId)
+                ->with(['items', 'latestTransaction'])
+                ->findOrFail($id);
 
-        return response()->json(['data' => $order]);
+            return HttpResponseMessages::getResponse([
+                'dataRecord' => [
+                    'data' => $order,
+                ]
+            ]);
+
+        }catch (\Exception $e) {
+            return MessageExceptionResponse::response($e);
+        }
     }
 
     /**
@@ -165,12 +179,13 @@ class OrderController extends Controller
             'installments'      => ['nullable', 'integer', 'min:1', 'max:36'],
         ]);
 
-        $companyId = CompanyQueries::getCompany()->id;
-        $order = CertificateOrder::where('company_id', $companyId)
-            ->where('status', 'PENDING')
-            ->findOrFail($id);
 
         try {
+            $companyId = CompanyQueries::getCompany()->id;
+            $order = CertificateOrder::where('company_id', $companyId)
+                ->where('status', 'PENDING')
+                ->findOrFail($id);
+
             $transaction = $this->orchestrator->initiatePayment(
                 order:           $order,
                 paymentSourceId: $data['payment_source_id'],
@@ -179,15 +194,15 @@ class OrderController extends Controller
                 installments:    $data['installments'] ?? 1,
             );
 
-            return response()->json([
+            return HttpResponseMessages::getResponse([
                 'data' => [
                     'transaction_id'     => $transaction->provider_transaction_id,
                     'transaction_status' => $transaction->status,
                     'order_status'       => $order->fresh()->status,
                 ],
             ]);
-        } catch (\RuntimeException $e) {
-            return response()->json(['message' => $e->getMessage()], 502);
+        } catch (\Exception $e) {
+            return MessageExceptionResponse::response($e);
         }
     }
 }

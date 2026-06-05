@@ -1,13 +1,81 @@
+// ── Purchase Wizard — Premium UI ─────────────────────────────────────────
+// Mobile-first, glassmorphism, micro-animations
+
+$pw-primary: #2556a3;
+$pw-primary-dark: #1d4688;
+$pw-success: #28c76f;
+$pw-success-dark: #1fa85c;
+$pw-warning: #ff9f43;
+$pw-danger: #ea5455;
+$pw-text: #2d2d3f;
+$pw-text-muted: #6e6b7b;
+$pw-border: #e8e8ee;
+$pw-bg-light: #f8f9fc;
+$pw-radius: 14px;
+$pw-transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
 :host {
   display: block;
 }
 
-// ─── Stepper visual ──────────────────────────────────────────────────────────
-.purchase-stepper {
-  padding: 0 1rem;
+// ─── Main Card Container ──────────────────────────────────────────────────
+.purchase-card {
+  border: none;
+  border-radius: $pw-radius;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.02);
+  overflow: hidden;
 
-  .d-flex {
-    align-items: center;
+  .card-header {
+    position: relative;
+    background: #fff;
+    border-bottom: 1px solid $pw-border;
+    padding: 18px 24px;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: linear-gradient(180deg, $pw-primary, $pw-success);
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: $pw-text;
+      margin: 0;
+
+      i {
+        color: $pw-primary;
+        margin-right: 10px;
+      }
+    }
+  }
+
+  .card-body {
+    padding: 24px;
+
+    @media (min-width: 768px) {
+      padding: 32px;
+    }
+  }
+}
+
+// ─── Stepper ──────────────────────────────────────────────────────────────
+.purchase-stepper {
+  padding: 0;
+  margin-bottom: 2rem;
+
+  @media (min-width: 576px) {
+    padding: 0 1rem;
+  }
+
+  .stepper-track {
+    display: flex;
+    align-items: flex-start;
+    position: relative;
   }
 
   .step-item {
@@ -16,90 +84,651 @@
     align-items: center;
     position: relative;
     z-index: 1;
+    flex-shrink: 0;
 
     .step-circle {
-      width: 36px;
-      height: 36px;
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
-      background: #e9ecef;
-      color: #6c757d;
+      background: $pw-bg-light;
+      border: 2px solid $pw-border;
+      color: $pw-text-muted;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 600;
-      font-size: 0.9rem;
-      transition: all 0.3s ease;
+      font-weight: 700;
+      font-size: 0.85rem;
+      transition: $pw-transition;
+      position: relative;
+
+      @media (min-width: 576px) {
+        width: 44px;
+        height: 44px;
+        font-size: 0.9rem;
+      }
     }
 
     .step-label {
-      margin-top: 0.4rem;
-      font-size: 0.75rem;
-      color: #6c757d;
-      font-weight: 500;
+      margin-top: 8px;
+      font-size: 0.65rem;
+      color: $pw-text-muted;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
       transition: color 0.3s ease;
+      text-align: center;
+
+      @media (min-width: 576px) {
+        font-size: 0.72rem;
+      }
     }
 
+    // Active
     &.active .step-circle {
-      background: #7367f0;
+      background: linear-gradient(135deg, $pw-primary, $pw-primary-dark);
+      border-color: $pw-primary;
       color: #fff;
-      box-shadow: 0 2px 8px rgba(115, 103, 240, 0.35);
+      box-shadow: 0 4px 14px rgba($pw-primary, 0.35);
+      animation: stepPulse 2s ease-in-out infinite;
     }
 
     &.active .step-label {
-      color: #7367f0;
+      color: $pw-primary;
+      font-weight: 700;
     }
 
+    // Completed
     &.completed .step-circle {
-      background: #28c76f;
+      background: linear-gradient(135deg, $pw-success, $pw-success-dark);
+      border-color: $pw-success;
       color: #fff;
+      box-shadow: 0 3px 10px rgba($pw-success, 0.25);
+      font-size: 0; // hide number
+
+      &::after {
+        content: '\f00c'; // fa-check
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+        font-size: 0.85rem;
+      }
     }
 
     &.completed .step-label {
-      color: #28c76f;
+      color: $pw-success;
     }
   }
 
   .step-line {
     flex: 1;
     height: 3px;
-    background: #e9ecef;
-    margin: 0 0.5rem;
-    margin-bottom: 1.5rem;
-    transition: background 0.3s ease;
+    background: $pw-border;
+    margin: 19px 6px 0;
+    border-radius: 3px;
+    transition: background 0.5s ease;
+    position: relative;
+    overflow: hidden;
+
+    @media (min-width: 576px) {
+      margin-top: 22px;
+      margin-left: 8px;
+      margin-right: 8px;
+    }
 
     &.active {
-      background: #28c76f;
+      background: linear-gradient(90deg, $pw-success, $pw-success-dark);
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(#fff, 0.4), transparent);
+        animation: lineShimmer 2s infinite;
+      }
     }
   }
 }
 
-// ─── Resumen de precios ──────────────────────────────────────────────────────
-.price-summary {
-  border: 1px solid #e9ecef;
+// ─── Step Section Titles ──────────────────────────────────────────────────
+.step-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: $pw-text;
+  margin-bottom: 1.25rem;
+  padding-bottom: 10px;
+  border-bottom: 2px solid $pw-bg-light;
 
-  hr {
-    margin: 0.75rem 0;
+  i {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+
+  .icon-tags { background: rgba($pw-primary, 0.1); color: $pw-primary; }
+  .icon-receipt { background: rgba($pw-warning, 0.1); color: $pw-warning; }
+  .icon-order { background: rgba($pw-success, 0.1); color: $pw-success; }
+}
+
+// ─── Pricing Table ────────────────────────────────────────────────────────
+.pricing-table {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid $pw-border;
+  margin-bottom: 1.5rem;
+
+  .table {
+    margin: 0;
+    font-size: 0.84rem;
+
+    thead th {
+      background: linear-gradient(135deg, $pw-bg-light, #eef0f5);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: $pw-text-muted;
+      padding: 12px 16px;
+      border-bottom: 2px solid $pw-border;
+      white-space: nowrap;
+    }
+
+    tbody td {
+      padding: 12px 16px;
+      vertical-align: middle;
+      border-color: rgba($pw-border, 0.6);
+    }
+
+    tbody tr {
+      transition: $pw-transition;
+
+      &:hover {
+        background: rgba($pw-primary, 0.03);
+      }
+    }
+  }
+
+  .tier-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, $pw-primary, $pw-primary-dark);
+    color: #fff;
+    letter-spacing: 0.03em;
+  }
+
+  .price-cell {
+    font-weight: 600;
+    color: $pw-text;
+    white-space: nowrap;
+
+    .price-suffix {
+      font-weight: 400;
+      color: $pw-text-muted;
+      font-size: 0.75rem;
+    }
   }
 }
 
-// ─── Tabla de tarifas ────────────────────────────────────────────────────────
-.table {
-  th {
-    font-weight: 600;
-    font-size: 0.85rem;
+// ─── Form Inputs ──────────────────────────────────────────────────────────
+.purchase-form {
+  background: $pw-bg-light;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba($pw-border, 0.7);
+
+  @media (min-width: 768px) {
+    padding: 24px;
+  }
+
+  .form-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: $pw-text;
     text-transform: uppercase;
-    color: #6c757d;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+
+  .form-control {
+    border-radius: 10px;
+    border: 2px solid $pw-border;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: $pw-transition;
+
+    &:focus {
+      border-color: $pw-primary;
+      box-shadow: 0 0 0 3px rgba($pw-primary, 0.12);
+    }
+  }
+
+  select.form-control {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236e6b7b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+
+  .price-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 6px 12px;
+    background: rgba($pw-primary, 0.06);
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: $pw-primary;
+
+    i {
+      font-size: 0.7rem;
+    }
   }
 }
 
-dl {
-  dt {
-    font-weight: 600;
-    color: #5e5873;
-    margin-bottom: 0.25rem;
+// ─── Summary Card (Step 2) ────────────────────────────────────────────────
+.summary-card {
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+
+  .summary-details {
+    padding: 20px;
+    background: #fff;
+
+    @media (min-width: 768px) {
+      padding: 24px;
+    }
   }
 
-  dd {
-    margin-bottom: 0.75rem;
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+
+    &:not(:last-child) {
+      border-bottom: 1px dashed rgba($pw-border, 0.8);
+    }
+
+    .summary-label {
+      font-size: 0.82rem;
+      color: $pw-text-muted;
+      font-weight: 500;
+    }
+
+    .summary-value {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: $pw-text;
+    }
   }
+
+  .summary-total {
+    background: linear-gradient(135deg, $pw-bg-light, #eef1f8);
+    padding: 16px 20px;
+    border-top: 2px solid rgba($pw-primary, 0.1);
+
+    @media (min-width: 768px) {
+      padding: 20px 24px;
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .total-label {
+        font-size: 1rem;
+        font-weight: 700;
+        color: $pw-text;
+      }
+
+      .total-amount {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: $pw-success;
+        letter-spacing: -0.02em;
+
+        @media (min-width: 768px) {
+          font-size: 1.6rem;
+        }
+      }
+    }
+  }
+}
+
+// ─── Invoice Detail List ──────────────────────────────────────────────────
+.invoice-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+
+    &:not(:last-child) {
+      border-bottom: 1px solid rgba($pw-border, 0.5);
+    }
+
+    .invoice-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+      background: rgba($pw-primary, 0.08);
+      color: $pw-primary;
+    }
+
+    .invoice-meta {
+      flex: 1;
+      min-width: 0;
+
+      .invoice-label {
+        font-size: 0.72rem;
+        color: $pw-text-muted;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-weight: 600;
+      }
+
+      .invoice-value {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: $pw-text;
+      }
+    }
+  }
+}
+
+// ─── Order Created Card (Step 3) ──────────────────────────────────────────
+.order-success-card {
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f0fff4, #e8faf0);
+  border: 1px solid rgba($pw-success, 0.15);
+  padding: 24px;
+  text-align: center;
+
+  .order-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, $pw-success, $pw-success-dark);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 16px rgba($pw-success, 0.3);
+  }
+
+  .order-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: $pw-text;
+    margin-bottom: 4px;
+  }
+
+  .order-subtitle {
+    font-size: 0.82rem;
+    color: $pw-text-muted;
+  }
+}
+
+.order-details-card {
+  border: 1px solid $pw-border;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 16px;
+
+  .order-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    font-size: 0.85rem;
+
+    &:not(:last-child) {
+      border-bottom: 1px solid rgba($pw-border, 0.6);
+    }
+
+    .detail-label {
+      color: $pw-text-muted;
+      font-weight: 500;
+    }
+
+    .detail-value {
+      font-weight: 700;
+      color: $pw-text;
+
+      code {
+        background: rgba($pw-primary, 0.08);
+        color: $pw-primary;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+    }
+
+    &.total-row {
+      background: $pw-bg-light;
+
+      .detail-value {
+        font-size: 1.15rem;
+        color: $pw-success;
+      }
+    }
+  }
+}
+
+// ─── WOMPI Button ─────────────────────────────────────────────────────────
+.btn-wompi {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 32px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, $pw-success, $pw-success-dark);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: $pw-transition;
+  box-shadow: 0 4px 16px rgba($pw-success, 0.3);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba($pw-success, 0.4);
+    color: #fff;
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  i {
+    font-size: 1.1rem;
+  }
+}
+
+// ─── Payment Status (Step 4) ──────────────────────────────────────────────
+.payment-status {
+  text-align: center;
+  padding: 40px 20px;
+
+  .status-spinner {
+    width: 56px;
+    height: 56px;
+    border-width: 4px;
+    margin-bottom: 20px;
+    color: $pw-primary;
+  }
+
+  .status-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin-bottom: 20px;
+
+    &.success {
+      background: rgba($pw-success, 0.1);
+      color: $pw-success;
+      animation: statusBounce 0.6s ease;
+    }
+
+    &.warning {
+      background: rgba($pw-warning, 0.1);
+      color: $pw-warning;
+    }
+  }
+
+  h4, h5 {
+    font-weight: 700;
+    color: $pw-text;
+    margin-bottom: 8px;
+  }
+
+  p {
+    color: $pw-text-muted;
+    font-size: 0.88rem;
+    max-width: 420px;
+    margin: 0 auto 24px;
+    line-height: 1.5;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: rgba($pw-warning, 0.1);
+    color: $pw-warning;
+    animation: pulse-badge 2s ease-in-out infinite;
+  }
+}
+
+// ─── Action Buttons ───────────────────────────────────────────────────────
+.btn-wizard {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: $pw-transition;
+  cursor: pointer;
+
+  &.btn-wizard--primary {
+    background: linear-gradient(135deg, $pw-primary, $pw-primary-dark);
+    color: #fff;
+    border: none;
+    box-shadow: 0 3px 12px rgba($pw-primary, 0.25);
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 18px rgba($pw-primary, 0.35);
+      color: #fff;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+  }
+
+  &.btn-wizard--outline {
+    background: transparent;
+    color: $pw-text-muted;
+    border: 2px solid $pw-border;
+
+    &:hover {
+      border-color: $pw-primary;
+      color: $pw-primary;
+      background: rgba($pw-primary, 0.03);
+    }
+  }
+
+  &.btn-wizard--success {
+    background: linear-gradient(135deg, $pw-primary, $pw-primary-dark);
+    color: #fff;
+    border: none;
+    box-shadow: 0 3px 12px rgba($pw-primary, 0.25);
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 18px rgba($pw-primary, 0.35);
+      color: #fff;
+    }
+  }
+}
+
+// ─── Step content fade-in ─────────────────────────────────────────────────
+.step-content {
+  animation: stepFadeIn 0.4s ease-out;
+}
+
+// ─── Animations ───────────────────────────────────────────────────────────
+@keyframes stepPulse {
+  0%, 100% { box-shadow: 0 4px 14px rgba($pw-primary, 0.35); }
+  50% { box-shadow: 0 4px 20px rgba($pw-primary, 0.5); }
+}
+
+@keyframes lineShimmer {
+  to { left: 100%; }
+}
+
+@keyframes stepFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes statusBounce {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse-badge {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }

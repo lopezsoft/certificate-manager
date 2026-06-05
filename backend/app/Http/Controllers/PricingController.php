@@ -57,13 +57,17 @@ class PricingController extends Controller
 
                 return HttpResponseMessages::getResponse([
                     'message'     => 'Precio calculado exitosamente',
-                    'dataRecords' => $price,
+                    'dataRecords' => [
+                        'data' => $price,
+                    ],
                 ]);
             }
 
             return HttpResponseMessages::getResponse([
                 'message'     => 'Tarifas obtenidas exitosamente',
-                'dataRecords' => $this->pricingService->getActiveTiers($userTypeId),
+                'dataRecords' => [
+                    'data' => $this->pricingService->getActiveTiers($userTypeId)
+                ],
             ]);
         } catch (\InvalidArgumentException $e) {
             return HttpResponseMessages::getResponse422(['message' => $e->getMessage()]);

@@ -11,6 +11,7 @@ export interface PricingTier {
   max: number | null;
   price_1yr: number;
   price_2yr: number;
+  name: string;
 }
 
 export interface PricingCalculation {
