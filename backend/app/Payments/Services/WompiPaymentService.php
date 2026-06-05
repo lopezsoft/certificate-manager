@@ -109,23 +109,33 @@ class WompiPaymentService implements PaymentGatewayContract
 
     /**
      * Valida la firma HMAC-SHA256 de un evento webhook de WOMPI.
-     * Firma = SHA256( transactionId + status + amountInCents + currency + checksum_timestamp + events_secret )
+     * Según docs: concatenar los valores de signature.properties en orden + timestamp + events_secret
+     * Luego SHA256 del resultado.
      */
     public function validateWebhookSignature(string $payload, string $checksum, string $timestamp): bool
     {
-        $data = json_decode($payload, true);
-        $tx   = $data['data']['transaction'] ?? [];
+        $data       = json_decode($payload, true);
+        $properties = $data['signature']['properties'] ?? [];
+        $tx         = $data['data']['transaction'] ?? [];
 
-        $chain = implode('', [
-            $tx['id']              ?? '',
-            $tx['status']          ?? '',
-            $tx['amount_in_cents'] ?? '',
-            $tx['currency']        ?? '',
-            $timestamp,
-            $this->eventsSecret,
-        ]);
+        // Construir cadena con los valores de las propiedades indicadas por Wompi
+        $values = [];
+        foreach ($properties as $property) {
+            $values[] = data_get($data['data'], str_replace('transaction.', 'transaction.', $property), '');
+        }
+
+        $chain = implode('', $values) . $timestamp . $this->eventsSecret;
 
         $expected = hash('sha256', $chain);
+
+        Log::info('[WOMPI-WEBHOOK] Validación de firma.', [
+            'properties' => $properties,
+            'values'     => $values,
+            'timestamp'  => $timestamp,
+            'expected'   => $expected,
+            'received'   => $checksum,
+            'match'      => hash_equals($expected, $checksum),
+        ]);
 
         return hash_equals($expected, $checksum);
     }
