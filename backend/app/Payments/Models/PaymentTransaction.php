@@ -36,7 +36,7 @@ class PaymentTransaction extends Model
     ];
 
     protected $casts = [
-        'amount'                => 'integer',
+        'amount'                => 'decimal:2',
         'provider_raw_response' => 'array',
         'signature_valid'       => 'boolean',
         'paid_at'               => 'datetime',
