@@ -84,8 +84,24 @@ class RegisteredUserController extends Controller
                 'company_id'    => $company->id,
             ]);
             DB::commit();
+
+            $typeId = (int) $request->type_id;
+
+            // Tipos 2 (Casa de Software) y 3 (Arrendamiento en Servidor):
+            // Usuarios creados desde nuestras apps — se auto-verifica el email sin fricción.
+            // Tipo 4 (Partner): registro externo — requiere verificación por email.
+            if (in_array($typeId, [2, 3], true)) {
+                $user->markEmailAsVerified();
+                Auth::login($user);
+
+                return HttpResponseMessages::getResponse([
+                    'message' => 'Empresa creada con éxito.',
+                ]);
+            }
+
             SendingEmail::toUser($user);
             Auth::login($user);
+
             return HttpResponseMessages::getResponse([
                 'message' => 'Empresa creada con éxito. Verifique su dirección de correo electrónico: ' . $request->email,
             ]);
