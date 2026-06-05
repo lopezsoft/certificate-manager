@@ -16,9 +16,10 @@ import {Subject} from "rxjs";
 import {takeUntil} from "rxjs/operators";
 
 @Component({
-  selector: 'app-dashboard',
-  templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss']
+    selector: 'app-dashboard',
+    templateUrl: './dashboard.component.html',
+    styleUrls: ['./dashboard.component.scss'],
+    standalone: false
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   toggle: boolean = false;

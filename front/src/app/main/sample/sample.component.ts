@@ -8,9 +8,10 @@ import { locale as pt } from './i18n/pt'
 import { CoreTranslationService } from '@core/services/translation.service'
 
 @Component({
-  selector: 'app-sample',
-  templateUrl: './sample.component.html',
-  styleUrls: ['./sample.component.scss']
+    selector: 'app-sample',
+    templateUrl: './sample.component.html',
+    styleUrls: ['./sample.component.scss'],
+    standalone: false
 })
 export class SampleComponent implements OnInit {
   public contentHeader: object

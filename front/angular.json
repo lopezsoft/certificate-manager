@@ -21,7 +21,7 @@
               "hammerjs",
               "node-waves",
               "app/main/ui/icons/feather/feather.component",
-              "@angularclass/hmr",
+
               "ngx-quill",
               "lodash",
               "uuid",
@@ -56,10 +56,10 @@
               "./node_modules/jqwidgets-ng/jqwidgets/styles/jqx.fluent.css",
               "src/assets/fonts/feather/iconfont.css",
               "src/assets/fonts/font-awesome/css/font-awesome.min.css",
-              "node_modules/devextreme/dist/css/dx.light.css",
+
               "node_modules/font-awesome/css/font-awesome.css",
               "node_modules/angular-calendar/scss/angular-calendar.scss",
-              "node_modules/dragula/dist/dragula.css",
+
               "node_modules/ngx-toastr/toastr.css"
             ],
             "stylePreprocessorOptions": {
@@ -225,5 +225,31 @@
   },
   "cli": {
     "analytics": false
+  },
+  "schematics": {
+    "@schematics/angular:component": {
+      "type": "component"
+    },
+    "@schematics/angular:directive": {
+      "type": "directive"
+    },
+    "@schematics/angular:service": {
+      "type": "service"
+    },
+    "@schematics/angular:guard": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:interceptor": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:module": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:pipe": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:resolver": {
+      "typeSeparator": "."
+    }
   }
 }

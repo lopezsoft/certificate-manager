@@ -5,29 +5,35 @@
       <h2>Historial de versiones</h2>
     </div>
     <div class="card-body">
-      <div class="version-container" *ngFor="let version of versiones">
-        <div class="version-header">
-          <h4 class="version-title">Versión {{ version.number }} - {{ version.date }}</h4>
-          <span class="span-button" (click)="version.isShow = !version.isShow">
-            <i class="fas-fa-save fas"[class]="{'fa-caret-down': !version.isShow, 'fa-caret-up': version.isShow}"> </i>
-          </span>
-        </div>
-        <ul class="changes-list" *ngIf="version.isShow">
-          <li *ngFor="let change of version.changes"
+      @for (version of versiones; track version) {
+        <div class="version-container">
+          <div class="version-header">
+            <h4 class="version-title">Versión {{ version.number }} - {{ version.date }}</h4>
+            <span class="span-button" (click)="version.isShow = !version.isShow">
+              <i class="fas-fa-save fas"[class]="{'fa-caret-down': !version.isShow, 'fa-caret-up': version.isShow}"> </i>
+            </span>
+          </div>
+          @if (version.isShow) {
+            <ul class="changes-list">
+              @for (change of version.changes; track change) {
+                <li
               [ngClass]="{'feature': change.type === 'caracteristica',
               'bug': change.type === 'bug', 'improvement': change.type === 'mejora'}">
-            <i
-                class="fas"
-                [appCustomTooltip]="getTooltip(change.type)"
+                  <i
+                    class="fas"
+                    [appCustomTooltip]="getTooltip(change.type)"
                 [class]="{
               'fa-lightbulb': change.type === 'caracteristica',
               'fa-bug': change.type === 'bug',
               'fa-arrow-up': change.type === 'mejora'
             }"></i>
-            <p [innerHTML]="change.description"></p>
-          </li>
-        </ul>
-      </div>
+                  <p [innerHTML]="change.description"></p>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
     </div>
   </div>
 </div>

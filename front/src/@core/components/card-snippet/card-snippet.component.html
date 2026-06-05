@@ -21,59 +21,83 @@
     <div class="card-body pt-0">
       <!-- nav tabs -->
       <ul ngbNav #nav="ngbNav" [(activeId)]="snippetCode.active" class="nav-tabs">
-        <li [ngbNavItem]="'html'" *ngIf="snippetCode.html">
-          <a ngbNavLink>HTML</a>
-          <ng-template ngbNavContent>
-            <div class="code-toggle">
-              <pre>
-                  <i class="feather icon-copy font-medium-2 cursor-pointer text-white p-1" *ngIf='!copyCodeStatus' (click)= "copyCode(snippetCode.html)"></i>
-                  <span class="text-white text-copied mr-1 badge badge-secondary" *ngIf='copyCodeStatus'>copied !</span>
+        @if (snippetCode.html) {
+          <li [ngbNavItem]="'html'">
+            <a ngbNavLink>HTML</a>
+            <ng-template ngbNavContent>
+              <div class="code-toggle">
+                <pre>
+                  @if (!copyCodeStatus) {
+                    <i class="feather icon-copy font-medium-2 cursor-pointer text-white p-1" (click)= "copyCode(snippetCode.html)"></i>
+                  }
+                  @if (copyCodeStatus) {
+                    <span class="text-white text-copied mr-1 badge badge-secondary">copied !</span>
+                  }
                   <code [highlight]="snippetCode.html" [languages]="['html']">
                   </code>
                 </pre>
-            </div>
-          </ng-template>
-        </li>
-        <li [ngbNavItem]="'ts'" *ngIf="snippetCode.ts">
-          <a ngbNavLink>TS</a>
-          <ng-template ngbNavContent>
-            <div class="code-toggle">
-              <pre>
-                  <i class="feather icon-copy font-medium-2 cursor-pointer text-white float-right p-1" *ngIf='!copyCodeStatus' (click)= "copyCode(snippetCode.ts)"></i>
-                  <span class="text-white float-right mr-1 badge badge-secondary" *ngIf='copyCodeStatus'>copied !</span>
+              </div>
+            </ng-template>
+          </li>
+        }
+        @if (snippetCode.ts) {
+          <li [ngbNavItem]="'ts'">
+            <a ngbNavLink>TS</a>
+            <ng-template ngbNavContent>
+              <div class="code-toggle">
+                <pre>
+                  @if (!copyCodeStatus) {
+                    <i class="feather icon-copy font-medium-2 cursor-pointer text-white float-right p-1" (click)= "copyCode(snippetCode.ts)"></i>
+                  }
+                  @if (copyCodeStatus) {
+                    <span class="text-white float-right mr-1 badge badge-secondary">copied !</span>
+                  }
                   <code [highlight]="snippetCode.ts"  [languages]="['typescript']">
                   </code>
                 </pre>
-            </div>
-          </ng-template>
-        </li>
-        <li [ngbNavItem]="'scss'" *ngIf="snippetCode.scss">
-          <a ngbNavLink>SCSS</a>
-          <ng-template ngbNavContent>
-            <div class="code-toggle">
-              <pre>
-                  <i class="feather icon-copy font-medium-2 cursor-pointer text-white float-right p-1" *ngIf='!copyCodeStatus' (click)= "copyCode(snippetCode.scss)"></i>
-                  <span class="text-white float-right mr-1 badge badge-secondary" *ngIf='copyCodeStatus'>copied !</span>
+              </div>
+            </ng-template>
+          </li>
+        }
+        @if (snippetCode.scss) {
+          <li [ngbNavItem]="'scss'">
+            <a ngbNavLink>SCSS</a>
+            <ng-template ngbNavContent>
+              <div class="code-toggle">
+                <pre>
+                  @if (!copyCodeStatus) {
+                    <i class="feather icon-copy font-medium-2 cursor-pointer text-white float-right p-1" (click)= "copyCode(snippetCode.scss)"></i>
+                  }
+                  @if (copyCodeStatus) {
+                    <span class="text-white float-right mr-1 badge badge-secondary">copied !</span>
+                  }
                   <code [highlight]="snippetCode.scss"  [languages]="['scss']">
                   </code>
                 </pre>
-            </div>
-          </ng-template>
-        </li>
-        <li [ngbNavItem]="'json'" *ngIf="snippetCode.json">
-          <a ngbNavLink>JSON</a>
-          <ng-template ngbNavContent>
-            <div class="code-toggle">
-              <div class="mb-1 ml-50"></div>
-              <pre>
-                  <i class="feather icon-copy font-medium-2 cursor-pointer text-white float-right p-1" *ngIf='!copyCodeStatus' (click)= "copyCode(snippetCode.json)"></i>
-                  <span class="text-white float-right mr-1 badge badge-secondary" *ngIf='copyCodeStatus'>copied !</span>
+              </div>
+            </ng-template>
+          </li>
+        }
+        @if (snippetCode.json) {
+          <li [ngbNavItem]="'json'">
+            <a ngbNavLink>JSON</a>
+            <ng-template ngbNavContent>
+              <div class="code-toggle">
+                <div class="mb-1 ml-50"></div>
+                <pre>
+                  @if (!copyCodeStatus) {
+                    <i class="feather icon-copy font-medium-2 cursor-pointer text-white float-right p-1" (click)= "copyCode(snippetCode.json)"></i>
+                  }
+                  @if (copyCodeStatus) {
+                    <span class="text-white float-right mr-1 badge badge-secondary">copied !</span>
+                  }
                   <code [highlight]="snippetCode.json"  [languages]="['json']">
                   </code>
                 </pre>
-            </div>
-          </ng-template>
-        </li>
+              </div>
+            </ng-template>
+          </li>
+        }
       </ul>
       <!--/ nav tabs -->
 

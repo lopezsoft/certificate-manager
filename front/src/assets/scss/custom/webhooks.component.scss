@@ -1,22 +1,37 @@
 // ─── Webhooks — estilos globales ────────────────────────────────────────────
+// Todas las variables usadas provienen de @core/scss/base/bootstrap-extended/_variables.scss (Vuexy)
+// $primary, $body-color, $headings-color, $text-muted, $border-color, $body-bg, $box-shadow, etc.
 
-// Badges de estado de salud del webhook
-.badge-webhook {
-  &-healthy  { background-color: #4CAF50; color: #fff; }
-  &-degraded { background-color: #FF9800; color: #fff; }
-  &-failing  { background-color: #F44336; color: #fff; }
-  &-unknown  { background-color: #9E9E9E; color: #fff; }
-}
+// ─── Variables derivadas de la paleta Vuexy ─────────────────────────────────
+$wh-primary: $primary;
+$wh-primary-light: rgba($primary, 0.08);
+$wh-primary-border: rgba($primary, 0.35);
+$wh-surface: $white;
+$wh-surface-hover: darken($white, 2%);
+$wh-surface-muted: $body-bg;
+$wh-text-primary: $headings-color;
+$wh-text-secondary: $body-color;
+$wh-text-muted: $text-muted;
+$wh-border: $border-color;
+$wh-radius: $card-border-radius;
+$wh-radius-sm: $border-radius;
+$wh-shadow: $box-shadow;
+$wh-shadow-hover: 0 6px 18px 0 rgba($black, 0.12);
+$wh-shadow-selected: 0 0 0 2px $wh-primary-border, 0 2px 8px rgba($primary, 0.1);
+$wh-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+$wh-security-accent: #7367f0; // $purple de Vuexy
+$wh-success: $green;
+$wh-danger: $red;
 
-// Badges de estado de entrega
+// ─── Badges de entrega ──────────────────────────────────────────────────────
 .badge-delivery {
-  &-success  { background-color: #4CAF50; color: #fff; }
-  &-failed   { background-color: #F44336; color: #fff; }
-  &-pending  { background-color: #2196F3; color: #fff; }
-  &-retrying { background-color: #FF9800; color: #fff; }
+  &-success  { background-color: $green; color: $white; }
+  &-failed   { background-color: $red; color: $white; }
+  &-pending  { background-color: $blue; color: $white; }
+  &-retrying { background-color: $orange; color: $white; }
 }
 
-// URL larga en tabla
+// ─── URL larga en tabla ─────────────────────────────────────────────────────
 .webhook-url {
   max-width: 280px;
   overflow: hidden;
@@ -26,24 +41,629 @@
   vertical-align: middle;
 }
 
-// Panel payload con scroll
+// ─── Panel payload con scroll ───────────────────────────────────────────────
 .webhook-payload {
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
+  background: $body-bg;
+  border: 1px solid $border-color;
+  border-radius: $border-radius;
   padding: 0.75rem;
-  font-family: monospace;
-  font-size: 0.8125rem;
+  font-family: $font-family-monospace;
+  font-size: $small-font-size;
   max-height: 320px;
   overflow-y: auto;
   white-space: pre-wrap;
   word-break: break-all;
 }
 
-// Icono de estado activo/inactivo
+// ─── Toggle activo/inactivo ─────────────────────────────────────────────────
 .webhook-toggle {
   cursor: pointer;
-  transition: opacity .2s;
+  transition: opacity 0.2s;
+  &.inactive { opacity: 0.5; }
+}
 
-  &.inactive { opacity: .5; }
+// ═══════════════════════════════════════════════════════════════════════════════
+// Webhook Form Card — Premium UI
+// ═══════════════════════════════════════════════════════════════════════════════
+
+.wh-form-card {
+  border: 1px solid $wh-border;
+  border-radius: $wh-radius;
+  box-shadow: $wh-shadow;
+  overflow: hidden;
+
+  &__header {
+    padding: 1.25rem $card-spacer-x;
+    background: linear-gradient(135deg, $wh-surface 0%, $wh-surface-muted 100%);
+    border-bottom: 1px solid $wh-border;
+  }
+
+  &__icon-wrap {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: $wh-primary-light;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    i, svg {
+      width: 20px;
+      height: 20px;
+      color: $wh-primary;
+      stroke: $wh-primary;
+    }
+  }
+
+  &__title {
+    font-size: $h5-font-size;
+    font-weight: $font-weight-bolder;
+    color: $wh-text-primary;
+    letter-spacing: -0.01em;
+  }
+
+  &__body {
+    padding: $card-spacer-x;
+  }
+}
+
+// ─── Sections ───────────────────────────────────────────────────────────────
+.wh-section {
+  margin-bottom: 1.75rem;
+
+  &__header {
+    margin-bottom: 0.75rem;
+  }
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: $wh-text-primary;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid $wh-border;
+  }
+
+  &__icon {
+    width: 14px;
+    height: 14px;
+    opacity: 0.65;
+  }
+}
+
+// ─── Form Fields ────────────────────────────────────────────────────────────
+.wh-field {
+  &__label {
+    display: block;
+    font-size: $small-font-size;
+    font-weight: $font-weight-bolder;
+    color: $wh-text-primary;
+    margin-bottom: $label-margin-bottom;
+    letter-spacing: 0.01em;
+  }
+
+  &__required {
+    color: $wh-danger;
+    font-weight: 700;
+    margin-left: 2px;
+  }
+
+  &__optional {
+    color: $wh-text-muted;
+    font-weight: $font-weight-normal;
+    font-size: 0.75rem;
+    margin-left: 4px;
+  }
+
+  &__input {
+    border: 1px solid $input-border-color;
+    border-radius: $input-border-radius;
+    padding: $input-padding-y $input-padding-x;
+    font-size: $input-font-size;
+    color: $input-color;
+    background: $wh-surface;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &::placeholder {
+      color: $input-placeholder-color;
+      font-weight: $font-weight-normal;
+    }
+
+    &:focus {
+      border-color: $input-focus-border-color;
+      box-shadow: $input-focus-box-shadow;
+      outline: none;
+    }
+
+    &.is-valid {
+      border-color: $wh-success;
+      &:focus {
+        box-shadow: 0 3px 10px 0 rgba($wh-success, 0.1);
+      }
+    }
+
+    &.is-invalid {
+      border-color: $wh-danger;
+      &:focus {
+        box-shadow: 0 3px 10px 0 rgba($wh-danger, 0.1);
+      }
+    }
+  }
+
+  &__url-group {
+    .input-group-text {
+      border: 1px solid $input-border-color;
+      border-right: none;
+      border-radius: $input-border-radius 0 0 $input-border-radius;
+      background: $input-group-addon-bg;
+      color: $wh-text-muted;
+      padding: $input-padding-y 0.7rem;
+    }
+
+    .wh-field__input {
+      border-left: none;
+      border-radius: 0 $input-border-radius $input-border-radius 0;
+    }
+  }
+
+  &__feedback {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+    margin-top: 0.3rem;
+    animation: wh-fadeSlideIn 0.2s ease;
+
+    &--error {
+      color: $wh-danger;
+    }
+
+    &-icon {
+      width: 13px;
+      height: 13px;
+      flex-shrink: 0;
+    }
+  }
+}
+
+// ─── Security Banner ────────────────────────────────────────────────────────
+.wh-security-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  background: linear-gradient(135deg, rgba($wh-security-accent, 0.04) 0%, rgba($wh-security-accent, 0.08) 100%);
+  border: 1px solid rgba($wh-security-accent, 0.15);
+  border-left: 3px solid $wh-security-accent;
+  border-radius: $wh-radius-sm;
+
+  &__icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba($wh-security-accent, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    i, svg {
+      width: 16px;
+      height: 16px;
+      color: $wh-security-accent;
+      stroke: $wh-security-accent;
+    }
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  &__title {
+    font-size: 0.8rem;
+    font-weight: $font-weight-bolder;
+    color: darken($wh-security-accent, 15%);
+  }
+
+  &__text {
+    font-size: 0.77rem;
+    color: $wh-text-secondary;
+    line-height: $line-height-base;
+  }
+}
+
+// ─── Toggle All Button ──────────────────────────────────────────────────────
+.wh-toggle-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: none;
+  border: 1px solid $wh-border;
+  border-radius: $wh-radius-sm;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: $font-weight-bold;
+  color: $wh-primary;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+
+  &:hover {
+    background: $wh-primary-light;
+    border-color: $wh-primary-border;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $wh-primary;
+    outline-offset: 2px;
+  }
+
+  &__icon {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+// ─── Event Counter Bar ──────────────────────────────────────────────────────
+.wh-event-counter {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+
+  &__bar {
+    flex: 1;
+    height: 4px;
+    background: $wh-surface-muted;
+    border-radius: $progress-border-radius;
+    overflow: hidden;
+  }
+
+  &__fill {
+    height: 100%;
+    background: linear-gradient(90deg, $wh-primary 0%, darken($wh-primary, 10%) 100%);
+    border-radius: $progress-border-radius;
+    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 0;
+  }
+
+  &__text {
+    font-size: 0.75rem;
+    color: $wh-text-secondary;
+    white-space: nowrap;
+    flex-shrink: 0;
+
+    strong {
+      color: $wh-primary;
+      font-weight: 700;
+    }
+  }
+}
+
+// ─── Events Loading ─────────────────────────────────────────────────────────
+.wh-events-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 2rem 0;
+  color: $wh-text-muted;
+  font-size: $small-font-size;
+}
+
+// ─── Event Group ────────────────────────────────────────────────────────────
+.wh-event-group {
+  margin-bottom: 1.25rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: $wh-text-primary;
+    margin-bottom: 0.6rem;
+    padding-bottom: 0.35rem;
+  }
+
+  &__icon {
+    width: 14px;
+    height: 14px;
+    opacity: 0.6;
+  }
+
+  &__count {
+    margin-left: auto;
+    font-size: 0.65rem;
+    font-weight: $font-weight-bolder;
+    color: $wh-text-muted;
+    background: $wh-surface-muted;
+    padding: 0.1rem 0.4rem;
+    border-radius: 10px;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+}
+
+// ─── Event Card ─────────────────────────────────────────────────────────────
+.event-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  border: 1px solid $wh-border;
+  border-radius: $wh-radius;
+  padding: 0.85rem;
+  cursor: pointer;
+  transition: all $wh-transition;
+  background: $wh-surface;
+  height: 100%;
+  user-select: none;
+  box-shadow: 0 1px 3px rgba($black, 0.04);
+
+  &:hover {
+    background: $wh-surface-hover;
+    border-color: darken($wh-border, 8%);
+    box-shadow: $wh-shadow-hover;
+    transform: translateY(-1px);
+
+    .event-card__copy-btn {
+      opacity: 1;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid $wh-primary;
+    outline-offset: 2px;
+  }
+
+  &--selected {
+    border-color: $wh-primary;
+    background: $wh-primary-light;
+    box-shadow: $wh-shadow-selected;
+
+    &:hover {
+      background: rgba($primary, 0.1);
+      border-color: $wh-primary;
+      box-shadow: $wh-shadow-selected;
+    }
+
+    .event-card__label {
+      color: darken($wh-primary, 10%);
+    }
+
+    .event-card__checkbox {
+      background: $wh-primary;
+      border-color: $wh-primary;
+    }
+  }
+
+  &__checkbox {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    border: 2px solid darken($wh-border, 8%);
+    border-radius: $custom-checkbox-indicator-border-radius + 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    background: $wh-surface;
+    margin-top: 1px;
+
+    &--checked {
+      background: $wh-primary;
+      border-color: $wh-primary;
+    }
+
+    &-icon {
+      width: 13px;
+      height: 13px;
+      color: $white;
+      stroke: $white;
+      stroke-width: 3;
+    }
+  }
+
+  &__icon {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 8px;
+    background: $wh-surface-muted;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+
+    i, svg {
+      width: 16px;
+      height: 16px;
+      color: $wh-text-muted;
+      stroke: $wh-text-muted;
+    }
+
+    &--active {
+      background: $wh-primary-light;
+
+      i, svg {
+        color: $wh-primary;
+        stroke: $wh-primary;
+      }
+    }
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__label {
+    font-size: $small-font-size;
+    font-weight: $font-weight-bolder;
+    color: $wh-text-primary;
+    line-height: 1.3;
+    transition: color 0.15s ease;
+  }
+
+  &__desc {
+    font-size: 0.7rem;
+    color: $wh-text-secondary;
+    line-height: 1.35;
+  }
+
+  &__code-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.25rem;
+  }
+
+  &__code {
+    font-size: 0.62rem;
+    color: $wh-text-muted;
+    background: $wh-surface-muted;
+    padding: 0.1rem 0.4rem;
+    border-radius: $border-radius-sm;
+    font-family: $font-family-monospace;
+    letter-spacing: 0.02em;
+  }
+
+  &__copy-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: $border-radius-sm;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.15s ease;
+    padding: 0;
+    color: $wh-text-muted;
+
+    i, svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    &:hover {
+      background: $wh-surface-muted;
+      border-color: $wh-border;
+      color: $wh-primary;
+
+      i, svg {
+        stroke: $wh-primary;
+      }
+    }
+  }
+}
+
+// ─── Action Buttons ─────────────────────────────────────────────────────────
+.wh-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid $wh-border;
+
+  &__submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: $btn-padding-y $btn-padding-x;
+    font-size: $small-font-size;
+    font-weight: $font-weight-bolder;
+    color: $white;
+    background: linear-gradient(135deg, $wh-primary 0%, darken($wh-primary, 12%) 100%);
+    border: none;
+    border-radius: $btn-border-radius;
+    box-shadow: 0 1px 3px rgba($primary, 0.3);
+    transition: all $wh-transition;
+    min-width: 160px;
+
+    &:hover:not(:disabled) {
+      box-shadow: 0 4px 14px rgba($primary, 0.35);
+      transform: translateY(-1px);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: 0 1px 3px rgba($primary, 0.3);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $wh-primary;
+      outline-offset: 3px;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    &--loading {
+      min-width: 170px;
+    }
+  }
+
+  &__cancel {
+    padding: $btn-padding-y $btn-padding-x;
+    font-size: $small-font-size;
+    font-weight: $font-weight-bold;
+    color: $wh-text-secondary;
+    background: transparent;
+    border: 1px solid $wh-border;
+    border-radius: $btn-border-radius;
+    transition: all 0.15s ease;
+
+    &:hover:not(:disabled) {
+      background: $wh-surface-hover;
+      border-color: darken($wh-border, 10%);
+      color: $wh-text-primary;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $secondary;
+      outline-offset: 2px;
+    }
+  }
+}
+
+// ─── Animations ─────────────────────────────────────────────────────────────
+@keyframes wh-fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ─── Row Gap Helper ─────────────────────────────────────────────────────────
+.g-75 {
+  --bs-gutter-x: 0.75rem;
+  --bs-gutter-y: 0.75rem;
 }

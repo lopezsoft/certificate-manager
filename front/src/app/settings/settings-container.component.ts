@@ -6,9 +6,10 @@ import { BaseComponent } from '../@core/components/base/base.component';
 import TokenService from '../utils/token.service';
 
 @Component({
-  selector: 'app-settings-container',
-  templateUrl: './settings.component.html',
-  styleUrls: ['./settings.component.scss']
+    selector: 'app-settings-container',
+    templateUrl: './settings.component.html',
+    styleUrls: ['./settings.component.scss'],
+    standalone: false
 })
 export class SettingsContainerComponent extends BaseComponent implements OnInit {
 

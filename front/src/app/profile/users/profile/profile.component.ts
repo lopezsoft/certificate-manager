@@ -11,9 +11,10 @@ import { UsersEditComponent } from '../users-edit/users-edit.component';
 import TokenService from "../../../utils/token.service";
 
 @Component({
-  selector: 'app-profile',
-  templateUrl: './profile.component.html',
-  styleUrls: ['./profile.component.scss']
+    selector: 'app-profile',
+    templateUrl: './profile.component.html',
+    styleUrls: ['./profile.component.scss'],
+    standalone: false
 })
 export class ProfileComponent extends UsersEditComponent implements OnInit, AfterViewInit {
   userTypes: UserTypes[] = [];

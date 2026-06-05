@@ -6,9 +6,10 @@ import { BaseComponent } from '../@core/components/base/base.component';
 import TokenService from '../utils/token.service';
 
 @Component({
-  selector: 'app-profile-container',
-  templateUrl: './profile.component.html',
-  styleUrls: ['./profile.component.scss']
+    selector: 'app-profile-container',
+    templateUrl: './profile.component.html',
+    styleUrls: ['./profile.component.scss'],
+    standalone: false
 })
 export class ProfileContainerComponent extends BaseComponent implements OnInit {
 

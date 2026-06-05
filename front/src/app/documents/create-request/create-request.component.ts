@@ -13,9 +13,10 @@ import {HttpErrorResponse} from "@angular/common/http";
 import {DebugService} from "../../utils/debug.service";
 
 @Component({
-  selector: 'app-create-request',
-  templateUrl: './create-request.component.html',
-  styleUrl: './create-request.component.scss'
+    selector: 'app-create-request',
+    templateUrl: './create-request.component.html',
+    styleUrl: './create-request.component.scss',
+    standalone: false
 })
 export class CreateRequestComponent implements OnInit, AfterViewInit {
 

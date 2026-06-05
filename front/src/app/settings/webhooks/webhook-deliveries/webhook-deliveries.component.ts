@@ -7,15 +7,12 @@ import TokenService from 'app/utils/token.service';
 import { MessagesService } from 'app/utils';
 import { WebhooksService } from 'app/services/webhooks';
 import { WebhookDelivery, WebhookEndpoint } from 'app/interfaces';
-import {
-  WebhookDeliveryStatus,
-  WebhookDeliveryStatusLabel,
-} from 'app/common/enums/WebhookStatus';
 
 @Component({
-  selector: 'app-webhook-deliveries',
-  templateUrl: './webhook-deliveries.component.html',
-  styleUrls: ['./webhook-deliveries.component.scss']
+    selector: 'app-webhook-deliveries',
+    templateUrl: './webhook-deliveries.component.html',
+    styleUrls: ['./webhook-deliveries.component.scss'],
+    standalone: false
 })
 export class WebhookDeliveriesComponent extends BaseComponent implements OnInit {
 
@@ -28,8 +25,12 @@ export class WebhookDeliveriesComponent extends BaseComponent implements OnInit 
   totalRecords = 0;
   perPage = 15;
 
-  readonly statusLabel = WebhookDeliveryStatusLabel;
-  readonly DeliveryStatus = WebhookDeliveryStatus;
+  readonly statusLabel: Record<string, string> = {
+    'delivered': 'Entregado',
+    'pending': 'Pendiente',
+    'failed': 'Fallido',
+    'retrying': 'Reintentando',
+  };
 
   constructor(
     public override _token: TokenService,
@@ -53,7 +54,9 @@ export class WebhookDeliveriesComponent extends BaseComponent implements OnInit 
 
   loadEndpoint(): void {
     this.webhooksService.getById(this.webhookId).subscribe({
-      next: (wh) => (this.webhook = wh),
+      next: (resp: any) => {
+        this.webhook = resp?.dataRecords ?? resp;
+      },
       error: () => { },
     });
   }
@@ -61,13 +64,14 @@ export class WebhookDeliveriesComponent extends BaseComponent implements OnInit 
   loadDeliveries(page = 1): void {
     this.activeLoading();
     this.webhooksService
-      .getDeliveries(this.webhookId, { page, per_page: this.perPage })
+      .getDeliveries(this.webhookId, { page, limit: this.perPage })
       .subscribe({
         next: (resp: any) => {
-          this.deliveries = resp?.data ?? resp ?? [];
-          this.totalRecords = resp?.total ?? this.deliveries.length;
-          this.totalPages = resp?.last_page ?? 1;
-          this.currentPage = resp?.current_page ?? page;
+          const records = resp?.dataRecords ?? resp;
+          this.deliveries = records?.data ?? [];
+          this.totalRecords = records?.total ?? this.deliveries.length;
+          this.totalPages = records?.last_page ?? 1;
+          this.currentPage = records?.current_page ?? page;
           this.disabledLoading();
         },
         error: () => {
@@ -92,12 +96,27 @@ export class WebhookDeliveriesComponent extends BaseComponent implements OnInit 
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
-  badgeClass(status: WebhookDeliveryStatus | string): string {
+  retryDelivery(deliveryId: number, event: Event): void {
+    event.stopPropagation();
+    this.activeLoading();
+    this.webhooksService.retryDelivery(this.webhookId, deliveryId).subscribe({
+      next: () => {
+        this.msg.toastMessage('Éxito', 'Reintento iniciado correctamente', 1);
+        this.loadDeliveries(this.currentPage);
+      },
+      error: () => {
+        this.disabledLoading();
+        this.msg.toastMessage('Error', 'No se pudo iniciar el reintento', 3);
+      }
+    });
+  }
+
+  badgeClass(status: string): string {
     const map: Record<string, string> = {
-      [WebhookDeliveryStatus.SUCCESS]: 'badge-delivery-success',
-      [WebhookDeliveryStatus.FAILED]: 'badge-delivery-failed',
-      [WebhookDeliveryStatus.PENDING]: 'badge-delivery-pending',
-      [WebhookDeliveryStatus.RETRYING]: 'badge-delivery-retrying',
+      'delivered': 'badge-delivery-success',
+      'failed': 'badge-delivery-failed',
+      'pending': 'badge-delivery-pending',
+      'retrying': 'badge-delivery-retrying',
     };
     return map[status] ?? 'bg-secondary';
   }

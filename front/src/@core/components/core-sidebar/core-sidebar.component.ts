@@ -11,11 +11,12 @@ import {
   OnInit,
   Output,
   Renderer2,
-  ViewEncapsulation
+  ViewEncapsulation,
+  DOCUMENT
 } from '@angular/core';
 import { animate, AnimationBuilder, AnimationPlayer, style } from '@angular/animations';
-import { DOCUMENT } from '@angular/common';
-import { MediaObserver } from '@angular/flex-layout';
+
+
 
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -26,9 +27,10 @@ import { CoreConfigService } from '@core/services/config.service';
 import { CoreSidebarService } from '@core/components/core-sidebar/core-sidebar.service';
 
 @Component({
-  selector: 'core-sidebar',
-  templateUrl: './core-sidebar.component.html',
-  encapsulation: ViewEncapsulation.None
+    selector: 'core-sidebar',
+    templateUrl: './core-sidebar.component.html',
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class CoreSidebarComponent implements OnInit, OnDestroy {
   // Sidebar name (Component input)
@@ -110,8 +112,7 @@ export class CoreSidebarComponent implements OnInit, OnDestroy {
     private _changeDetectorRef: ChangeDetectorRef,
     private _coreMediaService: CoreMediaService,
     private _coreSidebarService: CoreSidebarService,
-    private _animationBuilder: AnimationBuilder,
-    private _mediaObserver: MediaObserver
+    private _animationBuilder: AnimationBuilder
   ) {
     // Set Defaults
     this.isOpened = false;
@@ -243,7 +244,7 @@ export class CoreSidebarComponent implements OnInit, OnDestroy {
     // On every media(screen) change
     this._coreMediaService.onMediaUpdate.pipe(takeUntil(this._unsubscribeAll)).subscribe(() => {
       // Get the collapsible status
-      const isCollapsible = this._mediaObserver.isActive(this.collapsibleSidebar);
+      const isCollapsible = this._coreMediaService.isActive(this.collapsibleSidebar);
       //! On screen resize set the config collapsed state if we have else this.collapsed
       this._wasCollapsed = this._coreConfig.layout.menu.collapsed || this.collapsed;
 

@@ -12,10 +12,11 @@ import TokenService from "../../utils/token.service";
 
 import {environment} from '../../../environments/environment';
 @Component({
-  selector: 'app-login',
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'app-login',
+    templateUrl: './login.component.html',
+    styleUrls: ['./login.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class LoginComponent extends AuthMasterComponent implements OnInit, AfterViewInit {
   @ViewChild('email') email !: ElementRef;

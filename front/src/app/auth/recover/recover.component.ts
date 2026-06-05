@@ -15,10 +15,11 @@ import {CoreConfigService} from "../../../@core/services/config.service";
 import {GlobalSettingsService} from "../../services/global-settings.service";
 
 @Component({
-  selector: 'app-recover',
-  templateUrl: './recover.component.html',
-  styleUrls: ['./recover.component.scss'],
-	encapsulation: ViewEncapsulation.None
+    selector: 'app-recover',
+    templateUrl: './recover.component.html',
+    styleUrls: ['./recover.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class RecoverComponent extends AuthMasterComponent implements OnInit {
 

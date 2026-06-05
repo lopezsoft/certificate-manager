@@ -16,20 +16,21 @@ import {jqxEditorComponent} from 'jqwidgets-ng/jqxeditor';
 import {DocumentViewerService} from "../../services/document-viewer.service";
 
 @Component({
-	selector: 'app-request-in-process-view',
-	templateUrl: './request-in-process-view.component.html',
-	styleUrl: './request-in-process-view.component.scss',
-	animations: [
-		trigger('fadeInOut', [
-			transition(':enter', [
-				style({ opacity: 0 }),
-				animate('300ms', style({ opacity: 1 })),
-			]),
-			transition(':leave', [
-				animate('300ms', style({ opacity: 0 })),
-			])
-		])
-	]
+    selector: 'app-request-in-process-view',
+    templateUrl: './request-in-process-view.component.html',
+    styleUrl: './request-in-process-view.component.scss',
+    animations: [
+        trigger('fadeInOut', [
+            transition(':enter', [
+                style({ opacity: 0 }),
+                animate('300ms', style({ opacity: 1 })),
+            ]),
+            transition(':leave', [
+                animate('300ms', style({ opacity: 0 })),
+            ])
+        ])
+    ],
+    standalone: false
 })
 export class RequestInProcessViewComponent {
 	@ViewChild('myEditor') myEditor: jqxEditorComponent;

@@ -7,7 +7,7 @@ export class FormatsService {
   constructor() { }
   public getCurrencyFormat(format: string, currency: string, value: number): string {
     if (format && currency) {
-      const options = { style: 'currency', currency: currency, currencyDisplay: 'narrowSymbol' };
+      const options = { style: 'currency' as const, currency: currency, currencyDisplay: 'narrowSymbol' as const };
       const numberFormat = new Intl.NumberFormat(format, options);
       return numberFormat.format(value);
     }

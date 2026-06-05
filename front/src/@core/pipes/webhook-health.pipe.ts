@@ -11,7 +11,8 @@ import { WebhookHealthStatus, WebhookHealthStatusLabel } from 'app/common/enums/
  *   [class]="'badge badge-webhook-' + webhook.health_status"
  */
 @Pipe({
-  name: 'webhookHealth',
+    name: 'webhookHealth',
+    standalone: false
 })
 export class WebhookHealthPipe implements PipeTransform {
   transform(value: WebhookHealthStatus | string | null | undefined): string {

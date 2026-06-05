@@ -1,209 +1,237 @@
 <div class="layout-wrapper">
-    <div class="card custom-form">
-        <div class="card-header">
-            {{ title | uppercase }}
-        </div>
-        <div class="card-body">
-            <form [formGroup]="customForm">
-                <div class="form-group">
-                    <h6>DATOS EMPRESARIALES</h6>
-                    <hr>
-                </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label>
-                                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
-                                N.I.T sin digito de verificación
-                            </label>
-                            <input class="form-control" type="text"  formControlName="dni"
-                                   #dniInput
-                                   autofocus
-                                   (change)="onChangeDni($event)"
-                                   placeholder="N.I.T sin digito de verificación" inputmode="numeric" autocomplete="off"
-                                   [class.is-invalid]="isInvalid('dni')">
-                            <small class="text-danger" *ngIf="isInvalid('dni')">N.I.T incorrecto</small>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label>
-                                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
-                                {{'companies.type_organization' | translate}}
-                            </label>
-                            <ng-select
-                                    (change)="onChangeTypeOrganization($event)"
-                                    formControlName="type_organization_id"
-                                    placeholder="Tipo de contribuyente">
-                                <ng-option [value]="org.id" *ngFor="let org of organizations">{{ org.description }}</ng-option>
-                            </ng-select>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>
-                        <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
-                        {{'companies.company_name' | translate}}
-                    </label>
-                    <input class="form-control" type="text" formControlName="company_name"
-                           placeholder="Nombre o razón social" autocomplete="off"
-                           [class.is-invalid]="isInvalid('company_name')">
-                    <small class="text-danger" *ngIf="isInvalid('company_name')">Nombre o razón social muy corto</small>
-                </div>
-                <div class="form-group">
-                    <label>
-                        <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
-                        {{'companies.city' | translate}}
-                    </label>
-                    <ng-select data-live-search="true"  formControlName="city_id"
-                               placeholder="Ciudad o municipio" [virtualScroll]="true">
-                        <ng-option [value]="city.id" *ngFor="let city of cities">
-                            {{city.city_code}} - {{ city.name_city }} ({{city.department.name_department}})
-                        </ng-option>
-                    </ng-select>
-                </div>
-                <div class="form-group">
-                    <label>
-                        <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
-                        Dirección de la empresa
-                    </label>
-                    <input class="form-control" type="text"  formControlName="address" placeholder="Dirección"
-                           autocomplete="on" [class.is-invalid]="isInvalid('address')">
-                    <small class="text-danger" *ngIf="isInvalid('address')">Dirección muy corta</small>
-                </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <input class="form-control" type="text"  formControlName="phone"
-                                   placeholder="Teléfono fijo y extension" autocomplete="on" inputmode="tel">
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <input class="form-control" type="text"  formControlName="mobile"
-                                   placeholder="Número teléfono móvil" autocomplete="on" inputmode="tel">
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <hr>
-                    <h6>DATOS DEL REPRESENTANTE LEGAL</h6>
-                    <hr>
-                </div>
-                <div class="form-group">
-                    <label>
-                        <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
-                        Nombre completo de representante legal
-                    </label>
-                    <input class="form-control" type="text"  formControlName="legal_representative"
-                           placeholder="Nombre completo de representante legal" inputmode="text"
-                           [disabled]="isNaturelPerson()"
-                           autocomplete="on" [class.is-invalid]="isInvalid('legal_representative')">
-                    <small class="text-danger" *ngIf="isInvalid('legal_representative')">
-                        Nombre completo de representante legal muy corto
-                    </small>
-                </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label><span class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.identity_document' | translate}}</label>
-                            <ng-select formControlName="identity_document_id" required [class.is-invalid]="isInvalid('invalidIdentity')">
-                                <ng-option *ngFor="let docs of identityDocs" [value]="docs.id">
-                                    {{ docs.document_name }}
-                                </ng-option>
-                            </ng-select>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label>
-                                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
-                                Número de documento de identidad
-                            </label>
-                            <input class="form-control" type="text"  formControlName="document_number"
-                                   #documentInput (change)="onChangeDocument($event)"
-                                   placeholder="Documento sin digito de verificación" inputmode="numeric" autocomplete="off"
-                                   [class.is-invalid]="isInvalid('document_number')">
-                            <small class="text-danger" *ngIf="isInvalid('document_number')">Número de documento incorrecto</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="row" *ngIf="_token.isAdmin()">
-                    <div class="col-md-12">
-                        <div class="form-group">
-                            <textarea class="form-control" formControlName="info"
-                                      placeholder="Información adicional" inputmode="text">
-                            </textarea>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <hr>
-                    <h6>VIGENCIA DEL CERTIFICADO</h6>
-                    <hr>
-                </div>
-                <div class="form-group">
-                    <label>
-                        <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
-                        Seleccione la vigencia del certificado
-                    </label>
-                    <ng-select formControlName="life"
-                               required [class.is-invalid]="isInvalid('life')">
-                        <ng-option *ngFor="let validity of validities" [value]="validity.id">
-                            {{ validity.name }}
-                        </ng-option>
-                    </ng-select>
-                </div>
-                <ng-container *ngIf="!canEdit">
-                <div class="form-group">
-                    <hr>
-                    <h6>SUBIDA DE ARCHIVOS</h6>
-                    <hr>
-                </div>
-                <!-- Subida de archivos UNIFICADA -->
-                <div class="col-md-12">
-                    <app-file-upload
-                        [config]="uploadConfig"
-                        [currentFiles]="files"
-                        [totalUploadedSize]="getTotalUploadedSize()"
-                        (fileSelected)="onFileSelected($event)"
-                        (fileRemoved)="onFileRemoved($event)"
-                        (validationError)="onFileValidationError($event)">
-                    </app-file-upload>
-                </div>
-                </ng-container>
-            </form>
-            <div class="card-footer mt-2 d-flex justify-content-between align-items-center">
-                <div>
-                    <small *ngIf="!canSaveForm && !canEdit" 
-                           [class.text-danger]="files.length > maxFilesAllowed"
-                           [class.text-warning]="files.length < maxFilesAllowed || files.length === 0"
-                           class="fw-bold">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        {{ documentValidationMessage }}
-                    </small>
-                    <small *ngIf="canSaveForm && !canEdit" class="text-success fw-bold">
-                        <i class="fas fa-check-circle"></i>
-                        {{ documentValidationMessage }} ✓
-                    </small>
-                </div>
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn custom-button border fas-fa-close btn-block"
-                            (click)="onCancel()">
-                        <i class="fas fa-times"></i>
-                        Cancelar
-                    </button>
-                    <button (click)="onSave()" 
-                            type="button" 
-                            class="btn ms-1 custom-button border fas-fa-save btn-block"
-                            [disabled]="!canSaveForm || loading"
-                            [class.disabled]="!canSaveForm">
-                        <span *ngIf="!loading">{{buttonText}}</span>
-                        <span *ngIf="loading">Procesando solicitud... </span>
-                        <i class="fas-fa-save fas " [ngClass]="{'fa-plus' :!loading, 'fa-spinner fa-spin': loading }" ></i>
-                    </button>
-                </div>
-            </div>
-        </div>
+  <div class="card custom-form">
+    <div class="card-header">
+      {{ title | uppercase }}
     </div>
-</div>
+    <div class="card-body">
+      <form [formGroup]="customForm">
+        <div class="form-group">
+          <h6>DATOS EMPRESARIALES</h6>
+          <hr>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>
+                  <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                  N.I.T sin digito de verificación
+                </label>
+                <input class="form-control" type="text"  formControlName="dni"
+                  #dniInput
+                  autofocus
+                  (change)="onChangeDni($event)"
+                  placeholder="N.I.T sin digito de verificación" inputmode="numeric" autocomplete="off"
+                  [class.is-invalid]="isInvalid('dni')">
+                  @if (isInvalid('dni')) {
+                    <small class="text-danger">N.I.T incorrecto</small>
+                  }
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>
+                    <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                    {{'companies.type_organization' | translate}}
+                  </label>
+                  <ng-select
+                    (change)="onChangeTypeOrganization($event)"
+                    formControlName="type_organization_id"
+                    placeholder="Tipo de contribuyente">
+                    @for (org of organizations; track org) {
+                      <ng-option [value]="org.id">{{ org.description }}</ng-option>
+                    }
+                  </ng-select>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>
+                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                {{'companies.company_name' | translate}}
+              </label>
+              <input class="form-control" type="text" formControlName="company_name"
+                placeholder="Nombre o razón social" autocomplete="off"
+                [class.is-invalid]="isInvalid('company_name')">
+                @if (isInvalid('company_name')) {
+                  <small class="text-danger">Nombre o razón social muy corto</small>
+                }
+              </div>
+              <div class="form-group">
+                <label>
+                  <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                  {{'companies.city' | translate}}
+                </label>
+                <ng-select data-live-search="true"  formControlName="city_id"
+                  placeholder="Ciudad o municipio" [virtualScroll]="true">
+                  @for (city of cities; track city) {
+                    <ng-option [value]="city.id">
+                      {{city.city_code}} - {{ city.name_city }} ({{city.department.name_department}})
+                    </ng-option>
+                  }
+                </ng-select>
+              </div>
+              <div class="form-group">
+                <label>
+                  <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                  Dirección de la empresa
+                </label>
+                <input class="form-control" type="text"  formControlName="address" placeholder="Dirección"
+                  autocomplete="on" [class.is-invalid]="isInvalid('address')">
+                  @if (isInvalid('address')) {
+                    <small class="text-danger">Dirección muy corta</small>
+                  }
+                </div>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <input class="form-control" type="text"  formControlName="phone"
+                        placeholder="Teléfono fijo y extension" autocomplete="on" inputmode="tel">
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <input class="form-control" type="text"  formControlName="mobile"
+                          placeholder="Número teléfono móvil" autocomplete="on" inputmode="tel">
+                        </div>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <hr>
+                        <h6>DATOS DEL REPRESENTANTE LEGAL</h6>
+                        <hr>
+                        </div>
+                        <div class="form-group">
+                          <label>
+                            <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                            Nombre completo de representante legal
+                          </label>
+                          <input class="form-control" type="text"  formControlName="legal_representative"
+                            placeholder="Nombre completo de representante legal" inputmode="text"
+                            [disabled]="isNaturelPerson()"
+                            autocomplete="on" [class.is-invalid]="isInvalid('legal_representative')">
+                            @if (isInvalid('legal_representative')) {
+                              <small class="text-danger">
+                                Nombre completo de representante legal muy corto
+                              </small>
+                            }
+                          </div>
+                          <div class="row">
+                            <div class="col-md-6">
+                              <div class="form-group">
+                                <label><span class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.identity_document' | translate}}</label>
+                                <ng-select formControlName="identity_document_id" required [class.is-invalid]="isInvalid('invalidIdentity')">
+                                  @for (docs of identityDocs; track docs) {
+                                    <ng-option [value]="docs.id">
+                                      {{ docs.document_name }}
+                                    </ng-option>
+                                  }
+                                </ng-select>
+                              </div>
+                            </div>
+                            <div class="col-md-6">
+                              <div class="form-group">
+                                <label>
+                                  <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                                  Número de documento de identidad
+                                </label>
+                                <input class="form-control" type="text"  formControlName="document_number"
+                                  #documentInput (change)="onChangeDocument($event)"
+                                  placeholder="Documento sin digito de verificación" inputmode="numeric" autocomplete="off"
+                                  [class.is-invalid]="isInvalid('document_number')">
+                                  @if (isInvalid('document_number')) {
+                                    <small class="text-danger">Número de documento incorrecto</small>
+                                  }
+                                </div>
+                              </div>
+                            </div>
+                            @if (_token.isAdmin()) {
+                              <div class="row">
+                                <div class="col-md-12">
+                                  <div class="form-group">
+                                    <textarea class="form-control" formControlName="info"
+                                      placeholder="Información adicional" inputmode="text">
+                                    </textarea>
+                                  </div>
+                                </div>
+                              </div>
+                            }
+                            <div class="form-group">
+                              <hr>
+                                <h6>VIGENCIA DEL CERTIFICADO</h6>
+                                <hr>
+                                </div>
+                                <div class="form-group">
+                                  <label>
+                                    <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                                    Seleccione la vigencia del certificado
+                                  </label>
+                                  <ng-select formControlName="life"
+                                    required [class.is-invalid]="isInvalid('life')">
+                                    @for (validity of validities; track validity) {
+                                      <ng-option [value]="validity.id">
+                                        {{ validity.name }}
+                                      </ng-option>
+                                    }
+                                  </ng-select>
+                                </div>
+                                @if (!canEdit) {
+                                  <div class="form-group">
+                                    <hr>
+                                      <h6>SUBIDA DE ARCHIVOS</h6>
+                                      <hr>
+                                      </div>
+                                      <!-- Subida de archivos UNIFICADA -->
+                                      <div class="col-md-12">
+                                        <app-file-upload
+                                          [config]="uploadConfig"
+                                          [currentFiles]="files"
+                                          [totalUploadedSize]="getTotalUploadedSize()"
+                                          (fileSelected)="onFileSelected($event)"
+                                          (fileRemoved)="onFileRemoved($event)"
+                                          (validationError)="onFileValidationError($event)">
+                                        </app-file-upload>
+                                      </div>
+                                    }
+                                  </form>
+                                  <div class="card-footer mt-2 d-flex justify-content-between align-items-center">
+                                    <div>
+                                      @if (!canSaveForm && !canEdit) {
+                                        <small
+                                          [class.text-danger]="files.length > maxFilesAllowed"
+                                          [class.text-warning]="files.length < maxFilesAllowed || files.length === 0"
+                                          class="fw-bold">
+                                          <i class="fas fa-exclamation-triangle"></i>
+                                          {{ documentValidationMessage }}
+                                        </small>
+                                      }
+                                      @if (canSaveForm && !canEdit) {
+                                        <small class="text-success fw-bold">
+                                          <i class="fas fa-check-circle"></i>
+                                          {{ documentValidationMessage }} ✓
+                                        </small>
+                                      }
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                      <button type="button" class="btn custom-button border fas-fa-close btn-block"
+                                        (click)="onCancel()">
+                                        <i class="fas fa-times"></i>
+                                        Cancelar
+                                      </button>
+                                      <button (click)="onSave()"
+                                        type="button"
+                                        class="btn ms-1 custom-button border fas-fa-save btn-block"
+                                        [disabled]="!canSaveForm || loading"
+                                        [class.disabled]="!canSaveForm">
+                                        @if (!loading) {
+                                          <span>{{buttonText}}</span>
+                                        }
+                                        @if (loading) {
+                                          <span>Procesando solicitud... </span>
+                                        }
+                                        <i class="fas-fa-save fas " [ngClass]="{'fa-plus' :!loading, 'fa-spinner fa-spin': loading }" ></i>
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>

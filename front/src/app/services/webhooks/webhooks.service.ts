@@ -40,6 +40,15 @@ export class WebhooksService {
   }
 
   /**
+   * Obtiene la lista de eventos disponibles desde el backend.
+   * GET /webhooks/events
+   */
+  getAvailableEvents(): Observable<string[]> {
+    this.debug.log(this.CTX, 'getAvailableEvents');
+    return this.api.get('/webhooks/events') as any;
+  }
+
+  /**
    * Crea un nuevo webhook.
    */
   create(payload: WebhookCreateRequest): Observable<WebhookEndpoint> {
@@ -87,5 +96,13 @@ export class WebhooksService {
   getDeliveries(webhookId: number, params?: any): Observable<WebhookDeliveriesResponse> {
     this.debug.log(this.CTX, 'getDeliveries', webhookId, params);
     return this.api.get(`/webhooks/${webhookId}/deliveries`, params) as any;
+  }
+
+  /**
+   * Reintenta el envío de una entrega fallida.
+   */
+  retryDelivery(webhookId: number, deliveryId: number): Observable<any> {
+    this.debug.log(this.CTX, 'retryDelivery', webhookId, deliveryId);
+    return this.api.post(`/webhooks/${webhookId}/deliveries/${deliveryId}/retry`, {});
   }
 }

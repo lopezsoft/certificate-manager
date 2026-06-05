@@ -6,12 +6,14 @@
     <span class="d-none d-sm-inline-block">, All rights Reserved</span>
   </span>
   <span class="float-end d-none d-md-block">
-		<i class="fas fa-heart"></i>
-		<span><strong> V. {{ versionApp }} </strong> </span>
+    <i class="fas fa-heart"></i>
+    <span><strong> V. {{ versionApp }} </strong> </span>
   </span>
 </p>
 <!--/ Footer -->
 
 <!-- Move to top Button-->
-<app-scroll-top *ngIf="coreConfig.layout.scrollTop"></app-scroll-top>
+@if (coreConfig.layout.scrollTop) {
+  <app-scroll-top></app-scroll-top>
+}
 

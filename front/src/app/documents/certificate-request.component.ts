@@ -20,9 +20,10 @@ import {QuotaService} from "../services/quota.service";
 import {QuotaStatus} from "../interfaces/quota.interface";
 
 @Component({
-  selector: 'app-certificate-request',
-  templateUrl: './certificate-request.component.html',
-  styleUrl: './certificate-request.component.scss'
+    selector: 'app-certificate-request',
+    templateUrl: './certificate-request.component.html',
+    styleUrl: './certificate-request.component.scss',
+    standalone: false
 })
 export class CertificateRequestComponent extends BaseComponent  implements OnInit, AfterViewInit, OnDestroy  {
   @ViewChild('searchItems') searchItems: SearchDataComponent;

@@ -3,7 +3,8 @@ import { Directive, ElementRef, Input, Inject, ChangeDetectorRef, OnChanges, Sim
 import * as Feather from 'feather-icons';
 
 @Directive({
-  selector: '[data-feather]'
+    selector: '[data-feather]',
+    standalone: false
 })
 export class FeatherIconDirective implements OnChanges {
   // Private

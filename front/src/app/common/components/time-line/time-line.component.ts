@@ -3,9 +3,10 @@ import {TimelineEvent} from "../../../interfaces/file-manager.interface";
 import {DocumentStatusDescription} from "../../enums/DocumentStatus";
 
 @Component({
-  selector: 'app-time-line',
-  templateUrl: './time-line.component.html',
-  styleUrl: './time-line.component.scss'
+    selector: 'app-time-line',
+    templateUrl: './time-line.component.html',
+    styleUrl: './time-line.component.scss',
+    standalone: false
 })
 export class TimeLineComponent implements OnInit {
 

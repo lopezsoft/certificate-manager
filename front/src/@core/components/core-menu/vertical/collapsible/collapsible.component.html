@@ -1,40 +1,46 @@
-<ng-container *ngIf="!item.hidden">
+@if (!item.hidden) {
   <!-- collapsible title -->
-  <a class="d-flex align-items-center" [ngClass]="item.classes" *ngIf="!item.url" (click)="toggleOpen($event)">
-    <ng-container *ngTemplateOutlet="itemContent"></ng-container>
-  </a>
-
+  @if (!item.url) {
+    <a class="d-flex align-items-center" [ngClass]="item.classes" (click)="toggleOpen($event)">
+      <ng-container *ngTemplateOutlet="itemContent"></ng-container>
+    </a>
+  }
   <!-- itemContent template -->
   <ng-template #itemContent>
-    <span [data-feather]="item.icon" *ngIf="item.icon"></span>
+    @if (item.icon) {
+      <span [data-feather]="item.icon"></span>
+    }
     <span class="menu-title text-truncate" [translate]="item.translate">{{ item.title }}</span>
-    <span
-      class="badge ml-auto mr-1"
-      *ngIf="item.badge"
-      [translate]="item.badge.translate"
-      [ngClass]="item.badge.classes"
-    >
-      {{ item.badge.title }}
-    </span>
+    @if (item.badge) {
+      <span
+        class="badge ml-auto mr-1"
+        [translate]="item.badge.translate"
+        [ngClass]="item.badge.classes"
+        >
+        {{ item.badge.title }}
+      </span>
+    }
   </ng-template>
-
   <!-- sub-menu item/collapsible -->
   <ul class="menu-content">
-    <ng-container *ngFor="let item of item.children">
+    @for (item of item.children; track item) {
       <!-- item -->
-      <li
-        core-menu-vertical-item
-        [item]="item"
-        *ngIf="
-          item.type == 'item' && (item.role ? item.role.includes(currentUser.role) : item.role == undefined)
-        "
-        [ngClass]="{ disabled: item.disabled === true }"
-        [routerLink]="item.openInNewTab ? [] : [item.url]"
-        [routerLinkActive]="!item.openInNewTab ? 'active' : ''"
-        [routerLinkActiveOptions]="{ exact: item.exactMatch || false }"
-      ></li>
+      @if (
+        item.type == 'item' && (item.role ? item.role.includes(currentUser.role) : item.role == undefined)
+        ) {
+        <li
+          core-menu-vertical-item
+          [item]="item"
+          [ngClass]="{ disabled: item.disabled === true }"
+          [routerLink]="item.openInNewTab ? [] : [item.url]"
+          [routerLinkActive]="!item.openInNewTab ? 'active' : ''"
+          [routerLinkActiveOptions]="{ exact: item.exactMatch || false }"
+        ></li>
+      }
       <!-- collapsible -->
-      <li core-menu-vertical-collapsible *ngIf="item.type == 'collapsible'" [item]="item" class="nav-item has-sub"></li>
-    </ng-container>
+      @if (item.type == 'collapsible') {
+        <li core-menu-vertical-collapsible [item]="item" class="nav-item has-sub"></li>
+      }
+    }
   </ul>
-</ng-container>
+}

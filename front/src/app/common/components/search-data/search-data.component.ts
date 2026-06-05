@@ -3,9 +3,10 @@ import {Subject} from 'rxjs';
 import {debounceTime} from 'rxjs/operators';
 
 @Component({
-  selector: 'app-search-data',
-  templateUrl: './search-data.component.html',
-  styleUrls: ['./search-data.component.scss']
+    selector: 'app-search-data',
+    templateUrl: './search-data.component.html',
+    styleUrls: ['./search-data.component.scss'],
+    standalone: false
 })
 export class SearchDataComponent implements AfterViewInit {
   @ViewChild('searchField') searchField: ElementRef<HTMLInputElement>;

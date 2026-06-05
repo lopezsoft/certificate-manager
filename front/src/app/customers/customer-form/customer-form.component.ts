@@ -2,8 +2,9 @@ import { AfterViewInit, Component, OnInit } from '@angular/core';
 import {CompanyComponent} from "../../profile/company/company.component";
 
 @Component({
-  selector: 'app-customer-form',
-  templateUrl: './customer-form.component.html'
+    selector: 'app-customer-form',
+    templateUrl: './customer-form.component.html',
+    standalone: false
 })
 export class CustomerFormComponent extends CompanyComponent implements OnInit, AfterViewInit {
 

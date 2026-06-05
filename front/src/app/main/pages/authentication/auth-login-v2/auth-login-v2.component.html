@@ -1,8 +1,8 @@
 <div class="auth-wrapper auth-v2">
   <div class="auth-inner row m-0">
     <!-- Brand logo--><a class="brand-logo" href="javascript:void(0);">
-      <img src="{{ coreConfig.app.appLogoImage }}" alt="brand-logo" height="28" />
-      <h2 class="brand-text text-primary ml-1">Vuexy</h2></a
+    <img src="{{ coreConfig.app.appLogoImage }}" alt="brand-logo" height="28" />
+    <h2 class="brand-text text-primary ml-1">Vuexy</h2></a
     >
     <!-- /Brand logo-->
     <!-- Left Text-->
@@ -16,7 +16,7 @@
               : 'assets/images/pages/login-v2.svg'
           "
           alt="Login V2"
-        />
+          />
       </div>
     </div>
     <!-- /Left Text-->
@@ -26,11 +26,13 @@
         <h2 class="card-title font-weight-bold mb-1">Welcome to Vuexy! 👋</h2>
         <p class="card-text mb-2">Please sign-in to your account and start the adventure</p>
 
-        <ngb-alert [type]="'danger'" [dismissible]="false" *ngIf="error">
-          <div class="alert-body">
-            <p>{{ error }}</p>
-          </div>
-        </ngb-alert>
+        @if (error) {
+          <ngb-alert [type]="'danger'" [dismissible]="false">
+            <div class="alert-body">
+              <p>{{ error }}</p>
+            </div>
+          </ngb-alert>
+        }
 
         <form class="auth-login-form mt-2" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
           <div class="form-group">
@@ -44,73 +46,84 @@
               aria-describedby="login-email"
               autofocus=""
               tabindex="1"
-            />
-            <div *ngIf="submitted && f.email.errors" class="invalid-feedback">
-              <div *ngIf="f.email.errors.required">Email is required</div>
-              <div *ngIf="f.email.errors.email">Email must be a valid email address</div>
-            </div>
+              />
+            @if (submitted && f.email.errors) {
+              <div class="invalid-feedback">
+                @if (f.email.errors.required) {
+                  <div>Email is required</div>
+                }
+                @if (f.email.errors.email) {
+                  <div>Email must be a valid email address</div>
+                }
+              </div>
+            }
           </div>
           <div class="form-group">
             <div class="d-flex justify-content-between">
               <label for="login-password">Password</label
-              ><a routerLink="/pages/authentication/forgot-password-v2"><small>Forgot Password?</small></a>
-            </div>
-            <div class="input-group input-group-merge form-password-toggle">
-              <input
-                [type]="passwordTextType ? 'text' : 'password'"
-                formControlName="password"
-                class="form-control form-control-merge"
-                [ngClass]="{ 'is-invalid error': submitted && f.password.errors }"
-                placeholder="············"
-                aria-describedby="login-password"
-                tabindex="2"
-              />
-              <div class="input-group-append">
-                <span class="input-group-text cursor-pointer"
-                  ><i
+                ><a routerLink="/pages/authentication/forgot-password-v2"><small>Forgot Password?</small></a>
+              </div>
+              <div class="input-group input-group-merge form-password-toggle">
+                <input
+                  [type]="passwordTextType ? 'text' : 'password'"
+                  formControlName="password"
+                  class="form-control form-control-merge"
+                  [ngClass]="{ 'is-invalid error': submitted && f.password.errors }"
+                  placeholder="············"
+                  aria-describedby="login-password"
+                  tabindex="2"
+                  />
+                <div class="input-group-append">
+                  <span class="input-group-text cursor-pointer"
+                    ><i
                     class="feather font-small-4"
                     [ngClass]="{
                       'icon-eye-off': passwordTextType,
                       'icon-eye': !passwordTextType
                     }"
                     (click)="togglePasswordTextType()"
-                  ></i
-                ></span>
+                    ></i
+                  ></span>
+                </div>
+              </div>
+              @if (submitted && f.password.errors) {
+                <div
+                  class="invalid-feedback"
+                  [ngClass]="{ 'd-block': submitted && f.password.errors }"
+                  >
+                  @if (f.password.errors.required) {
+                    <div>Password is required</div>
+                  }
+                </div>
+              }
+            </div>
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                <input class="custom-control-input" id="remember-me" type="checkbox" tabindex="3" />
+                <label class="custom-control-label" for="remember-me"> Remember Me</label>
               </div>
             </div>
-            <div
-              *ngIf="submitted && f.password.errors"
-              class="invalid-feedback"
-              [ngClass]="{ 'd-block': submitted && f.password.errors }"
-            >
-              <div *ngIf="f.password.errors.required">Password is required</div>
+            <button [disabled]="loading" class="btn btn-primary btn-block" tabindex="4" rippleEffect>
+              @if (loading) {
+                <span class="spinner-border spinner-border-sm mr-1"></span>
+                }Sign in
+              </button>
+            </form>
+            <p class="text-center mt-2">
+              <span>New on our platform?</span
+                ><a routerLink="/pages/authentication/register-v2"><span>&nbsp;Create an account</span></a>
+              </p>
+              <div class="divider my-2">
+                <div class="divider-text">or</div>
+              </div>
+              <div class="auth-footer-btn d-flex justify-content-center">
+                <a class="btn btn-facebook" href="javascript:void(0)"><i data-feather="facebook"></i></a
+                ><a class="btn btn-twitter white" href="javascript:void(0)"><i data-feather="twitter"></i></a
+                ><a class="btn btn-google" href="javascript:void(0)"><i data-feather="mail"></i></a
+                ><a class="btn btn-github" href="javascript:void(0)"><i data-feather="github"></i></a>
+              </div>
             </div>
           </div>
-          <div class="form-group">
-            <div class="custom-control custom-checkbox">
-              <input class="custom-control-input" id="remember-me" type="checkbox" tabindex="3" />
-              <label class="custom-control-label" for="remember-me"> Remember Me</label>
-            </div>
-          </div>
-          <button [disabled]="loading" class="btn btn-primary btn-block" tabindex="4" rippleEffect>
-            <span *ngIf="loading" class="spinner-border spinner-border-sm mr-1"></span>Sign in
-          </button>
-        </form>
-        <p class="text-center mt-2">
-          <span>New on our platform?</span
-          ><a routerLink="/pages/authentication/register-v2"><span>&nbsp;Create an account</span></a>
-        </p>
-        <div class="divider my-2">
-          <div class="divider-text">or</div>
-        </div>
-        <div class="auth-footer-btn d-flex justify-content-center">
-          <a class="btn btn-facebook" href="javascript:void(0)"><i data-feather="facebook"></i></a
-          ><a class="btn btn-twitter white" href="javascript:void(0)"><i data-feather="twitter"></i></a
-          ><a class="btn btn-google" href="javascript:void(0)"><i data-feather="mail"></i></a
-          ><a class="btn btn-github" href="javascript:void(0)"><i data-feather="github"></i></a>
+          <!-- /Login-->
         </div>
       </div>
-    </div>
-    <!-- /Login-->
-  </div>
-</div>

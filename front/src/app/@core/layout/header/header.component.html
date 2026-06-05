@@ -6,9 +6,11 @@
     </div>
   </div>
   <div class="navbar-end">
-    <div class="company-name" *ngIf="companyData">
-      <span>{{ companyData.company_name }}</span>
-    </div>
+    @if (companyData) {
+      <div class="company-name">
+        <span>{{ companyData.company_name }}</span>
+      </div>
+    }
     <div class="dropdown">
       <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
         <img :src="{{ companyImg }}" alt="mdo" width="32" height="32" class="rounded-circle" fallimg>

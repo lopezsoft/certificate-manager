@@ -5,10 +5,11 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
-  selector: 'content',
-  templateUrl: './content.component.html',
-  encapsulation: ViewEncapsulation.None,
-  animations: [fadeInLeft, zoomIn, fadeIn]
+    selector: 'content',
+    templateUrl: './content.component.html',
+    encapsulation: ViewEncapsulation.None,
+    animations: [fadeInLeft, zoomIn, fadeIn],
+    standalone: false
 })
 export class ContentComponent {
   public coreConfig: any;

@@ -7,7 +7,6 @@ import { ngxLoadingAnimationTypes, NgxLoadingModule } from 'ngx-loading';
 
 import{ jqxEditorModule } from 'jqwidgets-ng/jqxeditor';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { DxHtmlEditorModule, DxCheckBoxModule, DxSelectBoxModule } from 'devextreme-angular';
 /*
   * Translation
 */
@@ -18,7 +17,6 @@ import {
   FooterFormComponent,
  } from '.';
 import { DataGridComponent } from './components/grid/data-grid.component';
-import {HtmlEditorComponent} from "./html-editor/html-editor.component";
 import {CustomTooltipDirective} from "./directives/custom-tooltip.directive";
 @NgModule({
   exports: [
@@ -35,10 +33,6 @@ import {CustomTooltipDirective} from "./directives/custom-tooltip.directive";
       NgxLoadingModule,
       ReactiveFormsModule,
       FormsModule,
-      DxHtmlEditorModule,
-      DxCheckBoxModule,
-      DxSelectBoxModule,
-      HtmlEditorComponent,
       CustomTooltipDirective
 	],
   declarations: [
@@ -48,7 +42,6 @@ import {CustomTooltipDirective} from "./directives/custom-tooltip.directive";
     HeaderComponent,
     BodyComponent,
     DataGridComponent,
-    HtmlEditorComponent,
       CustomTooltipDirective
 	],
   imports: [
@@ -57,9 +50,6 @@ import {CustomTooltipDirective} from "./directives/custom-tooltip.directive";
     TranslateModule,
     NgSelectModule,
     ReactiveFormsModule,
-    DxHtmlEditorModule,
-    DxCheckBoxModule,
-    DxSelectBoxModule,
     FormsModule,
     NgxLoadingModule.forRoot({
       animationType: ngxLoadingAnimationTypes.circleSwish,
@@ -73,3 +63,4 @@ import {CustomTooltipDirective} from "./directives/custom-tooltip.directive";
   ],
 })
 export class CoreModule { }
+

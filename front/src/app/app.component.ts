@@ -1,5 +1,5 @@
-import { Component, Inject, OnDestroy, OnInit, ElementRef, Renderer2 } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
+import { Component, Inject, OnDestroy, OnInit, ElementRef, Renderer2, DOCUMENT } from '@angular/core';
+
 import { Title } from '@angular/platform-browser';
 
 import {Observable, Subject} from 'rxjs';
@@ -25,9 +25,10 @@ import {DocumentViewerState} from "./interfaces/file-manager.interface";
 import {DocumentViewerService} from "./services/document-viewer.service";
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.scss'],
+    standalone: false
 })
 export class AppComponent implements OnInit, OnDestroy {
   coreConfig: any;

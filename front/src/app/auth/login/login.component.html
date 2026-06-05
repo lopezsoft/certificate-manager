@@ -2,19 +2,19 @@
   <div class="auth-inner row m-0">
     <!-- Brand logo--><a class="brand-logo" href="javascript:void(0);">
     <img src="{{ coreConfig.app.appLogoImage }}" alt="brand-logo" height="36" />
-    </a>
-    <!-- /Brand logo-->
-    <!-- Left Text-->
-    <div class="d-none d-lg-flex col-lg-8 align-items-center p-5 auth-image">
-      <div class="w-100 d-lg-flex align-items-center justify-content-center px-5">
-        <img
-                class="img-fluid"
+  </a>
+  <!-- /Brand logo-->
+  <!-- Left Text-->
+  <div class="d-none d-lg-flex col-lg-8 align-items-center p-5 auth-image">
+    <div class="w-100 d-lg-flex align-items-center justify-content-center px-5">
+      <img
+        class="img-fluid"
                 [src]="
             coreConfig.layout.skin === 'dark'
-              ? 'assets/images/pages/rest-api.svg'
-              : 'assets/images/pages/rest-api.svg'
+              ? 'assets/images/pages/login-v2-dark.svg'
+              : 'assets/images/pages/login-v2.svg'
           "
-                alt="Login V2"
+        alt="Login V2"
         />
       </div>
     </div>
@@ -29,75 +29,88 @@
             <label for="floatingInput">Correo electrónico</label>
             <input type="email" class="form-control" id="floatingInput" [class.is-invalid]="isInvalid('email')"
               placeholder="name@example.com" autofocus #email formControlName="email">
-            <div *ngIf="isInvalid('email') && f.email.errors" class="invalid-feedback">
-              <div *ngIf="f.email.errors.required">Corre es obligatorio</div>
-              <div *ngIf="f.email.errors.email">Ingrese una dirección de correo electrónico válida</div>
+              @if (isInvalid('email') && f.email.errors) {
+                <div class="invalid-feedback">
+                  @if (f.email.errors.required) {
+                    <div>Corre es obligatorio</div>
+                  }
+                  @if (f.email.errors.email) {
+                    <div>Ingrese una dirección de correo electrónico válida</div>
+                  }
+                </div>
+              }
             </div>
-          </div>
-          <div class="form-group">
-            <label for="floatingPassword">Contraseña</label>
-            <div class="input-group input-group-merge form-password-toggle">
-              <input type="password" class="form-control"
-                     [type]="passwordTextType ? 'text' : 'password'"
-                     [class.is-invalid]="isInvalid('password')"
-                     id="floatingPassword"
-                placeholder="Password" formControlName="password">
-                <span class="input-group-text cursor-pointer">
+            <div class="form-group">
+              <label for="floatingPassword">Contraseña</label>
+              <div class="input-group input-group-merge form-password-toggle">
+                <input type="password" class="form-control"
+                  [type]="passwordTextType ? 'text' : 'password'"
+                  [class.is-invalid]="isInvalid('password')"
+                  id="floatingPassword"
+                  placeholder="Password" formControlName="password">
+                  <span class="input-group-text cursor-pointer">
                     <i
-                        class="feather font-small-4"
+                      class="feather font-small-4"
                         [ngClass]="{
                       'icon-eye-off': passwordTextType,
                       'icon-eye': !passwordTextType
                     }"
-                        (click)="togglePasswordTextType()"
-                ></i
-                ></span>
-              <div
-                      *ngIf="isInvalid('password') && f.password.errors"
-                      class="invalid-feedback"
-                      [ngClass]="{ 'd-block': isInvalid('password') && f.password.errors }"
-              >
-                <div *ngIf="f.password.errors.required">Ingrese la contraseña</div>
+                      (click)="togglePasswordTextType()"
+                      ></i
+                    ></span>
+                    @if (isInvalid('password') && f.password.errors) {
+                      <div
+                        class="invalid-feedback"
+                        [ngClass]="{ 'd-block': isInvalid('password') && f.password.errors }"
+                        >
+                        @if (f.password.errors.required) {
+                          <div>Ingrese la contraseña</div>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div class="form-check">
+                    <input class="form-check-input" id="remember-me" type="checkbox" tabindex="3" />
+                    <label class="form-check-label" for="remember-me">Recuérdame</label>
+                  </div>
+                </div>
+              </form>
+              <div class="d-grid">
+                <button (click)="onLogin()" type="button" class="btn btn-primary btn-success" rippleEffect>
+                  @if (!loading) {
+                    <span>Iniciar sesión </span>
+                  }
+                  @if (loading) {
+                    <span>Iniciando sesión </span>
+                  }
+                  <i class="fas " [ngClass]="{'fa-sign-in-alt' :!loading, 'fa-spinner fa-spin': loading }" ></i>
+                </button>
               </div>
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="form-check">
-              <input class="form-check-input" id="remember-me" type="checkbox" tabindex="3" />
-              <label class="form-check-label" for="remember-me">Recuérdame</label>
-            </div>
-          </div>
-        </form>
-        <div class="d-grid">
-        <button (click)="onLogin()" type="button" class="btn btn-primary btn-success" rippleEffect>
-          <span *ngIf="!loading">Iniciar sesión </span>
-          <span *ngIf="loading">Iniciando sesión </span>
-          <i class="fas " [ngClass]="{'fa-sign-in-alt' :!loading, 'fa-spinner fa-spin': loading }" ></i>
-        </button>
-        </div>
-        <p class="mt-1 text-muted">
-          <span>¿Has olvidado tu contraseña?</span>
-          <a [routerLink]="[ '/auth/forgot-password' ]"> <b>Recuperar contraseña</b></a>
-        </p>
-        <p class="text-muted">¿No tienes cuenta? <a [routerLink]="[ '/auth/register' ]"><b>Crear cuenta</b></a> </p>
-        <label
+              <p class="mt-1 text-muted">
+                <span>¿Has olvidado tu contraseña?</span>
+                <a [routerLink]="[ '/auth/forgot-password' ]"> <b>Recuperar contraseña</b></a>
+              </p>
+              <p class="text-muted">¿No tienes cuenta? <a [routerLink]="[ '/auth/register' ]"><b>Crear cuenta</b></a> </p>
+              <label
                 style="padding: 2px;font-size: 12px;">{{ 'resend.label.notReceived' | translate }}
-          <a
+                <a
                   [routerLink]="['/auth/email-resend']"><strong>{{ 'resend.label.resend' | translate }}</strong>
-          </a>
-        </label>
-        <div class="divider my-2">
-          <div class="divider-text">O</div>
+                </a>
+              </label>
+              <div class="divider my-2">
+                <div class="divider-text">O</div>
+              </div>
+              <div class="auth-footer-btn d-flex justify-content-center">
+                <a class="btn btn-facebook" href="javascript:void(0)"><i class="fab fa-facebook"></i></a
+                ><a class="btn btn-twitter white" href="javascript:void(0)"><i class="fab fa-twitter"></i></a
+                ><a class="btn btn-google" href="javascript:void(0)"><i class="fab fa-google"></i></a
+                ><a class="btn btn-github" href="javascript:void(0)"><i class="fab fa-github"></i></a>
+              </div>
+              <p class="mt-5 mb-3 text-muted text-center">&copy; 2025–{{year}}</p>
+            </div>
+          </div>
         </div>
-        <div class="auth-footer-btn d-flex justify-content-center">
-          <a class="btn btn-facebook" href="javascript:void(0)"><i class="fab fa-facebook"></i></a
-          ><a class="btn btn-twitter white" href="javascript:void(0)"><i class="fab fa-twitter"></i></a
-        ><a class="btn btn-google" href="javascript:void(0)"><i class="fab fa-google"></i></a
-        ><a class="btn btn-github" href="javascript:void(0)"><i class="fab fa-github"></i></a>
-        </div>
-        <p class="mt-5 mb-3 text-muted text-center">&copy; 2025–{{year}}</p>
       </div>
-    </div>
-  </div>
-</div>
 

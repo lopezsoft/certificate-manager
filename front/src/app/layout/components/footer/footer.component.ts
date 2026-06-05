@@ -7,8 +7,9 @@ import { CoreConfigService } from '@core/services/config.service';
 import { environment } from 'environments/environment';
 
 @Component({
-  selector: 'footer',
-  templateUrl: './footer.component.html'
+    selector: 'footer',
+    templateUrl: './footer.component.html',
+    standalone: false
 })
 export class FooterComponent implements OnInit, OnDestroy {
   public coreConfig	: any;

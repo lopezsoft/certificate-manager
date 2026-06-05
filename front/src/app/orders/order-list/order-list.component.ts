@@ -20,9 +20,10 @@ import TokenService from '../../utils/token.service';
  * Sigue el mismo patrón del CertificateRequestComponent existente.
  */
 @Component({
-  selector: 'app-order-list',
-  templateUrl: './order-list.component.html',
-  styleUrl: './order-list.component.scss'
+    selector: 'app-order-list',
+    templateUrl: './order-list.component.html',
+    styleUrl: './order-list.component.scss',
+    standalone: false
 })
 export class OrderListComponent extends BaseComponent implements OnInit, AfterViewInit {
   @ViewChild('searchItems') searchItems: SearchDataComponent;

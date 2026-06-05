@@ -1,39 +1,44 @@
 <!-- vertical-layout -->
-<ng-container *ngIf="coreConfig.layout.type === 'vertical'">
+@if (coreConfig.layout.type === 'vertical') {
   <vertical-layout></vertical-layout>
-</ng-container>
+}
 <!-- / vertical-layout -->
 
 <!-- horizontal-layout -->
-<ng-container *ngIf="coreConfig.layout.type === 'horizontal'">
+@if (coreConfig.layout.type === 'horizontal') {
   <horizontal-layout></horizontal-layout>
-</ng-container>
+}
 <!-- / horizontal-layout -->
 
 <!-- theme customizer -->
-<core-sidebar
-  name="themeCustomizer"
-  class="customizer d-none d-md-block"
-  *ngIf="coreConfig.layout.customizer"
->
-  <a
-    class="customizer-toggle d-flex align-items-center justify-content-center"
-    (click)="toggleSidebar('themeCustomizer')"
-  >
-    <span [data-feather]="'settings'" [class]="'spinner'"></span>
-  </a>
-  <core-theme-customizer></core-theme-customizer>
-</core-sidebar>
+@if (coreConfig.layout.customizer) {
+  <core-sidebar
+    name="themeCustomizer"
+    class="customizer d-none d-md-block"
+    >
+    <a
+      class="customizer-toggle d-flex align-items-center justify-content-center"
+      (click)="toggleSidebar('themeCustomizer')"
+      >
+      <span [data-feather]="'settings'" [class]="'spinner'"></span>
+    </a>
+    <core-theme-customizer></core-theme-customizer>
+  </core-sidebar>
+}
 <!-- / theme customizer -->
 
 <ngx-loading [show]="_globalSettings.loading"></ngx-loading>
 <block-ui></block-ui>
-<app-support-button *ngIf="canShowAppSupport"></app-support-button>
+@if (canShowAppSupport) {
+  <app-support-button></app-support-button>
+}
 
-<ng-container *ngIf="viewerState$ | async as state">
-    <app-document-viewer *ngIf="state.isVisible"
-         [sourceUrl]="state.sourceUrl"
-         [title]="state.title"
-         (closeRequested)="closeViewer()">
+@if (viewerState$ | async; as state) {
+  @if (state.isVisible) {
+    <app-document-viewer
+      [sourceUrl]="state.sourceUrl"
+      [title]="state.title"
+      (closeRequested)="closeViewer()">
     </app-document-viewer>
-</ng-container>
+  }
+}

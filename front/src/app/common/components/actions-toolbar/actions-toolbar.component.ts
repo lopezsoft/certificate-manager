@@ -5,9 +5,10 @@ import {TranslateService} from '@ngx-translate/core';
 import {LoadMaskService} from "../../../services/load-mask.service";
 
 @Component({
-  selector: 'app-actions-toolbar',
-  templateUrl: './actions-toolbar.component.html',
-  styleUrls: ['./actions-toolbar.component.scss']
+    selector: 'app-actions-toolbar',
+    templateUrl: './actions-toolbar.component.html',
+    styleUrls: ['./actions-toolbar.component.scss'],
+    standalone: false
 })
 export class ActionsToolbarComponent {
   @Output() onEdit = new EventEmitter();

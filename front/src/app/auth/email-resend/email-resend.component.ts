@@ -14,9 +14,10 @@ import TokenService from "../../utils/token.service";
 import {environment} from '../../../environments/environment';
 
 @Component({
-  selector: 'app-email-resend',
-  templateUrl: './email-resend.component.html',
-  styleUrls : ['./email-resend.scss']
+    selector: 'app-email-resend',
+    templateUrl: './email-resend.component.html',
+    styleUrls: ['./email-resend.scss'],
+    standalone: false
 })
 
 export class EmailResendComponent extends AuthMasterComponent implements OnInit {

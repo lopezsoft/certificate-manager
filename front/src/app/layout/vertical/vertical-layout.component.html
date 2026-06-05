@@ -9,7 +9,9 @@
 <!-- APP-CONTENT -->
 <div class="app-content content">
   <div class="content-overlay"></div>
-  <div class="header-navbar-shadow" *ngIf="!coreConfig.layout.navbar.hidden"></div>
+  @if (!coreConfig.layout.navbar.hidden) {
+    <div class="header-navbar-shadow"></div>
+  }
   <!-- CONTENT -->
   <content></content>
   <!--/ CONTENT -->
@@ -24,8 +26,8 @@
 
 <!-- NAVBAR -->
 <ng-template #navbar>
-  <app-navbar
-    *ngIf="!coreConfig.layout.navbar.hidden"
+  @if (!coreConfig.layout.navbar.hidden) {
+    <app-navbar
     [ngClass]="[
       coreConfig.layout.navbar.customBackgroundColor === true
         ? coreConfig.layout.navbar.background +
@@ -36,36 +38,38 @@
         : coreConfig.layout.navbar.background + ' ' + coreConfig.layout.navbar.type,
       coreConfig.layout.navbar.type === 'floating-nav' ? 'container-xxl' : ''
     ]"
-    class="header-navbar navbar navbar-expand-lg align-items-center navbar-shadow"
-  >
-  </app-navbar>
+      class="header-navbar navbar navbar-expand-lg align-items-center navbar-shadow"
+      >
+    </app-navbar>
+  }
 </ng-template>
 <!--/ NAVBAR -->
 
 <!-- MENU -->
 <ng-template #menu>
-  <core-sidebar
-    name="menu"
-    [collapsed]="coreConfig.layout.menu.collapsed"
-    collapsibleSidebar="bs-gt-xl"
-    *ngIf="!coreConfig.layout.menu.hidden"
-    class="main-menu menu-fixed menu-accordio menu-shadow"
-    overlayClass="sidenav-overlay"
+  @if (!coreConfig.layout.menu.hidden) {
+    <core-sidebar
+      name="menu"
+      [collapsed]="coreConfig.layout.menu.collapsed"
+      collapsibleSidebar="bs-gt-xl"
+      class="main-menu menu-fixed menu-accordio menu-shadow"
+      overlayClass="sidenav-overlay"
     [ngClass]="[
       coreConfig.layout.skin === 'semi-dark' || coreConfig.layout.skin === 'dark' ? 'menu-dark' : 'menu-light',
       coreConfig.layout.menu.collapsed ? '' : 'expanded'
     ]"
-  >
-    <app-menu menuType="vertical-menu" class="vertical-menu"></app-menu>
-  </core-sidebar>
+      >
+      <app-menu menuType="vertical-menu" class="vertical-menu"></app-menu>
+    </core-sidebar>
+  }
 </ng-template>
 <!--/ MENU -->
 
 <!-- FOOTER -->
 <ng-template #footer>
-  <footer
-    *ngIf="!coreConfig.layout.footer.hidden"
-    class="footer"
+  @if (!coreConfig.layout.footer.hidden) {
+    <footer
+      class="footer"
     [ngClass]="
       coreConfig.layout.footer.customBackgroundColor === true
         ? coreConfig.layout.footer.background +
@@ -75,6 +79,7 @@
           coreConfig.layout.footer.backgroundColor
         : coreConfig.layout.footer.background + ' ' + coreConfig.layout.footer.type
     "
-  ></footer>
+    ></footer>
+  }
 </ng-template>
 <!-- / FOOTER -->

@@ -1,7 +1,8 @@
 import { Directive, ElementRef, HostListener, Input, Renderer2, OnDestroy } from '@angular/core';
 
 @Directive({
-  selector: '[appCustomTooltip]',
+    selector: '[appCustomTooltip]',
+    standalone: false
 })
 export class CustomTooltipDirective implements OnDestroy {
   @Input('appCustomTooltip') tooltipText: string | undefined | null;

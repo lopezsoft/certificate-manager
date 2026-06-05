@@ -1,10 +1,11 @@
 import {Component, Input, ViewEncapsulation} from '@angular/core';
 
 @Component({
-  selector: 'app-help-information',
-  templateUrl: './help-information.component.html',
-  styleUrls: ['./help-information.component.scss'],
-  encapsulation: ViewEncapsulation.None,
+    selector: 'app-help-information',
+    templateUrl: './help-information.component.html',
+    styleUrls: ['./help-information.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class HelpInformationComponent {
   @Input() imgWidth: string;

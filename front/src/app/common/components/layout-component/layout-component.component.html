@@ -1,23 +1,29 @@
 <div class="layout-wrapper-component">
-  <div class="layout-sidebar"
-       [class]="{'height-completed': hideNavbar}"
-       *ngIf="isShowSidebar()">
-    <ng-content select="[slot='sidebar']"></ng-content>
-  </div>
-  <div class="layout-content"
-       [ngClass]="{'height-completed': hideNavbar}"
-       *ngIf="isShowContent()">
-    <div class="card" *ngIf="!isShowSidebar()">
-      <div class="card-body">
-        <button
-            appCustomTooltip="Volver al menú anterior"
-            tooltipDirection="left"
-            class="btn custom-button fas-fa-close p-25" (click)="toggleNavbar()">
-          <i class="fas fa-chevron-left fas-fa-18 fas-fa-close"></i>
-          {{ 'buttons.back' | translate }}
-        </button>
-      </div>
+  @if (isShowSidebar()) {
+    <div class="layout-sidebar"
+      [class]="{'height-completed': hideNavbar}"
+      >
+      <ng-content select="[slot='sidebar']"></ng-content>
     </div>
-    <ng-content></ng-content>
-  </div>
+  }
+  @if (isShowContent()) {
+    <div class="layout-content"
+      [ngClass]="{'height-completed': hideNavbar}"
+      >
+      @if (!isShowSidebar()) {
+        <div class="card">
+          <div class="card-body">
+            <button
+              appCustomTooltip="Volver al menú anterior"
+              tooltipDirection="left"
+              class="btn custom-button fas-fa-close p-25" (click)="toggleNavbar()">
+              <i class="fas fa-chevron-left fas-fa-18 fas-fa-close"></i>
+              {{ 'buttons.back' | translate }}
+            </button>
+          </div>
+        </div>
+      }
+      <ng-content></ng-content>
+    </div>
+  }
 </div>

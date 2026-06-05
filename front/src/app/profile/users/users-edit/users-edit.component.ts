@@ -11,9 +11,10 @@ import { UsersService } from '../../../services/users/users.service';
 import TokenService from "../../../utils/token.service";
 
 @Component({
-  selector: 'app-users-edit',
-  templateUrl: './users-edit.component.html',
-  styleUrls: ['./users-edit.component.scss'],
+    selector: 'app-users-edit',
+    templateUrl: './users-edit.component.html',
+    styleUrls: ['./users-edit.component.scss'],
+    standalone: false
 })
 export class UsersEditComponent extends FormComponent implements OnInit, AfterViewInit {
     // @ts-ignore

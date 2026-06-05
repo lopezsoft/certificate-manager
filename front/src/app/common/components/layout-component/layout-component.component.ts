@@ -2,9 +2,10 @@ import {Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output}
 import {CoreConfigService} from '../../../../@core/services/config.service';
 
 @Component({
-  selector: 'app-layout-component',
-  templateUrl: './layout-component.component.html',
-  styleUrls: ['./layout-component.component.scss']
+    selector: 'app-layout-component',
+    templateUrl: './layout-component.component.html',
+    styleUrls: ['./layout-component.component.scss'],
+    standalone: false
 })
 export class LayoutComponentComponent implements OnInit, OnDestroy {
   protected hideNavbar = false;

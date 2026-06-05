@@ -1,62 +1,77 @@
-<div class="quota-banner" *ngIf="!loading && !error">
+@if (!loading && !error) {
+  <div class="quota-banner">
     <!-- Con cupo disponible -->
-    <div class="alert alert-success d-flex align-items-center" *ngIf="hasQuota">
+    @if (hasQuota) {
+      <div class="alert alert-success d-flex align-items-center">
         <div class="quota-icon me-3">
-            <i class="fas fa-check-circle fa-2x"></i>
+          <i class="fas fa-check-circle fa-2x"></i>
         </div>
         <div class="quota-info flex-grow-1">
-            <h6 class="mb-1">Cupos disponibles</h6>
-            <div class="d-flex align-items-center gap-3">
-                <span class="badge bg-success fs-6">
-                    {{ totalAvailable }} certificado{{ totalAvailable !== 1 ? 's' : '' }}
-                </span>
-                <span *ngIf="quota.prepaid_items_available > 0" class="text-muted small">
-                    <i class="fas fa-tag me-1"></i>Prepago: {{ quota.prepaid_items_available }}
-                </span>
-                <span *ngIf="quota.postpaid?.remaining > 0" class="text-muted small">
-                    <i class="fas fa-calendar-alt me-1"></i>Pospago: {{ quota.postpaid.remaining }}
-                    <span *ngIf="postpaidExpiresAt"> (vence {{ postpaidExpiresAt }})</span>
-                </span>
-            </div>
+          <h6 class="mb-1">Cupos disponibles</h6>
+          <div class="d-flex align-items-center gap-3">
+            <span class="badge bg-success fs-6">
+              {{ totalAvailable }} certificado{{ totalAvailable !== 1 ? 's' : '' }}
+            </span>
+            @if (quota.prepaid_items_available > 0) {
+              <span class="text-muted small">
+                <i class="fas fa-tag me-1"></i>Prepago: {{ quota.prepaid_items_available }}
+              </span>
+            }
+            @if (quota.postpaid?.remaining > 0) {
+              <span class="text-muted small">
+                <i class="fas fa-calendar-alt me-1"></i>Pospago: {{ quota.postpaid.remaining }}
+                @if (postpaidExpiresAt) {
+                  <span> (vence {{ postpaidExpiresAt }})</span>
+                }
+              </span>
+            }
+          </div>
         </div>
-    </div>
-
+      </div>
+    }
     <!-- Sin cupo -->
-    <div class="alert alert-warning d-flex align-items-center" *ngIf="!hasQuota">
+    @if (!hasQuota) {
+      <div class="alert alert-warning d-flex align-items-center">
         <div class="quota-icon me-3">
-            <i class="fas fa-exclamation-triangle fa-2x"></i>
+          <i class="fas fa-exclamation-triangle fa-2x"></i>
         </div>
         <div class="quota-info flex-grow-1">
-            <h6 class="mb-1">Sin cupos disponibles</h6>
-            <p class="mb-0 small">
-                No tiene certificados disponibles. Debe comprar un paquete para poder crear solicitudes.
-            </p>
+          <h6 class="mb-1">Sin cupos disponibles</h6>
+          <p class="mb-0 small">
+            No tiene certificados disponibles. Debe comprar un paquete para poder crear solicitudes.
+          </p>
         </div>
         <div class="quota-action ms-3">
-            <a routerLink="/orders/purchase" class="btn btn-warning btn-sm">
-                <i class="fas fa-shopping-cart me-1"></i> Comprar certificados
-            </a>
+          <a routerLink="/orders/purchase" class="btn btn-warning btn-sm">
+            <i class="fas fa-shopping-cart me-1"></i> Comprar certificados
+          </a>
         </div>
-    </div>
-</div>
+      </div>
+    }
+  </div>
+}
 
 <!-- Loading -->
-<div class="quota-banner" *ngIf="loading">
+@if (loading) {
+  <div class="quota-banner">
     <div class="alert alert-light d-flex align-items-center">
-        <div class="spinner-border spinner-border-sm me-2" role="status">
-            <span class="visually-hidden">Cargando...</span>
-        </div>
-        <span class="text-muted">Consultando disponibilidad de cupos...</span>
+      <div class="spinner-border spinner-border-sm me-2" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <span class="text-muted">Consultando disponibilidad de cupos...</span>
     </div>
-</div>
+  </div>
+}
 
 <!-- Error -->
-<div class="quota-banner" *ngIf="error">
+@if (error) {
+  <div class="quota-banner">
     <div class="alert alert-danger d-flex align-items-center">
-        <i class="fas fa-times-circle me-2"></i>
-        <span>Error al consultar cupos.</span>
-        <button class="btn btn-link btn-sm ms-2" (click)="loadQuota()">
-            <i class="fas fa-redo me-1"></i>Reintentar
-        </button>
+      <i class="fas fa-times-circle me-2"></i>
+      <span>Error al consultar cupos.</span>
+      <button class="btn btn-link btn-sm ms-2" (click)="loadQuota()">
+        <i class="fas fa-redo me-1"></i>Reintentar
+      </button>
     </div>
-</div>
+  </div>
+}

@@ -21,9 +21,10 @@ import {
 } from "../../common/enums/DocumentStatus";
 
 @Component({
-  selector: 'app-request-in-process',
-  templateUrl: './request-in-process.component.html',
-  styleUrl: './request-in-process.component.scss'
+    selector: 'app-request-in-process',
+    templateUrl: './request-in-process.component.html',
+    styleUrl: './request-in-process.component.scss',
+    standalone: false
 })
 export class RequestInProcessComponent extends BaseComponent  implements OnInit, AfterViewInit, OnDestroy  {
   @ViewChild('searchItems') searchItems: SearchDataComponent;

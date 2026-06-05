@@ -17,64 +17,72 @@
                   <div class="d-flex flex-sm-row flex-column justify-content-start px-0 mb-sm-2">
                     <div class="form-group">
                       <input type="file" id="file" #uploadFile
-                      (change)="uploadImage($event)" class="form-control-file">
+                        (change)="uploadImage($event)" class="form-control-file">
+                      </div>
                     </div>
+                  </div>
+                </div>
+                <!-- Media object ends -->
+
+                <!-- Account form starts -->
+                <form [formGroup]="customForm">
+                  <div class="row">
+                    <div class="col-md-4">
+                      <div class="form-group">
+                        <label>Nombre</label>
+                        <input class="form-control" type="text" formControlName="first_name" placeholder="Nombre" [class.is-invalid]="invalidFirstName" autofocus   #focusElement>
+                        @if (invalidFirstName) {
+                          <small class="text-danger">Nombre muy corto</small>
+                        }
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="form-group">
+                        <label>Apellidos</label>
+                        <input class="form-control" type="text" formControlName="last_name"
+                          placeholder="Apellidos"  [class.is-invalid]="invalidLastName">
+                          @if (invalidLastName) {
+                            <small class="text-danger">Apellidos muy cortos</small>
+                          }
+                        </div>
+                      </div>
+                      <div class="col-md-4">
+                        <div class="form-group">
+                          <label>{{'placeholder.email' | translate}}</label>
+                          <input class="form-control" type="email" formControlName="email"
+                            placeholder="Correo electrónico" inputmode="email"  [class.is-invalid]="invalidEmail" [readonly]="editing">
+                            @if (invalidEmail) {
+                              <small class="text-danger">Correo electrónico incorrecto</small>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row mt-2">
+                        <div class="col-12 col-md-8">
+                          <ng-select formControlName="type_id" [readonly]="editing">
+                            @for (item of userTypes; track item) {
+                              <ng-option [value]="item.id">
+                                {{ item.user_type_name }}
+                              </ng-option>
+                            }
+                          </ng-select>
+                        </div>
+                        <div class="col-12 col-md-4">
+                          <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="exampleCheck1" formControlName="active" [readonly]="true">
+                            <label class="form-check-label" for="exampleCheck1">Activo</label>
+                          </div>
+                        </div>
+                      </div>
+                    </form>
                   </div>
                 </div>
               </div>
-              <!-- Media object ends -->
-
-              <!-- Account form starts -->
-              <form [formGroup]="customForm">
-                <div class="row">
-                  <div class="col-md-4">
-										<div class="form-group">
-											<label>Nombre</label>
-											<input class="form-control" type="text" formControlName="first_name" placeholder="Nombre" [class.is-invalid]="invalidFirstName" autofocus   #focusElement>
-											<small class="text-danger" *ngIf="invalidFirstName">Nombre muy corto</small>
-										</div>
-									</div>
-									<div class="col-md-4">
-										<div class="form-group">
-											<label>Apellidos</label>
-											<input class="form-control" type="text" formControlName="last_name"
-												placeholder="Apellidos"  [class.is-invalid]="invalidLastName">
-											<small class="text-danger" *ngIf="invalidLastName">Apellidos muy cortos</small>
-										</div>
-									</div>
-									<div class="col-md-4">
-										<div class="form-group">
-											<label>{{'placeholder.email' | translate}}</label>
-											<input class="form-control" type="email" formControlName="email"
-												placeholder="Correo electrónico" inputmode="email"  [class.is-invalid]="invalidEmail" [readonly]="editing">
-											<small class="text-danger" *ngIf="invalidEmail">Correo electrónico incorrecto</small>
-										</div>
-									</div>
-                </div>
-                <div class="row mt-2">
-                  <div class="col-12 col-md-8">
-                    <ng-select formControlName="type_id" [readonly]="editing">
-                      <ng-option *ngFor="let item of userTypes" [value]="item.id">
-                        {{ item.user_type_name }}
-                      </ng-option>
-                    </ng-select>
-                  </div>
-                  <div class="col-12 col-md-4">
-                    <div class="form-check">
-                      <input type="checkbox" class="form-check-input" id="exampleCheck1" formControlName="active" [readonly]="true">
-                      <label class="form-check-label" for="exampleCheck1">Activo</label>
-                    </div>
-                    </div>
-                </div>
-              </form>
+              <div class="card-footer">
+                <app-footer-form [showAaveACreate]="false" [saveAClose]="saveAClose" [saveAClose]="saveAClose" (closeEvent)="cancel()"
+                (saveAndCreateEvent)="saveAndCreate()" (saveAndCloseEvent)="saveAndClose()" [maskSpinner]="maskSpinner"></app-footer-form>
+              </div>
             </div>
           </div>
         </div>
-        <div class="card-footer">
-          <app-footer-form [showAaveACreate]="false" [saveAClose]="saveAClose" [saveAClose]="saveAClose" (closeEvent)="cancel()"
-                            (saveAndCreateEvent)="saveAndCreate()" (saveAndCloseEvent)="saveAndClose()" [maskSpinner]="maskSpinner"></app-footer-form>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+      </section>

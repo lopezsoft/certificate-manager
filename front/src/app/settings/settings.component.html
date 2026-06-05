@@ -1,15 +1,14 @@
-  <div class="row">
-  <div class="col-sm-6 col-md-3" *ngIf="_token.isAdmin()">
-      <button type="button" class="btn btn-custom" (click)="goRoute('settings/reports')">
-          <i class="fas fa-newspaper"></i>
-          Encabezado de reportes
-      </button>
+<div class="row">
+  <div class="col-6 col-xs-3 col-sm-3">
+    <button type="button" class="btn btn-custom" (click)="goRoute('settings/general')">
+      <i class="fas fa-sliders-h"></i>
+      Ajustes generales
+    </button>
   </div>
-      <div class="col-6 col-xs-3 col-sm-3 col-md-2">
-          <button type="button" class="btn btn-custom" (click)="goRoute('settings/general')">
-              <i class="fas fa-sliders-h"></i>
-              Ajustes generales
-          </button>
-      </div>
+  <div class="col-sm-6 col-md-3">
+    <button type="button" class="btn btn-custom" (click)="goRoute('settings/webhooks')">
+      <i class="fas fa-link"></i>
+      Webhooks
+    </button>
   </div>
-
+</div>

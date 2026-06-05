@@ -1,0 +1,9 @@
+@import '@core/scss/base/bootstrap-extended/include';
+
+// El componente usa exclusivamente clases del sistema:
+// - .card, .card-header, .card-body (Bootstrap/Vuexy)
+// - .bg-light-primary, .badge-light-primary (Vuexy palette)
+// - .document-status-{STATUS} (document-status.styles.scss)
+// - .avatar (Vuexy avatar system)
+// - .btn-primary, .btn-outline-primary (Bootstrap)
+// No se definen estilos custom — todo viene del design system.

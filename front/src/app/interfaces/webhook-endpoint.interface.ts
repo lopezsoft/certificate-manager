@@ -1,37 +1,37 @@
-import { WebhookHealthStatus } from '../common/enums/WebhookStatus';
-
 /**
  * Representa un endpoint webhook registrado por el usuario.
+ * Alineado con la respuesta real del backend (WebhookEndpointResource).
  */
 export interface WebhookEndpoint {
   id: number;
+  name: string;
   url: string;
   description: string | null;
-  secret: string | null;
-  is_active: boolean;
-  health_status: WebhookHealthStatus;
   events: string[];
+  is_active: boolean;
+  last_triggered_at: string | null;
+  failure_count: number;
   created_at: string;
   updated_at: string;
-  last_delivery_at: string | null;
-  delivery_success_count: number;
-  delivery_failure_count: number;
 }
 
 /**
  * Payload para crear un nuevo webhook.
+ * POST /webhooks
  */
 export interface WebhookCreateRequest {
+  name: string;
   url: string;
   description?: string;
-  secret?: string;
   events: string[];
 }
 
 /**
  * Payload para actualizar un webhook existente.
+ * PUT /webhooks/{id}
  */
 export interface WebhookUpdateRequest {
+  name?: string;
   url?: string;
   description?: string;
   is_active?: boolean;
@@ -40,7 +40,10 @@ export interface WebhookUpdateRequest {
 
 /**
  * Respuesta del servidor al rotar el secreto de un webhook.
+ * dataRecords: { endpoint: WebhookEndpoint, secret: string }
  */
 export interface WebhookRotateSecretResponse {
+  endpoint: WebhookEndpoint;
   secret: string;
 }
+

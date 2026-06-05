@@ -11,10 +11,11 @@ import TokenService from "../../utils/token.service";
 import {GlobalSettingsService} from "../../services/global-settings.service";
 
 @Component({
-  selector: 'app-reset-password',
-  templateUrl: './reset-password.component.html',
-  styleUrls: ['./reset-password.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'app-reset-password',
+    templateUrl: './reset-password.component.html',
+    styleUrls: ['./reset-password.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ResetPasswordComponent extends AuthMasterComponent implements OnInit {
   // Public

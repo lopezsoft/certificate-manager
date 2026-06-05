@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ExodolibsModule } from 'exodolibs';
+import { NgApexchartsModule } from 'ng-apexcharts';
 import { CustomersRoutingModule } from './customers-routing.module';
 import { CoreModule } from '../@core/core.module';
 import {
@@ -24,7 +25,8 @@ import { CustomerViewComponent } from './customer-view/customer-view.component';
     CustomersRoutingModule,
     CoreModule,
     CommonComponentsModule,
-    ExodolibsModule
+    ExodolibsModule,
+    NgApexchartsModule
   ]
 })
 export class CustomersModule { }

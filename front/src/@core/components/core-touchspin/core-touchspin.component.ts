@@ -1,9 +1,10 @@
 import {Component, OnInit, Input, ViewEncapsulation, Output, EventEmitter, AfterViewInit} from '@angular/core';
 @Component({
-  selector: 'core-touchspin',
-  templateUrl: './core-touchspin.component.html',
-  styleUrls: ['./core-touchspin.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'core-touchspin',
+    templateUrl: './core-touchspin.component.html',
+    styleUrls: ['./core-touchspin.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class CoreTouchspinComponent implements OnInit, AfterViewInit {
   @Output() onChange  = new EventEmitter<number>();

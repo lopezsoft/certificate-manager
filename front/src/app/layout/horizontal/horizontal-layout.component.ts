@@ -6,10 +6,11 @@ import { takeUntil } from 'rxjs/operators';
 import { CoreConfigService } from '@core/services/config.service';
 
 @Component({
-  selector: 'horizontal-layout',
-  templateUrl: './horizontal-layout.component.html',
-  styleUrls: ['./horizontal-layout.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'horizontal-layout',
+    templateUrl: './horizontal-layout.component.html',
+    styleUrls: ['./horizontal-layout.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class HorizontalLayoutComponent implements OnInit, OnDestroy {
   coreConfig: any;

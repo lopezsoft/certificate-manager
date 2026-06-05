@@ -50,12 +50,6 @@ export const menu: CoreMenu[] = [
     url: 'settings',
     role: [Role.Admin]
   }, {
-    id: 'webhooks',
-    title: 'Webhooks',
-    type: 'item',
-    icon: 'link',
-    url: 'settings/webhooks',
-  }, {
     id: 'changes-history',
     title: 'Historial de cambios',
     type: 'item',

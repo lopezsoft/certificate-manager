@@ -6,11 +6,12 @@ import { takeUntil } from 'rxjs/operators';
 import { CoreMenuService } from '@core/components/core-menu/core-menu.service';
 
 @Component({
-  selector: '[core-menu]',
-  templateUrl: './core-menu.component.html',
-  styleUrls: ['./core-menu.component.scss'],
-  encapsulation: ViewEncapsulation.None,
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: '[core-menu]',
+    templateUrl: './core-menu.component.html',
+    styleUrls: ['./core-menu.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class CoreMenuComponent implements OnInit {
   currentUser: any;

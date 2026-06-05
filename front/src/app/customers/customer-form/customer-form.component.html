@@ -1,16 +1,16 @@
 <div class="layout-wrapper">
-    <div class="card custom-form">
-      <div class="card-header">
-        {{ title | uppercase}}
-      </div>
-      <div class ="card-body">
-        <form [formGroup]="customForm">
-          <div class="row">
-            <div class="col-md-6">
-              <div class="form-group">
-                <label><span class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.company_name' | translate}}</label>
-                <input class="form-control" #focusElement type="text" formControlName="company_name"
-                  [class.is-invalid]="isInvalid('invalidCompanyName')" required autofocus>
+  <div class="card custom-form">
+    <div class="card-header">
+      {{ title | uppercase}}
+    </div>
+    <div class ="card-body">
+      <form [formGroup]="customForm">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label><span class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.company_name' | translate}}</label>
+              <input class="form-control" #focusElement type="text" formControlName="company_name"
+                [class.is-invalid]="isInvalid('invalidCompanyName')" required autofocus>
               </div>
             </div>
             <div class="col-md-6">
@@ -26,9 +26,11 @@
                 <label><span class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.identity_document' | translate}}</label>
                 <ng-select formControlName="identity_document_id" required [class.is-invalid]="isInvalid('invalidIdentity')"
                   name="identity_document_id" >
-                  <ng-option *ngFor="let docs of identityDocs" [value]="docs.id">
-                    {{ docs.document_name }}
-                  </ng-option>
+                  @for (docs of identityDocs; track docs) {
+                    <ng-option [value]="docs.id">
+                      {{ docs.document_name }}
+                    </ng-option>
+                  }
                 </ng-select>
               </div>
             </div>
@@ -50,9 +52,11 @@
               <div class="form-group">
                 <label><span class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.type_organization' | translate}}</label>
                 <ng-select formControlName="type_organization_id" required [class.is-invalid]="isInvalid('invalidOrganization')" >
-                  <ng-option *ngFor="let typeOrg of typeOrg" [value]="typeOrg.id">
-                    {{ typeOrg.code }} - {{ typeOrg.description }}
-                  </ng-option>
+                  @for (typeOrg of typeOrg; track typeOrg) {
+                    <ng-option [value]="typeOrg.id">
+                      {{ typeOrg.code }} - {{ typeOrg.description }}
+                    </ng-option>
+                  }
                 </ng-select>
               </div>
             </div>
@@ -60,9 +64,11 @@
               <div class="form-group">
                 <label><span class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.tax_regime' | translate}}</label>
                 <ng-select formControlName="tax_regime_id" required [class.is-invalid]="isInvalid('invalidTaxRegime')" >
-                  <ng-option *ngFor="let taxr of taxregime" [value]="taxr.id">
-                    {{ taxr.code }} - {{ taxr.description }}
-                  </ng-option>
+                  @for (taxr of taxregime; track taxr) {
+                    <ng-option [value]="taxr.id">
+                      {{ taxr.code }} - {{ taxr.description }}
+                    </ng-option>
+                  }
                 </ng-select>
               </div>
             </div>
@@ -71,24 +77,28 @@
             <div class="col-md-6">
               <div class="form-group">
                 <label><span
-                    class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.tax_level' | translate}}</label>
+                class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.tax_level' | translate}}</label>
                 <ng-select formControlName="tax_level_id" required  [class.is-invalid]="isInvalid('invalidTaxLevel')"
                   >
-                  <ng-option *ngFor="let taxl of taxlevel" [value]="taxl.id">
-                    {{ taxl.code }} - {{ taxl.description }}
-                  </ng-option>
+                  @for (taxl of taxlevel; track taxl) {
+                    <ng-option [value]="taxl.id">
+                      {{ taxl.code }} - {{ taxl.description }}
+                    </ng-option>
+                  }
                 </ng-select>
               </div>
             </div>
             <div class="col-md-6">
               <div class="form-group">
                 <label><span
-                    class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.country' | translate}}</label>
+                class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.country' | translate}}</label>
                 <ng-select formControlName="country_id" required [class.is-invalid]="isInvalid('invalidCountry')"
                   >
-                  <ng-option *ngFor="let country of countries" [value]="country.id">
-                    <img height="15" width="15" [src]="'assets/flags/'+country.image" /> {{ country.country_name }}
-                  </ng-option>
+                  @for (country of countries; track country) {
+                    <ng-option [value]="country.id">
+                      <img height="15" width="15" [src]="'assets/flags/'+country.image" /> {{ country.country_name }}
+                    </ng-option>
+                  }
                 </ng-select>
               </div>
             </div>
@@ -97,11 +107,13 @@
             <div class="col-md-6">
               <div class="form-group">
                 <label><span
-                    class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.city' | translate}}</label>
+                class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.city' | translate}}</label>
                 <ng-select formControlName="city_id" required [class.is-invalid]="isInvalid('invalidCity')" [virtualScroll]="true">
-                  <ng-option *ngFor="let city of cities" [value]="city.id">
-                    {{ city.city_code }} - {{ city.name_city }} ({{ city.department.name_department }})
-                  </ng-option>
+                  @for (city of cities; track city) {
+                    <ng-option [value]="city.id">
+                      {{ city.city_code }} - {{ city.name_city }} ({{ city.department.name_department }})
+                    </ng-option>
+                  }
                 </ng-select>
               </div>
             </div>
@@ -157,19 +169,19 @@
               <div class="form-group">
                 <label for="file">Seleccionar imagen</label>
                 <input type="file" id="file" #uploadFile
-                (change)="uploadImage($event)" class="form-control-file">
+                  (change)="uploadImage($event)" class="form-control-file">
+                </div>
+              </div>
+              <div div class="col-md-6">
+                <img width="128px" [src]="imgData"  class="img-thumbnail" fallimg>
               </div>
             </div>
-            <div div class="col-md-6">
-              <img width="128px" [src]="imgData"  class="img-thumbnail" fallimg>
-            </div>
-          </div>
-        </form>
+          </form>
+        </div>
+        <div class="card-footer">
+          <app-footer-form [showAaveACreate]="false" [saveAClose]="saveAClose" (closeEvent)="cancel()"
+          (saveAndCreateEvent)="saveAndCreate()" (saveAndCloseEvent)="saveAndClose()"[maskSpinner]="maskSpinner"></app-footer-form>
+        </div>
       </div>
-      <div class="card-footer">
-        <app-footer-form [showAaveACreate]="false" [saveAClose]="saveAClose" (closeEvent)="cancel()"
-                          (saveAndCreateEvent)="saveAndCreate()" (saveAndCloseEvent)="saveAndClose()"[maskSpinner]="maskSpinner"></app-footer-form>
-      </div>
-    </div>
 
-</div>
+    </div>

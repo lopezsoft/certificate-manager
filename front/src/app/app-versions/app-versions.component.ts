@@ -13,9 +13,10 @@ export interface Version {
 }
 
 @Component({
-  selector: 'app-app-versions',
-  templateUrl: './app-versions.component.html',
-  styleUrls: ['./app-versions.component.scss']
+    selector: 'app-app-versions',
+    templateUrl: './app-versions.component.html',
+    styleUrls: ['./app-versions.component.scss'],
+    standalone: false
 })
 export class AppVersionsComponent implements OnInit {
   protected versiones: Version[] = [];

@@ -1,9 +1,10 @@
 import { Component, EventEmitter, Output, Input } from '@angular/core';
 
 @Component({
-  selector: 'app-footer-form',
-  templateUrl: './footer-form.component.html',
-  styleUrls: ['./footer-form.component.scss']
+    selector: 'app-footer-form',
+    templateUrl: './footer-form.component.html',
+    styleUrls: ['./footer-form.component.scss'],
+    standalone: false
 })
 export class FooterFormComponent {
 

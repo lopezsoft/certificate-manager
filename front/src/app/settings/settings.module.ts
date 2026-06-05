@@ -8,9 +8,6 @@ import { CoreModule } from '../@core/core.module';
 import { SettingsRoutingModule } from './settings-routing.module';
 import { SettingsComponent } from './settings.component';
 
-import {
-  ReportsHeaderComponent,
-} from './index';
 import { SettingsContainerComponent } from './settings-container.component';
 import {CommonComponentsModule} from "../common/common-components.module";
 import {GeneralSettingsComponent} from "./general-settings/general-settings.component";
@@ -21,7 +18,6 @@ import {CoreCommonModule} from "../../@core/common.module";
   declarations: [
     SettingsComponent,
     SettingsContainerComponent,
-    ReportsHeaderComponent,
     GeneralSettingsComponent,
   ],
   imports: [

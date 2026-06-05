@@ -1,5 +1,5 @@
 <div class="btn-group touchspin-wrapper"
-     [ngClass]="{ 'touchspin-sm': size == 'sm', 'touchspin-lg': size == 'lg' }">
+  [ngClass]="{ 'touchspin-sm': size == 'sm', 'touchspin-lg': size == 'lg' }">
   <button
     class="btn btn-sm btn-primary btn-touchspin btn-touchspin-down"
     (click)="decrement()"
@@ -12,9 +12,13 @@
       'btn-success': color == 'success',
       'btn-danger': color == 'danger'
     }"
-  >
-    <span *ngIf="!iconChevron" data-feather="minus"></span>
-    <span *ngIf="iconChevron" data-feather="chevron-down"></span>
+    >
+    @if (!iconChevron) {
+      <span data-feather="minus"></span>
+    }
+    @if (iconChevron) {
+      <span data-feather="chevron-down"></span>
+    }
   </button>
   <input
     type="text"
@@ -32,7 +36,7 @@
     pattern="[\d*]"
     onKeypress="if (event.keyCode < 45 || event.keyCode > 57) event.returnValue = false;"
     maxlength="10"
-  />
+    />
   <button
     class="btn btn-sm btn-primary btn-touchspin btn-touchspin-up"
     (click)="increment()"
@@ -45,8 +49,12 @@
       'btn-success': color == 'success',
       'btn-danger': color == 'danger'
     }"
-  >
-    <span *ngIf="!iconChevron" data-feather="plus"></span>
-    <span *ngIf="iconChevron" data-feather="chevron-down"></span>
+    >
+    @if (!iconChevron) {
+      <span data-feather="plus"></span>
+    }
+    @if (iconChevron) {
+      <span data-feather="chevron-down"></span>
+    }
   </button>
 </div>

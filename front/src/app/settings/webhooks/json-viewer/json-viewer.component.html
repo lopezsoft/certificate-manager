@@ -1,0 +1,12 @@
+<div class="json-viewer-wrapper mt-1">
+  <div class="json-viewer-header d-flex justify-content-between align-items-center">
+    <span class="json-viewer-title">{{ title }}</span>
+    <button class="btn btn-sm btn-icon btn-flat-secondary" 
+      (click)="copyToClipboard($event)" 
+      [appCustomTooltip]="copied ? 'Copiado!' : 'Copiar al portapapeles'">
+      <span [class.d-none]="copied"><i data-feather="copy" style="width:14px;height:14px;"></i></span>
+      <span [class.d-none]="!copied"><i data-feather="check" style="width:14px;height:14px;" class="text-success"></i></span>
+    </button>
+  </div>
+  <pre class="json-viewer-body m-0 p-0"><code [highlight]="formattedJson" language="json"></code></pre>
+</div>

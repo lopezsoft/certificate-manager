@@ -8,9 +8,10 @@ import {ErrorResponse} from "../../interfaces";
 import {CompanyService} from "../../services/companies";
 
 @Component({
-  selector: 'app-customer-create',
-  templateUrl: './customer-create.component.html',
-  styleUrls: ['./customer-create.component.scss']
+    selector: 'app-customer-create',
+    templateUrl: './customer-create.component.html',
+    styleUrls: ['./customer-create.component.scss'],
+    standalone: false
 })
 export class CustomerCreateComponent implements OnInit {
 

@@ -10,9 +10,10 @@ import { DebugService } from '../../utils/debug.service';
  * que necesite mostrar la disponibilidad de certificados.
  */
 @Component({
-  selector: 'app-quota-banner',
-  templateUrl: './quota-banner.component.html',
-  styleUrl: './quota-banner.component.scss'
+    selector: 'app-quota-banner',
+    templateUrl: './quota-banner.component.html',
+    styleUrl: './quota-banner.component.scss',
+    standalone: false
 })
 export class QuotaBannerComponent implements OnInit {
 

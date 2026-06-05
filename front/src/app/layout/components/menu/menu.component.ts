@@ -1,10 +1,11 @@
 import { Component, ElementRef, Input, Renderer2, ViewEncapsulation } from '@angular/core';
 
 @Component({
-  selector: 'app-menu',
-  templateUrl: './menu.component.html',
-  styleUrls: ['./menu.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'app-menu',
+    templateUrl: './menu.component.html',
+    styleUrls: ['./menu.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class MenuComponent {
   private _menuType: string;

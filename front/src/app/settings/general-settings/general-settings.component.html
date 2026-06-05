@@ -9,78 +9,82 @@
     </app-help-information>
     <div class="card-body p-1">
       <div class="row">
-        <div class="col-md-12" *ngFor="let setting of _settings.settings">
-          <ng-container *ngIf="setting.setting.list_values">
-            <!-- List -->
-            <div class="form-group">
-              <label>{{setting.setting.description}}</label>
-              <select class="form-control" [(ngModel)]="setting.value">
-                <option *ngFor="let value of getListValues(setting.setting.list_values)" [value]="value">{{value}}</option>
-              </select>
-            </div>
-          </ng-container>
-        <!-- Text -->
-        <ng-container *ngIf="setting.setting.data_type === 'V' && !setting.setting.list_values">
-            <div class="form-group">
-                <label for="{{setting.setting.id}}">{{setting.setting.description}}</label>
-                <ng-container *ngIf="setting.setting.tooltip">
-                    <i rippleEffect
-                       popoverClass="popover"
-                       [ngbPopover]="setting.setting.tooltip"
-                       [openDelay]="300" [closeDelay]="500" triggers="mouseenter:mouseleave"
-                       class="fas fa-info info-icon"></i>
-                </ng-container>
-                <input type="text" class="form-control mt-25"
-                       [disabled]="setting.setting.key_value === 'SENDEREMAIL' && !_settings.isUseSenderMailActive()"
-                       id="{{setting.setting.id}}" [(ngModel)]="setting.value">
-            </div>
-        </ng-container>
-          <!-- Integer -->
-          <ng-container *ngIf="setting.setting.data_type === 'I'">
-            <div class="form-group">
-              <label>{{setting.setting.description}}</label> <br/>
-              <ng-container *ngIf="setting.setting.min_value == 0 && setting.setting.max_value == 0">
-                <core-touchspin
-                    (onChange)="onChange(setting, $event)"
-                    [numberValue]="getNumberValues(setting.value)"></core-touchspin>
-              </ng-container>
-              <ng-container *ngIf="setting.setting.max_value > 0">
-              <core-touchspin [minValue]="setting.setting.min_value"
-                              [numberValue]="getNumberValues(setting.value)"
-                              (onChange)="onChange(setting, $event)"
-                              [maxValue]="setting.setting.max_value"></core-touchspin>
-              </ng-container>
-            </div>
-          </ng-container>
-          <!-- Boolean -->
-          <ng-container *ngIf="setting.setting.data_type === 'B'">
-             <div class="form-group">
-              <div class="form-check form-switch py-25">
-                <input type="checkbox" class="form-check-input"
-                       role="switch"
-                       id="{{setting.setting.id}}"
-                       [checked]="isSwitch(setting)"
-                       (change)="switchChange(setting, $event)">
-              <label class="form-check-label"
-                     for="{{setting.setting.id}}">{{setting.setting.description}}</label>
-                <ng-container *ngIf="setting.setting.tooltip">
-                    <i rippleEffect
-                       popoverClass="popover"
-                       [ngbPopover]="setting.setting.tooltip"
-                       [openDelay]="300" [closeDelay]="500" triggers="mouseenter:mouseleave"
-                       class="fas fa-info info-icon"></i>
-                </ng-container>
+        @for (setting of _settings.settings; track setting) {
+          <div class="col-md-12">
+            @if (setting.setting.list_values) {
+              <!-- List -->
+              <div class="form-group">
+                <label>{{setting.setting.description}}</label>
+                <select class="form-control" [(ngModel)]="setting.value">
+                  @for (value of getListValues(setting.setting.list_values); track value) {
+                    <option [value]="value">{{value}}</option>
+                  }
+                </select>
               </div>
-             </div>
-          </ng-container>
-        </div>
+            }
+            <!-- Text -->
+            @if (setting.setting.data_type === 'V' && !setting.setting.list_values) {
+              <div class="form-group">
+                <label for="{{setting.setting.id}}">{{setting.setting.description}}</label>
+                @if (setting.setting.tooltip) {
+                  <i rippleEffect
+                    popoverClass="popover"
+                    [ngbPopover]="setting.setting.tooltip"
+                    [openDelay]="300" [closeDelay]="500" triggers="mouseenter:mouseleave"
+                  class="fas fa-info info-icon"></i>
+                }
+                <input type="text" class="form-control mt-25"
+                  [disabled]="setting.setting.key_value === 'SENDEREMAIL' && !_settings.isUseSenderMailActive()"
+                  id="{{setting.setting.id}}" [(ngModel)]="setting.value">
+              </div>
+            }
+            <!-- Integer -->
+            @if (setting.setting.data_type === 'I') {
+              <div class="form-group">
+                <label>{{setting.setting.description}}</label> <br/>
+                @if (setting.setting.min_value == 0 && setting.setting.max_value == 0) {
+                  <core-touchspin
+                    (onChange)="onChange(setting, $event)"
+                  [numberValue]="getNumberValues(setting.value)"></core-touchspin>
+                }
+                @if (setting.setting.max_value > 0) {
+                  <core-touchspin [minValue]="setting.setting.min_value"
+                    [numberValue]="getNumberValues(setting.value)"
+                    (onChange)="onChange(setting, $event)"
+                  [maxValue]="setting.setting.max_value"></core-touchspin>
+                }
+              </div>
+            }
+            <!-- Boolean -->
+            @if (setting.setting.data_type === 'B') {
+              <div class="form-group">
+                <div class="form-check form-switch py-25">
+                  <input type="checkbox" class="form-check-input"
+                    role="switch"
+                    id="{{setting.setting.id}}"
+                    [checked]="isSwitch(setting)"
+                    (change)="switchChange(setting, $event)">
+                  <label class="form-check-label"
+                  for="{{setting.setting.id}}">{{setting.setting.description}}</label>
+                  @if (setting.setting.tooltip) {
+                    <i rippleEffect
+                      popoverClass="popover"
+                      [ngbPopover]="setting.setting.tooltip"
+                      [openDelay]="300" [closeDelay]="500" triggers="mouseenter:mouseleave"
+                    class="fas fa-info info-icon"></i>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
       </div>
     </div>
   </div>
   <div class="card">
     <app-footer-form (closeEvent)="cancel()"
-                     [showAaveACreate]="false"
-                     (saveAndCloseEvent)="saveAndClose()">
+      [showAaveACreate]="false"
+      (saveAndCloseEvent)="saveAndClose()">
     </app-footer-form>
   </div>
 </div>

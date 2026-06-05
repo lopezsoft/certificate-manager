@@ -6,15 +6,15 @@ export const environment = {
   hmr: false,
   production: false,
   SOCKET_URL: '',
-  APIJWT: 'cm-app-jwt',
+  APIJWT: 'cmanager-app-jwt',
   APPURL: 'http://cm-api.test',
   APIURL: 'http://cm-api.test/api/v1',
   VERSION: '1.4.0',
   config: {
     name: 'MANAGER',
     title: 'CERTIFICATE MANAGER - Aplicación para la gestión de solicitudes de certificados de firma digital',
-    logo: 'assets/img/logo-empresa-32.png',
-    logoHome: 'assets/img/logo-empresa-32.png',
+    logo: 'assets/images/logo/logo-horizontal-blue.png',
+    logoHome: 'assets/images/logo/logo-circle-blue.png',
     skin: 'default', // default, dark, bordered, semi-dark, green
     type: 'vertical', // vertical, horizontal
   }

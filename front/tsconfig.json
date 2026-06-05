@@ -5,18 +5,31 @@
     "outDir": "./dist/out-tsc",
     "sourceMap": true,
     "declaration": false,
+    "useDefineForClassFields": false,
     "module": "es2020",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "importHelpers": true,
-    "target": "es2020",
-    "typeRoots": ["node_modules/@types"],
-    "lib": ["es2018", "dom"],
+    "target": "es2022",
+    "lib": ["es2022", "dom"],
+    "strict": false,
+    "strictPropertyInitialization": false,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "typeRoots": [
+      "node_modules/@types"
+    ],
     "paths": {
-      "@core": ["@core/"],
-      "@fake-db": ["@fake-db/"],
-      "environments": ["environments/"]
+      "@core": [
+        "@core/"
+      ],
+      "@fake-db": [
+        "@fake-db/"
+      ],
+      "environments": [
+        "environments/"
+      ]
     }
   },
   "angularCompilerOptions": {

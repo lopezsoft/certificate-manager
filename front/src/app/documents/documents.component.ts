@@ -5,10 +5,11 @@ import {Router} from "@angular/router";
 import {TranslateService} from "@ngx-translate/core";
 
 @Component({
-  selector: 'app-documents',
-  template: `
+    selector: 'app-documents',
+    template: `
     <router-outlet></router-outlet>
-  `
+  `,
+    standalone: false
 })
 export class DocumentsComponent extends BaseComponent implements OnInit {
 

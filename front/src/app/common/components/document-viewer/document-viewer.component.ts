@@ -10,10 +10,11 @@ import {
 import {DomSanitizer, SafeResourceUrl} from "@angular/platform-browser";
 
 @Component({
-  selector: 'app-document-viewer',
-  templateUrl: './document-viewer.component.html',
-  styleUrl: './document-viewer.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-document-viewer',
+    templateUrl: './document-viewer.component.html',
+    styleUrl: './document-viewer.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class DocumentViewerComponent implements OnChanges {
   @Input() sourceUrl: string  = null;

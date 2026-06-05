@@ -10,8 +10,9 @@ interface notification {
 }
 
 @Component({
-  selector: 'app-navbar-notification',
-  templateUrl: './navbar-notification.component.html'
+    selector: 'app-navbar-notification',
+    templateUrl: './navbar-notification.component.html',
+    standalone: false
 })
 export class NavbarNotificationComponent implements OnInit {
   // Public

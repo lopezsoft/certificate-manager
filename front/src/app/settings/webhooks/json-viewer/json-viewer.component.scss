@@ -1,0 +1,42 @@
+.json-viewer-wrapper {
+  background-color: #282c34; // match atom-one-dark
+  border-radius: 0.5rem;
+  overflow: hidden;
+
+  .json-viewer-header {
+    background-color: #21252b;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #181a1f;
+
+    .json-viewer-title {
+      color: #abb2bf;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    button {
+      color: #abb2bf;
+      &:hover { color: #ffffff; }
+    }
+  }
+
+  .json-viewer-body {
+    padding: 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+    
+    code {
+      background: transparent !important;
+      font-size: 0.85rem;
+      font-family: 'Consolas', 'Monaco', 'Courier New', Courier, monospace;
+    }
+    
+    // Customize scrollbar for dark theme
+    &::-webkit-scrollbar { width: 8px; height: 8px; }
+    &::-webkit-scrollbar-track { background: #282c34; }
+    &::-webkit-scrollbar-thumb { background: #4b5263; border-radius: 4px; }
+    &::-webkit-scrollbar-thumb:hover { background: #5c6370; }
+  }
+}

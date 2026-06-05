@@ -3,8 +3,9 @@ import { Component, Input } from '@angular/core';
 import { CoreMenuItem } from '@core/types';
 
 @Component({
-  selector: '[core-menu-vertical-section]',
-  templateUrl: './section.component.html'
+    selector: '[core-menu-vertical-section]',
+    templateUrl: './section.component.html',
+    standalone: false
 })
 export class CoreMenuVerticalSectionComponent {
   @Input()

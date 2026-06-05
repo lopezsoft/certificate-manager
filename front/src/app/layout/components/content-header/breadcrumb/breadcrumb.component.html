@@ -5,7 +5,7 @@
     'justify-content-center': breadcrumb.alignment == 'center',
     'justify-content-end': breadcrumb.alignment == 'right'
   }"
->
+  >
   <ol
     class="breadcrumb"
     [ngClass]="{
@@ -16,11 +16,17 @@
       'breadcrumb-chevron': breadcrumb.type == 'chevron',
       'mr-1': breadcrumb.alignment == 'right'
     }"
-  >
-    <li class="breadcrumb-item" *ngFor="let link of breadcrumb.links">
-      <a *ngIf="link.isLink" routerLink="{{ link.link }}">{{ link.name }}</a>
-      <span *ngIf="!link.isLink">{{ link.name }}</span>
-    </li>
+    >
+    @for (link of breadcrumb.links; track link) {
+      <li class="breadcrumb-item">
+        @if (link.isLink) {
+          <a routerLink="{{ link.link }}">{{ link.name }}</a>
+        }
+        @if (!link.isLink) {
+          <span>{{ link.name }}</span>
+        }
+      </li>
+    }
   </ol>
 </div>
 <!-- app-breadcrumb end -->

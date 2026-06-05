@@ -19,20 +19,21 @@ import {IssuanceStatus, IssuanceDownloadMeta} from "../../interfaces/issuance.in
 import {DebugService} from "../../utils/debug.service";
 
 @Component({
-	selector: 'app-document-view',
-	templateUrl: './document-view.component.html',
-	styleUrl: './document-view.component.scss',
-	animations: [
-		trigger('fadeInOut', [
-			transition(':enter', [
-				style({ opacity: 0 }),
-				animate('300ms', style({ opacity: 1 })),
-			]),
-			transition(':leave', [
-				animate('300ms', style({ opacity: 0 })),
-			])
-		])
-	]
+    selector: 'app-document-view',
+    templateUrl: './document-view.component.html',
+    styleUrl: './document-view.component.scss',
+    animations: [
+        trigger('fadeInOut', [
+            transition(':enter', [
+                style({ opacity: 0 }),
+                animate('300ms', style({ opacity: 1 })),
+            ]),
+            transition(':leave', [
+                animate('300ms', style({ opacity: 0 })),
+            ])
+        ])
+    ],
+    standalone: false
 })
 export class DocumentViewComponent {
 	@ViewChild('fileUploadCc', { static: false}) fileUploadCc: ElementRef;

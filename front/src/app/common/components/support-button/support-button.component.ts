@@ -1,9 +1,10 @@
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-support-button',
-  templateUrl: './support-button.component.html',
-  styleUrl: './support-button.component.scss'
+    selector: 'app-support-button',
+    templateUrl: './support-button.component.html',
+    styleUrl: './support-button.component.scss',
+    standalone: false
 })
 export class SupportButtonComponent {
   isMenuOpen = false;

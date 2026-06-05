@@ -15,8 +15,9 @@ export interface ContentHeader {
 }
 
 @Component({
-  selector: 'app-content-header',
-  templateUrl: './content-header.component.html'
+    selector: 'app-content-header',
+    templateUrl: './content-header.component.html',
+    standalone: false
 })
 export class ContentHeaderComponent implements OnInit {
   // input variable

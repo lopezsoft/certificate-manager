@@ -24,9 +24,10 @@ import { DebugService } from '../../utils/debug.service';
  *   4. Pago y polling de estado → confirmación final
  */
 @Component({
-  selector: 'app-purchase',
-  templateUrl: './purchase.component.html',
-  styleUrl: './purchase.component.scss'
+    selector: 'app-purchase',
+    templateUrl: './purchase.component.html',
+    styleUrl: './purchase.component.scss',
+    standalone: false
 })
 export class PurchaseComponent implements OnInit, OnDestroy {
 

@@ -9,8 +9,9 @@ import {Router} from "@angular/router";
 import TokenService from "../../utils/token.service";
 
 @Component({
-  selector: 'app-auth-master',
-  templateUrl: './auth-master.component.html',
+    selector: 'app-auth-master',
+    templateUrl: './auth-master.component.html',
+    standalone: false
 })
 export class AuthMasterComponent implements OnInit {
   public customForm  !: FormGroup;

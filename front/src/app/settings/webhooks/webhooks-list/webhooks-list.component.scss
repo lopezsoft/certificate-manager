@@ -1,1 +1,13 @@
 // Estilos específicos de WebhooksListComponent — Sprint 2
+
+.webhook-url-wrapper {
+  &:hover {
+    .btn-copy-url {
+      opacity: 1 !important;
+    }
+  }
+}
+
+.table.table-hover tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+}

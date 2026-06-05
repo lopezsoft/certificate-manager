@@ -12,13 +12,14 @@ import { CitiesService, CountriesService, DocumentsService } from '../../service
 import { CompanyService } from '../../services/companies';
 import TokenService from '../../utils/token.service';
 @Component({
-  selector: 'app-company',
-  templateUrl: './company.component.html'
+    selector: 'app-company',
+    templateUrl: './company.component.html',
+    standalone: false
 })
 export class CompanyComponent extends FormComponent implements OnInit, AfterViewInit {
-  @ViewChild('uploadFile') uploadFile!: ElementRef;
-  @ViewChild('imgUp') imgUp!: ElementRef;
-  @ViewChild('focusElement') focusElement!: ElementRef;
+  @ViewChild('uploadFile') declare uploadFile: ElementRef;
+  @ViewChild('imgUp') declare imgUp: ElementRef;
+  @ViewChild('focusElement') declare focusElement: ElementRef;
   typeOrg: TypeOrganization[] = [];
   identityDocs: IdentityDocuments[] = [];
   countries: Country[] = [];

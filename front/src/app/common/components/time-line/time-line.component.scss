@@ -20,7 +20,7 @@ $item-spacing: 25px; // Espacio entre eventos
     &::before {
       content: '';
       position: absolute;
-      left: ($marker-size / 2) - ($line-width / 2); // Centra la línea con los marcadores
+      left: calc(#{$marker-size} / 2 - #{$line-width} / 2); // Centra la línea con los marcadores
       top: 5px; // Ajusta el inicio de la línea
       bottom: 5px; // Ajusta el final de la línea
       width: $line-width;

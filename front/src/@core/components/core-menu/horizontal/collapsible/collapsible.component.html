@@ -1,41 +1,44 @@
-<ng-container *ngIf="!item.hidden">
+@if (!item.hidden) {
   <!-- collapsible title -->
-  <a
-    class="d-flex align-items-center"
-    [ngClass]="item.type == 'section' ? 'dropdown-toggle nav-link' : 'dropdown-item dropdown-toggle'"
-    *ngIf="!item.url"
-  >
-    <ng-container *ngTemplateOutlet="itemContent"></ng-container>
-  </a>
-
+  @if (!item.url) {
+    <a
+      class="d-flex align-items-center"
+      [ngClass]="item.type == 'section' ? 'dropdown-toggle nav-link' : 'dropdown-item dropdown-toggle'"
+      >
+      <ng-container *ngTemplateOutlet="itemContent"></ng-container>
+    </a>
+  }
   <!-- itemContent template -->
   <ng-template #itemContent>
-    <span [data-feather]="item.icon" *ngIf="item.icon"></span>
+    @if (item.icon) {
+      <span [data-feather]="item.icon"></span>
+    }
     <span [translate]="item.translate">{{ item.title }}</span>
   </ng-template>
-
   <!-- sub-menu item/collapsible -->
   <ul class="dropdown-menu" [ngClass]="{ show: isShow }">
-    <ng-container *ngFor="let item of item.children">
+    @for (item of item.children; track item) {
       <!-- item -->
-      <li
-        core-menu-horizontal-item
-        *ngIf="
-          item.type == 'item' && (item.role ? item.role.includes(currentUser.role) : item.role == undefined)
-        "
-        [item]="item"
-        [ngClass]="{ disabled: item.disabled === true }"
-        [routerLink]="item.openInNewTab ? [] : [item.url]"
-        [routerLinkActive]="!item.openInNewTab ? 'active' : ''"
-        [routerLinkActiveOptions]="{ exact: item.exactMatch || false }"
-      ></li>
+      @if (
+        item.type == 'item' && (item.role ? item.role.includes(currentUser.role) : item.role == undefined)
+        ) {
+        <li
+          core-menu-horizontal-item
+          [item]="item"
+          [ngClass]="{ disabled: item.disabled === true }"
+          [routerLink]="item.openInNewTab ? [] : [item.url]"
+          [routerLinkActive]="!item.openInNewTab ? 'active' : ''"
+          [routerLinkActiveOptions]="{ exact: item.exactMatch || false }"
+        ></li>
+      }
       <!-- collapsible -->
-      <li
-        core-menu-horizontal-collapsible
-        *ngIf="item.type == 'collapsible'"
-        [item]="item"
-        class="dropdown dropdown-submenu"
-      ></li>
-    </ng-container>
+      @if (item.type == 'collapsible') {
+        <li
+          core-menu-horizontal-collapsible
+          [item]="item"
+          class="dropdown dropdown-submenu"
+        ></li>
+      }
+    }
   </ul>
-</ng-container>
+}

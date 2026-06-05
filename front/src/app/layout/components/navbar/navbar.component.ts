@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, HostBinding, HostListener, ViewEncapsulation } from '@angular/core';
-import { MediaObserver } from '@angular/flex-layout';
+
 
 import * as _ from 'lodash';
 import { Subject } from 'rxjs';
@@ -21,10 +21,11 @@ import {CompanyService} from "../../../services/companies";
 import Swal from "sweetalert2";
 
 @Component({
-  selector: 'app-navbar',
-  templateUrl: './navbar.component.html',
-  styleUrls: ['./navbar.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'app-navbar',
+    templateUrl: './navbar.component.html',
+    styleUrls: ['./navbar.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   public user: User = {avatar: "", email: "", firstName: "", id: 0, lastName: ""};
@@ -92,7 +93,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private _coreConfigService: CoreConfigService,
     private _coreMediaService: CoreMediaService,
     private _coreSidebarService: CoreSidebarService,
-    private _mediaObserver: MediaObserver,
     public _translateService: TranslateService,
     public _api: HttpResponsesService,
     public _token: TokenService,
@@ -256,7 +256,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     if (this.coreConfig.layout.type == 'horizontal') {
       // On every media(screen) change
       this._coreMediaService.onMediaUpdate.pipe(takeUntil(this._unsubscribeAll)).subscribe(() => {
-        const isFixedTop = this._mediaObserver.isActive('bs-gt-xl');
+        const isFixedTop = this._coreMediaService.isActive('bs-gt-xl');
         if (isFixedTop) {
           this.isFixed = false;
         } else {

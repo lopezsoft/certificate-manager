@@ -6,7 +6,7 @@ import {TranslateService} from "@ngx-translate/core";
 import {ExodoPaginationComponent} from "exodolibs";
 import {Company} from "../models/companies-model";
 import { SearchDataComponent } from 'app/common/components/search-data/search-data.component';
-import { DocumentViewComponent } from 'app/documents/document-view/document-view.component';
+import { CustomerViewComponent } from './customer-view/customer-view.component';
 import { DocumentStatusDescription } from 'app/common/enums/DocumentStatus';
 import { ProcessSoftware, SoftwareTest } from 'app/models/general-model';
 import { FormBuilder } from '@angular/forms';
@@ -18,14 +18,15 @@ import { ShippingService } from 'app/services/shipping.service';
 import { GlobalSettingsService } from 'app/services/global-settings.service';
 
 @Component({
-  selector: 'app-customers',
-  templateUrl: './customer-component.html',
-  styleUrls: ['./customers.component.scss']
+    selector: 'app-customers',
+    templateUrl: './customer-component.html',
+    styleUrls: ['./customers.component.scss'],
+    standalone: false
 })
 export class CustomersComponent extends BaseComponent  implements OnInit, AfterViewInit, OnDestroy  {
   @ViewChild('searchItems') searchItems: SearchDataComponent;
   @ViewChild('pagination') pagination: ExodoPaginationComponent;
-  @ViewChild('documentView') documentView: DocumentViewComponent;
+  @ViewChild('documentView') documentView: CustomerViewComponent;
   protected readonly documentStatusDescription = DocumentStatusDescription;
   interval: any;
   process: ProcessSoftware;
@@ -93,6 +94,7 @@ export class CustomersComponent extends BaseComponent  implements OnInit, AfterV
     this.customer.currentCustomer = row;
     this.customer.currentCustomer.checked = true;
     this.isClicked = true;
+    this.documentView.loadStats(row.id);
   }
 
   toggleNavbar() {

@@ -13,10 +13,11 @@ import TokenService from "../../utils/token.service";
 import {Router} from "@angular/router";
 import {environment} from '../../../environments/environment';
 @Component({
-  selector: 'app-register',
-  templateUrl: './register.component.html',
-  styleUrls: ['./register.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'app-register',
+    templateUrl: './register.component.html',
+    styleUrls: ['./register.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class RegisterComponent extends AuthMasterComponent implements OnInit, AfterViewInit {
   @ViewChild('email') email : ElementRef;

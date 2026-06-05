@@ -8,10 +8,11 @@ import { CoreMenuService } from '@core/components/core-menu/core-menu.service';
 import { CoreSidebarService } from '@core/components/core-sidebar/core-sidebar.service';
 
 @Component({
-  selector: 'horizontal-menu',
-  templateUrl: './horizontal-menu.component.html',
-  styleUrls: ['./horizontal-menu.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'horizontal-menu',
+    templateUrl: './horizontal-menu.component.html',
+    styleUrls: ['./horizontal-menu.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class HorizontalMenuComponent implements OnInit, OnDestroy {
   coreConfig: any;

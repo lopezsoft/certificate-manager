@@ -1,14 +1,16 @@
 <div class="row">
-    <div class="col-sm-6 col-md-3">
-        <button type="button" class="btn btn-custom" (click)="goRoute('requests/list')">
-            <i class="fas fa-list"></i>
-            Listado de solicitudes
-        </button>
+  <div class="col-sm-6 col-md-3">
+    <button type="button" class="btn btn-custom" (click)="goRoute('requests/list')">
+      <i class="fas fa-list"></i>
+      Listado de solicitudes
+    </button>
+  </div>
+  @if (_token.isAdmin()) {
+    <div class="col-6 col-xs-3 col-sm-3 col-md-2">
+      <button type="button" class="btn btn-custom" (click)="goRoute('requests/process')">
+        <i class="fas fa-sliders-h"></i>
+        Solicitudes en proceso
+      </button>
     </div>
-    <div class="col-6 col-xs-3 col-sm-3 col-md-2" *ngIf="_token.isAdmin()">
-        <button type="button" class="btn btn-custom" (click)="goRoute('requests/process')">
-            <i class="fas fa-sliders-h"></i>
-            Solicitudes en proceso
-        </button>
-    </div>
+  }
 </div>

@@ -1,8 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Company } from '../../models/companies-model';
+import { CertificateRequestStats } from '../../models/certificate-stats.model';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { CrudTableService } from '../crud-table.service';
+import { HttpResponsesService } from '../../utils';
 import { DataRecords } from 'app/interfaces';
 
 @Injectable({
@@ -15,7 +17,8 @@ export class CustomerService {
   dataRecords: DataRecords;
   protected _table = 'T001';
   constructor(
-    private _crud: CrudTableService
+    private _crud: CrudTableService,
+    private http: HttpResponsesService,
   ){}
 
   getData(params: any = {}): Observable<Company[]> {
@@ -30,5 +33,14 @@ export class CustomerService {
         ts.data = resp.data;
         return resp.data;
       }));
+  }
+
+  /**
+   * Obtiene estadísticas de solicitudes de certificados para una empresa.
+   * GET /certificate-request/stats/{companyId}
+   */
+  getStats(companyId: number): Observable<CertificateRequestStats> {
+    return this.http.get(`/certificate-request/stats/${companyId}`)
+      .pipe(map((resp: any) => resp.dataRecords));
   }
 }

@@ -10,10 +10,11 @@ import { CoreMenuService } from '@core/components/core-menu/core-menu.service';
 import { CoreSidebarService } from '@core/components/core-sidebar/core-sidebar.service';
 
 @Component({
-  selector: 'vertical-menu',
-  templateUrl: './vertical-menu.component.html',
-  styleUrls: ['./vertical-menu.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'vertical-menu',
+    templateUrl: './vertical-menu.component.html',
+    styleUrls: ['./vertical-menu.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class VerticalMenuComponent implements OnInit, OnDestroy {
   coreConfig: any;

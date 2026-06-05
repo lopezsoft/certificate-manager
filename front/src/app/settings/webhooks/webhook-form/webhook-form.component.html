@@ -1,83 +1,271 @@
 <div class="content-wrapper">
   <div class="content-body">
-    <div class="card">
-      <div class="card-header border-bottom">
-        <h4 class="card-title mb-0">{{ editing ? 'Editar' : 'Nuevo' }} {{ title
-          }}</h4>
+    <div class="card wh-form-card">
+
+      <!-- Header refinado -->
+      <div class="card-header wh-form-card__header">
+        <div class="d-flex align-items-center gap-75">
+          <div class="wh-form-card__icon-wrap">
+            <i data-feather="radio"></i>
+          </div>
+          <div>
+            <h5 class="wh-form-card__title mb-0">{{ editing ? 'Editar' : 'Crear' }} webhook</h5>
+            <small class="text-muted">Configura un endpoint que recibirá eventos en tiempo real.</small>
+          </div>
+        </div>
       </div>
 
-      <div class="card-body pt-2">
+      <div class="card-body wh-form-card__body">
         <form [formGroup]="customForm" (ngSubmit)="onSubmit()" novalidate>
 
-          <!-- URL -->
-          <div class="mb-1">
-            <label class="form-label" for="url">URL del endpoint <span
-                class="text-danger">*</span></label>
-            <input
-              id="url"
-              type="url"
-              class="form-control"
-              formControlName="url"
-              placeholder="https://tu-servidor.com/webhook"
-              [class.is-invalid]="customForm.get('url')?.invalid && customForm.get('url')?.touched" />
-            <div class="invalid-feedback">
-              Ingresa una URL válida (debe comenzar con http:// o https://).
+          <!-- ── Sección: Información básica ───────────────────────────────── -->
+          <div class="wh-section">
+            <h6 class="wh-section__title">
+              <i data-feather="info" class="wh-section__icon"></i>
+              Información básica
+            </h6>
+
+            <!-- Nombre -->
+            <div class="wh-field mb-1">
+              <label class="wh-field__label" for="wh-name">
+                Nombre
+                <span class="wh-field__required">*</span>
+              </label>
+              <input
+                #nameInput
+                id="wh-name"
+                type="text"
+                class="form-control wh-field__input"
+                formControlName="name"
+                placeholder="Ej: Notificaciones ERP"
+                maxlength="100"
+                autocomplete="off"
+                [class.is-invalid]="customForm.get('name')?.invalid && customForm.get('name')?.touched"
+                [class.is-valid]="customForm.get('name')?.valid && customForm.get('name')?.touched" />
+              @if (customForm.get('name')?.invalid && customForm.get('name')?.touched) {
+                <div class="wh-field__feedback wh-field__feedback--error"
+                  >
+                  <i data-feather="alert-circle" class="wh-field__feedback-icon"></i>
+                  El nombre es obligatorio (máximo 100 caracteres).
+                </div>
+              }
             </div>
-          </div>
 
-          <!-- Descripción -->
-          <div class="mb-1">
-            <label class="form-label" for="description">Descripción</label>
-            <input
-              id="description"
-              type="text"
-              class="form-control"
-              formControlName="description"
-              placeholder="Descripción opcional para identificar este webhook" />
-          </div>
-
-          <!-- Secreto (solo en creación) -->
-          <div class="mb-1" *ngIf="!editing">
-            <label class="form-label" for="secret">Secreto compartido</label>
-            <input
-              id="secret"
-              type="text"
-              class="form-control"
-              formControlName="secret"
-              placeholder="Deja en blanco para generar automáticamente" />
-            <small class="text-muted">
-              Se usará para firmar las peticiones con HMAC-SHA256.
-              Podrás rotarlo desde la lista en cualquier momento.
-            </small>
-          </div>
-
-          <!-- Eventos -->
-          <div class="mb-2">
-            <label class="form-label">Eventos <span
-                class="text-danger">*</span></label>
-            <ng-select
-              formControlName="events"
-              [items]="eventTypes"
-              [multiple]="true"
-              [closeOnSelect]="false"
-              placeholder="Selecciona uno o más eventos"
-              [class.is-invalid]="customForm.get('events')?.invalid && customForm.get('events')?.touched"></ng-select>
-            <div
-              class="text-danger small mt-25"
-              *ngIf="customForm.get('events')?.invalid && customForm.get('events')?.touched">
-              Selecciona al menos un evento.
+            <!-- URL -->
+            <div class="wh-field mb-1">
+              <label class="wh-field__label" for="wh-url">
+                URL del endpoint
+                <span class="wh-field__required">*</span>
+              </label>
+              <div class="input-group wh-field__url-group">
+                <span class="input-group-text wh-field__url-prefix">
+                  <i data-feather="link" style="width:14px;height:14px"></i>
+                </span>
+                <input
+                  id="wh-url"
+                  type="url"
+                  class="form-control wh-field__input"
+                  formControlName="url"
+                  placeholder="https://tu-servidor.com/webhook"
+                  autocomplete="off"
+                  [class.is-invalid]="customForm.get('url')?.invalid && customForm.get('url')?.touched"
+                  [class.is-valid]="customForm.get('url')?.valid && customForm.get('url')?.touched" />
+              </div>
+              @if (customForm.get('url')?.invalid && customForm.get('url')?.touched) {
+                <div class="wh-field__feedback wh-field__feedback--error"
+                  >
+                  <i data-feather="alert-circle" class="wh-field__feedback-icon"></i>
+                  Ingresa una URL válida (http:// o https://). Máx 500 caracteres.
+                </div>
+              }
             </div>
+
+            <!-- Descripción -->
+            <div class="wh-field mb-1">
+              <label class="wh-field__label" for="wh-desc">
+                Descripción
+                <span class="wh-field__optional">(opcional)</span>
+              </label>
+              <input
+                id="wh-desc"
+                type="text"
+                class="form-control wh-field__input"
+                formControlName="description"
+                placeholder="Breve nota para identificar este webhook"
+                maxlength="255"
+                autocomplete="off" />
+            </div>
+
+            <!-- Estado (solo en edición o si se quiere permitir al crear) -->
+            @if (editing) {
+              <div class="wh-field mb-0">
+                <label class="wh-field__label d-block mb-50">Estado del webhook</label>
+                <div class="form-check form-switch form-check-primary">
+                  <input class="form-check-input" type="checkbox" id="wh-active" formControlName="is_active">
+                  <label class="form-check-label" for="wh-active">
+                    @if (customForm.get('is_active')?.value) {
+                      <span class="text-success fw-semibold">Activo (Recibe eventos)</span>
+                    }
+                    @if (!customForm.get('is_active')?.value) {
+                      <span class="text-muted">Inactivo (Pausado)</span>
+                    }
+                  </label>
+                </div>
+              </div>
+            }
           </div>
 
-          <!-- Botones -->
-          <div class="d-flex gap-1 mt-2">
-            <button type="submit" class="btn btn-primary" [disabled]="loading">
-              <span *ngIf="loading"
-                class="spinner-border spinner-border-sm me-1"></span>
-              {{ editing ? 'Actualizar' : 'Crear webhook' }}
+          <!-- ── Sección: Seguridad ──────────────────────────────────────── -->
+          @if (!editing) {
+            <div class="wh-section">
+              <div class="wh-security-banner">
+                <div class="wh-security-banner__icon">
+                  <i data-feather="shield"></i>
+                </div>
+                <div class="wh-security-banner__content">
+                  <strong class="wh-security-banner__title">Firma HMAC-SHA256</strong>
+                  <span class="wh-security-banner__text">
+                    El secreto de firma se genera automáticamente al crear el webhook.
+                    Podrás rotarlo en cualquier momento desde la lista.
+                  </span>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- ── Sección: Eventos ────────────────────────────────────────── -->
+          <div class="wh-section">
+            <div class="d-flex justify-content-between align-items-center wh-section__header">
+              <h6 class="wh-section__title mb-0">
+                <i data-feather="zap" class="wh-section__icon"></i>
+                Suscripciones a eventos
+              </h6>
+              @if (!loadingEvents) {
+                <button type="button"
+                  class="wh-toggle-all-btn"
+                  (click)="toggleAllEvents()"
+                  tabindex="0">
+                  <i [attr.data-feather]="allSelected() ? 'x-square' : 'check-square'"
+                  class="wh-toggle-all-btn__icon"></i>
+                  {{ allSelected() ? 'Deseleccionar todos' : 'Seleccionar todos' }}
+                </button>
+              }
+            </div>
+
+            <!-- Contador prominente -->
+            @if (!loadingEvents) {
+              <div class="wh-event-counter">
+                <div class="wh-event-counter__bar">
+                  <div class="wh-event-counter__fill"
+                    [style.width.%]="eventTypes.length > 0 ? (selectedEvents.length / eventTypes.length * 100) : 0">
+                  </div>
+                </div>
+                <span class="wh-event-counter__text">
+                  <strong>{{ selectedEvents.length }}</strong> de {{ eventTypes.length }} eventos seleccionados
+                </span>
+              </div>
+            }
+
+            <!-- Loading -->
+            @if (loadingEvents) {
+              <div class="wh-events-loading">
+                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                <span>Cargando eventos disponibles...</span>
+              </div>
+            }
+
+            <!-- Event cards por grupo -->
+            @if (!loadingEvents) {
+              @for (group of eventGroups; track group) {
+                <div class="wh-event-group">
+                  <h6 class="wh-event-group__title">
+                    <i [attr.data-feather]="group.icon" class="wh-event-group__icon"></i>
+                    {{ group.name }}
+                    <span class="wh-event-group__count">{{ countSelectedInGroup(group) }}/{{ group.events.length }}</span>
+                  </h6>
+                  <div class="row g-75">
+                    @for (ev of group.events; track ev) {
+                      <div class="col-md-6 col-lg-4">
+                        <div
+                          class="event-card"
+                          [class.event-card--selected]="isEventSelected(ev.value)"
+                          (click)="toggleEvent(ev.value)"
+                          (keydown.enter)="toggleEvent(ev.value)"
+                          (keydown.space)="toggleEvent(ev.value); $event.preventDefault()"
+                          [attr.tabindex]="0"
+                          [attr.role]="'checkbox'"
+                          [attr.aria-checked]="isEventSelected(ev.value)"
+                          [attr.aria-label]="ev.label + ': ' + ev.description">
+                          <!-- Checkbox visual -->
+                          <div class="event-card__checkbox"
+                            [class.event-card__checkbox--checked]="isEventSelected(ev.value)">
+                            @if (isEventSelected(ev.value)) {
+                              <i data-feather="check" class="event-card__checkbox-icon"
+                              ></i>
+                            }
+                          </div>
+                          <!-- Icono de evento -->
+                          <div class="event-card__icon"
+                            [class.event-card__icon--active]="isEventSelected(ev.value)">
+                            <i [attr.data-feather]="ev.icon"></i>
+                          </div>
+                          <!-- Contenido -->
+                          <div class="event-card__body">
+                            <span class="event-card__label">{{ ev.label }}</span>
+                            <small class="event-card__desc">{{ ev.description }}</small>
+                            <div class="event-card__code-wrap">
+                              <code class="event-card__code">{{ ev.value }}</code>
+                              <button type="button"
+                                class="event-card__copy-btn"
+                                (click)="copyEventCode(ev.value, $event)"
+                                [appCustomTooltip]="'Copiar: ' + ev.value"
+                                tabindex="-1">
+                                <span [class.d-none]="copiedEvent === ev.value">
+                                  <i data-feather="copy"></i>
+                                </span>
+                                <span [class.d-none]="copiedEvent !== ev.value">
+                                  <i data-feather="check"></i>
+                                </span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            }
+
+            <!-- Error de validación -->
+            @if (customForm.get('events')?.invalid && customForm.get('events')?.touched) {
+              <div class="wh-field__feedback wh-field__feedback--error mt-50"
+                >
+                <i data-feather="alert-circle" class="wh-field__feedback-icon"></i>
+                Selecciona al menos un evento para continuar.
+              </div>
+            }
+          </div>
+
+          <!-- ── Botones de acción ───────────────────────────────────────── -->
+          <div class="wh-actions">
+            <button type="submit"
+              class="btn wh-actions__submit"
+              [disabled]="loading || loadingEvents"
+              [class.wh-actions__submit--loading]="loading">
+              @if (loading) {
+                <span class="spinner-border spinner-border-sm me-50"></span>
+              }
+              @if (!loading) {
+                <i [attr.data-feather]="editing ? 'save' : 'plus'" class="me-50"
+                style="width:16px;height:16px"></i>
+              }
+              {{ loading ? (editing ? 'Guardando...' : 'Creando...') : (editing ? 'Guardar cambios' : 'Crear webhook') }}
             </button>
-            <button type="button" class="btn btn-outline-secondary"
-              (click)="cancel()">
+            <button type="button"
+              class="btn wh-actions__cancel"
+              (click)="cancel()"
+              [disabled]="loading">
               Cancelar
             </button>
           </div>

@@ -1,7 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-  name: 'striphtml'
+    name: 'striphtml',
+    standalone: false
 })
 export class StripHtmlPipe implements PipeTransform {
   transform(value: string): any {

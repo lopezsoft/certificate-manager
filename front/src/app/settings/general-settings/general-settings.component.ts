@@ -5,9 +5,10 @@ import {Router} from '@angular/router';
 import {LoadMaskService} from "../../services/load-mask.service";
 
 @Component({
-  selector: 'app-general-settings',
-  templateUrl: './general-settings.component.html',
-  styleUrls: ['./general-settings.component.scss']
+    selector: 'app-general-settings',
+    templateUrl: './general-settings.component.html',
+    styleUrls: ['./general-settings.component.scss'],
+    standalone: false
 })
 export class GeneralSettingsComponent implements OnInit {
   constructor(
@@ -32,7 +33,7 @@ export class GeneralSettingsComponent implements OnInit {
   }
 
   saveAndClose() {
-    const settingValues = [];
+    const settingValues: { id: number; value: string }[] = [];
     this._settings.settings.forEach((setting: SettingEntry) => {
       settingValues.push({
         id: setting.id,
@@ -60,7 +61,7 @@ export class GeneralSettingsComponent implements OnInit {
   }
 
   switchChange(setting: SettingEntry, $event: Event) {
-    const checked = $event.target['checked'];
+    const checked = ($event.target as HTMLInputElement)?.checked;
      setting.value  = checked ? '1' : '0';
   }
   isSwitch(setting: SettingEntry): boolean {

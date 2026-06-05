@@ -1,62 +1,195 @@
-<ng-container *ngIf="!currentCustomer">
-    <div class="layout-content-empty">
+@if (!currentCustomer) {
+  <div class="layout-content-empty">
     <span class="card-text">
-    SELECCIONE UN CLIENTE PARA VER SU INFORMACIÓN
+      SELECCIONE UN CLIENTE PARA VER SU INFORMACIÓN
     </span>
-        <img
-                class="img-fluid"
-                src="/assets/img/search-document.svg" alt="Búsqueda documento">
-    </div>
-</ng-container>
-<ng-container *ngIf="currentCustomer">
-    <div class="row" [@fadeInOut]>
-        <div class="layout-wrapper custom-form">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-sm-12">
-                            <div class="form-group">
-                                <label>Cliente</label>
-                                <div class="card-text d-grid">
-                                  <span class="w-100">
-                                   <strong> {{ currentCustomer.company_name | uppercase }} </strong>
-                                  </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="form-group">
-                                <label>Identificación del cliente</label>
-                                <div class="card-text d-grid">
-                                   <span class="w-100">
-                                    <strong> {{ currentCustomer.dni }}-{{ currentCustomer.dv }} </strong>
-                                  </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-5">
-                            <div class="form-group">
-                                <label>Correo del cliente</label>
-                                <div class="card-text d-grid">
-                                   <span class="w-100">
-                                    <strong> {{ currentCustomer.email }} </strong>
-                                  </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-3">
-                            <div class="form-group">
-                                <label>Teléfono cliente</label>
-                                <div class="card-text d-grid">
-                                   <span class="w-100">
-                                    <strong> {{ currentCustomer.phone }} </strong>
-                                  </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+    <img
+      class="img-fluid"
+      src="/assets/img/search-document.svg" alt="Búsqueda documento">
+  </div>
+}
+@if (currentCustomer) {
+  <div class="row" [@fadeInOut]>
+    <div class="layout-wrapper custom-form">
+
+      <!-- ── Información del cliente ── -->
+      <div class="card">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-sm-12">
+              <div class="form-group">
+                <label>Cliente</label>
+                <div class="card-text d-grid">
+                  <span class="w-100">
+                    <strong> {{ currentCustomer.company_name | uppercase }} </strong>
+                  </span>
                 </div>
+              </div>
             </div>
+            <div class="col-sm-4">
+              <div class="form-group">
+                <label>Identificación del cliente</label>
+                <div class="card-text d-grid">
+                  <span class="w-100">
+                    <strong> {{ currentCustomer.dni }}-{{ currentCustomer.dv }} </strong>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-5">
+              <div class="form-group">
+                <label>Correo del cliente</label>
+                <div class="card-text d-grid">
+                  <span class="w-100">
+                    <strong> {{ currentCustomer.email }} </strong>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-3">
+              <div class="form-group">
+                <label>Teléfono cliente</label>
+                <div class="card-text d-grid">
+                  <span class="w-100">
+                    <strong> {{ currentCustomer.phone }} </strong>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
+
+      <!-- ── Cargando ── -->
+      @if (loadingStats) {
+        <div class="card">
+          <div class="card-body text-center py-2">
+            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+            <span class="ms-75 text-muted small">Cargando estadísticas...</span>
+          </div>
+        </div>
+      }
+
+      <!-- ── Error ── -->
+      @if (statsError) {
+        <div class="card">
+          <div class="card-body text-center py-2">
+            <i class="fas fa-exclamation-triangle text-warning me-50"></i>
+            <span class="text-muted small">No se pudieron cargar las estadísticas.</span>
+          </div>
+        </div>
+      }
+
+      @if (stats && !loadingStats) {
+        <!-- ── KPI: Total de solicitudes ── -->
+        <div class="card">
+          <div class="card-body d-flex align-items-center justify-content-between py-1">
+            <div>
+              <span class="text-muted small text-uppercase">Total de solicitudes</span>
+              <h3 class="mb-0 fw-bolder text-primary">{{ stats.grand_total }}</h3>
+            </div>
+            <div class="avatar bg-light-primary p-50">
+              <div class="avatar-content">
+                <i class="fas fa-file-alt font-medium-5 text-primary"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="row match-height">
+            <!-- ── Chart: Barras por año ── -->
+            <div class="col-md-7">
+              <div class="card">
+                <div class="card-header py-1">
+                  <h6 class="card-title mb-0">Solicitudes por Año</h6>
+                </div>
+                <div class="card-body pt-0">
+                  @if (barChartOptions.series) {
+                    <apx-chart
+                      [series]="barChartOptions.series"
+                      [chart]="barChartOptions.chart"
+                      [plotOptions]="barChartOptions.plotOptions"
+                      [colors]="barChartOptions.colors"
+                      [dataLabels]="barChartOptions.dataLabels"
+                      [xaxis]="barChartOptions.xaxis"
+                      [yaxis]="barChartOptions.yaxis"
+                      [legend]="barChartOptions.legend"
+                      [grid]="barChartOptions.grid"
+                      [tooltip]="barChartOptions.tooltip"
+                    ></apx-chart>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- ── Chart: Donut por status ── -->
+            <div class="col-md-5">
+              @if (selectedYear) {
+                <div class="card">
+                  <div class="card-header py-1 d-flex align-items-center justify-content-between">
+                    <h6 class="card-title mb-0">Detalle {{ selectedYear.year }}</h6>
+                    <span class="badge badge-light-primary">{{ selectedYear.total }}</span>
+                  </div>
+                  <div class="card-body pt-0">
+                    @if (donutChartOptions.series) {
+                      <apx-chart
+                        [series]="donutChartOptions.series"
+                        [chart]="donutChartOptions.chart"
+                        [labels]="donutChartOptions.labels"
+                        [colors]="donutChartOptions.colors"
+                        [legend]="donutChartOptions.legend"
+                        [dataLabels]="donutChartOptions.dataLabels"
+                        [plotOptions]="donutChartOptions.plotOptions"
+                        [responsive]="donutChartOptions.responsive"
+                      ></apx-chart>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+      </div>
+
+        <!-- ── Desglose por Estado ── -->
+        @if (selectedYear) {
+          <div class="card">
+            <div class="card-header py-1 d-flex align-items-center justify-content-between">
+              <h6 class="card-title mb-0">Desglose por Estado — {{ selectedYear.year }}</h6>
+              @if (stats.data.length > 1) {
+                <div class="d-flex gap-50">
+                  @for (yr of stats.data; track yr.year) {
+                    <button
+                      class="btn btn-sm py-25 px-75"
+                      [class.btn-primary]="selectedYear?.year === yr.year"
+                      [class.btn-outline-primary]="selectedYear?.year !== yr.year"
+                      (click)="selectYear(yr)">
+                      {{ yr.year }}
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+            <div class="card-body pt-50">
+              <div class="row">
+                @for (entry of getStatusEntries(); track entry.key) {
+                  <div class="col-sm-6 col-md-4 col-lg-3 mb-75">
+                    <div class="d-flex align-items-center justify-content-between border rounded px-1 py-75">
+                      <div class="d-flex align-items-center">
+                        <span [class]="'document-status-' + entry.key"
+                              class="me-75"
+                              style="font-size: 10px; padding: 2px 6px;">
+                          {{ entry.label | uppercase }}
+                        </span>
+                      </div>
+                      <span class="fw-bolder">{{ entry.value }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      }
     </div>
-</ng-container>
+  </div>
+}

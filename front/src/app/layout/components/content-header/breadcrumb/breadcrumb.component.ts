@@ -12,8 +12,9 @@ export interface Breadcrumb {
 }
 
 @Component({
-  selector: 'app-breadcrumb',
-  templateUrl: './breadcrumb.component.html'
+    selector: 'app-breadcrumb',
+    templateUrl: './breadcrumb.component.html',
+    standalone: false
 })
 export class BreadcrumbComponent implements OnInit {
   // input variable

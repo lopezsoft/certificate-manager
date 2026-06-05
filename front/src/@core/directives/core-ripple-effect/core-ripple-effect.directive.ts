@@ -3,7 +3,8 @@ import { Directive, ElementRef, Input, OnInit } from '@angular/core';
 import * as Waves from 'node-waves';
 
 @Directive({
-  selector: '[rippleEffect]'
+    selector: '[rippleEffect]',
+    standalone: false
 })
 export class RippleEffectDirective {
   // Private
