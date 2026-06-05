@@ -2310,6 +2310,76 @@
                 ]
             }
         },
+        "/company/{id}/toggle-active": {
+            "patch": {
+                "tags": [
+                    "Configuración"
+                ],
+                "summary": "Habilitar o deshabilitar una empresa (solo admin)",
+                "description": "Cambia el estado activo/inactivo de una empresa. Solo accesible para administradores del sistema.",
+                "operationId": "c010c123cfa5a9965d4c9af73330d3e8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la empresa",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Estado actualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Empresa deshabilitada exitosamente."
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "active": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Se requieren permisos de administrador"
+                    },
+                    "404": {
+                        "description": "Empresa no encontrada"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/consume/{year}": {
             "get": {
                 "tags": [

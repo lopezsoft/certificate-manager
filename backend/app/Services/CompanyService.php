@@ -200,4 +200,36 @@ class CompanyService
 
         return "/storage{$path}";
     }
+
+    /**
+     * Habilita o deshabilita una empresa (toggle del campo active).
+     * Solo accesible para administradores del sistema (protegido por middleware).
+     */
+    public function toggleActive(int $id): JsonResponse
+    {
+        try {
+            $company = Company::find($id);
+
+            if (!$company) {
+                return HttpResponseMessages::getResponse404([
+                    'message' => 'Empresa no encontrada.',
+                ]);
+            }
+
+            $newState = $company->active ? 0 : 1;
+            $company->update(['active' => $newState]);
+
+            $label = $newState ? 'habilitada' : 'deshabilitada';
+
+            return HttpResponseMessages::getResponse([
+                'message'     => "Empresa {$label} exitosamente.",
+                'dataRecords' => [
+                    'id'     => $company->id,
+                    'active' => $newState,
+                ],
+            ]);
+        } catch (Exception $e) {
+            return MessageExceptionResponse::response($e);
+        }
+    }
 }

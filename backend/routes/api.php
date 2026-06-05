@@ -91,6 +91,8 @@ Route::group(['prefix' => 'v1'], function () {
                     Route::get('/',         'getSetting');
                     Route::put('/',         'updateSetting');
                 });
+                // Solo administradores
+                Route::patch('/{id}/toggle-active', 'toggleActive')->middleware('admin');
             });
         });
         // Profile

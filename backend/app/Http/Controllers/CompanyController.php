@@ -109,4 +109,34 @@ class CompanyController extends Controller
     {
         return $this->companyService->update($request->all(), $id);
     }
+
+    /**
+     * @OA\Patch(
+     *     path="/company/{id}/toggle-active",
+     *     tags={"Configuración"},
+     *     summary="Habilitar o deshabilitar una empresa (solo admin)",
+     *     description="Cambia el estado activo/inactivo de una empresa. Solo accesible para administradores del sistema.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, description="ID de la empresa", @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Estado actualizado",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Empresa deshabilitada exitosamente."),
+     *             @OA\Property(property="dataRecords", type="object",
+     *                 @OA\Property(property="id", type="integer", example=5),
+     *                 @OA\Property(property="active", type="integer", example=0)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Se requieren permisos de administrador"),
+     *     @OA\Response(response=404, description="Empresa no encontrada"),
+     *     @OA\Response(response=401, description="No autenticado")
+     * )
+     */
+    public function toggleActive(int $id): JsonResponse
+    {
+        return $this->companyService->toggleActive($id);
+    }
 }
