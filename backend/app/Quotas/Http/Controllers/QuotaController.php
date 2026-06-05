@@ -69,6 +69,7 @@ class QuotaController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
+            'company_id'       => ['required', 'integer'],
             'pricing_tier_id'  => ['nullable', 'integer', 'exists:pricing_tiers,id'],
             'quantity'         => ['required', 'integer', 'min:1'],
             'period_start'     => ['required', 'date'],
@@ -76,10 +77,15 @@ class QuotaController extends Controller
             'notes'            => ['nullable', 'string', 'max:500'],
         ]);
 
-        $company = \App\Modules\Company\CompanyQueries::getCompany();
+        $companyId = (int) $data['company_id'];
+
+        // Si company_id = 0, usar la empresa del admin en sesión
+        if ($companyId === 0) {
+            $companyId = \App\Modules\Company\CompanyQueries::getCompany()->id;
+        }
 
         $quota = $this->quotaService->allocateQuota(
-            companyId:     $company->id,
+            companyId:     $companyId,
             quantity:      $data['quantity'],
             start:         Carbon::parse($data['period_start']),
             end:           Carbon::parse($data['period_end']),
