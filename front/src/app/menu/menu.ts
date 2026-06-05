@@ -23,7 +23,8 @@ export const menu: CoreMenu[] = [
     title: 'Comprar Certificados',
     type: 'item',
     icon: 'shopping-cart',
-    url: 'orders'
+    url: 'orders',
+    role: [Role.Server, Role.Software, Role.Partner, Role.Reseller]
   },
   {
     id: 'customers',

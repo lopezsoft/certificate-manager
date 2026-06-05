@@ -1,9 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-
-import { environment } from 'environments/environment';
 import { User, Role } from 'app/auth/models';
 import { ToastrService } from 'ngx-toastr';
 
@@ -40,45 +37,29 @@ export class AuthenticationService {
   /**
    *  Confirms if user is client
    */
-  get isClient() {
-    return this.currentUser && this.currentUserSubject.value.role === Role.Client;
+  get isSoftwareHouse() {
+    return this.currentUser && this.currentUserSubject.value.role === Role.Software;
   }
 
   /**
-   * User login
-   *
-   * @param email
-   * @param password
-   * @returns user
+   *  Confirms if user is client
    */
-  login(email: string, password: string) {
-    return this._http
-      .post<any>(`${environment.APIURL}/users/authenticate`, { email, password })
-      .pipe(
-        map(user => {
-          // login successful if there's a jwt token in the response
-          if (user && user.token) {
-            // store user details and jwt token in local storage to keep user logged in between page refreshes
-            localStorage.setItem('currentUser', JSON.stringify(user));
+  get isServer() {
+    return this.currentUser && this.currentUserSubject.value.role === Role.Server;
+  }
 
-            // Display welcome toast!
-            setTimeout(() => {
-              this._toastrService.success(
-                'You have successfully logged in as an ' +
-                  user.role +
-                  ' user to Vuexy. Now you can start to explore. Enjoy! 🎉',
-                '👋 Welcome, ' + user.firstName + '!',
-                { toastClass: 'toast ngx-toastr', closeButton: true }
-              );
-            }, 2500);
+  /**
+   *  Confirms if user is client
+   */
+  get isPartner() {
+    return this.currentUser && this.currentUserSubject.value.role === Role.Partner;
+  }
 
-            // notify
-            this.currentUserSubject.next(user);
-          }
-
-          return user;
-        })
-      );
+  /**
+   *  Confirms if user is client
+   */
+  get isReseller() {
+    return this.currentUser && this.currentUserSubject.value.role === Role.Reseller;
   }
 
   /**

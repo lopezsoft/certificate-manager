@@ -31,8 +31,32 @@ export class AuthenticationService {
   /**
    *  Confirms if user is client
    */
-  get isClient() {
+  get isSoftwareHouse() {
     const _api  = this._api;
-    return _api.isAuthenticated() && _api.getCurrentUser() && _api.getCurrentUser().role === Role.Client;
+    return _api.isAuthenticated() && _api.getCurrentUser() && _api.getCurrentUser().role === Role.Software;
+  }
+
+  /**
+   *  Confirms if user is client
+   */
+  get isServer() {
+    const _api  = this._api;
+    return _api.isAuthenticated() && _api.getCurrentUser() && _api.getCurrentUser().role === Role.Server;
+  }
+
+  /**
+   *  Confirms if user is client
+   */
+  get isPartner() {
+    const _api  = this._api;
+    return _api.isAuthenticated() && _api.getCurrentUser() && _api.getCurrentUser().role === Role.Partner;
+  }
+
+  /**
+   *  Confirms if user is client
+   */
+  get isReseller() {
+    const _api  = this._api;
+    return _api.isAuthenticated() && _api.getCurrentUser() && _api.getCurrentUser().role === Role.Reseller;
   }
 }
