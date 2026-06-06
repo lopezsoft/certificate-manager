@@ -58,7 +58,7 @@ class AutoIssueViafirmaJob implements ShouldQueue
             $requestDto = new IssuanceRequest(
                 certificateRequestId: $cr->id,
                 requestedByUserId:    $this->userId,
-                emailCertificate:     $cr->legal_rep_email,
+                emailCertificate:     $cr->legal_rep_email ?? $cr->company?->email ?? 'noreply@example.com',
                 organizationType:     $organizationType,
                 providerHint:         'viafirma'
             );

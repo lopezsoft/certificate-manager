@@ -47,7 +47,7 @@ class CertificateRequestMailService
                 'certificate_request_id'=>  $query->id,
                 'status'                =>  CertificateRequestStatusEnum::PROCESSING->value,
                 'comments'              =>  $request->comments,
-                'user_id'               =>  auth()->user()->id,
+                'user_id'               =>  auth()->id(),
                 'user_of_change'        =>  'MANAGER',
             ]);
             DB::commit();
