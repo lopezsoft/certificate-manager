@@ -6,7 +6,7 @@ export const environment = {
   APPURL: 'https://api-certs.matias-api.com',
   APIURL: 'https://api-certs.matias-api.com/api/v1',
   WOMPI_PUBLIC_KEY: 'pub_prod_XXXXXXXXXXXXXXXX',
-  VERSION: '1.5.0',
+  VERSION: '1.8.0',
   config: {
     name: 'MANAGER',
     title: 'CERTIFICATE MANAGER - Aplicación para la gestión de solicitudes de certificados de firma digital',
