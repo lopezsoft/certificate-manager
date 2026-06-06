@@ -39,6 +39,7 @@
             </div>
           </div>
         </div>
+        @if (!(isViafirma() && isNaturelPerson())) {
         <div class="form-group">
           <label>
             <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
@@ -50,10 +51,11 @@
           <small class="text-danger">Nombre o razón social muy corto</small>
           }
         </div>
+        }
         <div class="form-group">
           <label>
             <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
-            {{'companies.city' | translate}}
+            {{ (isViafirma() && isNaturelPerson()) ? 'Ciudad de residencia' : 'companies.city' | translate }}
           </label>
           <ng-select data-live-search="true" formControlName="city_id" placeholder="Ciudad o municipio"
             [virtualScroll]="true">
@@ -67,7 +69,7 @@
         <div class="form-group">
           <label>
             <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
-            Dirección de la empresa
+            {{ (isViafirma() && isNaturelPerson()) ? 'Dirección de residencia' : 'Dirección de la empresa' }}
           </label>
           <input class="form-control" type="text" formControlName="address" placeholder="Dirección" autocomplete="on"
             [class.is-invalid]="isInvalid('address')">
@@ -91,9 +93,10 @@
         </div>
         <div class="form-group">
           <hr>
-          <h6>DATOS DEL REPRESENTANTE LEGAL</h6>
+          <h6>{{ isNaturelPerson() ? 'DATOS PERSONALES' : 'DATOS DEL REPRESENTANTE LEGAL' }}</h6>
           <hr>
         </div>
+        @if (!isViafirma()) {
         <div class="form-group">
           <label>
             <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
@@ -108,6 +111,36 @@
           </small>
           }
         </div>
+        } @else {
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>
+                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                Nombres
+              </label>
+              <input class="form-control" type="text" formControlName="legal_rep_first_name"
+                placeholder="Nombres" autocomplete="on" [class.is-invalid]="isInvalid('legal_rep_first_name')">
+              @if (isInvalid('legal_rep_first_name')) {
+              <small class="text-danger">Nombres requeridos</small>
+              }
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>
+                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                Apellidos
+              </label>
+              <input class="form-control" type="text" formControlName="legal_rep_last_name"
+                placeholder="Apellidos" autocomplete="on" [class.is-invalid]="isInvalid('legal_rep_last_name')">
+              @if (isInvalid('legal_rep_last_name')) {
+              <small class="text-danger">Apellidos requeridos</small>
+              }
+            </div>
+          </div>
+        </div>
+        }
         <div class="row">
           <div class="col-md-6">
             <div class="form-group">
@@ -138,8 +171,9 @@
             </div>
           </div>
         </div>
-        @if (isViafirma() && !isNaturelPerson()) {
+        @if (isViafirma()) {
         <div class="row">
+          @if (!isNaturelPerson()) {
           <div class="col-md-6">
             <div class="form-group">
               <label>
@@ -154,11 +188,12 @@
               </ng-select>
             </div>
           </div>
+          }
           <div class="col-md-6">
             <div class="form-group">
               <label>
                 <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
-                Email del representante legal
+                {{ isNaturelPerson() ? 'Email de contacto' : 'Email del representante legal' }}
               </label>
               <input class="form-control" type="email" formControlName="legal_rep_email"
                 placeholder="ejemplo@empresa.com" autocomplete="email"
@@ -173,11 +208,11 @@
           <div class="col-md-12">
             <div class="alert alert-info py-2 mb-50">
               <i class="fas fa-info-circle me-2"></i>
-              @if (f['entity_document_type_id']?.value === 1) {
+              @if (!isNaturelPerson() && f['entity_document_type_id']?.value === 1) {
               Se enviará un enlace de verificación biométrica al correo del representante legal una vez procesada la
               solicitud.
               } @else {
-              Un asesor de la entidad certificadora contactará al representante legal por correo electrónico para
+              Un asesor de la entidad certificadora le contactará por correo electrónico para
               continuar con el proceso.
               }
             </div>

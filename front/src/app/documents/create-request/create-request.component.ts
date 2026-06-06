@@ -185,6 +185,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       this.organizations  = resp;
     });
     this.onCreateForm();
+    this.updateDynamicValidators();
   }
 
 
@@ -197,6 +198,8 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     ts.customForm = ts.fb.group({
       company_name          : ['',[Validators.required, Validators.minLength(5)]],
       legal_representative  : ['', [Validators.required, Validators.minLength(10)]],
+      legal_rep_first_name  : [''],
+      legal_rep_last_name   : [''],
       legal_rep_email       : [''],
       dni                   : ['',[Validators.required, Validators.minLength(5), Validators.maxLength(12)]],
       document_number       : ['',[Validators.required, Validators.minLength(5), Validators.maxLength(12)]],
@@ -235,6 +238,8 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       this.customForm.get('document_number')?.setValue(resp.document_number);
       this.customForm.get('company_name')?.setValue(resp.company_name);
       this.customForm.get('legal_representative')?.setValue(resp.legal_representative);
+      this.customForm.get('legal_rep_first_name')?.setValue(resp.legal_rep_first_name);
+      this.customForm.get('legal_rep_last_name')?.setValue(resp.legal_rep_last_name);
       this.customForm.get('legal_rep_email')?.setValue(resp.legal_rep_email);
       this.customForm.get('identity_document_id')?.setValue(resp.identity_document_id);
       this.customForm.get('type_organization_id')?.setValue(resp.type_organization_id);
@@ -253,6 +258,18 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     try {
       const ts    = this;
       const frm   = ts.customForm;
+
+      if (ts.isViafirma() && ts.isNaturelPerson()) {
+         const firstName = frm.get('legal_rep_first_name')?.value || '';
+         const lastName = frm.get('legal_rep_last_name')?.value || '';
+         frm.get('company_name')?.setValue(`${firstName} ${lastName}`.trim());
+      }
+      if (ts.isViafirma()) {
+         const firstName = frm.get('legal_rep_first_name')?.value || '';
+         const lastName = frm.get('legal_rep_last_name')?.value || '';
+         frm.get('legal_representative')?.setValue(`${firstName} ${lastName}`.trim());
+      }
+
       ts.onValidateForm(frm);
       if(frm.invalid) {
         throw new Error('Por favor llene la información de cada campo');
@@ -349,19 +366,45 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
 
 
   protected isNaturelPerson(): boolean {
-    const frm = this.customForm;
-    const res =  parseFloat(frm.get('type_organization_id')?.value) === 2;
-    if (res) {
-      frm.get('legal_representative')?.setValue(frm.get('company_name')?.value);
-    }
-    return res
+    if (!this.customForm) return false;
+    return parseFloat(this.customForm.get('type_organization_id')?.value) === 2;
   }
   
   isViafirma(): boolean {
     return this.issuanceProvider === 'viafirma';
   }
 
+  private updateDynamicValidators() {
+    const frm = this.customForm;
+    if (!frm) return;
+
+    if (this.isViafirma()) {
+      frm.get('legal_rep_first_name')?.setValidators([Validators.required, Validators.minLength(2)]);
+      frm.get('legal_rep_last_name')?.setValidators([Validators.required, Validators.minLength(2)]);
+      frm.get('legal_rep_email')?.setValidators([Validators.required, Validators.email]);
+      frm.get('legal_representative')?.clearValidators();
+      
+      if (this.isNaturelPerson()) {
+        frm.get('company_name')?.clearValidators();
+      } else {
+        frm.get('company_name')?.setValidators([Validators.required, Validators.minLength(5)]);
+      }
+    } else {
+      frm.get('legal_rep_first_name')?.clearValidators();
+      frm.get('legal_rep_last_name')?.clearValidators();
+      frm.get('legal_representative')?.setValidators([Validators.required, Validators.minLength(10)]);
+      frm.get('company_name')?.setValidators([Validators.required, Validators.minLength(5)]);
+    }
+
+    frm.get('legal_rep_first_name')?.updateValueAndValidity();
+    frm.get('legal_rep_last_name')?.updateValueAndValidity();
+    frm.get('legal_rep_email')?.updateValueAndValidity();
+    frm.get('legal_representative')?.updateValueAndValidity();
+    frm.get('company_name')?.updateValueAndValidity();
+  }
+
   protected onChangeTypeOrganization($event: any) {
+    this.updateDynamicValidators();
     const isPersonaJuridica = !this.isNaturelPerson();
     const maxFiles = isPersonaJuridica ? 3 : 2;
     
@@ -493,6 +536,8 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     this.customForm.get('document_number')?.setValue('');
     this.customForm.get('company_name')?.setValue('');
     this.customForm.get('legal_representative')?.setValue('');
+    this.customForm.get('legal_rep_first_name')?.setValue('');
+    this.customForm.get('legal_rep_last_name')?.setValue('');
     this.customForm.get('legal_rep_email')?.setValue('');
     this.customForm.get('identity_document_id')?.setValue(3);
     this.customForm.get('type_organization_id')?.setValue(2);
