@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Certificate;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 /**
  * Form Request para la creación de solicitudes de certificado.
@@ -57,6 +59,14 @@ class CreateCertificateRequestFormRequest extends FormRequest
             'life.required'                    => 'La vigencia del certificado es requerida',
             'life.integer'                     => 'La vigencia del certificado debe ser un número entero',
         ];
+    }
+
+    protected function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(response()->json([
+            'message' => 'Los datos de la solicitud son inválidos.',
+            'errors'  => $validator->errors()
+        ], 400));
     }
 }
 
