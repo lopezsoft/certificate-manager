@@ -117,17 +117,20 @@ export class RegisterComponent extends AuthMasterComponent implements OnInit, Af
       ts._msg.errorMessage('Error', 'Por favor llene la información de cada campo.');
       return;
     }
-    const params = { ...frm.getRawValue(), remember_me: 0 };
-    ts._globalSettings.loading = true;
+    const params = { ...frm.getRawValue(), remember_me: 0, type_id: 4};
+    ts.loading = true;
+    ts._globalSettings.showBlockUI('Creando cuenta...');
 
     ts._http.post('/register', params).subscribe({
       next: (resp) => {
-        ts._globalSettings.loading = false;
+        ts.loading = false;
+        ts._globalSettings.hideBlockUI();
         ts._msg.onMessage('Crear cuenta', resp.message);
         ts.submitted = true;
       },
       error: (err: ErrorResponse) => {
-        ts._globalSettings.loading = false;
+        ts.loading = false;
+        ts._globalSettings.hideBlockUI();
 
         // HTTP 422 — mapear errores por campo al formulario reactivo
         if (err.status === 422 && err.error?.errors) {
