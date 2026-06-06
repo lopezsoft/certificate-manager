@@ -137,6 +137,27 @@ export class CertificateRequestComponent extends BaseComponent  implements OnIni
     this.modalForm.get('start_date').setValue(DateManager.oldDate());
     this.modalForm.get('end_date').setValue(DateManager.currentDate());
   }
+
+  onDeleteRequest(item: CertificateRequest, event: Event) {
+    event.stopPropagation();
+    this.msg.confirm('¿Eliminar solicitud?', `¿Está seguro de eliminar la solicitud de ${item.company_name}? Esta acción no se puede deshacer.`)
+      .then((result) => {
+        if (result.isConfirmed) {
+          this.mask.showBlockUI('Eliminando...');
+          this.api.delete(`/certificate-request/${item.id}`).subscribe({
+            next: (resp: any) => {
+              this.mask.hideBlockUI();
+              this.msg.toastMessage('Éxito', resp.message || 'Solicitud eliminada correctamente');
+              this.onSearch(); // Refrescar la lista
+            },
+            error: () => {
+              this.mask.hideBlockUI();
+            }
+          });
+        }
+      });
+  }
+
   private setPagination() {
     this.pagination.setPagination(this.shipping.shippingDataRecords);
   }

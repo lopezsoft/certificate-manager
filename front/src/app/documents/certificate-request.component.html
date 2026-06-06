@@ -157,10 +157,17 @@
               <p class="card-text item-description w-100">
                 {{ item.address | uppercase }}
               </p>
-              <div class="card-text d-grid">
+              <div class="card-text position-relative d-flex justify-content-center align-items-center">
                 <span class="w-100 text-center" [class]="'document-status-'+item.request_status">
                   {{ documentStatusDescription[item.request_status] | uppercase }}
                 </span>
+                @if (item.request_status === 'DRAFT' || item.request_status === 'REJECTED' || item.request_status === 'DELETED') {
+                  <button class="btn btn-sm btn-icon btn-flat-danger position-absolute" style="right: -5px;"
+                          (click)="onDeleteRequest(item, $event)"
+                          appCustomTooltip="Eliminar solicitud">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                }
               </div>
             </div>
           </div>
@@ -170,5 +177,6 @@
   </ng-container>
   <app-document-view
     #documentView
+    (onDeleted)="toggleNavbar(); onSearch()"
   ></app-document-view>
 </app-layout-component>

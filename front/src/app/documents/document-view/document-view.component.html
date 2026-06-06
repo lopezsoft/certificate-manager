@@ -55,6 +55,16 @@
                         <i class="fas fa-edit fa-cursor fas-fa-ok"></i>
                         Editar
                       </button>
+                      <!-- Eliminar -->
+                      @if (currentShipping.request_status === 'DRAFT' || currentShipping.request_status === 'REJECTED' || currentShipping.request_status === 'DELETED') {
+                        <button
+                          class="btn custom-button border me-50 text-danger"
+                          (click)="onDeleteRequest()"
+                          appCustomTooltip="Eliminar solicitud" >
+                          <i class="fas fa-trash fa-cursor"></i>
+                          Eliminar
+                        </button>
+                      }
                     </div>
                   </div>
                 </div>

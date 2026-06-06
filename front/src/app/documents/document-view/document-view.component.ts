@@ -1,4 +1,4 @@
-import {Component, ElementRef, ViewChild} from '@angular/core';
+import {Component, ElementRef, ViewChild, Output, EventEmitter} from '@angular/core';
 import {animate, style, transition, trigger} from "@angular/animations";
 import {ShippingService} from "../../services/shipping.service";
 import {FormatsService} from "../../services/formats.service";
@@ -38,6 +38,7 @@ import {DebugService} from "../../utils/debug.service";
 export class DocumentViewComponent {
 	@ViewChild('fileUploadCc', { static: false}) fileUploadCc: ElementRef;
 	@ViewChild('fileUploadPayment', { static: false}) fileUploadPayment: ElementRef;
+	@Output() onDeleted = new EventEmitter<void>();
 	protected selectedFile: FileManager;
 	protected readonly convertBytesToMB = convertBytesToMB;
 	protected readonly documentStatusDescription = DocumentStatusDescription;
@@ -143,6 +144,25 @@ export class DocumentViewComponent {
 
 	onEdit() {
 		this.router.navigate(['/requests/list/edit', this.currentShipping.id]);
+	}
+
+	onDeleteRequest() {
+		this.msg.confirm('¿Eliminar solicitud?', `¿Está seguro de eliminar esta solicitud? Esta acción no se puede deshacer.`)
+			.then((result) => {
+				if (result.isConfirmed) {
+					this.mask.showBlockUI('Eliminando...');
+					this.http.delete(`/certificate-request/${this.currentShipping.id}`).subscribe({
+						next: (resp: any) => {
+							this.mask.hideBlockUI();
+							this.msg.toastMessage('Éxito', resp.message || 'Solicitud eliminada correctamente');
+							this.onDeleted.emit();
+						},
+						error: () => {
+							this.mask.hideBlockUI();
+						}
+					});
+				}
+			});
 	}
 
 	onAddFile() {
