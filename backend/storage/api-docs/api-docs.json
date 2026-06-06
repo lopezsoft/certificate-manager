@@ -993,6 +993,99 @@
                 }
             }
         },
+        "/sync-account": {
+            "post": {
+                "tags": [
+                    "Sincronización"
+                ],
+                "summary": "Sincronizar cuenta desde sistema externo (ERP/API)",
+                "description": "Crea o actualiza un usuario y su empresa desde un sistema externo. El password se recibe ya hasheado (bcrypt). Autenticación vía HMAC-SHA256.",
+                "operationId": "77a8ae6ddd9b45922508ac3ba9abb377",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user",
+                                    "company"
+                                ],
+                                "properties": {
+                                    "user": {
+                                        "required": [
+                                            "email",
+                                            "password_hash",
+                                            "first_name",
+                                            "last_name",
+                                            "type_id"
+                                        ],
+                                        "properties": {
+                                            "email": {
+                                                "type": "string",
+                                                "format": "email"
+                                            },
+                                            "password_hash": {
+                                                "description": "Bcrypt hash (60 chars)",
+                                                "type": "string"
+                                            },
+                                            "first_name": {
+                                                "type": "string",
+                                                "maxLength": 100
+                                            },
+                                            "last_name": {
+                                                "type": "string",
+                                                "maxLength": 100
+                                            },
+                                            "type_id": {
+                                                "type": "integer",
+                                                "enum": [
+                                                    2,
+                                                    3,
+                                                    4
+                                                ]
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "company": {
+                                        "required": [
+                                            "company_name",
+                                            "dni"
+                                        ],
+                                        "properties": {
+                                            "company_name": {
+                                                "type": "string",
+                                                "maxLength": 100
+                                            },
+                                            "dni": {
+                                                "type": "string",
+                                                "maxLength": 30
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Cuenta creada"
+                    },
+                    "200": {
+                        "description": "Cuenta actualizada"
+                    },
+                    "401": {
+                        "description": "Autenticación HMAC fallida"
+                    },
+                    "422": {
+                        "description": "Validación fallida"
+                    }
+                }
+            }
+        },
         "/verify-email/{id}/{hash}": {
             "get": {
                 "tags": [
@@ -1177,6 +1270,11 @@
                                         "type": "integer",
                                         "example": 1
                                     },
+                                    "entity_document_type_id": {
+                                        "description": "1=Cámara de Comercio, 2=Personería Jurídica, etc. (Opcional, default 1)",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
                                     "document_number": {
                                         "type": "string",
                                         "example": "1234567890"
@@ -1188,6 +1286,12 @@
                                     "legal_representative": {
                                         "type": "string",
                                         "example": "JUAN PÉREZ"
+                                    },
+                                    "legal_rep_email": {
+                                        "description": "Requerido si viafirma y persona jurídica",
+                                        "type": "string",
+                                        "example": "juan.perez@empresa.com",
+                                        "nullable": true
                                     },
                                     "company_name": {
                                         "type": "string",
@@ -1576,6 +1680,10 @@
                                                     "type": "integer",
                                                     "example": 1
                                                 },
+                                                "entity_document_type_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
                                                 "dni": {
                                                     "type": "string",
                                                     "example": "901091403"
@@ -1607,6 +1715,11 @@
                                                 "legal_representative": {
                                                     "type": "string",
                                                     "example": "LEWIS OSWALDO LOPEZ GOMEZ"
+                                                },
+                                                "legal_rep_email": {
+                                                    "type": "string",
+                                                    "example": "juan@lopezsoft.com",
+                                                    "nullable": true
                                                 },
                                                 "life": {
                                                     "type": "integer",
@@ -3011,6 +3124,63 @@
                 }
             }
         },
+        "/entity-document-types": {
+            "get": {
+                "tags": [
+                    "Datos Maestros"
+                ],
+                "summary": "Listar tipos de documento constitutivo (Cámara de Comercio, etc.)",
+                "description": "Retorna los tipos de documento constitutivo soportados, usados en flujos de Persona Jurídica para la validación biométrica.",
+                "operationId": "9e5895db6fe8d67bc619300596ad6ef9",
+                "responses": {
+                    "200": {
+                        "description": "Lista de tipos de documento constitutivo",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "code": {
+                                                                "type": "string",
+                                                                "example": "CC"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Cámara de Comercio"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/certificates/expiring": {
             "get": {
                 "tags": [
@@ -3424,22 +3594,22 @@
                 ]
             }
         },
-        "/orders/{id}": {
+        "/orders/{uuid}": {
             "get": {
                 "tags": [
                     "Órdenes"
                 ],
                 "summary": "Ver detalle de una orden",
-                "operationId": "f088d34a2737782215f435f854e31de5",
+                "operationId": "8e48dcef1411a9d3c0fe571cd944514e",
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "uuid",
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
-                        },
-                        "example": 1
+                            "type": "string",
+                            "format": "uuid"
+                        }
                     }
                 ],
                 "responses": {
@@ -3467,25 +3637,57 @@
                         "bearerAuth": []
                     }
                 ]
+            },
+            "delete": {
+                "tags": [
+                    "Órdenes"
+                ],
+                "summary": "Eliminar una orden PENDING",
+                "description": "Solo permite eliminar órdenes en estado PENDING. Órdenes pagadas o procesadas no pueden eliminarse.",
+                "operationId": "531bc96651587c55627843f92ce88f3c",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Orden eliminada correctamente"
+                    },
+                    "404": {
+                        "description": "Orden no encontrada o no está en estado PENDING"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
-        "/orders/{id}/pay": {
+        "/orders/{uuid}/pay": {
             "post": {
                 "tags": [
                     "Órdenes"
                 ],
                 "summary": "Ejecutar pago de una orden",
                 "description": "Crea la transacción de pago. El estado final llega asíncronamente por webhook.",
-                "operationId": "c0443b25eb5b6b180b9d15436d7d1315",
+                "operationId": "3a9b1bbd2553601ada362f5c7350c681",
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "uuid",
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
-                        },
-                        "example": 1
+                            "type": "string",
+                            "format": "uuid"
+                        }
                     }
                 ],
                 "requestBody": {
@@ -3547,23 +3749,23 @@
                 ]
             }
         },
-        "/orders/{id}/retry": {
+        "/orders/{uuid}/retry": {
             "post": {
                 "tags": [
                     "Órdenes"
                 ],
                 "summary": "Reintentar pago de una orden PENDING",
                 "description": "Devuelve tokens frescos para abrir el widget de pago en una orden PENDING existente.",
-                "operationId": "70f28a26f4f24028b31527aab7d6c810",
+                "operationId": "e9918c2eb1dd27ea25cabb20f538b154",
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "uuid",
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
-                        },
-                        "example": 1
+                            "type": "string",
+                            "format": "uuid"
+                        }
                     }
                 ],
                 "responses": {
@@ -5124,6 +5326,10 @@
                         "type": "integer",
                         "example": 1
                     },
+                    "entity_document_type_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
                     "document_number": {
                         "type": "string",
                         "maxLength": 30,
@@ -5138,6 +5344,12 @@
                         "type": "string",
                         "maxLength": 120,
                         "example": "JUAN PÉREZ GÓMEZ"
+                    },
+                    "legal_rep_email": {
+                        "type": "string",
+                        "maxLength": 250,
+                        "example": "juan.perez@empresa.com",
+                        "nullable": true
                     },
                     "company_name": {
                         "type": "string",
@@ -6304,6 +6516,10 @@
         {
             "name": "Sistema",
             "description": "Health check de servicios externos: WOMPI, etc."
+        },
+        {
+            "name": "Sincronización",
+            "description": "Sincronización"
         },
         {
             "name": "Cupos",
