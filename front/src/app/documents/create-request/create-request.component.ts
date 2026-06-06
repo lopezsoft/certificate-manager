@@ -263,6 +263,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
          const firstName = frm.get('legal_rep_first_name')?.value || '';
          const lastName = frm.get('legal_rep_last_name')?.value || '';
          frm.get('company_name')?.setValue(`${firstName} ${lastName}`.trim());
+         frm.get('dni')?.setValue(frm.get('document_number')?.value);
       }
       if (ts.isViafirma()) {
          const firstName = frm.get('legal_rep_first_name')?.value || '';

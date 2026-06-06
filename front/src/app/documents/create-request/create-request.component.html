@@ -10,6 +10,21 @@
           <hr>
         </div>
         <div class="row">
+          <div [ngClass]="(isViafirma() && isNaturelPerson()) ? 'col-md-12' : 'col-md-6'">
+            <div class="form-group">
+              <label>
+                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                {{'companies.type_organization' | translate}}
+              </label>
+              <ng-select (change)="onChangeTypeOrganization($event)" formControlName="type_organization_id"
+                placeholder="Tipo de contribuyente">
+                @for (org of organizations; track org) {
+                <ng-option [value]="org.id">{{ org.description }}</ng-option>
+                }
+              </ng-select>
+            </div>
+          </div>
+          @if (!(isViafirma() && isNaturelPerson())) {
           <div class="col-md-6">
             <div class="form-group">
               <label>
@@ -24,21 +39,9 @@
               }
             </div>
           </div>
-          <div class="col-md-6">
-            <div class="form-group">
-              <label>
-                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
-                {{'companies.type_organization' | translate}}
-              </label>
-              <ng-select (change)="onChangeTypeOrganization($event)" formControlName="type_organization_id"
-                placeholder="Tipo de contribuyente">
-                @for (org of organizations; track org) {
-                <ng-option [value]="org.id">{{ org.description }}</ng-option>
-                }
-              </ng-select>
-            </div>
-          </div>
+          }
         </div>
+
         @if (!(isViafirma() && isNaturelPerson())) {
         <div class="form-group">
           <label>
@@ -51,59 +54,14 @@
           <small class="text-danger">Nombre o razón social muy corto</small>
           }
         </div>
-        }
-        <div class="row">
-          <div class="col-md-6">
-            <div class="form-group">
-              <label>
-                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
-                {{ (isViafirma() && isNaturelPerson()) ? 'Ciudad de residencia' : 'companies.city' | translate }}
-              </label>
-              <ng-select data-live-search="true" formControlName="city_id" placeholder="Ciudad o municipio"
-                [virtualScroll]="true">
-                @for (city of cities; track city) {
-                <ng-option [value]="city.id">
-                  {{city.city_code}} - {{ city.name_city }} ({{city.department.name_department}})
-                </ng-option>
-                }
-              </ng-select>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="form-group">
-              <label>
-                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
-                {{ (isViafirma() && isNaturelPerson()) ? 'Dirección de residencia' : 'Dirección de la empresa' }}
-              </label>
-              <input class="form-control" type="text" formControlName="address" placeholder="Dirección" autocomplete="on"
-                [class.is-invalid]="isInvalid('address')">
-              @if (isInvalid('address')) {
-              <small class="text-danger">Dirección muy corta</small>
-              }
-            </div>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-6">
-            <div class="form-group">
-              <input class="form-control" type="text" formControlName="phone" placeholder="Teléfono fijo y extension"
-                autocomplete="on" inputmode="tel">
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="form-group">
-              <input class="form-control" type="text" formControlName="mobile" placeholder="Número teléfono móvil"
-                autocomplete="on" inputmode="tel">
-            </div>
-          </div>
-        </div>
-        @if (!(isViafirma() && isNaturelPerson())) {
+
         <div class="form-group">
           <hr>
-          <h6>{{ isNaturelPerson() ? 'DATOS PERSONALES' : 'DATOS DEL REPRESENTANTE LEGAL' }}</h6>
+          <h6>DATOS DEL REPRESENTANTE LEGAL</h6>
           <hr>
         </div>
         }
+
         @if (!isViafirma()) {
         <div class="form-group">
           <label>
@@ -149,6 +107,7 @@
           </div>
         </div>
         }
+
         <div class="row">
           <div class="col-md-6">
             <div class="form-group">
@@ -179,10 +138,10 @@
             </div>
           </div>
         </div>
-        @if (isViafirma()) {
+
+        @if (isViafirma() && !isNaturelPerson()) {
         <div class="row">
-          @if (!isNaturelPerson()) {
-          <div class="col-md-6">
+          <div class="col-md-12">
             <div class="form-group">
               <label>
                 <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
@@ -196,8 +155,17 @@
               </ng-select>
             </div>
           </div>
-          }
-          <div [ngClass]="isNaturelPerson() ? 'col-md-12' : 'col-md-6'">
+        </div>
+        }
+
+        <div class="form-group">
+          <hr>
+          <h6>DATOS DE CONTACTO Y UBICACIÓN</h6>
+          <hr>
+        </div>
+
+        <div class="row">
+          <div class="col-md-12">
             <div class="form-group">
               <label>
                 <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
@@ -212,6 +180,61 @@
             </div>
           </div>
         </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>
+                Número teléfono móvil
+              </label>
+              <input class="form-control" type="text" formControlName="mobile" placeholder="Número teléfono móvil"
+                autocomplete="on" inputmode="tel">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>
+                Teléfono fijo y extensión
+              </label>
+              <input class="form-control" type="text" formControlName="phone" placeholder="Teléfono fijo y extensión"
+                autocomplete="on" inputmode="tel">
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>
+                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                {{ (isViafirma() && isNaturelPerson()) ? 'Ciudad de residencia' : 'companies.city' | translate }}
+              </label>
+              <ng-select data-live-search="true" formControlName="city_id" placeholder="Ciudad o municipio"
+                [virtualScroll]="true">
+                @for (city of cities; track city) {
+                <ng-option [value]="city.id">
+                  {{city.city_code}} - {{ city.name_city }} ({{city.department.name_department}})
+                </ng-option>
+                }
+              </ng-select>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>
+                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                {{ (isViafirma() && isNaturelPerson()) ? 'Dirección de residencia' : 'Dirección de la empresa' }}
+              </label>
+              <input class="form-control" type="text" formControlName="address" placeholder="Dirección" autocomplete="on"
+                [class.is-invalid]="isInvalid('address')">
+              @if (isInvalid('address')) {
+              <small class="text-danger">Dirección muy corta</small>
+              }
+            </div>
+          </div>
+        </div>
+
+        @if (isViafirma()) {
         <div class="row">
           <div class="col-md-12">
             <div class="alert alert-info py-2 mb-50">
@@ -227,17 +250,21 @@
           </div>
         </div>
         }
+
         @if (_token.isAdmin()) {
         <div class="row">
           <div class="col-md-12">
             <div class="form-group">
+              <label>
+                Información adicional
+              </label>
               <textarea class="form-control" formControlName="info" placeholder="Información adicional"
-                inputmode="text">
-                                    </textarea>
+                inputmode="text"></textarea>
             </div>
           </div>
         </div>
         }
+
         <div class="form-group">
           <hr>
           <h6>VIGENCIA DEL CERTIFICADO</h6>
@@ -288,19 +315,19 @@
           }
         </div>
         <div class="d-flex gap-2">
-          <button type="button" class="btn custom-button border fas-fa-close btn-block" (click)="onCancel()">
-            <i class="fas fa-times"></i>
+          <button type="button" class="btn custom-button border btn-block" (click)="onCancel()">
+            <i class="fas fa-times me-1"></i>
             Cancelar
           </button>
-          <button (click)="onSave()" type="button" class="btn ms-1 custom-button border fas-fa-save btn-block"
+          <button (click)="onSave()" type="button" class="btn ms-1 custom-button btn-primary btn-block text-white"
             [disabled]="!canSaveForm || loading" [class.disabled]="!canSaveForm">
             @if (!loading) {
-            <span>{{buttonText}}</span>
+            <span>Crear solicitud</span>
             }
             @if (loading) {
             <span>Procesando solicitud... </span>
             }
-            <i class="fas-fa-save fas " [ngClass]="{'fa-plus' :!loading, 'fa-spinner fa-spin': loading }"></i>
+            <i class="fas-fa-save fas ms-1" [ngClass]="{'fa-plus' :!loading, 'fa-spinner fa-spin': loading }"></i>
           </button>
         </div>
       </div>
