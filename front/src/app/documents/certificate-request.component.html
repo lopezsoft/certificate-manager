@@ -144,11 +144,21 @@
       </div>
       @for (item of shipping.shippingData; track item; let i = $index) {
         <div class="col">
-          <div class="card cursor layout-content-card single full-height"
+          <div class="card cursor layout-content-card single full-height position-relative"
             [ngClass]="{'is-selected': item.checked}"
             (click)="onClickItem(item)">
+            @if (item.request_status === 'DRAFT' || item.request_status === 'REJECTED' || item.request_status === 'DELETED') {
+              <button class="btn btn-icon btn-sm text-danger position-absolute" 
+                      style="top: 8px; right: 8px; z-index: 10; background: rgba(255,255,255,0.8); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;"
+                      onmouseover="this.style.background='#ffe5e5'; this.style.transform='scale(1.1)'"
+                      onmouseout="this.style.background='rgba(255,255,255,0.8)'; this.style.transform='scale(1)'"
+                      (click)="onDeleteRequest(item, $event)"
+                      appCustomTooltip="Eliminar solicitud">
+                <i class="fas fa-trash"></i>
+              </button>
+            }
             <div class="card-body">
-              <p class="card-text item-description w-100">
+              <p class="card-text item-description w-100 pr-3">
                 {{ item.company_name | uppercase }}
               </p>
               <p class="card-text">
@@ -157,17 +167,10 @@
               <p class="card-text item-description w-100">
                 {{ item.address | uppercase }}
               </p>
-              <div class="card-text position-relative d-flex justify-content-center align-items-center">
+              <div class="card-text d-grid">
                 <span class="w-100 text-center" [class]="'document-status-'+item.request_status">
                   {{ documentStatusDescription[item.request_status] | uppercase }}
                 </span>
-                @if (item.request_status === 'DRAFT' || item.request_status === 'REJECTED' || item.request_status === 'DELETED') {
-                  <button class="btn btn-sm btn-icon btn-flat-danger position-absolute" style="right: -5px;"
-                          (click)="onDeleteRequest(item, $event)"
-                          appCustomTooltip="Eliminar solicitud">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                }
               </div>
             </div>
           </div>
