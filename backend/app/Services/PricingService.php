@@ -121,13 +121,19 @@ class PricingService
             ->whereYear('updated_at', $previousYear)
             ->count();
 
-        // Compras pagadas del año en curso
+        // Año en curso: MAX(emisiones, compras) para cubrir legacy + nuevo flujo
+        $currentYearEmissions = CertificateRequest::where('company_id', $companyId)
+            ->whereIn('request_status', CertificateRequestStatusEnum::issuedStatuses())
+            ->whereYear('updated_at', $currentYear)
+            ->count();
+
         $currentYearPurchases = (int) CertificateOrder::where('company_id', $companyId)
             ->where('status', 'PAID')
             ->whereYear('created_at', $currentYear)
             ->sum('quantity');
 
-        $currentTotal = $currentYearPurchases + $currentPurchase;
+        $currentYearVolume = max($currentYearEmissions, $currentYearPurchases);
+        $currentTotal      = $currentYearVolume + $currentPurchase;
 
         if ($lastYearEmissions > 0) {
             $effectiveQty = max($lastYearEmissions, $currentTotal);
@@ -136,12 +142,14 @@ class PricingService
         }
 
         Log::info('[PRICING] Cantidad efectiva calculada.', [
-            'company_id'            => $companyId,
-            'user_type_id'          => $userTypeId,
-            'current_purchase'      => $currentPurchase,
-            'last_year_emissions'   => $lastYearEmissions,
-            'current_year_purchases'=> $currentYearPurchases,
-            'effective_quantity'     => $effectiveQty,
+            'company_id'             => $companyId,
+            'user_type_id'           => $userTypeId,
+            'current_purchase'       => $currentPurchase,
+            'last_year_emissions'    => $lastYearEmissions,
+            'current_year_emissions' => $currentYearEmissions,
+            'current_year_purchases' => $currentYearPurchases,
+            'current_year_volume'    => $currentYearVolume,
+            'effective_quantity'      => $effectiveQty,
         ]);
 
         return max($effectiveQty, 1); // Mínimo 1 para evitar tier vacío
