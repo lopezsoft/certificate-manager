@@ -162,8 +162,9 @@ class CertificateRequestService
                 ->first();
 
             if (!$certificate) {
-                return HttpResponseMessages::getResponse404([
-                    'message' => 'No se encontraron solicitudes previas para el NIT proporcionado.',
+                return HttpResponseMessages::getResponse([
+                    'message'     => 'No se encontraron solicitudes previas para el NIT proporcionado.',
+                    'dataRecords' => null,
                 ]);
             }
 

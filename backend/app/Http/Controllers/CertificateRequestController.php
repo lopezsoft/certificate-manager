@@ -198,10 +198,10 @@ class CertificateRequestController extends Controller
      *     @OA\Parameter(name="dni", in="path", required=true, description="NIT/Cédula a consultar", @OA\Schema(type="string", example="901091403")),
      *     @OA\Response(
      *         response=200,
-     *         description="Datos de la última solicitud encontrada",
+     *         description="Datos de la última solicitud encontrada (o dataRecords=null si no se encuentran previas)",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Datos de la última solicitud encontrada"),
-     *             @OA\Property(property="dataRecords", type="object",
+     *             @OA\Property(property="dataRecords", type="object", nullable=true,
      *                 @OA\Property(property="city_id", type="integer", example=149),
      *                 @OA\Property(property="identity_document_id", type="integer", example=3),
      *                 @OA\Property(property="type_organization_id", type="integer", example=1),
@@ -221,7 +221,6 @@ class CertificateRequestController extends Controller
      *             @OA\Property(property="success", type="boolean", example=true)
      *         )
      *     ),
-     *     @OA\Response(response=404, description="No se encontraron solicitudes previas para ese NIT"),
      *     @OA\Response(response=401, description="No autenticado")
      * )
      */

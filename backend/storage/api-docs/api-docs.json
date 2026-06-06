@@ -1657,7 +1657,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Datos de la última solicitud encontrada",
+                        "description": "Datos de la última solicitud encontrada (o dataRecords=null si no se encuentran previas)",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1730,7 +1730,8 @@
                                                     "nullable": true
                                                 }
                                             },
-                                            "type": "object"
+                                            "type": "object",
+                                            "nullable": true
                                         },
                                         "success": {
                                             "type": "boolean",
@@ -1741,9 +1742,6 @@
                                 }
                             }
                         }
-                    },
-                    "404": {
-                        "description": "No se encontraron solicitudes previas para ese NIT"
                     },
                     "401": {
                         "description": "No autenticado"
