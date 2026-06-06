@@ -9,7 +9,6 @@ use App\DTOs\Certificate\IssuanceRequest;
 use App\Exceptions\Certificate\CertificateIssuanceException;
 use App\Models\CertificateRequest;
 use Illuminate\Contracts\Container\Container;
-use Illuminate\Support\Facades\Schema;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -17,7 +16,7 @@ use Psr\Log\LoggerInterface;
  * de emisión, respetando el orden de precedencia documentado en el plan:
  *
  *   1. Override explícito en payload (requiere config `allow_payload_override`).
- *   2. Configuración por empresa (futura columna `companies.issuance_provider`).
+ *   2. Configuración por empresa (`companies.issuance_provider`).
  *   3. Feature flag global (`certificate.issuance.default_provider`).
  *   4. Fallback: 'mail' (legacy).
  *
@@ -151,16 +150,10 @@ final class CertificateIssuanceProviderFactory
 
     /**
      * Lee `companies.issuance_provider` para la solicitud dada.
-     * Retorna null si la columna no existe, la solicitud no tiene empresa,
-     * o el valor es null/vacío.
+     * Retorna null si la solicitud no tiene empresa o el valor es null/vacío.
      */
     private function resolveCompanyOverride(int $certificateRequestId): ?string
     {
-        // La columna puede no existir aún si la migración no se corrió.
-        if (!Schema::hasColumn('companies', 'issuance_provider')) {
-            return null;
-        }
-
         $cr = CertificateRequest::query()
             ->with('company:id,issuance_provider')
             ->find($certificateRequestId, ['id', 'company_id']);

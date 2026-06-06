@@ -67,7 +67,7 @@ Route::group(['prefix' => 'v1'], function () {
             // ── Emisión agnóstica (mail / viafirma / futuros) ─────────────
             Route::controller('Certificate\CertificateIssuanceController')->group(function () {
                 Route::post('/{id}/issue', 'issue')
-                    ->middleware('throttle:send-mail')
+                    ->middleware('throttle:certificate-issue')
                     ->name('v1.certificate-request.issue');
 
                 Route::get('/{id}/issuance', 'show')

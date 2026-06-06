@@ -86,14 +86,14 @@ class RouteServiceProvider extends ServiceProvider
                 });
         });
 
-        // Envío de correos: máximo 5 por minuto por usuario
-        RateLimiter::for('send-mail', function (Request $request) {
+        // Emisión de certificados: máximo 5 por minuto por usuario
+        RateLimiter::for('certificate-issue', function (Request $request) {
             return Limit::perMinute(5)
                 ->by(optional($request->user())->id ?: $request->ip())
                 ->response(function () {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Demasiados envíos de correo. Intente nuevamente en un minuto.',
+                        'message' => 'Demasiadas solicitudes de emisión. Intente nuevamente en un minuto.',
                     ], 429);
                 });
         });

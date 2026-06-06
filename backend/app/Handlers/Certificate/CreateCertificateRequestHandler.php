@@ -10,6 +10,7 @@ use App\Enums\CertificateRequestStatusEnum;
 use App\Events\CertificateRequestCreated;
 use App\Models\CertificateRequest;
 use App\Models\ChangeHistory;
+use App\Models\Company;
 use App\Models\FileManager;
 use App\Notifications\CertificateRequestCreateNotification;
 use App\Services\QuotaService;
@@ -38,7 +39,16 @@ class CreateCertificateRequestHandler
     public function handle(CreateCertificateRequestCommand $command): JsonResponse
     {
         try {
-            $this->validateFiles($command);
+            // Resolver el proveedor de emisión de la empresa
+            $company  = Company::find($command->companyId);
+            $provider = $company?->issuance_provider
+                ?? config('certificate.issuance.default_provider', 'mail');
+            $requiresFiles = $provider !== 'viafirma';
+
+            // Solo validar archivos si el proveedor los requiere (mail)
+            if ($requiresFiles) {
+                $this->validateFiles($command);
+            }
 
             $dv = VerificationDigit::getDigit($command->dni);
 
@@ -54,8 +64,6 @@ class CreateCertificateRequestHandler
             $disk        = Storage::disk('attachment');
             $folderName  = $this->buildFolderName($command->companyId, $command->dni, $dv);
             $disk->makeDirectory($folderName);
-
-            [$reader, $activeSheet] = $this->loadExcelTemplate();
 
             DB::beginTransaction();
 
@@ -83,11 +91,14 @@ class CreateCertificateRequestHandler
                 'user_id'                => $command->userId,
             ]);
 
-            // Cargar relaciones necesarias para fillAndStoreExcel
-            $certificate->load(['city', 'identity']);
+            // Excel y archivos solo para flujo mail
+            if ($requiresFiles && !empty($command->files)) {
+                $certificate->load(['city', 'identity']);
 
-            $this->fillAndStoreExcel($activeSheet, $certificate, $command->dni, $dv, $folderName, $disk);
-            $this->storeUploadedFiles($command->files, $folderName, $disk, $certificate->id);
+                [$reader, $activeSheet] = $this->loadExcelTemplate();
+                $this->fillAndStoreExcel($activeSheet, $certificate, $command->dni, $dv, $folderName, $disk);
+                $this->storeUploadedFiles($command->files, $folderName, $disk, $certificate->id);
+            }
 
             // Consumir un cupo (POSTPAID o PREPAID) de forma atómica
             $this->quotaService->consumeQuota($command->companyId);
