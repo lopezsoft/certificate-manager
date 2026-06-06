@@ -71,6 +71,8 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     const isPersonaJuridica = !this.isNaturelPerson();
     const requiredCount = isPersonaJuridica ? 3 : 2;
     const currentCount = this.files.length;
+
+    if (this.isViafirma()) return 'No se requieren archivos para crear la solicitud.';
     
     if (currentCount === 0) {
       if (isPersonaJuridica) {
@@ -199,7 +201,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       document_number       : ['',[Validators.required, Validators.minLength(5), Validators.maxLength(12)]],
       identity_document_id  : [1, [Validators.required]],
       type_organization_id  : [1,Validators.required],
-      entity_document_type_id: [1],
+      entity_document_type_id: [0, Validators.required],
       mobile                : [''],
       phone                 : [''],
       info                  : [''],
@@ -254,6 +256,11 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       if(frm.invalid) {
         throw new Error('Por favor llene la información de cada campo');
       }
+      if(ts.isViafirma() && !ts.isNaturelPerson() && frm.get('entity_document_type_id')?.value == 0) {
+        throw new Error('Por favor seleccione el tipo de documento constitutivo');
+      } else {
+        frm.get('entity_document_type_id')?.setValue(1);
+      }
       
       // Validar cantidad de archivos requeridos según tipo de persona
       if (!ts.canEdit && !ts.isViafirma()) {
@@ -272,8 +279,8 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       }
       
       let params            =  frm.getRawValue();
-      params.dni            = params.dni.replace(/[^0-9]/g, '');
-      params.document_number= params.document_number.replace(/[^0-9]/g, '');
+      params.dni            = params.dni.replace(/[^a-zA-Z0-9]/g, '');
+      params.document_number= params.document_number.replace(/[^a-zA-Z0-9]/g, '');
       ts.loading            = true;
       
       if (!ts.canEdit && !ts.isViafirma()) {
@@ -413,10 +420,27 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     this.debug.warn('CreateRequestComponent', 'File validation error', error);
   }
 
+  protected onLookupDni() {
+    const dni = this.customForm.get('dni')?.value;
+    if (!dni || this.canEdit) return;
+
+    this._http.get(`/certificate-request/lookup/${dni}`).subscribe({
+      next: (resp: any) => {
+        if (resp.dataRecords) {
+          this.customForm.patchValue(resp.dataRecords);
+          this._msg.toastMessage('Autocompletado', 'Datos recuperados de una solicitud anterior.', 2);
+        }
+      },
+      error: () => {
+        // Ignorar el error 404 silenciosamente
+      }
+    });
+  }
+
   protected onChangeDni($event: Event) {
     const ts = this;
     const input = $event.target as HTMLInputElement;
-    const value = input.value.replace(/[^0-9]/g, '');
+    const value = input.value.replace(/[^a-zA-Z0-9]/g, '');
     ts.customForm.get('dni')?.setValue(value);
     if (value.length > 5) {
       ts.dniInput.nativeElement.blur();
@@ -426,7 +450,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
   protected onChangeDocument($event: Event) {
     const ts = this;
     const input = $event.target as HTMLInputElement;
-    const value = input.value.replace(/[^0-9]/g, '');
+    const value = input.value.replace(/[^a-zA-Z0-9]/g, '');
     ts.customForm.get('document_number')?.setValue(value);
     if (value.length > 5) {
       ts.documentInput.nativeElement.blur();
