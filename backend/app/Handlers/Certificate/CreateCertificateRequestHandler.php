@@ -62,6 +62,14 @@ class CreateCertificateRequestHandler
                 ]);
             }
 
+            if ($provider === 'viafirma') {
+                if (empty($command->legalRepFirstName) || empty($command->legalRepLastName)) {
+                    return HttpResponseMessages::getResponse422([
+                        'message' => 'Para solicitudes de Viafirma, los nombres y apellidos del representante legal (legal_rep_first_name, legal_rep_last_name) deben enviarse por separado.',
+                    ]);
+                }
+            }
+
             $disk        = Storage::disk('attachment');
             $folderName  = $this->buildFolderName($command->companyId, $command->dni, $dv);
             $disk->makeDirectory($folderName);
@@ -80,7 +88,9 @@ class CreateCertificateRequestHandler
                 'entity_document_type_id'  => $command->entityDocumentTypeId,
                 'document_number'          => strip_tags($command->documentNumber),
                 'address'                  => strip_tags($command->address),
-                'legal_representative'     => Str::upper(strip_tags($command->legalRepresentative)),
+                'legal_representative'     => $command->legalRepresentative ? Str::upper(strip_tags($command->legalRepresentative)) : null,
+                'legal_rep_first_name'     => $command->legalRepFirstName ? Str::upper(strip_tags($command->legalRepFirstName)) : null,
+                'legal_rep_last_name'      => $command->legalRepLastName ? Str::upper(strip_tags($command->legalRepLastName)) : null,
                 'legal_rep_email'          => $command->legalRepEmail,
                 'company_name'             => Str::upper(strip_tags($command->companyName)),
                 'dni'                      => strip_tags($command->dni),

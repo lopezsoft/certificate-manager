@@ -34,7 +34,7 @@ class CertificateRequest extends CoreModel
     protected $fillable = [
         'city_id', 'identity_document_id', 'type_organization_id', 'entity_document_type_id',
         'company_name', 'dni', 'dv', 'address', 'document_number',
-        'phone', 'mobile', 'legal_representative', 'legal_rep_email', 'info', 'request_status',
+        'phone', 'mobile', 'legal_representative', 'legal_rep_first_name', 'legal_rep_last_name', 'legal_rep_email', 'info', 'request_status',
         'company_id', 'postal_code', 'life', 'base_path', 'document_type',
         'pin', 'expiration_date',
     ];

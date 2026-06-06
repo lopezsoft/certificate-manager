@@ -46,7 +46,9 @@ class CertificateRequestService
             entityDocumentTypeId:  (int) ($request->input('entity_document_type_id') ?? 1),
             documentNumber:        $request->document_number,
             address:               $request->address,
-            legalRepresentative:   $request->legal_representative,
+            legalRepresentative:   $request->input('legal_representative'),
+            legalRepFirstName:     $request->input('legal_rep_first_name'),
+            legalRepLastName:      $request->input('legal_rep_last_name'),
             legalRepEmail:         $request->input('legal_rep_email'),
             companyName:           $request->company_name,
             dni:                   $request->dni,
@@ -164,26 +166,32 @@ class CertificateRequestService
             if (!$certificate) {
                 return HttpResponseMessages::getResponse([
                     'message'     => 'No se encontraron solicitudes previas para el NIT proporcionado.',
-                    'dataRecords' => null,
+                    'dataRecords' => [
+                        'data' => null
+                    ],
                 ]);
             }
 
             return HttpResponseMessages::getResponse([
                 'message'     => 'Datos de la última solicitud encontrada',
                 'dataRecords' => [
-                    'city_id'              => $certificate->city_id,
-                    'identity_document_id' => $certificate->identity_document_id,
-                    'type_organization_id' => $certificate->type_organization_id,
-                    'dni'                  => $certificate->dni,
-                    'dv'                   => $certificate->dv,
-                    'document_number'      => $certificate->document_number,
-                    'company_name'         => $certificate->company_name,
-                    'address'              => $certificate->address,
-                    'phone'                => $certificate->phone,
-                    'mobile'               => $certificate->mobile,
-                    'legal_representative' => $certificate->legal_representative,
-                    'life'                 => $certificate->life,
-                    'postal_code'          => $certificate->postal_code ?? null,
+                    'data' => [
+                        'city_id'              => $certificate->city_id,
+                        'identity_document_id' => $certificate->identity_document_id,
+                        'type_organization_id' => $certificate->type_organization_id,
+                        'entity_document_type_id' => $certificate->entity_document_type_id,
+                        'dni'                  => $certificate->dni,
+                        'dv'                   => $certificate->dv,
+                        'document_number'      => $certificate->document_number,
+                        'company_name'         => $certificate->company_name,
+                        'address'              => $certificate->address,
+                        'phone'                => $certificate->phone,
+                        'mobile'               => $certificate->mobile,
+                        'legal_representative' => $certificate->legal_representative,
+                        'legal_rep_email'       => $certificate->legal_rep_email,
+                        'life'                 => $certificate->life,
+                        'postal_code'          => $certificate->postal_code ?? null,
+                    ]
                 ],
             ]);
         } catch (Exception $e) {
