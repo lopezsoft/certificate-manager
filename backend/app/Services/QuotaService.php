@@ -129,6 +129,72 @@ class QuotaService
     }
 
     /**
+     * Libera un cupo al eliminar una solicitud de certificado.
+     *
+     * Intenta devolver en orden inverso al consumo:
+     *   1. PREPAID → marca el último item USED como PENDING
+     *   2. POSTPAID → decrementa used_quantity
+     *
+     * @return bool true si se liberó un cupo, false si no había nada que liberar
+     */
+    public function releaseQuotaForRequest(int $companyId): bool
+    {
+        return DB::transaction(function () use ($companyId): bool {
+            // 1. Intentar devolver un item PREPAID (el más reciente USED)
+            $item = DB::table('certificate_order_items')
+                ->join('certificate_orders', 'certificate_orders.id', '=', 'certificate_order_items.certificate_order_id')
+                ->where('certificate_orders.company_id', $companyId)
+                ->where('certificate_orders.status', 'PAID')
+                ->where('certificate_order_items.status', 'USED')
+                ->whereNull('certificate_order_items.certificate_request_id')
+                ->lockForUpdate()
+                ->select('certificate_order_items.id')
+                ->orderByDesc('certificate_order_items.updated_at')
+                ->first();
+
+            if ($item) {
+                DB::table('certificate_order_items')
+                    ->where('id', $item->id)
+                    ->update([
+                        'status'     => 'PENDING',
+                        'updated_at' => now(),
+                    ]);
+
+                Log::info('[QUOTA] Item PREPAID liberado por eliminación de solicitud.', [
+                    'company_id' => $companyId,
+                    'item_id'    => $item->id,
+                ]);
+                return true;
+            }
+
+            // 2. Intentar devolver un cupo POSTPAID
+            $quota = CertificateQuota::where('company_id', $companyId)
+                ->whereIn('status', [QuotaStatusEnum::ACTIVE->value, QuotaStatusEnum::EXHAUSTED->value])
+                ->where('period_end', '>=', now()->toDateString())
+                ->lockForUpdate()
+                ->orderByDesc('used_quantity')
+                ->first();
+
+            if ($quota && $quota->used_quantity > 0) {
+                $quota->decrement('used_quantity');
+                if ($quota->status === QuotaStatusEnum::EXHAUSTED->value) {
+                    $quota->update(['status' => QuotaStatusEnum::ACTIVE->value]);
+                }
+
+                Log::info('[QUOTA] Cupo POSTPAID liberado por eliminación de solicitud.', [
+                    'company_id' => $companyId,
+                    'quota_id'   => $quota->id,
+                    'remaining'  => $quota->fresh()->getRemaining(),
+                ]);
+                return true;
+            }
+
+            Log::warning('[QUOTA] No se encontró cupo para liberar.', ['company_id' => $companyId]);
+            return false;
+        });
+    }
+
+    /**
      * Asigna un cupo POSTPAID a una empresa. Solo Admin LOPEZSOFT.
      */
     public function allocateQuota(
