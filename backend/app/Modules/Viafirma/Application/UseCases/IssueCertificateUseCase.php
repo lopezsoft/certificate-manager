@@ -207,15 +207,9 @@ final class IssueCertificateUseCase
 
     private function resolveIdentityType(CertificateRequest $cr, CertificateProfile $profile): IdentityType
     {
-        // PJ → identityType del Representante Legal (campos estructurados nuevos).
-        // PN → identityType del titular (catálogo legacy en certificate_requests.identity).
-        if ($profile === CertificateProfile::FE_PJ && $cr->legal_rep_identity_document_id !== null) {
-            $doc = \App\Models\IdentityDocument::find($cr->legal_rep_identity_document_id);
-            if ($doc !== null) {
-                return $this->identityTypeMapper->fromIdentityDocument($doc);
-            }
-        }
-
+        // identity_document_id SIEMPRE es el tipo de documento del representante legal
+        // (CC, CE, etc.), tanto para PJ como para PN.
+        // El NIT de la empresa está en el campo `dni`.
         $doc = $cr->identity;
         if ($doc === null) {
             throw new ViafirmaException("CertificateRequest {$cr->id} sin identity_document asociado.");
@@ -285,7 +279,7 @@ final class IssueCertificateUseCase
                 organizationUnit: (string) ($company->trade_name ?? $company->company_name ?? 'FACTURACION'),
                 organizationType: $cmd->organizationType,
                 emailCertificate: $cmd->emailCertificate,
-                identity:         $cr->legal_rep_identity_number ?? $cr->document_number,
+                identity:         $cr->document_number,
             );
         }
 
@@ -310,10 +304,8 @@ final class IssueCertificateUseCase
         CertificateProfile $profile,
         IssueCertificateCommand $cmd,
     ): string {
-        // Para PJ: cédula del Representante Legal (no el NIT). Para PN: cédula del titular.
-        if ($profile === CertificateProfile::FE_PJ) {
-            return (string) ($cr->legal_rep_identity_number ?? $cr->document_number ?? '');
-        }
+        // document_number SIEMPRE es la cédula del representante legal.
+        // Para PJ y PN es el mismo campo; el NIT de la empresa está en `dni`.
         return (string) ($cr->document_number ?? '');
     }
 

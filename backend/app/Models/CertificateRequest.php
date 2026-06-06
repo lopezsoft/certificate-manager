@@ -37,8 +37,6 @@ class CertificateRequest extends CoreModel
         'phone', 'mobile',  'legal_representative', 'info',  'request_status',
         'company_id', 'postal_code', 'life', 'base_path', 'document_type',
         'pin', 'expiration_date',
-        // Campos para Viafirma PJ (persona jurídica) — requiere migración de BD
-        'legal_rep_identity_document_id', 'legal_rep_identity_number',
     ];
 
     protected $casts = [
