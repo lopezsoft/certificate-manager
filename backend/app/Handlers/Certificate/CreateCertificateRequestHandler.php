@@ -12,6 +12,7 @@ use App\Models\CertificateRequest;
 use App\Models\ChangeHistory;
 use App\Models\Company;
 use App\Models\FileManager;
+use App\Jobs\Certificate\AutoIssueViafirmaJob;
 use App\Notifications\CertificateRequestCreateNotification;
 use App\Services\QuotaService;
 use Exception;
@@ -67,6 +68,10 @@ class CreateCertificateRequestHandler
 
             DB::beginTransaction();
 
+            $initialStatus = $provider === 'viafirma' 
+                ? CertificateRequestStatusEnum::PROCESSING->value 
+                : CertificateRequestStatusEnum::DRAFT->value;
+
             $certificate = CertificateRequest::create([
                 'company_id'               => $command->companyId,
                 'city_id'                  => $command->cityId,
@@ -83,11 +88,12 @@ class CreateCertificateRequestHandler
                 'info'                     => strip_tags($command->info ?? ''),
                 'life'                     => $command->life,
                 'base_path'                => $folderName,
+                'request_status'           => $initialStatus,
             ]);
 
             ChangeHistory::create([
                 'certificate_request_id' => $certificate->id,
-                'status'                 => CertificateRequestStatusEnum::DRAFT->value,
+                'status'                 => $initialStatus,
                 'comments'               => 'Solicitud de certificado creada',
                 'user_of_change'         => 'USER',
                 'user_id'                => $command->userId,
@@ -114,6 +120,10 @@ class CreateCertificateRequestHandler
 
             Notification::route('mail', config('certificate.mail.support_address'))
                 ->notify(new CertificateRequestCreateNotification($certificate));
+
+            if ($provider === 'viafirma') {
+                AutoIssueViafirmaJob::dispatch($certificate->id, $command->userId);
+            }
 
             return HttpResponseMessages::getResponse([
                 'message'     => 'Solicitud de certificado creada exitosamente',
