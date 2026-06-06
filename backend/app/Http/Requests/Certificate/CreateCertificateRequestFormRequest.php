@@ -28,7 +28,7 @@ class CreateCertificateRequestFormRequest extends FormRequest
             'legal_representative'     => ['required_without_all:legal_rep_first_name,legal_rep_last_name', 'string', 'max:120'],
             'legal_rep_first_name'     => ['nullable', 'string', 'max:120'],
             'legal_rep_last_name'      => ['nullable', 'string', 'max:120'],
-            'legal_rep_email'          => ['nullable', 'email', 'max:250'],
+            'legal_rep_email'          => ['required', 'email:rfc,dns', 'max:250'],
             'company_name'             => ['required', 'string', 'max:120'],
             'dni'                      => ['required', 'string', 'max:30'],
             'life'                     => ['required', 'integer'],
@@ -52,7 +52,8 @@ class CreateCertificateRequestFormRequest extends FormRequest
             'legal_representative.required_without_all' => 'El nombre completo del representante es requerido si no se proporcionan los nombres separados',
             'legal_rep_first_name.string'      => 'El nombre del representante debe ser un texto',
             'legal_rep_last_name.string'       => 'Los apellidos del representante deben ser un texto',
-            'legal_rep_email.email'            => 'El correo del representante legal no es válido',
+            'legal_rep_email.required'         => 'El correo del representante legal es requerido',
+            'legal_rep_email.email'            => 'El correo del representante legal no es válido o no existe',
             'life.required'                    => 'La vigencia del certificado es requerida',
             'life.integer'                     => 'La vigencia del certificado debe ser un número entero',
         ];
