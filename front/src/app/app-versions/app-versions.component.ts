@@ -26,6 +26,91 @@ export class AppVersionsComponent implements OnInit {
     this.versiones = [
       {
         isShow: true,
+        number: '1.8.0',
+        date: '06-JUN-2026',
+        changes: [
+          {
+            type: 'caracteristica',
+            description: 'Módulo de Órdenes de Compra: grid profesional con estados, método de pago y acciones contextuales'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Botón "Reintentar pago" para órdenes PENDING y opción de cancelar/eliminar orden'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Modal global de pago Wompi reutilizable con máquina de estados (IDLE → SUCCESS) y polling automático cada 3s'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Seguridad: identificación de órdenes por UUID público, eliminando exposición de IDs secuenciales'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Navbar: tarjeta corporativa de sesión (lado izquierdo) con rol de usuario, nombre de empresa y UUID copiable'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Tooltip en UUID de la cuenta usando directiva appCustomTooltip: "Identificador único de la cuenta"'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Pipe AvatarFallbackPipe: imagen de perfil de respaldo profesional cuando el usuario no tiene avatar asignado'
+          },
+          {
+            type: 'mejora',
+            description: 'Nombre de empresa destacado en azul junto al nombre del usuario en el menú de perfil'
+          },
+          {
+            type: 'bug',
+            description: 'Corrección de error al copiar UUID en HTTP (fallback a execCommand cuando la Clipboard API no está disponible)'
+          },
+          {
+            type: 'bug',
+            description: 'Corrección de tipado TypeScript en navbar al leer user_type del token de acceso'
+          }
+        ]
+      },
+      {
+        isShow: true,
+        number: '1.7.0',
+        date: '19-FEB-2026',
+        changes: [
+          {
+            type: 'caracteristica',
+            description: 'Sistema de Personal Access Tokens (PAT): creación, renovación atómica y revocación de tokens para integraciones'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Expiración configurable de tokens (90 días por defecto, máximo 365 días) vía variables de entorno'
+          },
+          {
+            type: 'mejora',
+            description: 'Configuración global de expiración Passport: los tokens de acceso ahora tienen tiempo de vida definido'
+          }
+        ]
+      },
+      {
+        isShow: true,
+        number: '1.6.0',
+        date: '19-FEB-2026',
+        changes: [
+          {
+            type: 'caracteristica',
+            description: 'Sistema de Webhooks Salientes: 6 tipos de evento, firma HMAC-SHA256 estilo Stripe, reintentos con backoff exponencial'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Historial paginado de entregas de webhooks con estado: delivered / failed / pending'
+          },
+          {
+            type: 'mejora',
+            description: 'Seguridad mejorada: validación MIME real, headers HTTP de seguridad y rate limiting en carga de archivos'
+          }
+        ]
+      },
+      {
+        isShow: true,
         number: "1.5.0",
         date: "20-ENE-2025",
         changes: [
