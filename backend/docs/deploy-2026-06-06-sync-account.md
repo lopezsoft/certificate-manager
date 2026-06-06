@@ -1,63 +1,79 @@
-# Deploy — Endpoint de Sincronización de Cuentas
+# Sincronización de Cuentas — `POST /api/v1/sync-account`
 
-> **Endpoint:** `POST /api/v1/sync-account`  
-> **Fecha:** 2026-06-06
+> **Fecha:** 2026-06-06  
+> Este endpoint permite sincronizar cuentas de usuario desde sistemas externos (ERP, API) hacia Certificate Manager.  
+> Como todos los sistemas usan Laravel (bcrypt), el password se transfiere directamente y el usuario ingresa con las mismas credenciales.
 
 ---
 
-## Configuración en Certificate Manager (destino)
+## Paso 1 — Generar credenciales compartidas
 
-### 1. Variables de entorno
-
-Agregar al `.env`:
-
-```env
-SYNC_API_KEY=<generar>
-SYNC_API_SECRET=<generar>
-SYNC_ALLOWED_IPS=              # Opcional: IPs del servidor origen separadas por coma
-```
-
-Generar credenciales:
+Ejecutar en cualquier terminal con PHP:
 
 ```bash
-php -r "echo 'cm-sync-' . bin2hex(random_bytes(16)) . PHP_EOL;"   # API Key
-php -r "echo bin2hex(random_bytes(32)) . PHP_EOL;"                  # Secret
+php -r "echo 'cm-sync-' . bin2hex(random_bytes(16)) . PHP_EOL;"   # → API Key
+php -r "echo bin2hex(random_bytes(32)) . PHP_EOL;"                  # → Secret
 ```
 
-### 2. Limpiar cache
+Ejemplo de resultado:
+
+```
+cm-sync-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6
+9f8e7d6c5b4a39281706f5e4d3c2b1a09f8e7d6c5b4a39281706f5e4d3c2b1a0
+```
+
+> ⚠️ Guardar ambos valores. Se usan en los dos sistemas.
+
+---
+
+## Paso 2 — Configurar Certificate Manager (destino)
+
+Agregar al `.env` del CM:
+
+```env
+SYNC_API_KEY=cm-sync-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6
+SYNC_API_SECRET=9f8e7d6c5b4a39281706f5e4d3c2b1a09f8e7d6c5b4a39281706f5e4d3c2b1a0
+SYNC_ALLOWED_IPS=                # Opcional: IPs del servidor origen separadas por coma
+```
+
+Limpiar cache:
 
 ```bash
 php artisan config:clear
 php artisan route:clear
 ```
 
-### 3. Archivos involucrados
-
-| Archivo | Acción |
-|---|---|
-| `app/Http/Middleware/ValidateSyncSignature.php` | Nuevo — Valida HMAC |
-| `app/Http/Controllers/Auth/RegisteredUserController.php` | Método `syncAccount()` |
-| `app/Http/Kernel.php` | Middleware `sync.signature` registrado |
-| `config/services.php` | Config `sync` agregada |
-| `routes/auth-api.php` | Ruta registrada |
+✅ Listo. El CM ya acepta peticiones firmadas.
 
 ---
 
-## Configuración en el Sistema Origen (ERP / API)
+## Paso 3 — Configurar el Sistema Origen (ERP / API)
 
-### 1. Variables de entorno
+### 3.1 Variables de entorno
 
-Agregar las **mismas credenciales** generadas arriba:
+Agregar al `.env` del ERP:
 
 ```env
-CM_SYNC_API_KEY=<mismo valor que SYNC_API_KEY>
-CM_SYNC_SECRET=<mismo valor que SYNC_API_SECRET>
-CM_SYNC_URL=https://cm-api.produccion.com/api/v1/sync-account
+CM_SYNC_API_KEY=cm-sync-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6
+CM_SYNC_SECRET=9f8e7d6c5b4a39281706f5e4d3c2b1a09f8e7d6c5b4a39281706f5e4d3c2b1a0
+CM_SYNC_URL=https://cm-api.tudominio.com/api/v1/sync-account
 ```
 
-### 2. Servicio de sincronización
+### 3.2 Agregar config
 
-Crear un servicio en el ERP que envíe la cuenta al CM:
+En `config/services.php` del ERP:
+
+```php
+'cm' => [
+    'sync_url'     => env('CM_SYNC_URL'),
+    'sync_api_key' => env('CM_SYNC_API_KEY'),
+    'sync_secret'  => env('CM_SYNC_SECRET'),
+],
+```
+
+### 3.3 Crear el servicio
+
+Crear archivo `app/Services/CertificateManagerSyncService.php`:
 
 ```php
 <?php
@@ -83,35 +99,41 @@ class CertificateManagerSyncService
     /**
      * Sincroniza un usuario y su empresa con Certificate Manager.
      *
-     * @param \App\Models\User    $user    Usuario del ERP
-     * @param \App\Models\Company $company Empresa del ERP
-     * @param int                 $typeId  Tipo en CM: 2=Casa Software, 3=Servidor, 4=Partner
+     * @param  object $user    Usuario del ERP (necesita: email, password, first_name, last_name)
+     * @param  object $company Empresa del ERP (necesita: company_name/name, dni/nit)
+     * @param  int    $typeId  Tipo en CM: 2=Casa Software, 3=Arrendamiento Servidor, 4=Partner
+     * @return array           Respuesta del CM
      */
-    public function syncAccount($user, $company, int $typeId = 3): array
+    public function sync($user, $company, int $typeId = 3): array
     {
-        $payload = json_encode([
+        // 1. Armar el payload
+        $data = [
             'user' => [
                 'email'         => $user->email,
-                'password_hash' => $user->password,   // Bcrypt directo del ERP
+                'password_hash' => $user->password,   // ← Se envía el hash bcrypt directo
                 'first_name'    => $user->first_name ?? $user->name,
                 'last_name'     => $user->last_name ?? '',
                 'type_id'       => $typeId,
             ],
             'company' => [
-                'company_name' => $company->name ?? $company->company_name,
-                'dni'          => $company->nit ?? $company->dni,
+                'company_name' => $company->company_name ?? $company->name,
+                'dni'          => $company->dni ?? $company->nit,
                 'dv'           => $company->dv ?? null,
                 'email'        => $company->email ?? $user->email,
                 'phone'        => $company->phone ?? null,
                 'address'      => $company->address ?? null,
                 'city_id'      => $company->city_id ?? null,
-                'country_id'   => 45,  // Colombia
+                'country_id'   => 45,
             ],
-        ]);
+        ];
 
+        $payload = json_encode($data);
+
+        // 2. Firmar con HMAC-SHA256
         $timestamp = time();
         $signature = hash_hmac('sha256', $payload . $timestamp, $this->secret);
 
+        // 3. Enviar
         $response = Http::withHeaders([
             'Content-Type'     => 'application/json',
             'X-Sync-Key'       => $this->apiKey,
@@ -119,93 +141,120 @@ class CertificateManagerSyncService
             'X-Sync-Timestamp' => (string) $timestamp,
         ])->withBody($payload, 'application/json')->post($this->url);
 
-        if ($response->failed()) {
-            Log::error('[CM-SYNC] Falló sincronización.', [
-                'status' => $response->status(),
-                'body'   => $response->json(),
+        // 4. Log resultado
+        if ($response->successful()) {
+            Log::info('[CM-SYNC] Cuenta sincronizada.', [
                 'email'  => $user->email,
+                'action' => $response->json('data.user_action'),
+            ]);
+        } else {
+            Log::error('[CM-SYNC] Error en sincronización.', [
+                'email'  => $user->email,
+                'status' => $response->status(),
+                'error'  => $response->json(),
             ]);
         }
 
-        return $response->json();
+        return $response->json() ?? [];
     }
 }
 ```
 
-### 3. Configuración en `config/services.php` del ERP
+### 3.4 Usar el servicio
+
+**Opción A — Llamada directa** (después de registrar un usuario):
 
 ```php
-'cm' => [
-    'sync_url'     => env('CM_SYNC_URL'),
-    'sync_api_key' => env('CM_SYNC_API_KEY'),
-    'sync_secret'  => env('CM_SYNC_SECRET'),
-],
+use App\Services\CertificateManagerSyncService;
+
+// En el controlador de registro del ERP:
+public function register(Request $request)
+{
+    $user    = User::create([...]);
+    $company = Company::create([...]);
+
+    // Sincronizar con Certificate Manager
+    app(CertificateManagerSyncService::class)->sync($user, $company, 3);
+
+    return response()->json(['message' => 'Registrado']);
+}
 ```
 
-### 4. Uso
+**Opción B — Con evento/listener** (recomendada):
 
 ```php
-// Después de registrar un usuario en el ERP:
-app(CertificateManagerSyncService::class)->syncAccount($user, $company, 3);
+// En EventServiceProvider del ERP:
+protected $listen = [
+    \App\Events\UserRegistered::class => [
+        \App\Listeners\SyncWithCertificateManager::class,
+    ],
+];
 
-// O en un listener de evento:
-// UserRegistered::class => [SyncWithCertificateManager::class]
+// Listener:
+class SyncWithCertificateManager
+{
+    public function handle(UserRegistered $event): void
+    {
+        app(CertificateManagerSyncService::class)
+            ->sync($event->user, $event->company, 3);
+    }
+}
+```
+
+**Opción C — Artisan command** (sincronización masiva):
+
+```php
+// Para migrar usuarios existentes del ERP al CM:
+User::with('company')->chunk(50, function ($users) {
+    $sync = app(CertificateManagerSyncService::class);
+    foreach ($users as $user) {
+        $sync->sync($user, $user->company, 3);
+        sleep(1); // Evitar saturar el CM
+    }
+});
 ```
 
 ---
 
-## Referencia del Endpoint
+## Referencia rápida
 
-### Headers
+### ¿Cómo se firma la petición?
 
-| Header | Valor |
-|---|---|
-| `Content-Type` | `application/json` |
-| `X-Sync-Key` | API Key |
-| `X-Sync-Signature` | `hash_hmac('sha256', $jsonBody . $timestamp, $secret)` |
-| `X-Sync-Timestamp` | Unix timestamp (ventana: 5 min) |
-
-### Body
-
-```json
-{
-    "user": {
-        "email": "usuario@empresa.com",
-        "password_hash": "$2y$12$...",
-        "first_name": "Juan",
-        "last_name": "Pérez",
-        "type_id": 3
-    },
-    "company": {
-        "company_name": "Empresa S.A.S",
-        "dni": "900123456",
-        "dv": "7",
-        "email": "contacto@empresa.com",
-        "phone": "3001234567",
-        "address": "Calle 100 #15-20",
-        "city_id": 1,
-        "country_id": 45
-    }
-}
 ```
+firma = HMAC-SHA256( json_body + unix_timestamp, secret )
+```
+
+El CM verifica que:
+1. El `X-Sync-Key` coincida con su `.env`
+2. El `X-Sync-Timestamp` no tenga más de 5 minutos de antigüedad
+3. La firma `X-Sync-Signature` sea válida
+
+### ¿Qué `type_id` usar?
+
+| type_id | Tipo de usuario |
+|---|---|
+| `2` | Casa de Software |
+| `3` | Arrendamiento en Servidor |
+| `4` | Partner |
+
+> ❌ `type_id = 1` (Administrador) está **bloqueado** por seguridad.
 
 ### Respuestas
 
 | Código | Significado |
 |---|---|
-| `201` | Cuenta creada (usuario nuevo) |
-| `200` | Cuenta actualizada (usuario existía) |
-| `401` | API Key / firma / timestamp inválido |
+| `201` | Cuenta creada exitosamente |
+| `200` | Cuenta actualizada exitosamente |
+| `401` | Credenciales o firma inválida |
 | `403` | IP no autorizada |
-| `422` | Validación de datos fallida |
+| `422` | Datos incompletos o inválidos |
 
-### Comportamiento
+### Comportamiento upsert
 
-| Escenario | Acción |
+| Si... | Entonces... |
 |---|---|
-| Email no existe | Crea usuario + marca email verificado |
-| Email ya existe | Actualiza nombre, apellido, password, activa |
-| DNI no existe | Crea empresa |
-| DNI ya existe | Actualiza nombre, email, teléfono, dirección |
-| Vínculo user↔company no existe | Crea en `business_users` |
-| Vínculo ya existe | No hace nada |
+| El email **no existe** en CM | Crea usuario nuevo con el password del ERP |
+| El email **ya existe** en CM | Actualiza nombre, apellido y password |
+| El DNI **no existe** en CM | Crea empresa nueva |
+| El DNI **ya existe** en CM | Actualiza datos de la empresa |
+| El vínculo user↔empresa **no existe** | Lo crea automáticamente |
