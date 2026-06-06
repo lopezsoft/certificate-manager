@@ -223,8 +223,8 @@ class RegisteredUserController extends Controller
                         'address'              => $companyData['address'] ?? null,
                         'city_id'              => $companyData['city_id'] ?? null,
                         'country_id'           => $companyData['country_id'] ?? 45,
-                        'identity_document_id' => 3,  // NIT
-                        'type_organization_id' => 1,  // Default
+                        'identity_document_id' => $companyData['identity_document_id'] ?? 3,
+                        'type_organization_id' => $companyData['type_organization_id'] ?? 1,
                         'active'               => 1,
                     ]);
                     $companyAction = 'created';

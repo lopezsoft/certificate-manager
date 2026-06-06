@@ -34,31 +34,31 @@ class Login
 
         $credentials = request(['email', 'password']);
         if (!Auth::attempt($credentials)) {
-            return  HttpResponseMessages::getResponse401([
+            return  HttpResponseMessages::getResponse404([
                 'message'   => 'Credenciales inválidas.'
             ]);
         }
         $user           = $request->user();
         if ($user->active == 0) {
-            return  HttpResponseMessages::getResponse401([
+            return  HttpResponseMessages::getResponse404([
                 'message'   => 'El usuario se encuentra inactivo. Comuníquese con el administrador.'
             ]);
         }
         if (!$user->hasVerifiedEmail()) {
-            return HttpResponseMessages::getResponse401([
-                'message'   => 'El correo electrónico no ha sido verificado. Comuníquese con el administrador.'
+            return HttpResponseMessages::getResponse400([
+                'message'   => 'El correo electrónico no ha sido verificado. Por favor, revise su bandeja de entrada y siga las instrucciones para verificar su cuenta.'
             ]);
         }
 
         $buser      = DB::table('business_users')->where('user_id', $user->id)->first();
         $company    = Company::where('id', $buser->company_id)->first();
         if ($company->active == 0) {
-            return  HttpResponseMessages::getResponse401([
+            return  HttpResponseMessages::getResponse404([
                 'message'   => 'La empresa se encuentra inactiva. Comuníquese con el administrador.'
             ]);
         }
         if(!$company) {
-            return  HttpResponseMessages::getResponse401([
+            return  HttpResponseMessages::getResponse404([
                 'message'   => 'No se ha encontrado la empresa asociada al usuario.'
             ]);
         }
