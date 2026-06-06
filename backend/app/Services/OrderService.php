@@ -21,7 +21,7 @@ class OrderService
      */
     public function createOrder(int $companyId, int $userId, int $quantity, int $vigencia, int $userTypeId): CertificateOrder
     {
-        $pricing = $this->pricingService->calculatePrice($quantity, $vigencia, $userTypeId);
+        $pricing = $this->pricingService->calculatePrice($quantity, $vigencia, $userTypeId, $companyId);
 
         $order = CertificateOrder::create([
             'company_id'         => $companyId,

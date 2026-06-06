@@ -89,8 +89,8 @@ class OrderController extends Controller
             $order = $this->orderService->createOrder(
                 companyId:  CompanyQueries::getCompany()->id,
                 userId:     $user->id,
-                quantity:   $data['quantity'],
-                vigencia:   $data['vigencia'],
+                quantity:   (int) $data['quantity'],
+                vigencia:   (int) $data['vigencia'],
                 userTypeId: (int) $user->type_id,
             );
 

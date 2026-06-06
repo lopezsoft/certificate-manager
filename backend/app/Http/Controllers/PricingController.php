@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Common\HttpResponseMessages;
 use App\Common\MessageExceptionResponse;
+use App\Modules\Company\CompanyQueries;
 use App\Services\PricingService;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -53,6 +54,7 @@ class PricingController extends Controller
                     (int) $validated['quantity'],
                     (int) $validated['vigencia'],
                     $userTypeId,
+                    CompanyQueries::getCompany()->id,
                 );
 
                 return HttpResponseMessages::getResponse([
