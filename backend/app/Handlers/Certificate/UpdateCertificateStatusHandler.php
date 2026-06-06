@@ -34,6 +34,16 @@ class UpdateCertificateStatusHandler
 
             $previousStatus = $certificate->request_status;
 
+            // Validar transición de estado permitida
+            if (! CertificateRequestStatusEnum::canTransitionTo($previousStatus, $command->requestStatus)) {
+                $allowed = CertificateRequestStatusEnum::allowedTransitions()[$previousStatus] ?? [];
+                return response()->json([
+                    'success' => false,
+                    'message' => "Transición de estado no permitida: {$previousStatus} → {$command->requestStatus}. "
+                        . 'Transiciones válidas: ' . (empty($allowed) ? 'ninguna (estado final)' : implode(', ', $allowed)),
+                ], 422);
+            }
+
             DB::beginTransaction();
 
             $certificate->update([
@@ -99,7 +109,7 @@ class UpdateCertificateStatusHandler
             'request_status' => $command->requestStatus,
         ];
 
-        Notification::route('mail', env('MAIL_SUPPORT_ADDRESS', 'soporte@matias.com.co'))
+        Notification::route('mail', config('certificate.mail.support_address'))
             ->notify(new CertificateRequestStatusNotification($messageData));
 
         Notification::route('mail', $company->email)

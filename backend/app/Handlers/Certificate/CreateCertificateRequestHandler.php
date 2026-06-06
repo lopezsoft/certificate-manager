@@ -99,7 +99,7 @@ class CreateCertificateRequestHandler
 
             event(new CertificateRequestCreated($certificate));
 
-            Notification::route('mail', env('MAIL_SUPPORT_ADDRESS', 'soporte@matias.com.co'))
+            Notification::route('mail', config('certificate.mail.support_address'))
                 ->notify(new CertificateRequestCreateNotification($certificate));
 
             return HttpResponseMessages::getResponse([
@@ -199,7 +199,7 @@ class CreateCertificateRequestHandler
         $activeSheet->setCellValue('C8',  $certificate->legal_representative);
         $activeSheet->setCellValue('C9',  $certificate->identity->document_name);
         $activeSheet->setCellValue('C10', $certificate->document_number);
-        $activeSheet->setCellValue('C11', 'soporte@matias.com.co');
+        $activeSheet->setCellValue('C11', config('certificate.mail.support_address'));
         $activeSheet->setCellValue('C12', $certificate->phone);
         $activeSheet->setCellValue('C13', $certificate->mobile);
         $activeSheet->setCellValue('C14', "{$certificate->life} año(s)");

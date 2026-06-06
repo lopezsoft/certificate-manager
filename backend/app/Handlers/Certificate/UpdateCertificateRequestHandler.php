@@ -7,6 +7,7 @@ use App\Common\HttpResponseMessages;
 use App\Common\MessageExceptionResponse;
 use App\Common\VerificationDigit;
 use App\Models\CertificateRequest;
+use App\Models\ChangeHistory;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
@@ -15,7 +16,7 @@ use Illuminate\Support\Str;
  * Handler para actualizar los datos de una solicitud de certificado.
  *
  * Aplica Command Pattern: recibe UpdateCertificateRequestCommand y
- * encapsula toda la lógica de actualización.
+ * encapsula toda la lógica de actualización + registro de historial.
  */
 class UpdateCertificateRequestHandler
 {
@@ -46,6 +47,15 @@ class UpdateCertificateRequestHandler
                 'mobile'                => $command->mobile,
             ]);
 
+            // Registrar historial de cambios para trazabilidad
+            ChangeHistory::create([
+                'certificate_request_id' => $certificate->id,
+                'status'                 => $certificate->request_status,
+                'comments'               => 'Datos de la solicitud actualizados',
+                'user_of_change'         => 'USER',
+                'user_id'                => auth()->id(),
+            ]);
+
             return HttpResponseMessages::getResponse([
                 'message'     => 'Solicitud de certificado actualizada exitosamente',
                 'dataRecords' => $certificate->fresh(),
@@ -55,3 +65,4 @@ class UpdateCertificateRequestHandler
         }
     }
 }
+

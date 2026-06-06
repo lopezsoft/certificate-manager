@@ -35,8 +35,8 @@ class CertificateRequestMailService
                 'data'      => $query,
                 'subject'   => "Solicitud de certificado para facturación electrónica - {$query->dni}-{$query->dv}",
                 'files'     => $query->files,
-                'email_from'=> env('MAIL_FROM','soporte@matias.com.co'),
-                'replyTo'   => env('REPLY_TO_MAIL', 'soporte@matias.com.co')
+                'email_from'=> config('mail.from.address'),
+                'replyTo'   => config('mail.reply_to.address', config('mail.from.address')),
             ];
             DB::beginTransaction();
             $query->update([
@@ -52,11 +52,13 @@ class CertificateRequestMailService
             ]);
             DB::commit();
             // Send mail
-            $receiptMail = env('RECEIPT_EMAIL', 'gerencia@lopezsoft.net.co');
+            $receiptMail = config('certificate.mail.receipt_email');
             Mail::to($receiptMail)->queue(new SendMail($messageData));
-            $send = env('SEND_MAIL_TO_SUPPORT', false);
-            if($send) {
-                Mail::to('gerencia@lopezsoft.net.co')->queue(new SendMail($messageData));
+
+            $sendToSupport = config('certificate.mail.send_to_support', false);
+            if($sendToSupport) {
+                $supportEmail = config('certificate.mail.support_address');
+                Mail::to($supportEmail)->queue(new SendMail($messageData));
             }
             return HttpResponseMessages::getResponse([
                 'dataRecords' => [

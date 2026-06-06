@@ -87,5 +87,35 @@ enum CertificateRequestStatusEnum: string
     {
         return array_column(self::cases(), 'value');
     }
-}
 
+    /**
+     * Mapa de transiciones de estado permitidas.
+     *
+     * Cada estado define a qué estados puede transicionar.
+     * Si un estado no está aquí, no se permite la transición.
+     *
+     * @return array<string, string[]>
+     */
+    public static function allowedTransitions(): array
+    {
+        return [
+            self::DRAFT->value      => [self::SENT->value, self::REJECTED->value],
+            self::SENT->value       => [self::PENDING->value, self::ACCEPTED->value, self::REJECTED->value],
+            self::PENDING->value    => [self::ACCEPTED->value, self::REJECTED->value],
+            self::ACCEPTED->value   => [self::PROCESSING->value, self::REJECTED->value],
+            self::PROCESSING->value => [self::PROCESSED->value, self::REJECTED->value],
+            self::PROCESSED->value  => [], // Estado final
+            self::REJECTED->value   => [self::DRAFT->value], // Permite reabrir
+        ];
+    }
+
+    /**
+     * Verifica si una transición de estado es válida.
+     */
+    public static function canTransitionTo(string $from, string $to): bool
+    {
+        $allowed = self::allowedTransitions()[$from] ?? [];
+
+        return in_array($to, $allowed, true);
+    }
+}

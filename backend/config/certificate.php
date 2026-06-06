@@ -208,4 +208,24 @@ return [
 
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Mail Configuration (Certificate-specific)
+    |--------------------------------------------------------------------------
+    |
+    | Direcciones de correo utilizadas por el sistema de certificados.
+    | Centraliza los emails que antes estaban hardcodeados en handlers y services.
+    |
+    */
+    'mail' => [
+        // Email de soporte que se muestra en el Excel y recibe notificaciones
+        'support_address' => env('MAIL_SUPPORT_ADDRESS', 'soporte@matias.com.co'),
+
+        // Email destino para el envío de solicitudes (legacy mail flow)
+        'receipt_email' => env('RECEIPT_EMAIL', 'soporte@matias.com.co'),
+
+        // Enviar copia a gerencia cuando se envía una solicitud
+        'send_to_support' => env('SEND_MAIL_TO_SUPPORT', false),
+    ],
+
 ];
