@@ -6,7 +6,7 @@
     <div class="card-body">
       <form [formGroup]="customForm">
         <div class="form-group">
-          <h6>DATOS EMPRESARIALES</h6>
+          <h6>{{ (isViafirma() && isNaturelPerson()) ? 'DATOS DEL SOLICITANTE' : 'DATOS EMPRESARIALES' }}</h6>
           <hr>
         </div>
         <div class="row">
@@ -52,30 +52,36 @@
           }
         </div>
         }
-        <div class="form-group">
-          <label>
-            <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
-            {{ (isViafirma() && isNaturelPerson()) ? 'Ciudad de residencia' : 'companies.city' | translate }}
-          </label>
-          <ng-select data-live-search="true" formControlName="city_id" placeholder="Ciudad o municipio"
-            [virtualScroll]="true">
-            @for (city of cities; track city) {
-            <ng-option [value]="city.id">
-              {{city.city_code}} - {{ city.name_city }} ({{city.department.name_department}})
-            </ng-option>
-            }
-          </ng-select>
-        </div>
-        <div class="form-group">
-          <label>
-            <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
-            {{ (isViafirma() && isNaturelPerson()) ? 'Dirección de residencia' : 'Dirección de la empresa' }}
-          </label>
-          <input class="form-control" type="text" formControlName="address" placeholder="Dirección" autocomplete="on"
-            [class.is-invalid]="isInvalid('address')">
-          @if (isInvalid('address')) {
-          <small class="text-danger">Dirección muy corta</small>
-          }
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>
+                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                {{ (isViafirma() && isNaturelPerson()) ? 'Ciudad de residencia' : 'companies.city' | translate }}
+              </label>
+              <ng-select data-live-search="true" formControlName="city_id" placeholder="Ciudad o municipio"
+                [virtualScroll]="true">
+                @for (city of cities; track city) {
+                <ng-option [value]="city.id">
+                  {{city.city_code}} - {{ city.name_city }} ({{city.department.name_department}})
+                </ng-option>
+                }
+              </ng-select>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>
+                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                {{ (isViafirma() && isNaturelPerson()) ? 'Dirección de residencia' : 'Dirección de la empresa' }}
+              </label>
+              <input class="form-control" type="text" formControlName="address" placeholder="Dirección" autocomplete="on"
+                [class.is-invalid]="isInvalid('address')">
+              @if (isInvalid('address')) {
+              <small class="text-danger">Dirección muy corta</small>
+              }
+            </div>
+          </div>
         </div>
         <div class="row">
           <div class="col-md-6">
@@ -91,11 +97,13 @@
             </div>
           </div>
         </div>
+        @if (!(isViafirma() && isNaturelPerson())) {
         <div class="form-group">
           <hr>
           <h6>{{ isNaturelPerson() ? 'DATOS PERSONALES' : 'DATOS DEL REPRESENTANTE LEGAL' }}</h6>
           <hr>
         </div>
+        }
         @if (!isViafirma()) {
         <div class="form-group">
           <label>
@@ -189,7 +197,7 @@
             </div>
           </div>
           }
-          <div class="col-md-6">
+          <div [ngClass]="isNaturelPerson() ? 'col-md-12' : 'col-md-6'">
             <div class="form-group">
               <label>
                 <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
