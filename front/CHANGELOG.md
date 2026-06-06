@@ -5,7 +5,69 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.8.0] - 2026-06-06
+
+### Añadido
+
+- **Módulo de Órdenes de Compra** (`/orders`):
+  - Grid profesional con columnas: Referencia, Método de Pago, Cantidad, Vigencia, Subtotal, Impuesto, Total, Estado, Acciones
+  - Badges de estado con colores semánticos (PENDING, PAID, FAILED, CANCELLED)
+  - Columna de método de pago (`payment_method`) visible en la tabla
+  - Botón **"Reintentar pago"** para órdenes en estado `PENDING`
+  - Botón **"Cancelar / Eliminar"** para órdenes pendientes con confirmación SweetAlert2
+
+- **Modal global de pago Wompi** (`WompiPaymentModalComponent`):
+  - Componente reutilizable declarado en `CommonComponentsModule`
+  - Invocable desde cualquier ubicación via `WompiPaymentService` (servicio + modal desacoplados)
+  - Estados progresivos: `IDLE → LOADING → WIDGET_OPEN → POLLING → SUCCESS/FAILED`
+  - Polling automático del estado de la orden cada 3s hasta confirmación o timeout
+  - Muestra referencia de la orden, monto y proveedor de pago
+
+- **Servicio `WompiPaymentService`**:
+  - Apertura del widget Wompi con `acceptance_token` fresco
+  - Método `retryPayment(uuid)` para reintentar desde cualquier componente
+  - Método `cancelOrder(uuid)` con diálogo de confirmación integrado
+  - Polling de estado con `takeWhile` + `takeUntil` para evitar memory leaks
+
+- **Seguridad — UUID en órdenes**:
+  - Las órdenes ahora se identifican públicamente por `uuid` (eliminado el `id` secuencial)
+  - Todos los endpoints frontend actualizados: `GET /orders/{uuid}`, `POST /orders/{uuid}/pay`, `POST /orders/{uuid}/retry`, `DELETE /orders/{uuid}`
+  - La interfaz `Order` y `OrderResponse` usan `uuid: string` como identificador primario
+
+- **Navbar — Session Info Card**:
+  - Nueva tarjeta corporativa en el **lado izquierdo del navbar** (visible ≥ lg)
+  - Muestra: ícono empresa (gradiente azul) + badge de rol (`user_type_name`) + UUID completo copiable
+  - UUID con tooltip via `appCustomTooltip`: _"Identificador único de la cuenta · Clic para copiar"_
+  - Clic en UUID copia al portapapeles (Clipboard API con fallback `execCommand` para HTTP)
+  - Nombre de empresa destacado junto al nombre de usuario (derecha) con ícono y color primario
+
+- **Pipe `AvatarFallbackPipe`** (`avatar-fallback.pipe.ts`):
+  - Retorna avatar de fallback profesional cuando el avatar del usuario está vacío o es inválido
+  - Mapeo por inicial del nombre: A–M → `man.png`, N–Z → `woman.png`, desconocido → `unknown.png`
+  - Handler `(error)` en el `<img>` como segunda línea de defensa para URLs rotas
+  - Registrado en `NavbarModule` (declarado + exportado)
+
+### Cambiado
+
+- **`OrderService`**: todos los métodos (`getOrder`, `payOrder`, `retryOrder`, `cancelOrder`, `pollOrderStatus`) usan `uuid: string` en lugar de `id: number`
+- **`PurchaseComponent`**: el paso 3 (confirmación) muestra la **Referencia** (`provider_reference`) en vez del ID secuencial
+- **`OrderListComponent`**: acciones de reintentar/cancelar pasan `order.uuid` a los servicios
+- **`NavbarModule`**: importa `CoreModule` para acceder a `CustomTooltipDirective`
+- **Navbar HTML**: avatar del usuario usa el pipe `avatarFallback` + handler `(error)` de seguridad
+
+### Corregido
+
+- **`copyUuid`**: error `Cannot read properties of undefined (reading 'writeText')` en contextos HTTP — corregido con fallback a `document.execCommand('copy')`
+- **Tipado TypeScript**: el objeto `userData` en el navbar se obtiene del token completo (`data.user`) en vez del objeto `User` mapeado localmente, evitando el error `Property 'user_type' does not exist on type 'User'`
+
+### Técnico
+
+- **Angular**: 18.2.10
+- **Nuevos archivos**: `wompi-payment-modal/` (component + html + scss), `wompi-payment.service.ts`, `avatar-fallback.pipe.ts`
+- **Archivos modificados**: `order.interface.ts`, `order.service.ts`, `order-list.*`, `purchase.*`, `navbar.*`, `navbar.module.ts`, `common-components.module.ts`
+
 ## [1.7.0] - 2026-02-19
+
 
 ### Añadido
 

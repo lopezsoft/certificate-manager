@@ -13,6 +13,7 @@ import { MessagesService } from '../../utils';
 import { LoadMaskService } from '../../services/load-mask.service';
 import { FormatsService } from '../../services/formats.service';
 import { DebugService } from '../../utils/debug.service';
+import { WompiPaymentService } from '../../services/wompi-payment.service';
 
 /**
  * PurchaseComponent — Wizard de compra de certificados.
@@ -61,6 +62,7 @@ export class PurchaseComponent implements OnInit, OnDestroy {
     public format: FormatsService,
     private router: Router,
     private debug: DebugService,
+    private wompiPaymentService: WompiPaymentService,
   ) {
     this.purchaseForm = this.fb.group({
       quantity: [1, [Validators.required, Validators.min(1)]],
@@ -70,6 +72,15 @@ export class PurchaseComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadTiers();
+
+    // Escuchar cuando el pago se confirma desde el modal global
+    this.wompiPaymentService.paymentCompleted$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.polling = false;
+        this.paymentStatus = 'PAID';
+        this.currentStep = 4;
+      });
   }
 
   ngOnDestroy(): void {
@@ -142,41 +153,15 @@ export class PurchaseComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ─── Paso 4: Redirigir al pago WOMPI ─────────────────────────────────────
+  // ─── Paso 4: Pago con Widget de WOMPI ─────────────────────────────────────
 
   /**
-   * Redirige al usuario a la URL de aceptación de WOMPI para completar el pago.
-   * Luego inicia polling del estado de la orden.
+   * Delega el pago al WompiPaymentService que gestiona el modal global.
+   * Suscrito a paymentCompleted$ para actualizar el estado del wizard.
    */
   onPayWithWompi(): void {
     if (!this.orderResponse) return;
-
-    // Abrir la URL de pago WOMPI en nueva ventana
-    window.open(this.orderResponse.acceptance_url, '_blank');
-
-    // Iniciar polling del estado de la orden
-    this.polling = true;
-    this.paymentStatus = 'PENDING';
-    this.currentStep = 4;
-
-    this.orderService.pollOrderStatus(this.orderResponse.order_id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (order: Order) => {
-          this.paymentStatus = order.status;
-          if (order.status === 'PAID') {
-            this.polling = false;
-            this.msg.toastMessage('¡Pago confirmado!', 'Su compra ha sido procesada exitosamente. Los certificados ya están disponibles.');
-            // Refrescar cupos disponibles
-            this.quotaService.getQuotaStatus().subscribe();
-          }
-        },
-        error: (err) => {
-          this.debug.error('PurchaseComponent', 'Error en polling de estado', err);
-          this.polling = false;
-          this.msg.errorMessage('Error', 'No se pudo verificar el estado del pago. Consulte sus órdenes.');
-        }
-      });
+    this.wompiPaymentService.openPayment(this.orderResponse);
   }
 
   // ─── Navegación ──────────────────────────────────────────────────────────

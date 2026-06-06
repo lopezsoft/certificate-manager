@@ -3,11 +3,20 @@
     <!-- Banner de Cupo -->
     <app-quota-banner></app-quota-banner>
 
-    <div class="card">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="card-title mb-0">{{ title | uppercase }}</h5>
-        <button class="btn custom-button fas-fa-ok" (click)="onNewOrder()">
-          <i class="fas fa-shopping-cart me-1"></i> Nueva compra
+    <div class="card orders-card">
+      <div class="card-header orders-card__header">
+        <div class="orders-card__title-group">
+          <div class="orders-card__icon">
+            <i class="fas fa-file-invoice-dollar"></i>
+          </div>
+          <div>
+            <h5 class="orders-card__title">{{ title | uppercase }}</h5>
+            <small class="orders-card__subtitle">Historial de compras y pagos</small>
+          </div>
+        </div>
+        <button class="orders-card__new-btn" (click)="onNewOrder()">
+          <i class="fas fa-shopping-cart"></i>
+          <span>Nueva compra</span>
         </button>
       </div>
       <div class="card-body">
@@ -26,43 +35,89 @@
 
         <!-- Lista de órdenes -->
         @if (orderService.orders.length > 0) {
-          <div class="table-responsive">
-            <table class="table table-hover">
+          <div class="orders-table-wrapper">
+            <table class="orders-table">
               <thead>
                 <tr>
-                  <th>#</th>
                   <th>Referencia</th>
-                  <th>Cantidad</th>
-                  <th>Vigencia</th>
-                  <th>Total</th>
-                  <th>Estado</th>
+                  <th class="text-center">Cantidad</th>
+                  <th class="text-center">Vigencia</th>
+                  <th class="text-end">Total</th>
+                  <th class="text-center">Estado</th>
+                  <th class="text-center">Método</th>
                   <th>Fecha</th>
+                  <th class="text-center">Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                @for (order of orderService.orders; track order) {
-                  <tr>
-                    <td>{{ order.id }}</td>
+                @for (order of orderService.orders; track order.uuid) {
+                <tr>
                     <td>
-                      <span class="text-muted small">{{ order.provider_reference }}</span>
+                      <code class="orders-table__ref">{{ order.provider_reference }}</code>
                     </td>
-                    <td>{{ order.quantity }}</td>
-                    <td>{{ order.vigencia }} año{{ order.vigencia > 1 ? 's' : '' }}</td>
-                    <td>
-                      <strong>{{ formatCurrency(order.total_amount, order.currency) }}</strong>
+                    <td class="text-center">
+                      <span class="orders-table__qty">{{ order.quantity }}</span>
                     </td>
-                    <td>
-                      <span class="badge"
-                                        [ngClass]="{
-                                            'bg-warning text-dark': order.status === 'PENDING',
-                                            'bg-success': order.status === 'PAID',
-                                            'bg-danger': order.status === 'CANCELLED' || order.status === 'FAILED',
-                                            'bg-secondary': order.status === 'EXPIRED'
-                                        }">
+                    <td class="text-center">
+                      {{ order.vigencia }} año{{ order.vigencia > 1 ? 's' : '' }}
+                    </td>
+                    <td class="text-end">
+                      <strong class="orders-table__amount">
+                        {{ formatCurrency(order.total_amount, order.currency) }}
+                      </strong>
+                    </td>
+                    <td class="text-center">
+                      <span class="orders-table__status"
+                        [ngClass]="{
+                          'orders-table__status--pending': order.status === 'PENDING',
+                          'orders-table__status--paid': order.status === 'PAID',
+                          'orders-table__status--failed': order.status === 'CANCELLED' || order.status === 'FAILED',
+                          'orders-table__status--expired': order.status === 'EXPIRED'
+                        }">
+                        <i class="fas"
+                          [ngClass]="{
+                            'fa-clock': order.status === 'PENDING',
+                            'fa-check-circle': order.status === 'PAID',
+                            'fa-times-circle': order.status === 'CANCELLED' || order.status === 'FAILED',
+                            'fa-calendar-times': order.status === 'EXPIRED'
+                          }"></i>
                         {{ orderStatusDescription[order.status] || order.status }}
                       </span>
                     </td>
-                    <td>{{ order.created_at_formatted || order.created_at }}</td>
+                    <td class="text-center">
+                      @if (order.payment_method) {
+                        <span class="orders-table__method">
+                          <i class="fas fa-credit-card"></i> {{ order.payment_method }}
+                        </span>
+                      } @else {
+                        <span class="text-muted">-</span>
+                      }
+                    </td>
+                    <td>
+                      <span class="orders-table__date">
+                        {{ order.created_at | date:'dd/MM/yyyy HH:mm' }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      @if (order.status === 'PENDING') {
+                        <button class="orders-table__retry-btn"
+                          (click)="onRetryPayment(order)"
+                          appCustomTooltip="Reintentar pago">
+                          <i class="fas fa-credit-card"></i>
+                          Pagar
+                        </button>
+                        <button class="orders-table__cancel-btn"
+                          (click)="onCancelOrder(order)"
+                          appCustomTooltip="Cancelar orden">
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
+                      }
+                      @if (order.status === 'PAID') {
+                        <span class="orders-table__completed-icon" appCustomTooltip="Pago completado">
+                          <i class="fas fa-check-double"></i>
+                        </span>
+                      }
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -72,11 +127,15 @@
 
         <!-- Sin resultados -->
         @if (orderService.orders.length === 0) {
-          <div class="text-center py-4">
-            <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
-            <p class="text-muted">No se encontraron órdenes de compra.</p>
-            <button class="btn custom-button fas-fa-ok" (click)="onNewOrder()">
-              <i class="fas fa-plus me-1"></i> Realizar primera compra
+          <div class="orders-empty">
+            <div class="orders-empty__icon">
+              <i class="fas fa-shopping-cart"></i>
+            </div>
+            <h6 class="orders-empty__title">Sin órdenes de compra</h6>
+            <p class="orders-empty__text">Aún no ha realizado ninguna compra de certificados.</p>
+            <button class="orders-card__new-btn" (click)="onNewOrder()">
+              <i class="fas fa-plus"></i>
+              <span>Realizar primera compra</span>
             </button>
           </div>
         }

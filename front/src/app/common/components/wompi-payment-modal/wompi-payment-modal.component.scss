@@ -1,0 +1,219 @@
+$wompi-primary: #2556a3;
+$wompi-primary-dark: #1d4688;
+$wompi-success: #28c76f;
+$wompi-danger: #ea5455;
+$wompi-warning: #ff9f43;
+$wompi-text: #2d2d3f;
+$wompi-text-muted: #6e6b7b;
+$wompi-border: #e8e8ee;
+$wompi-bg-light: #f8f9fc;
+
+// ─── Loading ─────────────────────────────────────────────────────────────
+.wompi-modal__loading {
+  text-align: center;
+  padding: 2rem 1rem;
+
+  p {
+    margin-top: 1rem;
+    color: $wompi-text-muted;
+    font-size: 0.85rem;
+  }
+}
+
+// ─── Content (Ready to Pay) ──────────────────────────────────────────────
+.wompi-modal__content {
+  text-align: center;
+}
+
+.wompi-modal__order-info {
+  border: 1px solid $wompi-border;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+
+.wompi-modal__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  font-size: 0.84rem;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid rgba($wompi-border, 0.6);
+  }
+
+  &--total {
+    background: $wompi-bg-light;
+  }
+}
+
+.wompi-modal__label {
+  color: $wompi-text-muted;
+  font-weight: 500;
+}
+
+.wompi-modal__value {
+  font-weight: 600;
+  color: $wompi-text;
+
+  code {
+    background: rgba($wompi-primary, 0.08);
+    color: $wompi-primary;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+}
+
+.wompi-modal__total {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: $wompi-success;
+}
+
+// ─── Pay Button ──────────────────────────────────────────────────────────
+.wompi-modal__pay-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 28px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, $wompi-primary, $wompi-primary-dark);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba($wompi-primary, 0.3);
+  margin-bottom: 0.75rem;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba($wompi-primary, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  i {
+    font-size: 1.05rem;
+  }
+}
+
+.wompi-modal__hint {
+  font-size: 0.72rem;
+  color: $wompi-text-muted;
+  margin: 0;
+
+  i {
+    color: $wompi-success;
+    margin-right: 4px;
+  }
+}
+
+// ─── Status (Polling / Result) ───────────────────────────────────────────
+.wompi-modal__status {
+  text-align: center;
+  padding: 1.5rem 0.5rem;
+
+  h6 {
+    font-weight: 700;
+    color: $wompi-text;
+    margin-bottom: 6px;
+  }
+
+  p {
+    font-size: 0.82rem;
+    color: $wompi-text-muted;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+  }
+}
+
+.wompi-modal__spinner {
+  width: 48px;
+  height: 48px;
+  border-width: 3px;
+  margin-bottom: 1rem;
+}
+
+.wompi-modal__status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+
+  &--pending {
+    background: rgba($wompi-warning, 0.1);
+    color: $wompi-warning;
+  }
+}
+
+.wompi-modal__status-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+
+  &--success {
+    background: rgba($wompi-success, 0.1);
+    color: $wompi-success;
+    animation: wompi-bounce 0.6s ease;
+  }
+
+  &--error {
+    background: rgba($wompi-danger, 0.1);
+    color: $wompi-danger;
+  }
+}
+
+@keyframes wompi-bounce {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+// ─── Footer Actions (Cancel/Close) ──────────────────────────────────────
+.wompi-modal__footer-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.wompi-modal__link-btn {
+  background: none;
+  border: none;
+  color: $wompi-text-muted;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: $wompi-danger;
+    background: rgba($wompi-danger, 0.06);
+  }
+}
+
+.wompi-modal__note {
+  display: block;
+  font-size: 0.7rem;
+  color: rgba($wompi-text-muted, 0.7);
+  text-align: center;
+  max-width: 280px;
+  line-height: 1.4;
+}

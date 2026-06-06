@@ -43,3 +43,109 @@ app-navbar-bookmark {
     }
   }
 }
+
+// =============================================
+// Navbar Session Card — info corporativa PRO
+// =============================================
+.navbar-session-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  margin-left: 0.5rem;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(37, 86, 163, 0.06) 0%, rgba(26, 140, 216, 0.04) 100%);
+  border: 1px solid rgba(37, 86, 163, 0.15);
+  box-shadow: 0 1px 4px rgba(37, 86, 163, 0.08);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(37, 86, 163, 0.15);
+    border-color: rgba(37, 86, 163, 0.3);
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #2556a3, #1a8cd8);
+    color: #fff;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+    box-shadow: 0 2px 5px rgba(37, 86, 163, 0.3);
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__role {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #fff;
+    background: linear-gradient(90deg, #2556a3, #1a8cd8);
+    padding: 2px 7px;
+    border-radius: 20px;
+    white-space: nowrap;
+
+    i {
+      font-size: 0.6rem;
+    }
+  }
+
+  &__uuid {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.63rem;
+    font-weight: 600;
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    letter-spacing: 0.04em;
+    color: #5e6b84;
+    background: rgba(94, 107, 132, 0.1);
+    border: 1px solid rgba(94, 107, 132, 0.2);
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease;
+
+    &:hover {
+      background: rgba(37, 86, 163, 0.1);
+      border-color: rgba(37, 86, 163, 0.3);
+      color: #2556a3;
+    }
+
+    i {
+      font-size: 0.6rem;
+    }
+  }
+}
+
+// Company name badge near user avatar
+.user-status--company {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #2556a3 !important;
+}
+

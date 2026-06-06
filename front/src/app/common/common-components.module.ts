@@ -11,6 +11,7 @@ import {TimeLineComponent} from "./components/time-line/time-line.component";
 import {DocumentViewerComponent} from "./components/document-viewer/document-viewer.component";
 import {CamerfirmaInfoComponent} from "./components/camerfirma-info/camerfirma-info.component";
 import {ModalCardComponent} from "./components/modal-card/modal-card.component";
+import {WompiPaymentModalComponent} from "./components/wompi-payment-modal/wompi-payment-modal.component";
 @NgModule({
   declarations: [
     NotificationCardComponent,
@@ -22,7 +23,8 @@ import {ModalCardComponent} from "./components/modal-card/modal-card.component";
     TimeLineComponent,
     DocumentViewerComponent,
     CamerfirmaInfoComponent,
-    ModalCardComponent
+    ModalCardComponent,
+    WompiPaymentModalComponent
   ],
   imports: [
     CommonModule,
@@ -38,7 +40,8 @@ import {ModalCardComponent} from "./components/modal-card/modal-card.component";
     TimeLineComponent,
     DocumentViewerComponent,
     CamerfirmaInfoComponent,
-    ModalCardComponent
+    ModalCardComponent,
+    WompiPaymentModalComponent
   ]
 })
 export class CommonComponentsModule { }

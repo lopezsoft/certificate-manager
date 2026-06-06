@@ -120,7 +120,10 @@
               </div>
             </form>
 
-            <div class="d-flex justify-content-end mt-4">
+            <div class="d-flex justify-content-between mt-4">
+              <button class="btn-wizard btn-wizard--outline" (click)="goToOrders()">
+                <i class="fas fa-arrow-left"></i> Volver
+              </button>
               <button class="btn-wizard btn-wizard--primary"
                 (click)="onCalculatePrice()"
                 [disabled]="purchaseForm.invalid || loadingPrice">
@@ -237,10 +240,6 @@
 
             <div class="order-details-card">
               <div class="order-detail-row">
-                <span class="detail-label">Nº de Orden</span>
-                <span class="detail-value">#{{ orderResponse.order_id }}</span>
-              </div>
-              <div class="order-detail-row">
                 <span class="detail-label">Referencia</span>
                 <span class="detail-value"><code>{{ orderResponse.provider_reference }}</code></span>
               </div>
@@ -250,7 +249,10 @@
               </div>
             </div>
 
-            <div class="text-center mt-4">
+            <div class="d-flex justify-content-center align-items-center gap-3 mt-4 flex-wrap">
+              <button class="btn-wizard btn-wizard--outline" (click)="goToOrders()">
+                <i class="fas fa-clock"></i> Pagar después
+              </button>
               <button class="btn-wompi" (click)="onPayWithWompi()">
                 <i class="fas fa-credit-card"></i>
                 Pagar con WOMPI

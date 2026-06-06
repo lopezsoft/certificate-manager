@@ -1,0 +1,109 @@
+<app-modal-card
+  [visible]="state.visible"
+  [title]="'Pagar con WOMPI'"
+  [showFooter]="false"
+  size="sm"
+  (onClose)="onClose()">
+
+  <!-- Loading: obteniendo datos de reintento -->
+  @if (state.loading) {
+    <div class="wompi-modal__loading">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p>Obteniendo datos de pago...</p>
+      <button class="wompi-modal__link-btn" (click)="onClose()">Cancelar</button>
+    </div>
+  }
+
+  <!-- Datos de la orden listos → mostrar resumen + botón pagar -->
+  @if (!state.loading && state.orderData && !state.polling && state.paymentStatus !== 'PAID') {
+    <div class="wompi-modal__content">
+      <div class="wompi-modal__order-info">
+        @if (state.orderUuid) {
+          <div class="wompi-modal__row">
+            <span class="wompi-modal__label">Orden</span>
+            <span class="wompi-modal__value"><code>{{ state.orderUuid | slice:0:8 }}...</code></span>
+          </div>
+        }
+        <div class="wompi-modal__row">
+          <span class="wompi-modal__label">Referencia</span>
+          <span class="wompi-modal__value">
+            <code>{{ state.orderData.provider_reference }}</code>
+          </span>
+        </div>
+        <div class="wompi-modal__row wompi-modal__row--total">
+          <span class="wompi-modal__label">Total a pagar</span>
+          <span class="wompi-modal__value wompi-modal__total">
+            {{ formatCurrency(state.orderData.total_amount, state.orderData.currency) }}
+          </span>
+        </div>
+      </div>
+
+      <button class="wompi-modal__pay-btn" (click)="onPayClick()">
+        <i class="fas fa-credit-card"></i>
+        Pagar con WOMPI
+      </button>
+
+      <div class="wompi-modal__footer-actions">
+        <button class="wompi-modal__link-btn" (click)="onClose()">
+          Cancelar y volver
+        </button>
+      </div>
+
+      <p class="wompi-modal__hint">
+        <i class="fas fa-shield-alt"></i>
+        Pago seguro procesado por Wompi
+      </p>
+    </div>
+  }
+
+  <!-- Polling: verificando estado del pago -->
+  @if (state.polling) {
+    <div class="wompi-modal__status">
+      <div class="spinner-border text-primary wompi-modal__spinner" role="status">
+        <span class="visually-hidden">Verificando...</span>
+      </div>
+      <h6>Verificando estado del pago...</h6>
+      <p>Se está consultando automáticamente.</p>
+      <span class="wompi-modal__status-badge wompi-modal__status-badge--pending">
+        <i class="fas fa-sync-alt fa-spin"></i>
+        {{ state.paymentStatus }}
+      </span>
+      <div class="wompi-modal__footer-actions mt-3">
+        <button class="wompi-modal__link-btn" (click)="onClose()">
+          <i class="fas fa-times me-1"></i>
+          Cerrar y verificar después
+        </button>
+        <small class="wompi-modal__note">
+          La orden permanecerá pendiente. Puede reintentar el pago desde "Órdenes de compra".
+        </small>
+      </div>
+    </div>
+  }
+
+  <!-- Pago confirmado -->
+  @if (state.paymentStatus === 'PAID' && !state.polling) {
+    <div class="wompi-modal__status">
+      <div class="wompi-modal__status-icon wompi-modal__status-icon--success">
+        <i class="fas fa-check"></i>
+      </div>
+      <h6>¡Pago confirmado!</h6>
+      <p>Su compra ha sido procesada exitosamente.</p>
+      <button class="btn btn-outline-secondary btn-sm" (click)="onClose()">Cerrar</button>
+    </div>
+  }
+
+  <!-- Error -->
+  @if (state.paymentStatus === 'ERROR' && !state.polling) {
+    <div class="wompi-modal__status">
+      <div class="wompi-modal__status-icon wompi-modal__status-icon--error">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <h6>Pago no confirmado</h6>
+      <p>No se pudo verificar el estado del pago. Puede reintentar desde la lista de órdenes.</p>
+      <button class="btn btn-outline-secondary btn-sm" (click)="onClose()">Cerrar</button>
+    </div>
+  }
+
+</app-modal-card>

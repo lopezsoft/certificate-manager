@@ -9,12 +9,14 @@ import {
 
 import { CoreCommonModule } from '@core/common.module';
 import { CoreTouchspinModule } from '@core/components/core-touchspin/core-touchspin.module';
+import { CoreModule } from 'app/@core/core.module';
 
 import { NavbarComponent } from 'app/layout/components/navbar/navbar.component';
 import { NavbarBookmarkComponent } from 'app/layout/components/navbar/navbar-bookmark/navbar-bookmark.component';
 import { NavbarSearchComponent } from 'app/layout/components/navbar/navbar-search/navbar-search.component';
 
 import { NavbarNotificationComponent } from 'app/layout/components/navbar/navbar-notification/navbar-notification.component';
+import { AvatarFallbackPipe } from 'app/layout/components/navbar/avatar-fallback.pipe';
 
 const DEFAULT_PERFECT_SCROLLBAR_CONFIG: PerfectScrollbarConfigInterface = {
   suppressScrollX: true,
@@ -22,14 +24,14 @@ const DEFAULT_PERFECT_SCROLLBAR_CONFIG: PerfectScrollbarConfigInterface = {
 };
 
 @NgModule({
-  declarations: [NavbarComponent, NavbarSearchComponent, NavbarBookmarkComponent, NavbarNotificationComponent],
-  imports: [RouterModule, NgbModule, CoreCommonModule, CoreTouchspinModule],
+  declarations: [NavbarComponent, NavbarSearchComponent, NavbarBookmarkComponent, NavbarNotificationComponent, AvatarFallbackPipe],
+  imports: [RouterModule, NgbModule, CoreCommonModule, CoreTouchspinModule, CoreModule],
   providers: [
     {
       provide: PERFECT_SCROLLBAR_CONFIG,
       useValue: DEFAULT_PERFECT_SCROLLBAR_CONFIG
     }
   ],
-  exports: [NavbarComponent]
+  exports: [NavbarComponent, AvatarFallbackPipe]
 })
 export class NavbarModule {}

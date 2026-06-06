@@ -30,6 +30,7 @@ import Swal from "sweetalert2";
 export class NavbarComponent implements OnInit, OnDestroy {
   public user: User = {avatar: "", email: "", firstName: "", id: 0, lastName: ""};
   public companyData: any = null;
+  public userData: any = null;
   public companyImg: string = '';
   
   public horizontalMenu: boolean;
@@ -182,6 +183,34 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Copia el UUID de la empresa al portapapeles.
+   * Usa Clipboard API (HTTPS) con fallback a execCommand (HTTP).
+   */
+  copyUuid(uuid: string): void {
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(uuid).then(() => {
+        this.msg.toastMessage('UUID copiado', uuid, 2);
+      });
+    } else {
+      // Fallback para contextos HTTP (sin HTTPS)
+      const textarea = document.createElement('textarea');
+      textarea.value = uuid;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        this.msg.toastMessage('UUID copiado', uuid, 2);
+      } catch {
+        this.msg.errorMessage('Error', 'No se pudo copiar el UUID.');
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    }
+  }
+
+  /**
    * Logout method
    */
   logout() {
@@ -227,6 +256,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.user = this._token.getCurrentUser();
       const data = this._token.getToken();
       this.companyData  = data.company;
+      this.userData     = data.user;
     }
     // get the currentUser details from localStorage
 

@@ -9,6 +9,7 @@ export const environment = {
   APIJWT: 'cmanager-app-jwt',
   APPURL: 'http://cm-api.test',
   APIURL: 'http://cm-api.test/api/v1',
+  WOMPI_PUBLIC_KEY: 'pub_test_q4gEVnZWpzfEROZMScHdZgH4ChcGHW2E',
   VERSION: '1.4.0',
   config: {
     name: 'MANAGER',
