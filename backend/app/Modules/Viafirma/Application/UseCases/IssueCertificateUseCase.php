@@ -290,7 +290,7 @@ final class IssueCertificateUseCase
             state:            null,     // API v3.4.53: FE-PN no lleva ST
             locality:         null,     // API v3.4.53: FE-PN no lleva L
             street:           $street,
-            serialNumber:     (string) ($cr->document_number ?? $cr->dni),
+            serialNumber:     (string) ($cr->dni),
             email:            (string) ($cr->email ?? $company->email ?? $cmd->emailCertificate),
             givenName:        (string) ($cr->legal_rep_first_name ?? $this->firstName($cr->legal_representative ?? '')),
             surname:          (string) ($cr->legal_rep_last_name ?? $this->lastName($cr->legal_representative ?? '')),
