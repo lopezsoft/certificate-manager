@@ -142,17 +142,32 @@ class Kernel extends ConsoleKernel
         /**
          * Job 7: Revivir solicitudes Viafirma huérfanas (sin poll programado)
          *
-         * Frecuencia: Cada 15 minutos
+         * Frecuencia: Cada 5 minutos (antes era 15)
          * Función: Busca solicitudes en estado SUBMITTED/POLLING sin next_poll_at
          *          programado y las re-arma despachando PollViafirmaStatusJob
          */
         $schedule->job(new \App\Modules\Viafirma\Infrastructure\Jobs\ReviveStalledViafirmaPollsJob())
-            ->everyFifteenMinutes()
+            ->everyFiveMinutes()
             ->timezone('America/Bogota')
             ->name('viafirma:revive-stalled-polls')
             ->withoutOverlapping(10)
             ->onOneServer()
             ->appendOutputTo(storage_path('logs/scheduled-viafirma-watchdog.log'));
+
+        /**
+         * Job 7.5: Reintentar emisiones estancadas
+         *
+         * Frecuencia: Cada 10 minutos
+         * Función: Busca solicitudes de Viafirma en estado PROCESSING sin
+         *          registro remoto tras 10 minutos de gracia, y las reintenta.
+         */
+        $schedule->job(new \App\Jobs\Certificate\RetryStalledIssuancesJob())
+            ->everyTenMinutes()
+            ->timezone('America/Bogota')
+            ->name('viafirma:retry-stalled-issuances')
+            ->withoutOverlapping(10)
+            ->onOneServer()
+            ->appendOutputTo(storage_path('logs/scheduled-viafirma-retry-issuances.log'));
 
         /**
          * Job 8: Purga segura de llaves privadas expiradas (Sprint 4)
