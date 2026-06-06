@@ -38,6 +38,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
   formData: FormData;
   canEdit: boolean = false;
   buttonText: string = 'Crear solicitud';
+  private lastLookupDni: string = '';
   
   // Límite total de archivos: 10MB
   private readonly MAX_TOTAL_SIZE = 10 * 1024 * 1024; // 10MB
@@ -422,13 +423,17 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
 
   protected onLookupDni() {
     const dni = this.customForm.get('dni')?.value;
-    if (!dni || this.canEdit) return;
+    if (!dni || this.canEdit || dni === this.lastLookupDni) return;
+
+    this.lastLookupDni = dni;
 
     this._http.get(`/certificate-request/lookup/${dni}`).subscribe({
       next: (resp: any) => {
-        if (resp.dataRecords) {
-          this.customForm.patchValue(resp.dataRecords);
+        if (resp.dataRecords.data) {
+          this.customForm.patchValue(resp.dataRecords.data);
           this._msg.toastMessage('Autocompletado', 'Datos recuperados de una solicitud anterior.', 2);
+        } else {
+          this.defaultFormValues();
         }
       },
       error: () => {
@@ -482,5 +487,22 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
           ts._router.navigate(['/requests/list']);
         }
       });
+  }
+
+  private defaultFormValues() {
+    this.customForm.get('document_number')?.setValue('');
+    this.customForm.get('company_name')?.setValue('');
+    this.customForm.get('legal_representative')?.setValue('');
+    this.customForm.get('legal_rep_email')?.setValue('');
+    this.customForm.get('identity_document_id')?.setValue(3);
+    this.customForm.get('type_organization_id')?.setValue(2);
+    this.customForm.get('entity_document_type_id')?.setValue(1);
+    this.customForm.get('mobile')?.setValue('');
+    this.customForm.get('phone')?.setValue('');
+    this.customForm.get('info')?.setValue('');
+    this.customForm.get('address')?.setValue('');
+    this.customForm.get('city_id')?.setValue(149);
+    this.customForm.get('dv')?.setValue('');
+    this.customForm.get('life')?.setValue(1);
   }
 }
