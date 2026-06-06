@@ -63,5 +63,6 @@ class Kernel extends HttpKernel
         'verified'      => \App\Http\Middleware\EnsureEmailIsVerified::class,
         'validate.mime' => \App\Http\Middleware\ValidateFileMimeType::class,
         'admin'         => \App\Http\Middleware\EnsureUserIsAdmin::class,
+        'sync.signature' => \App\Http\Middleware\ValidateSyncSignature::class,
     ];
 }

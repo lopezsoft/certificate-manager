@@ -110,4 +110,169 @@ class RegisteredUserController extends Controller
             return MessageExceptionResponse::response($e);
         }
     }
+
+    /**
+     * @OA\Post(
+     *     path="/sync-account",
+     *     tags={"Sincronización"},
+     *     summary="Sincronizar cuenta desde sistema externo (ERP/API)",
+     *     description="Crea o actualiza un usuario y su empresa desde un sistema externo. El password se recibe ya hasheado (bcrypt). Autenticación vía HMAC-SHA256.",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"user", "company"},
+     *             @OA\Property(property="user", type="object",
+     *                 required={"email", "password_hash", "first_name", "last_name", "type_id"},
+     *                 @OA\Property(property="email", type="string", format="email"),
+     *                 @OA\Property(property="password_hash", type="string", description="Bcrypt hash (60 chars)"),
+     *                 @OA\Property(property="first_name", type="string", maxLength=100),
+     *                 @OA\Property(property="last_name", type="string", maxLength=100),
+     *                 @OA\Property(property="type_id", type="integer", enum={2,3,4})
+     *             ),
+     *             @OA\Property(property="company", type="object",
+     *                 required={"company_name", "dni"},
+     *                 @OA\Property(property="company_name", type="string", maxLength=100),
+     *                 @OA\Property(property="dni", type="string", maxLength=30)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=201, description="Cuenta creada"),
+     *     @OA\Response(response=200, description="Cuenta actualizada"),
+     *     @OA\Response(response=401, description="Autenticación HMAC fallida"),
+     *     @OA\Response(response=422, description="Validación fallida")
+     * )
+     *
+     * Sincroniza una cuenta de usuario desde un sistema externo (ERP/API).
+     * El password llega ya hasheado (bcrypt) y se asigna directamente.
+     */
+    public function syncAccount(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            // Usuario
+            'user.email'         => ['required', 'email', 'max:255'],
+            'user.password_hash' => ['required', 'string', 'min:60', 'max:60'],
+            'user.first_name'    => ['required', 'string', 'max:100'],
+            'user.last_name'     => ['required', 'string', 'max:100'],
+            'user.type_id'       => ['required', 'integer', 'exists:user_types,id', 'not_in:1'],
+
+            // Empresa
+            'company.company_name' => ['required', 'string', 'max:100'],
+            'company.dni'          => ['required', 'string', 'max:30'],
+            'company.dv'           => ['nullable', 'string', 'max:2'],
+            'company.email'        => ['nullable', 'email', 'max:255'],
+            'company.phone'        => ['nullable', 'string', 'max:30'],
+            'company.address'      => ['nullable', 'string', 'max:255'],
+            'company.city_id'      => ['nullable', 'integer', 'exists:cities,id'],
+            'company.country_id'   => ['nullable', 'integer'],
+        ], [
+            'user.email.required'         => 'El email del usuario es requerido',
+            'user.email.email'            => 'El email no es válido',
+            'user.password_hash.required' => 'El hash del password es requerido',
+            'user.password_hash.min'      => 'El hash debe ser un bcrypt válido (60 caracteres)',
+            'user.first_name.required'    => 'El nombre es requerido',
+            'user.last_name.required'     => 'El apellido es requerido',
+            'user.type_id.not_in'         => 'No se permite sincronizar usuarios administradores',
+            'company.company_name.required' => 'El nombre de la empresa es requerido',
+            'company.dni.required'          => 'El NIT es requerido',
+        ]);
+
+        try {
+            $result = DB::transaction(function () use ($data) {
+                $userData    = $data['user'];
+                $companyData = $data['company'];
+
+                // ── 1. Upsert usuario ──────────────────────────────────────
+                $user = User::where('email', $userData['email'])->first();
+                $userAction = 'updated';
+
+                if (! $user) {
+                    $user = User::create([
+                        'email'      => $userData['email'],
+                        'password'   => $userData['password_hash'], // Bcrypt directo
+                        'first_name' => $userData['first_name'],
+                        'last_name'  => $userData['last_name'],
+                        'type_id'    => $userData['type_id'],
+                        'active'     => 1,
+                    ]);
+                    $userAction = 'created';
+                } else {
+                    $user->update([
+                        'first_name' => $userData['first_name'],
+                        'last_name'  => $userData['last_name'],
+                        'password'   => $userData['password_hash'],
+                        'active'     => 1,
+                    ]);
+                }
+
+                // Marcar email como verificado (confiamos en el sistema origen)
+                if (! $user->hasVerifiedEmail()) {
+                    $user->markEmailAsVerified();
+                }
+
+                // ── 2. Upsert empresa ──────────────────────────────────────
+                $company = Company::where('dni', $companyData['dni'])->first();
+                $companyAction = 'updated';
+
+                if (! $company) {
+                    $company = Company::create([
+                        'company_name'         => $companyData['company_name'],
+                        'dni'                  => $companyData['dni'],
+                        'dv'                   => $companyData['dv'] ?? null,
+                        'email'                => $companyData['email'] ?? $userData['email'],
+                        'phone'                => $companyData['phone'] ?? null,
+                        'address'              => $companyData['address'] ?? null,
+                        'city_id'              => $companyData['city_id'] ?? null,
+                        'country_id'           => $companyData['country_id'] ?? 45,
+                        'identity_document_id' => 3,  // NIT
+                        'type_organization_id' => 1,  // Default
+                        'active'               => 1,
+                    ]);
+                    $companyAction = 'created';
+                } else {
+                    $company->update(array_filter([
+                        'company_name' => $companyData['company_name'],
+                        'email'        => $companyData['email'] ?? null,
+                        'phone'        => $companyData['phone'] ?? null,
+                        'address'      => $companyData['address'] ?? null,
+                    ]));
+                }
+
+                // ── 3. Vincular user ↔ company (idempotente) ───────────────
+                $pivotExists = DB::table('business_users')
+                    ->where('user_id', $user->id)
+                    ->where('company_id', $company->id)
+                    ->exists();
+
+                if (! $pivotExists) {
+                    DB::table('business_users')->insert([
+                        'user_id'    => $user->id,
+                        'company_id' => $company->id,
+                    ]);
+                }
+
+                return [
+                    'user_action'    => $userAction,
+                    'company_action' => $companyAction,
+                    'user_id'        => $user->id,
+                    'email'          => $user->email,
+                    'company_id'     => $company->id,
+                    'company_dni'    => $company->dni,
+                ];
+            });
+
+            $httpStatus = $result['user_action'] === 'created' ? 201 : 200;
+            $message    = $result['user_action'] === 'created'
+                ? 'Cuenta sincronizada exitosamente'
+                : 'Cuenta actualizada exitosamente';
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'data'    => $result,
+            ], $httpStatus);
+
+        } catch (Exception $e) {
+            return MessageExceptionResponse::response($e);
+        }
+    }
 }

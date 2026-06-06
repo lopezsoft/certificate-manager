@@ -25,3 +25,8 @@ Route::get('/verify-email/{id}/{hash}', [VerifyEmailController::class, 'verify']
 Route::post('/email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
     ->middleware('guest')
     ->name('verification.send');
+
+// ── Sincronización inter-sistema (ERP/API → Certificate Manager) ──────
+Route::post('/sync-account', [RegisteredUserController::class, 'syncAccount'])
+    ->middleware('sync.signature')
+    ->name('sync.account');

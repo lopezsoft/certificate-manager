@@ -37,4 +37,19 @@ return [
         'textract_region' => env('AWS_TEXTRACT_REGION', 'us-east-1'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Sincronización Inter-Sistema (ERP / API → Certificate Manager)
+    |--------------------------------------------------------------------------
+    |
+    | Credenciales para autenticación servicio-a-servicio vía HMAC-SHA256.
+    | Generar con: php -r "echo bin2hex(random_bytes(32));"
+    |
+    */
+    'sync' => [
+        'api_key'     => env('SYNC_API_KEY'),
+        'api_secret'  => env('SYNC_API_SECRET'),
+        'allowed_ips' => array_filter(explode(',', env('SYNC_ALLOWED_IPS', ''))),
+    ],
+
 ];
