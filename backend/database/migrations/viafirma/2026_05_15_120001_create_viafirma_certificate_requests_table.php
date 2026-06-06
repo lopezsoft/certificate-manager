@@ -23,12 +23,24 @@ return new class extends Migration
             $t->id();
 
             // ── Enlace fuerte al agregado de negocio existente ──────────────
-            $t->foreignId('certificate_request_id')
-                ->unique()
-                ->constrained('certificate_requests')
+            $t->bigInteger('certificate_request_id');
+            $t->bigInteger('company_id');
+            $t->unsignedBigInteger('requested_by_user_id')->nullable();
+
+            $t->foreign('certificate_request_id')
+                ->references('id')
+                ->on('certificate_requests')
                 ->cascadeOnDelete();
-            $t->foreignId('company_id')->constrained()->cascadeOnDelete();
-            $t->foreignId('requested_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+                
+            $t->foreign('company_id')
+                ->references('id')
+                ->on('companies')
+                ->cascadeOnDelete();
+                
+            $t->foreign('requested_by_user_id')
+                ->references('id')
+                ->on('users')
+                ->nullOnDelete();
 
             // ── Identificadores Viafirma ────────────────────────────────────
             $t->string('cod_request', 32)->nullable()->unique()->index();
