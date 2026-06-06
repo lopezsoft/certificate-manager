@@ -18,18 +18,28 @@ export class ErrorInterceptor implements HttpInterceptor {
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
         const _auth = this.accessToken;
-        if (_auth && !_auth?.isAuthenticated()) {
-          this.clearSessionData();
-        }
+
+        // Solo limpiar sesión y redirigir al login si el usuario TENÍA una sesión activa
+        // (había un token) pero el servidor la rechazó. NO aplica en rutas públicas
+        // como /register o /login donde no hay token.
         if ([401, 403].indexOf(error.status) !== -1) {
-          // auto logout if 401 Unauthorized or 403 Forbidden response returned from api
-          this._router.navigate(['/auth/not-authorized']);
+          if (_auth?.isAuthenticated()) {
+            // Sesión expirada o sin permisos — limpiar y redirigir
+            this.clearSessionData();
+          } else {
+            // Ruta pública con credenciales inválidas — solo mostrar error
+            this._router.navigate(['/auth/not-authorized']);
+          }
         }
 
         // HTTP 402: Sin cupo disponible — propagar sin mostrar error genérico.
-        // Los componentes que llaman al endpoint deben manejar este caso
-        // detectando error.status === 402 y redirigiendo al flujo de compra.
         if (error.status === 402) {
+          return throwError(() => error);
+        }
+
+        // HTTP 422: Error de validación de formulario — propagar sin mostrar
+        // toast genérico para que el componente pueda mapear los errores por campo.
+        if (error.status === 422) {
           return throwError(() => error);
         }
 
