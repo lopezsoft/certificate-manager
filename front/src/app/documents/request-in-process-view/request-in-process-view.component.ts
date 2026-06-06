@@ -65,7 +65,7 @@ export class RequestInProcessViewComponent {
 
 	protected sendEmail(status: DocumentStatusEnum) {
 		this.mask.showBlockUI("Cambiando estado del documento...");
-		this.http.post(`/certificate-request/${this.currentShipping.id}/send-mail`, {
+		this.http.post(`/certificate-request/${this.currentShipping.id}/issue`, {
 			request_status: status,
 			comments: this.comments ? this.comments : DocumentStatusComments[status],
 			user_of_change: 'MANAGER'

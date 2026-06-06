@@ -4,7 +4,7 @@ import { map } from 'rxjs/operators';
 import { JsonResponse } from '../../interfaces';
 
 import { TypeOrganization } from '../../models/companies-model';
-import { TaxLevel, TaxRegime, IdentityDocuments
+import { TaxLevel, TaxRegime, IdentityDocuments, EntityDocumentType
 } from '../../models/general-model';
 import { HttpResponsesService } from '../../utils';
 
@@ -19,6 +19,14 @@ export class DocumentsService {
     const ts  = this;
     return ts.api.get('/organization-type', params)
       .pipe( map ( (resp: any ) => {
+        return resp.dataRecords.data;
+      }));
+  }
+
+  getEntityDocumentTypes(params: any = {}): Observable<EntityDocumentType[]> {
+    const ts = this;
+    return ts.api.get('/entity-document-types', params)
+      .pipe(map((resp: any) => {
         return resp.dataRecords.data;
       }));
   }

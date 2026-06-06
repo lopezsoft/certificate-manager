@@ -144,6 +144,49 @@
                                 </div>
                               </div>
                             </div>
+                            @if (isViafirma() && !isNaturelPerson()) {
+                              <div class="row">
+                                <div class="col-md-6">
+                                  <div class="form-group">
+                                    <label>
+                                      <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                                      Tipo de documento constitutivo
+                                    </label>
+                                    <ng-select formControlName="entity_document_type_id" required>
+                                      @for (type of entityDocumentTypes; track type) {
+                                        <ng-option [value]="type.id">{{ type.description }}</ng-option>
+                                      }
+                                    </ng-select>
+                                  </div>
+                                </div>
+                                <div class="col-md-6">
+                                  <div class="form-group">
+                                    <label>
+                                      <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                                      Email del representante legal
+                                    </label>
+                                    <input class="form-control" type="email" formControlName="legal_rep_email"
+                                           placeholder="ejemplo@empresa.com" autocomplete="email"
+                                           [class.is-invalid]="isInvalid('legal_rep_email')">
+                                    @if (isInvalid('legal_rep_email')) {
+                                      <small class="text-danger">Correo electrónico inválido o requerido</small>
+                                    }
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="row">
+                                <div class="col-md-12">
+                                  <div class="alert alert-info py-2 mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    @if (f['entity_document_type_id']?.value === 1) {
+                                      Se enviará un enlace de verificación biométrica al correo del representante legal una vez procesada la solicitud.
+                                    } @else {
+                                      Un asesor de Viafirma contactará al representante legal por correo electrónico para continuar con el proceso.
+                                    }
+                                  </div>
+                                </div>
+                              </div>
+                            }
                             @if (_token.isAdmin()) {
                               <div class="row">
                                 <div class="col-md-12">
@@ -174,7 +217,7 @@
                                     }
                                   </ng-select>
                                 </div>
-                                @if (!canEdit) {
+                                @if (!canEdit && !isViafirma()) {
                                   <div class="form-group">
                                     <hr>
                                       <h6>SUBIDA DE ARCHIVOS</h6>

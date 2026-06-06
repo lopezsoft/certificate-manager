@@ -236,6 +236,14 @@ export interface IdentityDocuments {
   active: number;
   state: number,
 }
+
+export interface EntityDocumentType {
+  id: number;
+  code: string;
+  description: string;
+  active: boolean;
+}
+
 export interface Department {
   id: number;
   code: string;

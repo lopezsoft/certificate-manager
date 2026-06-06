@@ -6,7 +6,7 @@ export interface  Company {
   email           : string;
   has_agreement   : boolean;
   company_type_id : number;
-  issuance_provider: string;
+  issuance_provider: string | null;
 }
 
 export interface AccessToken {

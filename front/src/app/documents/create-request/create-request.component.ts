@@ -1,5 +1,5 @@
 import {AfterViewInit, Component, ElementRef, OnInit, ViewChild} from '@angular/core';
-import {Cities, IdentityDocuments, TypeOrganzation} from "../../models/general-model";
+import {Cities, IdentityDocuments, TypeOrganzation, EntityDocumentType} from "../../models/general-model";
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
 import {HttpResponsesService, MessagesService} from "../../utils";
 import {ActivatedRoute, Router} from "@angular/router";
@@ -23,8 +23,10 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
   @ViewChild('dniInput', { static: false}) dniInput: ElementRef;
   @ViewChild('documentInput', { static: false}) documentInput: ElementRef;
   organizations !: TypeOrganzation[];
+  entityDocumentTypes: EntityDocumentType[] = [];
   identityDocs: IdentityDocuments[] = [];
   cities: Cities[] = [];
+  issuanceProvider: string | null = 'mail';
   customForm  : FormGroup;
   loading     : boolean = false;
   protected title: string = 'Datos para solicitud de certificado';
@@ -46,6 +48,9 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
   get canSaveForm(): boolean {
     // Si está editando, siempre puede guardar
     if (this.canEdit) return true;
+    
+    // Si es viafirma, los archivos no son obligatorios en este componente
+    if (this.isViafirma()) return true;
     
     // Determinar si es persona jurídica o natural
     const isPersonaJuridica = !this.isNaturelPerson();
@@ -160,8 +165,14 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
+    this.issuanceProvider = this._token.getToken()?.company?.issuance_provider || 'mail';
+
     this.documentSer.getIdentityDocuments({}).subscribe((resp) => {
       this.identityDocs  = resp;
+    });
+
+    this.documentSer.getEntityDocumentTypes({}).subscribe((resp) => {
+      this.entityDocumentTypes = resp;
     });
 
     this._cities.getData({}).subscribe((resp) => {
@@ -183,10 +194,12 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     ts.customForm = ts.fb.group({
       company_name          : ['',[Validators.required, Validators.minLength(5)]],
       legal_representative  : ['', [Validators.required, Validators.minLength(10)]],
+      legal_rep_email       : [''],
       dni                   : ['',[Validators.required, Validators.minLength(5), Validators.maxLength(12)]],
       document_number       : ['',[Validators.required, Validators.minLength(5), Validators.maxLength(12)]],
       identity_document_id  : [1, [Validators.required]],
       type_organization_id  : [1,Validators.required],
+      entity_document_type_id: [1],
       mobile                : [''],
       phone                 : [''],
       info                  : [''],
@@ -219,8 +232,10 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       this.customForm.get('document_number')?.setValue(resp.document_number);
       this.customForm.get('company_name')?.setValue(resp.company_name);
       this.customForm.get('legal_representative')?.setValue(resp.legal_representative);
+      this.customForm.get('legal_rep_email')?.setValue(resp.legal_rep_email);
       this.customForm.get('identity_document_id')?.setValue(resp.identity_document_id);
       this.customForm.get('type_organization_id')?.setValue(resp.type_organization_id);
+      this.customForm.get('entity_document_type_id')?.setValue(resp.entity_document_type_id);
       this.customForm.get('mobile')?.setValue(resp.mobile);
       this.customForm.get('phone')?.setValue(resp.phone);
       this.customForm.get('info')?.setValue(resp.info);
@@ -241,7 +256,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       }
       
       // Validar cantidad de archivos requeridos según tipo de persona
-      if (!ts.canEdit) {
+      if (!ts.canEdit && !ts.isViafirma()) {
         const isPersonaJuridica = !ts.isNaturelPerson();
         const requiredFiles = isPersonaJuridica ? 3 : 2;
         
@@ -261,7 +276,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       params.document_number= params.document_number.replace(/[^0-9]/g, '');
       ts.loading            = true;
       
-      if (!ts.canEdit) {
+      if (!ts.canEdit && !ts.isViafirma()) {
         ts.formData = new FormData();
         // Append all files to formData
         ts.files.forEach((file: any, index) => {
@@ -288,7 +303,8 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
               }
           });
       } else {
-      this._http.post('/certificate-request', ts.formData)
+        const payload = ts.isViafirma() ? params : ts.formData;
+        this._http.post('/certificate-request', payload)
           .subscribe({
               next: (resp) => {
                 ts.finalResponse(resp);
@@ -332,6 +348,11 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     }
     return res
   }
+  
+  isViafirma(): boolean {
+    return this.issuanceProvider === 'viafirma';
+  }
+
   protected onChangeTypeOrganization($event: any) {
     const isPersonaJuridica = !this.isNaturelPerson();
     const maxFiles = isPersonaJuridica ? 3 : 2;
