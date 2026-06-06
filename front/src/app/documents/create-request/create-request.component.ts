@@ -270,14 +270,21 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
          frm.get('legal_representative')?.setValue(`${firstName} ${lastName}`.trim());
       }
 
-      ts.onValidateForm(frm);
-      if(frm.invalid) {
-        throw new Error('Por favor llene la información de cada campo');
-      }
       if(ts.isViafirma() && !ts.isNaturelPerson() && frm.get('entity_document_type_id')?.value == 0) {
         throw new Error('Por favor seleccione el tipo de documento constitutivo');
       } else {
         frm.get('entity_document_type_id')?.setValue(1);
+      }
+
+      ts.onValidateForm(frm);
+      if(frm.invalid) {
+         let invalidFields = [];
+         for (const name in frm.controls) {
+             if (frm.controls[name].invalid) {
+                 invalidFields.push(name);
+             }
+         }
+         throw new Error(`Por favor llene la información correctamente. Campos con error: ${invalidFields.join(', ')}`);
       }
       
       // Validar cantidad de archivos requeridos según tipo de persona
