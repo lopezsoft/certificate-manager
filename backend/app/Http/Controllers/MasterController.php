@@ -65,4 +65,8 @@ class MasterController extends Controller
         return ReferencedTablesService::getCurrencies();
     }
 
+    public function getEntityDocumentTypes(): JsonResponse
+    {
+        return ReferencedTablesService::getEntityDocumentTypes();
+    }
 }

@@ -7,5 +7,6 @@
     Route::controller('MasterController')->group(function () {
         Route::get('identity-documents',        'getIdentityDocuments');
         Route::get('organization-type',         'getTypeOrganization');
+        Route::get('entity-document-types',     'getEntityDocumentTypes');
     });
 

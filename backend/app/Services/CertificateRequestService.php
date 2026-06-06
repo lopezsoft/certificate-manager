@@ -39,19 +39,21 @@ class CertificateRequestService
         $company = CompanyQueries::getCompany();
 
         return $this->createHandler->handle(new CreateCertificateRequestCommand(
-            companyId:            $company->id,
-            cityId:               (int) $request->city_id,
-            identityDocumentId:   (int) $request->identity_document_id,
-            typeOrganizationId:   (int) $request->type_organization_id,
-            documentNumber:       $request->document_number,
-            address:              $request->address,
-            legalRepresentative:  $request->legal_representative,
-            companyName:          $request->company_name,
-            dni:                  $request->dni,
-            life:                 (int) ($request->input('life') ?? 2),
-            info:                 $request->input('info'),
-            files:                array_values($request->files->all()),
-            userId:               auth()->id(),
+            companyId:             $company->id,
+            cityId:                (int) $request->city_id,
+            identityDocumentId:    (int) $request->identity_document_id,
+            typeOrganizationId:    (int) $request->type_organization_id,
+            entityDocumentTypeId:  (int) ($request->input('entity_document_type_id') ?? 1),
+            documentNumber:        $request->document_number,
+            address:               $request->address,
+            legalRepresentative:   $request->legal_representative,
+            legalRepEmail:         $request->input('legal_rep_email'),
+            companyName:           $request->company_name,
+            dni:                   $request->dni,
+            life:                  (int) ($request->input('life') ?? 2),
+            info:                  $request->input('info'),
+            files:                 array_values($request->files->all()),
+            userId:                auth()->id(),
         ));
     }
 

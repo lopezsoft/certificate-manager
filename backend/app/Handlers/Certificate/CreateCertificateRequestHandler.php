@@ -68,19 +68,21 @@ class CreateCertificateRequestHandler
             DB::beginTransaction();
 
             $certificate = CertificateRequest::create([
-                'company_id'            => $command->companyId,
-                'city_id'               => $command->cityId,
-                'identity_document_id'  => $command->identityDocumentId,
-                'type_organization_id'  => $command->typeOrganizationId,
-                'document_number'       => strip_tags($command->documentNumber),
-                'address'               => strip_tags($command->address),
-                'legal_representative'  => Str::upper(strip_tags($command->legalRepresentative)),
-                'company_name'          => Str::upper(strip_tags($command->companyName)),
-                'dni'                   => strip_tags($command->dni),
-                'dv'                    => $dv,
-                'info'                  => strip_tags($command->info ?? ''),
-                'life'                  => $command->life,
-                'base_path'             => $folderName,
+                'company_id'               => $command->companyId,
+                'city_id'                  => $command->cityId,
+                'identity_document_id'     => $command->identityDocumentId,
+                'type_organization_id'     => $command->typeOrganizationId,
+                'entity_document_type_id'  => $command->entityDocumentTypeId,
+                'document_number'          => strip_tags($command->documentNumber),
+                'address'                  => strip_tags($command->address),
+                'legal_representative'     => Str::upper(strip_tags($command->legalRepresentative)),
+                'legal_rep_email'          => $command->legalRepEmail,
+                'company_name'             => Str::upper(strip_tags($command->companyName)),
+                'dni'                      => strip_tags($command->dni),
+                'dv'                       => $dv,
+                'info'                     => strip_tags($command->info ?? ''),
+                'life'                     => $command->life,
+                'base_path'                => $folderName,
             ]);
 
             ChangeHistory::create([
