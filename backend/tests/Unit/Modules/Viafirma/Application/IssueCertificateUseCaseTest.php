@@ -12,9 +12,7 @@ use App\Models\TypeOrganization;
 use App\Modules\Viafirma\Application\Commands\IssueCertificateCommand;
 use App\Modules\Viafirma\Application\DTOs\CsrResult;
 use App\Modules\Viafirma\Application\DTOs\KeyPair;
-use App\Modules\Viafirma\Application\DTOs\ProfileDescriptor;
 use App\Modules\Viafirma\Application\DTOs\SubmitCsrResultDto;
-use App\Modules\Viafirma\Application\Services\DnPatternValidator;
 use App\Modules\Viafirma\Application\UseCases\IssueCertificateUseCase;
 use App\Modules\Viafirma\Domain\Contracts\CryptoServiceContract;
 use App\Modules\Viafirma\Domain\Contracts\KeyVault;
@@ -37,7 +35,7 @@ use Psr\Log\NullLogger;
 use Tests\TestCase;
 
 /**
- * Tests unitarios del IssueCertificateUseCase (V-209).
+ * Tests unitarios del IssueCertificateUseCase.
  *
  * Escenarios cubiertos:
  *  1) PJ camino feliz → entity con cod_request, internal_state = SUBMITTED
@@ -48,6 +46,9 @@ use Tests\TestCase;
  *  6) 5xx transient → TransientHttpException propagada
  *  7) 4xx client → ViafirmaClientException propagada
  *  8) Llave huérfana limpiada en fallo
+ *
+ * Nota: el endpoint GET /ra/available-profiles NO se llama en el flujo de emisión.
+ * Los valores ra_code y cod_profile se leen de config (VIAFIRMA_RA_CODE / VIAFIRMA_COD_PROFILE).
  */
 class IssueCertificateUseCaseTest extends TestCase
 {
@@ -62,11 +63,15 @@ class IssueCertificateUseCaseTest extends TestCase
     {
         parent::setUp();
 
-        $this->crypto           = Mockery::mock(CryptoServiceContract::class);
+        $this->crypto            = Mockery::mock(CryptoServiceContract::class);
         $this->csrBuilderFactory = Mockery::mock(CsrBuilderFactory::class);
-        $this->keyVault         = Mockery::mock(KeyVault::class);
-        $this->viafirmaClient   = Mockery::mock(ViafirmaClient::class);
-        $this->repository       = Mockery::mock(ViafirmaCertificateRequestRepositoryContract::class);
+        $this->keyVault          = Mockery::mock(KeyVault::class);
+        $this->viafirmaClient    = Mockery::mock(ViafirmaClient::class);
+        $this->repository        = Mockery::mock(ViafirmaCertificateRequestRepositoryContract::class);
+
+        // ra_code y cod_profile provienen de config (.env) — no del API remoto.
+        config(['viafirma.ra_code'     => 'viafirmaco']);
+        config(['viafirma.cod_profile' => 'VklBRklSTUEtQ08tUEotRkFDVFVSQUUtUDEy']);
 
         $this->useCase = new IssueCertificateUseCase(
             crypto:             $this->crypto,
@@ -76,9 +81,6 @@ class IssueCertificateUseCaseTest extends TestCase
             repository:         $this->repository,
             identityTypeMapper: new IdentityTypeMapper(),
             profileTypeMapper:  new ProfileTypeMapper(),
-            dnValidator:        Mockery::mock(DnPatternValidator::class, function ($m) {
-                $m->shouldReceive('assertMatches')->andReturn(null)->byDefault();
-            }),
             logger:             new NullLogger(),
         );
     }
@@ -152,30 +154,23 @@ class IssueCertificateUseCaseTest extends TestCase
             ->with($cr->id)
             ->andReturn(null);
 
-        // Remote profiles
-        $profileDescriptor = new ProfileDescriptor(
-            name: $profile === CertificateProfile::FE_PJ ? 'FE-PJ en formato PKCS10' : 'FE-PN en formato PKCS10',
-            codProfile: 'VklBRklSTUEt...',
-            dnPattern: '',
-            validity: 730,
-            raw: ['code' => $profile->value],
-        );
-        $this->viafirmaClient->shouldReceive('getProfiles')
-            ->andReturn([$profileDescriptor]);
+        // ra_code y cod_profile vienen de config — getProfiles() NO se llama en el flujo de emisión
+        // (se llama manualmente UNA VEZ para obtener los valores que se guardan en .env)
 
         // Key pair
         $this->crypto->shouldReceive('generateKeyPair')
             ->andReturn(new KeyPair(
                 publicKeyPem: '-----BEGIN PUBLIC KEY-----...',
                 privateKeyPem: '-----BEGIN PRIVATE KEY-----...',
+                bits: 2048,
             ));
 
         // CSR builder
         $csrBuilderMock = Mockery::mock(\App\Modules\Viafirma\Domain\Contracts\CsrBuilderStrategy::class);
         $csrBuilderMock->shouldReceive('build')
             ->andReturn(new CsrResult(
-                pem: '-----BEGIN CERTIFICATE REQUEST-----...',
-                base64: base64_encode('test-csr'),
+                pem: "-----BEGIN CERTIFICATE REQUEST-----\nMIIBx...\n-----END CERTIFICATE REQUEST-----\n",
+                base64: base64_encode("-----BEGIN CERTIFICATE REQUEST-----\nMIIBx...\n-----END CERTIFICATE REQUEST-----\n"),
                 fingerprint: 'abcdef1234567890',
             ));
         $this->csrBuilderFactory->shouldReceive('for')
@@ -186,7 +181,7 @@ class IssueCertificateUseCaseTest extends TestCase
         $this->keyVault->shouldReceive('store')
             ->andReturn('vault://ref/42');
 
-        // Submit CSR
+        // Submit CSR — el payload debe incluir `csr` como PEM completo en base64
         $this->viafirmaClient->shouldReceive('submitCsr')
             ->andReturn(new SubmitCsrResultDto(
                 codRequest: 'PYJR5N4QC',
@@ -204,8 +199,6 @@ class IssueCertificateUseCaseTest extends TestCase
         $entity->public_id = 'bd6eda8d0f2d';
         $entity->internal_state = InternalState::SUBMITTED;
 
-        $freshEntity = clone $entity;
-        $entity->shouldReceive = null;
 
         $this->repository->shouldReceive('create')
             ->andReturn($entity);
@@ -305,28 +298,19 @@ class IssueCertificateUseCaseTest extends TestCase
             ->with(42)
             ->andReturn(null);
 
-        // Profiles
-        $profileDescriptor = new ProfileDescriptor(
-            name: 'FE-PJ en formato PKCS10',
-            codProfile: 'VklBRklSTUEt...',
-            dnPattern: '',
-            validity: 730,
-            raw: ['code' => 'FE-PJ'],
-        );
-        $this->viafirmaClient->shouldReceive('getProfiles')
-            ->andReturn([$profileDescriptor]);
-
+        // ra_code y cod_profile vienen de config — NO de getProfiles()
         $this->crypto->shouldReceive('generateKeyPair')
             ->andReturn(new KeyPair(
                 publicKeyPem: '-----BEGIN PUBLIC KEY-----...',
                 privateKeyPem: '-----BEGIN PRIVATE KEY-----...',
+                bits: 2048,
             ));
 
         $csrBuilderMock = Mockery::mock(\App\Modules\Viafirma\Domain\Contracts\CsrBuilderStrategy::class);
         $csrBuilderMock->shouldReceive('build')
             ->andReturn(new CsrResult(
-                pem: '-----BEGIN CERTIFICATE REQUEST-----...',
-                base64: base64_encode('test-csr'),
+                pem: "-----BEGIN CERTIFICATE REQUEST-----\nMIIBx...\n-----END CERTIFICATE REQUEST-----\n",
+                base64: base64_encode("-----BEGIN CERTIFICATE REQUEST-----\nMIIBx...\n-----END CERTIFICATE REQUEST-----\n"),
                 fingerprint: 'abcdef1234567890',
             ));
         $this->csrBuilderFactory->shouldReceive('for')

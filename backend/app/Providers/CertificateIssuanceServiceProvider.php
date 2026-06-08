@@ -25,25 +25,47 @@ final class CertificateIssuanceServiceProvider extends ServiceProvider
     {
         // Logger dedicado: reutiliza el canal de logging principal pero
         // permite redirigirlo en el futuro mediante config.
-        $this->app->singleton('certificate.issuance.logger', function (): LoggerInterface {
+        // IMPORTANTE: usar $app->make('log') en vez de Log::getFacadeRoot()
+        // para evitar la re-resolución del facade en queue:work daemon mode
+        // (resetScope() llama clearResolvedInstances() al inicio de cada iteración,
+        // lo que hace que getFacadeRoot() añada frames extra al stack de PHP,
+        // causando stack overflow en Windows con la cadena completa de DI).
+        $this->app->singleton('certificate.issuance.logger', function ($app): LoggerInterface {
             $channel = (string) config('certificate.issuance.log_channel', '');
-            /** @var LoggerInterface $logger */
-            $logger = $channel !== '' ? Log::channel($channel) : Log::getFacadeRoot();
-            return $logger;
+            /** @var \Illuminate\Log\LogManager $logManager */
+            $logManager = $app->make('log');
+            return $channel !== '' ? $logManager->channel($channel) : $logManager;
         });
 
-        // Inyectar el logger compartido en los servicios del subsistema.
+        // Factory explícita (no auto-wire) para evitar stack overflow en
+        // queue:work daemon mode en Windows (php.ini stack más pequeño).
+        $this->app->singleton(CertificateIssuanceProviderFactory::class, function ($app): CertificateIssuanceProviderFactory {
+            return new CertificateIssuanceProviderFactory(
+                container: $app,
+                logger:    $app->make('certificate.issuance.logger'),
+            );
+        });
+
+        $this->app->singleton(CertificateIssuanceOrchestrator::class, function ($app): CertificateIssuanceOrchestrator {
+            return new CertificateIssuanceOrchestrator(
+                factory: $app->make(CertificateIssuanceProviderFactory::class),
+                logger:  $app->make('certificate.issuance.logger'),
+            );
+        });
+
+        // Inyectar el logger compartido en los proveedores restantes.
         $this->app->when([
-                CertificateIssuanceProviderFactory::class,
-                CertificateIssuanceOrchestrator::class,
                 MailIssuanceProvider::class,
                 ViafirmaIssuanceProvider::class,
             ])
             ->needs(LoggerInterface::class)
             ->give(fn () => $this->app->make('certificate.issuance.logger'));
 
-        $this->app->singleton(CertificateIssuanceProviderFactory::class);
-        $this->app->singleton(CertificateIssuanceOrchestrator::class);
+        // Singleton para evitar reconstrucción costosa (DI profunda) en cada llamada
+        // del queue:work daemon. Sin esto, cada job en el daemon loop reconstruye la
+        // cadena completa →  stack overflow en Windows (PHP stack size limitado).
+        $this->app->singleton(ViafirmaIssuanceProvider::class);
+        $this->app->singleton(MailIssuanceProvider::class);
     }
 }
 

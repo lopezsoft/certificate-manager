@@ -54,7 +54,12 @@ final class DnPatternValidator
     }
 
     /**
-     * Extrae los nombres de atributo del pattern: "CN={x},GN={y},..." → ["CN","GN",...].
+     * Extrae los nombres de atributo del pattern que contienen placeholder `{...}`.
+     *
+     * Los componentes con valor literal (ej. `C=CO` o `DN=EMISOR FACTURA...`)
+     * se OMITEN porque no corresponden a datos del CSR; son rellenados por el RA.
+     *
+     * "CN={x},name={y},C=CO,DN=EMISOR..." → ["CN","name",...]
      *
      * @return string[]
      */
@@ -66,22 +71,33 @@ final class DnPatternValidator
             if ($component === '' || !str_contains($component, '=')) {
                 continue;
             }
-            [$k, ] = explode('=', $component, 2);
+            [$k, $v] = explode('=', $component, 2);
             $k = trim($k);
-            if ($k !== '') {
+            $v = trim($v);
+            // Sólo validar campos con placeholder {xxx}; los literales los pone el RA.
+            if ($k !== '' && str_contains($v, '{')) {
                 $keys[] = $k;
             }
         }
         return $keys;
     }
 
-    /** Normaliza claves Viafirma → claves que devuelve openssl_csr_get_subject. */
+    /**
+     * Normaliza claves Viafirma → claves que devuelve openssl_csr_get_subject.
+     *
+     * Mapeos necesarios porque Viafirma usa los nombres largos de OID en su
+     * dnPattern mientras que PHP/OpenSSL devuelve los nombres cortos:
+     *   givenName / name (OID 2.5.4.42 / 2.5.4.41) → GN (PHP short name)
+     *   surname          (OID 2.5.4.4)              → SN (PHP short name)
+     */
     private function normalizeKey(string $key): string
     {
         return match (strtolower($key)) {
-            'e', 'emailaddress' => 'emailaddress',
-            'street'            => 'street',
-            default             => strtolower($key),
+            'e', 'emailaddress'        => 'emailaddress',
+            'street'                   => 'street',
+            'gn', 'givenname', 'name'  => 'gn',   // givenName (long) = GN (short)
+            'sn', 'surname'            => 'sn',   // surname   (long) = SN (short)
+            default                    => strtolower($key),
         };
     }
 }

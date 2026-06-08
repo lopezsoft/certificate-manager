@@ -86,8 +86,9 @@ abstract class AbstractOpenSslCsrBuilder implements CsrBuilderStrategy
         }
 
         // Drenar la cola de errores OpenSSL (warnings no-fatales del def_load).
-        while (openssl_error_string() !== false) {
-            // drain
+        // @phpcs:ignore
+        while (($openSslErr = openssl_error_string()) !== false) {
+            unset($openSslErr); // drain silencioso
         }
 
         return new CsrResult(
@@ -98,13 +99,16 @@ abstract class AbstractOpenSslCsrBuilder implements CsrBuilderStrategy
     }
 
     /**
-     * Quita cabeceras BEGIN/END y saltos de línea para obtener el body base64
-     * estándar (no URL-safe) — listo para el payload Viafirma.
+     * Codifica el PEM completo (con cabeceras BEGIN/END y saltos de línea)
+     * en base64 estándar — tal como lo requiere Viafirma en el campo `csr`.
+     *
+     * ⚠️  Viafirma espera base64 del PEM COMPLETO (incluyendo headers y newlines),
+     * equivalente a: Buffer.from(csrPem).toString('base64') en Node.js / Postman.
+     * NO se debe enviar solo el body interno del PEM.
      */
     protected function pemToBase64Body(string $pem): string
     {
-        $body = preg_replace('/-----(BEGIN|END) CERTIFICATE REQUEST-----/', '', $pem);
-        return preg_replace('/\s+/', '', $body ?? '') ?? '';
+        return base64_encode($pem);
     }
 
     protected function lastOpenSslError(): string

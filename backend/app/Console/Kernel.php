@@ -142,7 +142,7 @@ class Kernel extends ConsoleKernel
         /**
          * Job 7: Revivir solicitudes Viafirma huérfanas (sin poll programado)
          *
-         * Frecuencia: Cada 5 minutos (antes era 15)
+         * Frecuencia: Cada 5 minutos
          * Función: Busca solicitudes en estado SUBMITTED/POLLING sin next_poll_at
          *          programado y las re-arma despachando PollViafirmaStatusJob
          */
@@ -157,15 +157,17 @@ class Kernel extends ConsoleKernel
         /**
          * Job 7.5: Reintentar emisiones estancadas
          *
-         * Frecuencia: Cada 10 minutos
+         * Frecuencia: Cada minuto
          * Función: Busca solicitudes de Viafirma en estado PROCESSING sin
-         *          registro remoto tras 10 minutos de gracia, y las reintenta.
+         *          registro remoto tras 3 minutos de gracia, y las reintenta.
+         *          La gracia de 3 min cubre los 3 reintentos del AutoIssueViafirmaJob
+         *          (backoff=30s c/u → ~90s total) antes de declarar la emisión estancada.
          */
         $schedule->job(new \App\Jobs\Certificate\RetryStalledIssuancesJob())
-            ->everyTenMinutes()
+            ->everyMinute()
             ->timezone('America/Bogota')
             ->name('viafirma:retry-stalled-issuances')
-            ->withoutOverlapping(10)
+            ->withoutOverlapping(2)
             ->onOneServer()
             ->appendOutputTo(storage_path('logs/scheduled-viafirma-retry-issuances.log'));
 

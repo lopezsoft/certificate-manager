@@ -9,15 +9,15 @@ use App\Modules\Viafirma\Domain\Enums\CertificateProfile;
 use App\Modules\Viafirma\Domain\Exceptions\CsrBuildException;
 
 /**
- * Builder de CSR para perfil FE-PJ (Persona Jurídica) — 10 atributos.
+ * Builder de CSR para perfil FE-PJ (Persona Jurídica) — 11 atributos.
  *
- *  C, ST, L, STREET, O, OU, SERIALNUMBER (NIT), E, GN, SN
+ *  CN, C, ST, L, STREET, O, OU, SERIALNUMBER (NIT), E, GN, SN
  */
 final class FePjCsrBuilder extends AbstractOpenSslCsrBuilder
 {
     protected function expectedAttributeCount(): int
     {
-        return 10;
+        return 11;
     }
 
     protected function validate(CsrInputDto $input): void
@@ -46,7 +46,11 @@ final class FePjCsrBuilder extends AbstractOpenSslCsrBuilder
 
     protected function dn(CsrInputDto $input): array
     {
+        // CN = {legalNameCorp} - {departament} según dnPattern Viafirma
+        $cn = trim($input->organization . ' - ' . ($input->state ?? ''));
+
         return [
+            'CN'           => $cn,
             'C'            => $input->country,
             'ST'           => $input->state,
             'L'            => $input->locality,

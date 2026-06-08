@@ -8,9 +8,7 @@ use App\Models\CertificateRequest;
 use App\Models\ChangeHistory;
 use App\Modules\Viafirma\Application\Commands\IssueCertificateCommand;
 use App\Modules\Viafirma\Application\DTOs\CsrInputDto;
-use App\Modules\Viafirma\Application\DTOs\ProfileDescriptor;
 use App\Modules\Viafirma\Application\DTOs\SubmitCsrInputDto;
-use App\Modules\Viafirma\Application\Services\DnPatternValidator;
 use App\Modules\Viafirma\Domain\Contracts\CryptoServiceContract;
 use App\Modules\Viafirma\Domain\Contracts\KeyVault;
 use App\Modules\Viafirma\Domain\Contracts\ViafirmaCertificateRequestRepositoryContract;
@@ -23,6 +21,7 @@ use App\Modules\Viafirma\Domain\Exceptions\ViafirmaException;
 use App\Modules\Viafirma\Domain\Mappers\IdentityTypeMapper;
 use App\Modules\Viafirma\Domain\Mappers\ProfileTypeMapper;
 use App\Modules\Viafirma\Infrastructure\Crypto\CsrBuilderFactory;
+use App\Modules\Viafirma\Infrastructure\Jobs\PollViafirmaStatusJob;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaStatusHistory;
 use Carbon\Carbon;
@@ -30,21 +29,29 @@ use Illuminate\Support\Facades\DB;
 use Psr\Log\LoggerInterface;
 
 /**
- * IssueCertificateUseCase — orquesta el ciclo completo de emisión (V-204):
+ * IssueCertificateUseCase — orquesta el ciclo completo de emisión:
  *
  *   1) Resolver perfil (FE_PJ/FE_PN) y datos del CSR desde catálogos productivos.
- *   2) Obtener `dnPattern`, `codProfile` y `validity` del perfil vía Viafirma.
+ *   2) Leer `ra_code` y `cod_profile` desde config (VIAFIRMA_RA_CODE / VIAFIRMA_COD_PROFILE).
+ *      El endpoint GET /ra/available-profiles solo se llama UNA VEZ de forma manual
+ *      para obtener estos valores, los cuales se persisten en .env.
  *   3) Generar par RSA-2048 LOCALMENTE.
  *   4) Construir el CSR con el builder correspondiente (Strategy).
- *   5) Validar CSR contra `dnPattern` del perfil (V-211).
- *   6) Guardar la llave privada cifrada en el KeyVault.
- *   7) `POST /request/fromCSR` → obtener codRequest + publicId (ambos directos, API v3.4.53).
- *   8) Persistir el agregado `viafirma_certificate_requests` (estado SUBMITTED).
- *   9) Auditoría: `change_histories` + `viafirma_status_history`.
- *  10) Despachar el primer poll job (Sprint 3).
+ *   5) Guardar la llave privada cifrada en el KeyVault.
+ *   6) `POST /request/fromCSR` → obtener codRequest + publicId (ambos directos, API v3.4.53).
+ *      El campo `csr` lleva el PEM COMPLETO codificado en base64 (con headers BEGIN/END).
+ *   7) Persistir el agregado `viafirma_certificate_requests` (estado SUBMITTED).
+ *   8) Auditoría: `change_histories` + `viafirma_status_history`.
+ *   9) Despachar el primer poll job.
  *
- *  Toda la operación va en transacción de BD; la generación de llave + submit
- *  remoto se hacen ANTES del commit (rollback automático si Viafirma falla).
+ *  Payload FE-PJ: identityType, countryCode, identity, ra, codProfile,
+ *                 emailCertificate, organizationType, csr
+ *  Payload FE-PN: identityType, countryCode, identity, ra, codProfile,
+ *                 emailCertificate, csr  (sin organizationType)
+ *
+ *  Las llamadas HTTP (submitCsr) ocurren FUERA de la transacción de BD para no
+ *  mantener locks durante I/O de red. Solo los writes a BD (pasos 7-8) van en
+ *  transacción. Si submitCsr falla, la llave del vault se destruye.
  */
 final class IssueCertificateUseCase
 {
@@ -56,7 +63,6 @@ final class IssueCertificateUseCase
         private readonly ViafirmaCertificateRequestRepositoryContract $repository,
         private readonly IdentityTypeMapper $identityTypeMapper,
         private readonly ProfileTypeMapper $profileTypeMapper,
-        private readonly DnPatternValidator $dnValidator,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -73,58 +79,78 @@ final class IssueCertificateUseCase
             );
         }
 
-        // ── 1) Resolver perfil + datos -------------------------------------
+        // ── 1) Resolver perfil + datos localmente ─────────────────────────
         $profile      = $this->resolveProfile($cr);
         $identityType = $cmd->identityTypeOverride ?? $this->resolveIdentityType($cr, $profile);
+        $countryCode  = strtoupper((string) ($cr->company?->country?->abbreviation_A2 ?? 'CO'));
+
         $this->enforceOrganizationTypeRule($profile, $cmd->organizationType);
 
-        $countryCode = strtoupper((string) ($cr->company?->country?->abbreviation_A2 ?? 'CO'));
-
-        // ── 2) Obtener perfil Viafirma -------------------------------------
+        // ── 2) Leer ra_code y cod_profile desde config (.env) ─────────────
+        // El endpoint GET /ra/available-profiles se ejecuta UNA SOLA VEZ de
+        // forma manual para obtener estos valores y persistirlos en .env.
+        // No hay necesidad de llamarlo en cada emisión.
         $raCode = (string) config('viafirma.ra_code');
         if ($raCode === '') {
             throw new ViafirmaException('config(viafirma.ra_code) está vacío — verifique VIAFIRMA_RA_CODE.');
         }
 
-        $remoteProfile = $this->pickProfile($this->client->getProfiles($raCode), $profile);
+        $codProfile = (string) config('viafirma.cod_profile');
+        if ($codProfile === '') {
+            throw new ViafirmaException('config(viafirma.cod_profile) está vacío — verifique VIAFIRMA_COD_PROFILE.');
+        }
 
-        // ── 3-4) Generar llave + CSR ---------------------------------------
-        $keyPair = $this->crypto->generateKeyPair((int) config('viafirma.crypto.key_size', 2048));
-        $csrInput = $this->buildCsrInput($cr, $profile, $identityType, $countryCode, $cmd);
+        $validityDays = (int) config('viafirma.certificate_validity_days', 730);
+
+        $this->logger->info('viafirma.issue.start', [
+            'cr_id'       => $cr->id,
+            'profile'     => $profile->value,
+            'ra_code'     => $raCode,
+            'cod_profile' => substr($codProfile, 0, 12) . '…',
+        ]);
+
+        // ── 3-4) Generar llave + CSR ──────────────────────────────────────
+        $this->logger->info('viafirma.issue.generating_key', ['cr_id' => $cr->id]);
+        $keyPair   = $this->crypto->generateKeyPair((int) config('viafirma.crypto.key_size', 2048));
+        $csrInput  = $this->buildCsrInput($cr, $profile, $identityType, $countryCode, $cmd);
         $csrResult = $this->csrBuilderFactory->for($profile)->build($csrInput, $keyPair->privateKeyPem);
 
-        // ── 5) Validar contra dnPattern (V-211) ----------------------------
-        $this->dnValidator->assertMatches($csrResult->pem, $remoteProfile->dnPattern);
-
-        // ── 6) Vault: persistir llave privada cifrada ----------------------
+        // ── 5) Vault: persistir llave privada cifrada ─────────────────────
         $keyRef = $this->keyVault->store($keyPair->privateKeyPem, [
             'certificate_request_id' => $cr->id,
             'company_id'             => $cr->company_id,
             'profile'                => $profile->value,
         ]);
 
-        // A partir de aquí la llave privada en memoria deja de ser útil; el
-        // GC se la lleva al salir de scope. (No la pasamos a ningún logger.)
         unset($keyPair);
 
         try {
-            // ── 7) Submit remoto ------------------------------------------
+            // ── 6) Submit remoto ──────────────────────────────────────────
+            // FE-PJ: incluye organizationType en el payload.
+            // FE-PN: organizationType = null → no se envía (ver SubmitCsrInputDto::toViafirmaPayload).
+            // El campo `csr` lleva el PEM completo codificado en base64 (con headers BEGIN/END).
+            $this->logger->info('viafirma.issue.submitting_csr', [
+                'cr_id'      => $cr->id,
+                'profile'    => $profile->value,
+                'cod_profile' => substr($codProfile, 0, 12) . '…',
+            ]);
+
             $submitInput = new SubmitCsrInputDto(
                 identityType:     $identityType,
                 countryCode:      $countryCode,
                 identity:         $this->resolveSubscriberIdentity($cr, $profile, $cmd),
                 raCode:           $raCode,
-                codProfile:       $remoteProfile->codProfile,
+                codProfile:       $codProfile,
                 emailCertificate: $cmd->emailCertificate,
                 csrBase64:        $csrResult->base64,
-                organizationType: $cmd->organizationType,
+                organizationType: $profile === CertificateProfile::FE_PJ ? $cmd->organizationType : null,
             );
             $submitResult = $this->client->submitCsr($submitInput);
 
-            // ── 8-9) Persistir agregado + auditoría -----------------------
+            // ── 7-8) Persistir agregado + auditoría ───────────────────────
             return DB::transaction(function () use (
-                $cr, $cmd, $profile, $identityType, $countryCode, $remoteProfile,
-                $csrResult, $keyRef, $submitInput, $submitResult
+                $cr, $cmd, $profile, $identityType, $countryCode, $codProfile, $raCode,
+                $csrResult, $keyRef, $submitInput, $submitResult, $validityDays
             ) {
                 $entity = $this->repository->create([
                     'certificate_request_id' => $cr->id,
@@ -132,13 +158,13 @@ final class IssueCertificateUseCase
                     'requested_by_user_id'   => $cmd->requestedByUserId,
                     'cod_request'            => $submitResult->codRequest,
                     'public_id'              => $submitResult->publicId,
-                    'cod_profile'            => $remoteProfile->codProfile,
-                    'ra_code'                => (string) config('viafirma.ra_code'),
+                    'cod_profile'            => $codProfile,
+                    'ra_code'                => $raCode,
                     'profile_type'           => $profile->value,
                     'identity_type'          => $identityType->value,
                     'country_code'           => $countryCode,
                     'organization_type'      => $cmd->organizationType?->value,
-                    'validity_days'          => $remoteProfile->validity ?: (int) config('viafirma.certificate_validity_days', 730),
+                    'validity_days'          => $validityDays,
                     'internal_state'         => InternalState::SUBMITTED->value,
                     'remote_status'          => $submitResult->initialStatus,
                     'key_vault_ref'          => $keyRef,
@@ -150,7 +176,6 @@ final class IssueCertificateUseCase
                     'expires_at'             => Carbon::now()->addHours((int) config('viafirma.polling.expiration_hours', 72)),
                 ]);
 
-                // Historial técnico de la FSM
                 ViafirmaStatusHistory::create([
                     'viafirma_certificate_request_id' => $entity->id,
                     'previous_state' => InternalState::DRAFT->value,
@@ -161,7 +186,6 @@ final class IssueCertificateUseCase
                     'occurred_at'    => now(),
                 ]);
 
-                // Auditoría de negocio (V-210)
                 ChangeHistory::create([
                     'certificate_request_id' => $cr->id,
                     'status'                 => 'VIAFIRMA_SUBMITTED',
@@ -170,31 +194,26 @@ final class IssueCertificateUseCase
                     'user_id'                => $cmd->requestedByUserId,
                 ]);
 
-                // Despachar primer poll job (definición en Sprint 3 — clase fully-qualified
-                // tolerada como string para no bloquear si aún no existe el job).
-                if (class_exists(\App\Jobs\Viafirma\PollViafirmaStatusJob::class)) {
-                    \App\Jobs\Viafirma\PollViafirmaStatusJob::dispatch($entity->id)
-                        ->delay(now()->addSeconds(15));
-                }
+                // Primer poll job — 15 s de delay para dar tiempo a que Viafirma procese
+                PollViafirmaStatusJob::dispatch($entity->id)
+                    ->delay(now()->addSeconds(15));
 
                 $this->logger->info('viafirma.issue.success', [
-                    'viafirma_id'   => $entity->id,
-                    'cr_id'         => $cr->id,
-                    'cod_request'   => $submitResult->codRequest,
-                    'profile'       => $profile->value,
+                    'viafirma_id' => $entity->id,
+                    'cr_id'       => $cr->id,
+                    'cod_request' => $submitResult->codRequest,
+                    'profile'     => $profile->value,
                 ]);
 
                 return $entity->fresh();
             });
         } catch (\Throwable $e) {
-            // Si falla el submit, intentamos limpiar la llave huérfana para no
-            // dejar material criptográfico colgado.
             $this->keyVault->destroy($keyRef);
             throw $e;
         }
     }
 
-    // ── Helpers privados (resolución desde catálogo productivo) ────────────
+    // ── Helpers privados ──────────────────────────────────────────────────────
 
     private function resolveProfile(CertificateRequest $cr): CertificateProfile
     {
@@ -207,9 +226,6 @@ final class IssueCertificateUseCase
 
     private function resolveIdentityType(CertificateRequest $cr, CertificateProfile $profile): IdentityType
     {
-        // identity_document_id SIEMPRE es el tipo de documento del representante legal
-        // (CC, CE, etc.), tanto para PJ como para PN.
-        // El NIT de la empresa está en el campo `dni`.
         $doc = $cr->identity;
         if ($doc === null) {
             throw new ViafirmaException("CertificateRequest {$cr->id} sin identity_document asociado.");
@@ -217,6 +233,9 @@ final class IssueCertificateUseCase
         return $this->identityTypeMapper->fromIdentityDocument($doc);
     }
 
+    /**
+     * FE-PJ requiere organizationType; FE-PN NO debe llevarlo.
+     */
     private function enforceOrganizationTypeRule(CertificateProfile $profile, ?OrganizationType $orgType): void
     {
         if ($profile === CertificateProfile::FE_PJ && $orgType === null) {
@@ -227,26 +246,6 @@ final class IssueCertificateUseCase
         }
     }
 
-    /** @param ProfileDescriptor[] $remote */
-    private function pickProfile(array $remote, CertificateProfile $profile): ProfileDescriptor
-    {
-        // Heurística: por defecto buscamos por nombre que contenga "PJ" o "PN".
-        // En Sprint 2.5/3 esto se puede refinar con un mapping explícito en config.
-        $needle = $profile === CertificateProfile::FE_PJ ? 'PJ' : 'PN';
-        foreach ($remote as $p) {
-            if (stripos($p->name, $needle) !== false || stripos($p->raw['code'] ?? '', $needle) !== false) {
-                return $p;
-            }
-        }
-        if ($remote === []) {
-            throw new ViafirmaException("Viafirma no retornó perfiles disponibles para el RA configurado.");
-        }
-        // Fallback: si sólo hay uno, lo tomamos.
-        if (count($remote) === 1) {
-            return $remote[0];
-        }
-        throw new ViafirmaException("No se pudo seleccionar un perfil remoto que coincida con {$profile->value}.");
-    }
 
     private function buildCsrInput(
         CertificateRequest $cr,

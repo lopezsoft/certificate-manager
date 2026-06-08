@@ -19,8 +19,8 @@ final class ProfileResponseParser
      */
     public function parse(array $payload): array
     {
-        // Algunas variantes del API envuelven el listado bajo "profiles".
-        $items = $payload['profiles'] ?? $payload;
+        // La API Viafirma puede envolver el listado bajo "profiles", "items", o devolverlo plano.
+        $items = $payload['profiles'] ?? $payload['items'] ?? $payload;
         if (!is_array($items)) {
             return [];
         }
@@ -36,7 +36,7 @@ final class ProfileResponseParser
             }
             $out[] = new ProfileDescriptor(
                 codProfile: $codProfile,
-                name:       (string) ($item['name'] ?? $item['profileName'] ?? ''),
+                name:       (string) ($item['name'] ?? $item['profileName'] ?? $item['title'] ?? ''),
                 dnPattern:  (string) ($item['dnPattern'] ?? ''),
                 validity:   (int) ($item['validity'] ?? 730),
                 token:      (string) ($item['token'] ?? 'P7B'),

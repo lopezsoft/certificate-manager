@@ -46,9 +46,13 @@ final class ViafirmaServiceProvider extends ServiceProvider
     public function register(): void
     {
         // ---- Logger decorado ----------------------------------------------------
+        // IMPORTANTE: usar $app->make('log') en vez de Log::getFacadeRoot()
+        // para evitar stack overflow en queue:work daemon mode en Windows.
         $this->app->singleton(SafePemLogger::class, function ($app): SafePemLogger {
             $channel = config('viafirma.logging.channel');
-            $base    = $channel ? Log::channel($channel) : Log::getFacadeRoot();
+            /** @var \Illuminate\Log\LogManager $logManager */
+            $logManager = $app->make('log');
+            $base = $channel ? $logManager->channel($channel) : $logManager;
             /** @var LoggerInterface $base */
             return new SafePemLogger($base);
         });
@@ -112,6 +116,25 @@ final class ViafirmaServiceProvider extends ServiceProvider
             ViafirmaCertificateRequestRepositoryContract::class,
             ViafirmaCertificateRequestRepository::class
         );
+
+        // ---- CSR Builders: inyectar opensslConf para Windows/WAMP64 -----------
+        // Los builders heredan AbstractOpenSslCsrBuilder(opensslConf=null por defecto).
+        // Sin opensslConf explícito, openssl_csr_new falla en Windows si OPENSSL_CONF
+        // no está en el entorno del sistema. Leemos el .cnf empaquetado con la app.
+        foreach ([
+            \App\Modules\Viafirma\Infrastructure\Crypto\FePjCsrBuilder::class,
+            \App\Modules\Viafirma\Infrastructure\Crypto\FePnCsrBuilder::class,
+        ] as $builderClass) {
+            $this->app->when($builderClass)
+                ->needs('$opensslConf')
+                ->give(fn () => config('viafirma.crypto.openssl_conf') ?: null);
+        }
+
+        // ---- UseCase como singleton para evitar reconstrucción profunda en daemon mode ─
+        // Sin esto, cada llamada a ViafirmaIssuanceProvider->issue() en el queue worker
+        // daemon reconstruye la cadena completa IssueCertificateUseCase → todas sus deps
+        // → stack overflow en Windows. El UseCase es stateless (safe as singleton).
+        $this->app->singleton(\App\Modules\Viafirma\Application\UseCases\IssueCertificateUseCase::class);
 
         // ---- UseCase Logger (SafePemLogger para todo el módulo Viafirma) ---------
         $this->app->when(\App\Modules\Viafirma\Application\UseCases\IssueCertificateUseCase::class)

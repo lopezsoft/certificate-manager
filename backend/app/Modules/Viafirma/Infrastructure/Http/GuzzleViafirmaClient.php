@@ -56,6 +56,16 @@ final class GuzzleViafirmaClient implements ViafirmaClient
             'raCode' => $raCode,
             'count'  => count($profiles),
         ]);
+
+        // Log del body crudo cuando no se obtienen perfiles para facilitar diagnóstico
+        if (count($profiles) === 0) {
+            $this->logger->warning('viafirma.getProfiles.empty', [
+                'raCode'       => $raCode,
+                'raw_response' => $decoded,
+                'hint'         => 'Verifique VIAFIRMA_RA_CODE y que el RA tenga perfiles en el entorno configurado.',
+            ]);
+        }
+
         return $profiles;
     }
 
@@ -124,10 +134,12 @@ final class GuzzleViafirmaClient implements ViafirmaClient
 
         $decoded = $this->send('GET', $url);
 
-        $statusValue = (string) ($decoded['status'] ?? $decoded['state'] ?? '');
+        // API v3.4.53: el campo que trae el estado es "code", no "status" ni "state".
+        // Ejemplo de respuesta: {"code": "rues_check"}
+        $statusValue = (string) ($decoded['code'] ?? $decoded['status'] ?? $decoded['state'] ?? '');
         if ($statusValue === '') {
             throw new ViafirmaClientException(
-                "Respuesta de getStatus sin `status` para codRequest={$codRequest}: " . json_encode($decoded)
+                "Respuesta de getStatus sin campo `code` para codRequest={$codRequest}: " . json_encode($decoded)
             );
         }
 

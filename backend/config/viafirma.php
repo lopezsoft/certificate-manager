@@ -20,6 +20,12 @@ return [
     'client_id'     => env('VIAFIRMA_CLIENT_ID'),
     'client_secret' => env('VIAFIRMA_CLIENT_SECRET'),
     'ra_code'       => env('VIAFIRMA_RA_CODE'),
+    'cod_profile'   => env('VIAFIRMA_COD_PROFILE'),
+
+    // TTL (segundos) del caché de perfiles del RA en memoria local.
+    // Los perfiles cambian rarísimo; cachearlos evita un HTTP GET en cada emisión.
+    // Usar 0 para deshabilitar el caché (útil en desarrollo para ver cambios inmediatos).
+    'profiles_cache_ttl_seconds' => (int) env('VIAFIRMA_PROFILES_CACHE_TTL', 3600),
 
     'timeout'       => (int) env('VIAFIRMA_HTTP_TIMEOUT', 30),
     'connect_timeout' => (int) env('VIAFIRMA_HTTP_CONNECT_TIMEOUT', 10),
@@ -33,21 +39,11 @@ return [
     'certificate_validity_days' => (int) env('VIAFIRMA_CERT_VALIDITY_DAYS', 730),
 
     'polling' => [
-        'max_attempts'     => (int) env('VIAFIRMA_POLL_MAX_ATTEMPTS', 96),
+        'max_attempts'     => (int) env('VIAFIRMA_POLL_MAX_ATTEMPTS', 288), // 288 × 60s = 8h máximo
         'expiration_hours' => (int) env('VIAFIRMA_POLL_EXPIRATION_HOURS', 72),
-        'jitter_pct'       => (int) env('VIAFIRMA_POLL_JITTER_PCT', 20),
-        'intervals' => [
-            'rues_check'              => 30,
-            'accreditation'           => 300,
-            'accreditation_check'     => 120,
-            'accreditation_completed' => 60,
-            'accreditation_verified'  => 30,
-            'proposeFor'              => 120,
-            'proposedToAcceptance'    => 120,
-            'inProcess'               => 60,
-            'All_Ok'                  => 30,
-            'default'                 => 180,
-        ],
+        // Intervalo fijo entre polls (segundos). Máximo recomendado: 60.
+        // Todos los estados usan este mismo valor; no hay backoff exponencial.
+        'interval_seconds' => (int) env('VIAFIRMA_POLL_INTERVAL', 60),
     ],
 
     'crypto' => [

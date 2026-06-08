@@ -33,3 +33,10 @@ ALTER TABLE `certificate_requests`
     ADD CONSTRAINT `fk_cr_entity_document_type`
         FOREIGN KEY (`entity_document_type_id`) REFERENCES `entity_document_types` (`id`)
             ON UPDATE CASCADE ON DELETE RESTRICT;
+
+
+-- 4) Nuevos campos para nombre del representante legal
+
+ALTER TABLE `certificate_requests`
+    ADD `legal_rep_first_name` VARCHAR(120) NULL AFTER `legal_representative`,
+    ADD `legal_rep_last_name` VARCHAR(120) NULL AFTER `legal_rep_first_name`;

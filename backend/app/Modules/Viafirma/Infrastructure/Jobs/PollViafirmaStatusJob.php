@@ -8,7 +8,6 @@ use App\Modules\Viafirma\Application\Services\PollingScheduler;
 use App\Modules\Viafirma\Domain\Contracts\ViafirmaClient;
 use App\Modules\Viafirma\Domain\Exceptions\TransientHttpException;
 use App\Modules\Viafirma\Domain\StateMachine;
-use App\Modules\Viafirma\Infrastructure\CircuitBreaker\ViafirmaCircuitBreaker;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -18,17 +17,16 @@ use Illuminate\Queue\InteractsWithQueue;
 use Psr\Log\LoggerInterface;
 
 /**
- * Job de polling auto-reagendable para una solicitud Viafirma (V-303).
+ * Polling de estado Viafirma — se auto-reprograma cada ~60 s hasta resolverse.
  *
  * Flujo:
- *  1. Cargar entidad → guard (terminal, expired, max attempts, circuit breaker)
- *  2. GET /request/{cod}/status
- *  3. FSM transition (StateMachine)
- *  4. Persistir
- *  5. Decidir: auto-reagendar || despachar DownloadP7bJob (Sprint 4) || STOP
+ *   1. GET /request/{codRequest}/status
+ *   2. FSM actualiza internal_state + remote_status
+ *   3. Si estado = Generated_Not_Downloaded → despacha DownloadP7bJob (descarga)
+ *   4. Si estado terminal o fallo → detiene polling
+ *   5. Si sigue en curso → reprograma a los 60 s
  *
- * ShouldBeUnique previene polling concurrente sobre la misma solicitud.
- * $tries = 1 porque el dominio controla los reintentos, no la cola.
+ * ShouldBeUnique evita polls concurrentes sobre la misma solicitud.
  */
 final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
 {
@@ -36,7 +34,7 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
     use InteractsWithQueue;
     use Queueable;
 
-    public int $tries   = 1;
+    public int $tries   = 1;   // El dominio controla los reintentos, no la cola
     public int $timeout = 25;
 
     public function __construct(
@@ -50,14 +48,10 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
 
     public function uniqueFor(): int
     {
-        return 600; // 10 minutos de lock
+        return 120; // lock de 2 min — suficiente para el timeout + margen
     }
 
-    /**
-     * Tags para Telescope / Horizon (cuando se instale).
-     *
-     * @return string[]
-     */
+    /** @return string[] */
     public function tags(): array
     {
         return ["viafirma:poll:{$this->requestId}"];
@@ -67,7 +61,6 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
         ViafirmaClient $client,
         PollingScheduler $scheduler,
         StateMachine $fsm,
-        ViafirmaCircuitBreaker $circuitBreaker,
         LoggerInterface $logger,
     ): void {
         $entity = ViafirmaCertificateRequest::find($this->requestId);
@@ -77,82 +70,82 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
             return;
         }
 
-        // Guard: estado terminal → no hacer nada
+        // Guard: estado terminal → no hacer nada más
         if ($entity->isTerminal()) {
-            $logger->info('viafirma.poll.skip_terminal', ['id' => $entity->id, 'state' => $entity->internal_state->value]);
-            return;
-        }
-
-        // Guard: expirado → marcar EXPIRED
-        if ($entity->hasExpired() || $scheduler->hasExceededSla($entity)) {
-            $fsm->markExpired($entity);
-            $entity->save();
-            $logger->info('viafirma.poll.expired', ['id' => $entity->id]);
-            return;
-        }
-
-        // Guard: máximo de intentos → marcar FAILED
-        if ($scheduler->hasExceededMaxAttempts($entity)) {
-            $fsm->markFailed($entity, 'MAX_ATTEMPTS', "Superado el máximo de {$entity->poll_attempts} intentos de polling.");
-            $entity->save();
-            $logger->info('viafirma.poll.max_attempts', ['id' => $entity->id, 'attempts' => $entity->poll_attempts]);
-            return;
-        }
-
-        // Guard: circuit breaker abierto → reagendar corto sin llamar a Viafirma
-        if ($circuitBreaker->isOpen()) {
-            $delay = $scheduler->retryAfter($entity);
-            self::dispatch($this->requestId)->delay(now()->addSeconds($delay));
-            $entity->next_poll_at = now()->addSeconds($delay);
-            $entity->save();
-            $logger->info('viafirma.poll.circuit_open', ['id' => $entity->id, 'retry_in' => $delay]);
-            return;
-        }
-
-        // Guard: cod_request vacío → no se puede consultar
-        if (empty($entity->cod_request)) {
-            $logger->warning('viafirma.poll.no_cod_request', ['id' => $entity->id]);
-            return;
-        }
-
-        // ── Ejecutar polling ──────────────────────────────────────────────
-        $entity->poll_attempts++;
-        $entity->last_polled_at = now();
-
-        try {
-            $statusResult = $client->getStatus($entity->cod_request);
-            $circuitBreaker->recordSuccess();
-        } catch (TransientHttpException $e) {
-            $circuitBreaker->recordFailure();
-            $logger->warning('viafirma.poll.transient_error', [
-                'id'      => $entity->id,
-                'message' => $e->getMessage(),
-            ]);
-
-            $delay = $scheduler->retryAfter($entity);
-            $entity->next_poll_at = now()->addSeconds($delay);
-            $entity->save();
-
-            self::dispatch($this->requestId)->delay(now()->addSeconds($delay));
-            return;
-        }
-
-        // ── Transición FSM ────────────────────────────────────────────────
-        $fsm->transition($entity, $statusResult->status, $statusResult->raw);
-
-        // ── Decidir próximo paso ──────────────────────────────────────────
-        if ($entity->isTerminal() || $entity->isReadyToDownload() || $entity->isFailed()) {
-            // Sprint 4 escuchará ViafirmaReadyToDownload para despachar DownloadP7bJob
-            $entity->next_poll_at = null;
-            $entity->save();
-            $logger->info('viafirma.poll.stopped', [
+            $logger->info('viafirma.poll.skip_terminal', [
                 'id'    => $entity->id,
                 'state' => $entity->internal_state->value,
             ]);
             return;
         }
 
-        // Auto-reagendar
+        // Guard: SLA o máximo de intentos superado → expirar
+        if ($entity->hasExpired() || $scheduler->hasExceededSla($entity) || $scheduler->hasExceededMaxAttempts($entity)) {
+            $fsm->markExpired($entity);
+            $entity->save();
+            $logger->warning('viafirma.poll.expired', [
+                'id'       => $entity->id,
+                'attempts' => $entity->poll_attempts,
+            ]);
+            return;
+        }
+
+        // Guard: sin codRequest → no se puede consultar
+        if (empty($entity->cod_request)) {
+            $logger->warning('viafirma.poll.no_cod_request', ['id' => $entity->id]);
+            return;
+        }
+
+        // ── Consultar estado en Viafirma ──────────────────────────────────
+        $entity->poll_attempts++;
+        $entity->last_polled_at = now();
+
+        try {
+            // GET /request/{codRequest}/status — responde {"code": "<estado>"}
+            $statusResult = $client->getStatus($entity->cod_request);
+        } catch (TransientHttpException $e) {
+            // Error de red o 5xx — reprogramar y continuar
+            $logger->warning('viafirma.poll.transient_error', [
+                'id'      => $entity->id,
+                'message' => $e->getMessage(),
+            ]);
+            $delay = $scheduler->retryAfter($entity);
+            $entity->next_poll_at = now()->addSeconds($delay);
+            $entity->save();
+            self::dispatch($this->requestId)->delay(now()->addSeconds($delay));
+            return;
+        }
+
+        // ── FSM: actualizar estado ────────────────────────────────────────
+        $fsm->transition($entity, $statusResult->status, $statusResult->raw);
+
+        // ── Decidir próximo paso ──────────────────────────────────────────
+        if ($entity->isReadyToDownload()) {
+            // Estado Generated_Not_Downloaded → despachar descarga del P7B
+            $entity->next_poll_at = null;
+            $entity->save();
+            $logger->info('viafirma.poll.ready_to_download', [
+                'id'        => $entity->id,
+                'publicId'  => $entity->public_id,
+                'remote'    => $statusResult->status->value,
+            ]);
+            // GET /downloadCertificateServlet?req={publicId}
+            DownloadP7bJob::dispatch($entity->id)->delay(now()->addSeconds(5));
+            return;
+        }
+
+        if ($entity->isTerminal() || $entity->isFailed()) {
+            $entity->next_poll_at = null;
+            $entity->save();
+            $logger->info('viafirma.poll.stopped', [
+                'id'     => $entity->id,
+                'state'  => $entity->internal_state->value,
+                'remote' => $statusResult->status->value,
+            ]);
+            return;
+        }
+
+        // Sigue en curso → reprogramar en ~60 s
         $delay = $scheduler->nextDelay($entity);
         $entity->next_poll_at = now()->addSeconds($delay);
         $entity->save();

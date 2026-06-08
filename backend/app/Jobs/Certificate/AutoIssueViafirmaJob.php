@@ -20,15 +20,14 @@ class AutoIssueViafirmaJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * El número de intentos permitidos.
-     */
+    /** Intentos totales (1 inmediato + 2 reintentos). */
     public int $tries = 3;
 
-    /**
-     * Esperar 30 segundos antes de reintentar.
-     */
+    /** Segundos de espera entre reintentos. */
     public int $backoff = 30;
+
+    /** Timeout del job (segundos). Suficiente para generación de llave + HTTP. */
+    public int $timeout = 90;
 
     public function __construct(
         public readonly int $certificateRequestId,
@@ -37,43 +36,89 @@ class AutoIssueViafirmaJob implements ShouldQueue
 
     public function handle(CertificateIssuanceOrchestrator $orchestrator): void
     {
-        $cr = CertificateRequest::query()->find($this->certificateRequestId);
+        $startedAt = microtime(true);
 
-        if ($cr === null) {
-            Log::warning('AutoIssueViafirmaJob: Solicitud no encontrada', ['id' => $this->certificateRequestId]);
-            return;
-        }
+        Log::info('AutoIssueViafirmaJob: iniciando', [
+            'cr_id'   => $this->certificateRequestId,
+            'attempt' => $this->attempts(),
+        ]);
 
         try {
-            $organizationType = null;
-            
-            // Si es Persona Jurídica (1), determinamos el organization_type de Viafirma
-            if ($cr->type_organization_id === 1) {
-                // entity_document_type_id = 1 corresponde a Cámara de Comercio (Registro Mercantil)
-                $organizationType = $cr->entity_document_type_id === 1
-                    ? OrganizationType::RM->value
-                    : OrganizationType::ESAL->value; // Fallback razonable para Personería Jurídica, Actas, etc.
+            $cr = CertificateRequest::query()->find($this->certificateRequestId);
+
+            if ($cr === null) {
+                Log::warning('AutoIssueViafirmaJob: solicitud no encontrada — se abandona', [
+                    'cr_id' => $this->certificateRequestId,
+                ]);
+                return; // No reintentar: la solicitud no existe
             }
+
+            // legal_rep_email obligatorio — sin él Viafirma no puede emitir
+            $emailCertificate = $cr->legal_rep_email ?? null;
+            if (empty($emailCertificate)) {
+                Log::warning('AutoIssueViafirmaJob: sin legal_rep_email — se abandona', [
+                    'cr_id' => $cr->id,
+                ]);
+                return; // No reintentar: falta dato estructural
+            }
+
+            // PJ (type_organization_id == 1) → EXTRANJERAS
+            // PN (type_organization_id == 2) → null (no se envía el campo)
+            // Usar == (no ===) porque Eloquent puede retornar string "1" sin cast
+            $organizationType = ((int) $cr->type_organization_id === 1)
+                ? OrganizationType::EXTRANJERAS->value
+                : null;
 
             $requestDto = new IssuanceRequest(
                 certificateRequestId: $cr->id,
                 requestedByUserId:    $this->userId,
-                emailCertificate:     $cr->legal_rep_email,
+                emailCertificate:     $emailCertificate,
                 organizationType:     $organizationType,
-                providerHint:         'viafirma'
+                providerHint:         'viafirma',
             );
 
-            Log::info('AutoIssueViafirmaJob: Iniciando emisión asíncrona', ['cr_id' => $cr->id]);
+            Log::info('AutoIssueViafirmaJob: llamando al orquestador', [
+                'cr_id'            => $cr->id,
+                'organization_type' => $organizationType ?? 'null (PN)',
+                'attempt'          => $this->attempts(),
+            ]);
 
-            $orchestrator->dispatch($requestDto);
+            // dispatchAsSystem respeta el providerHint sin requerir callerIsAdmin
+            $result = $orchestrator->dispatchAsSystem($requestDto);
+
+            Log::info('AutoIssueViafirmaJob: emisión completada', [
+                'cr_id'      => $cr->id,
+                'status'     => $result->status,
+                'elapsed_ms' => round((microtime(true) - $startedAt) * 1000),
+            ]);
 
         } catch (Throwable $e) {
-            Log::error('AutoIssueViafirmaJob: Fallo en la emisión', [
-                'cr_id' => $cr->id,
-                'error' => $e->getMessage(),
+            $elapsed = round((microtime(true) - $startedAt) * 1000);
+
+            Log::error('AutoIssueViafirmaJob: fallo en emisión', [
+                'cr_id'      => $this->certificateRequestId,
+                'attempt'    => $this->attempts(),
+                'error'      => $e->getMessage(),
+                'class'      => get_class($e),
+                'elapsed_ms' => $elapsed,
             ]);
-            
+
+            // Re-lanzar para que Laravel marque el intento como FAILED
+            // y lo reintente hasta $tries veces.
             throw $e;
         }
+    }
+
+    /**
+     * Se ejecuta cuando se agotan todos los intentos.
+     * Registra el fallo definitivo sin relanzar (evita que el worker muera).
+     */
+    public function failed(Throwable $exception): void
+    {
+        Log::error('AutoIssueViafirmaJob: todos los intentos fallaron', [
+            'cr_id' => $this->certificateRequestId,
+            'error' => $exception->getMessage(),
+            'class' => get_class($exception),
+        ]);
     }
 }

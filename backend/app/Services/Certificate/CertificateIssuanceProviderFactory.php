@@ -62,12 +62,20 @@ final class CertificateIssuanceProviderFactory
     /**
      * Resuelve el proveedor que atenderá la solicitud, aplicando la
      * cascada de precedencia.
+      *
+     * @param bool $isSystem  true cuando la llamada viene de un job/cron interno;
+     *                        en ese caso el providerHint siempre se respeta sin
+     *                        necesidad del flag allow_payload_override.
      */
-    public function resolveFor(IssuanceRequest $request, bool $callerIsAdmin = false): CertificateIssuanceProvider
+    public function resolveFor(IssuanceRequest $request, bool $callerIsAdmin = false, bool $isSystem = false): CertificateIssuanceProvider
     {
-        // 1) Override explícito en payload (sólo admins, sólo si está habilitado).
-        $allowOverride = (bool) config('certificate.issuance.allow_payload_override', false);
-        if ($request->providerHint !== null && $allowOverride && $callerIsAdmin) {
+        // 1) Override explícito en payload:
+        //    – callers HTTP admin con flag habilitado en config, O
+        //    – llamadas internas de sistema ($isSystem=true).
+        $allowOverride = $isSystem
+            || ((bool) config('certificate.issuance.allow_payload_override', false) && $callerIsAdmin);
+
+        if ($request->providerHint !== null && $allowOverride) {
             $provider = $this->make($request->providerHint);
             $this->logger->info('certificate.issuance.provider.selected', [
                 'source' => 'payload_override',
