@@ -137,6 +137,22 @@ class CertificateRequestService
         }
     }
 
+    public function getCertificateRequestHistory(int $id): JsonResponse
+    {
+        try {
+            $company     = CompanyQueries::getCompany();
+            // Validamos que el certificado exista y pertenezca a la empresa
+            $certificate = $this->repository->findOneByCompany($company->id, $id);
+
+            return HttpResponseMessages::getResponse([
+                'message'     => 'Historial de la solicitud de certificado',
+                'dataRecords' => ['data' => $certificate->history],
+            ]);
+        } catch (Exception $e) {
+            return MessageExceptionResponse::response($e);
+        }
+    }
+
     public function getAllCertificateRequest(CertificateRequestFiltersDTO $filters): JsonResponse
     {
         try {

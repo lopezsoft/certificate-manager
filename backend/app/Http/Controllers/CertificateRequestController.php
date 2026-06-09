@@ -131,6 +131,23 @@ class CertificateRequestController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/certificate-request/{id}/history",
+     *     tags={"Solicitudes de Certificado"},
+     *     summary="Obtener el historial de cambios de una solicitud de certificado",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Historial obtenido con éxito", @OA\JsonContent(ref="#/components/schemas/ApiSuccessResponse")),
+     *     @OA\Response(response=404, description="Solicitud no encontrada"),
+     *     @OA\Response(response=401, description="No autenticado")
+     * )
+     */
+    public function getCertificateRequestHistory(int $id): JsonResponse
+    {
+        return $this->service->getCertificateRequestHistory($id);
+    }
+
+    /**
      * @OA\Put(
      *     path="/certificate-request/{id}",
      *     tags={"Solicitudes de Certificado"},
