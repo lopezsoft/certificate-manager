@@ -73,7 +73,21 @@ export class DocumentViewComponent {
 	}
 
 	initData() {
-		// console.log('initData');
+		this.getChangeHistory();
+	}
+
+	protected getChangeHistory() {
+		if (!this.currentShipping) return;
+		this.http.get(`/certificate-request/${this.currentShipping.id}/history`).subscribe({
+			next: (resp: any) => {
+				if (this.currentShipping) {
+					this.currentShipping.history = resp.dataRecords?.data || [];
+				}
+			},
+			error: (err) => {
+				this.debug.error('DocumentViewComponent', 'Error al consultar el historial', err);
+			}
+		});
 	}
 
 	public get currentShipping(): CertificateRequest {
