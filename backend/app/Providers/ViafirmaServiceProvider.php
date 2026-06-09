@@ -130,11 +130,25 @@ final class ViafirmaServiceProvider extends ServiceProvider
                 ->give(fn () => config('viafirma.crypto.openssl_conf') ?: null);
         }
 
-        // ---- UseCase como singleton para evitar reconstrucción profunda en daemon mode ─
-        // Sin esto, cada llamada a ViafirmaIssuanceProvider->issue() en el queue worker
-        // daemon reconstruye la cadena completa IssueCertificateUseCase → todas sus deps
-        // → stack overflow en Windows. El UseCase es stateless (safe as singleton).
-        $this->app->singleton(\App\Modules\Viafirma\Application\UseCases\IssueCertificateUseCase::class);
+        // ---- UseCase como singleton EXPLÍCITO -----------------------------------
+        // ⚠️  Windows / WAMP: singleton() sin closure usa reflection y provoca
+        // stack overflow silencioso por la cadena profunda de 8 dependencias.
+        // La factory closure las resuelve de forma plana (sin recursión profunda).
+        $this->app->singleton(
+            \App\Modules\Viafirma\Application\UseCases\IssueCertificateUseCase::class,
+            function ($app): \App\Modules\Viafirma\Application\UseCases\IssueCertificateUseCase {
+                return new \App\Modules\Viafirma\Application\UseCases\IssueCertificateUseCase(
+                    crypto:             $app->make(\App\Modules\Viafirma\Domain\Contracts\CryptoServiceContract::class),
+                    csrBuilderFactory:  $app->make(\App\Modules\Viafirma\Infrastructure\Crypto\CsrBuilderFactory::class),
+                    keyVault:           $app->make(\App\Modules\Viafirma\Domain\Contracts\KeyVault::class),
+                    client:             $app->make(\App\Modules\Viafirma\Domain\Contracts\ViafirmaClient::class),
+                    repository:         $app->make(\App\Modules\Viafirma\Domain\Contracts\ViafirmaCertificateRequestRepositoryContract::class),
+                    identityTypeMapper: $app->make(\App\Modules\Viafirma\Domain\Mappers\IdentityTypeMapper::class),
+                    profileTypeMapper:  $app->make(\App\Modules\Viafirma\Domain\Mappers\ProfileTypeMapper::class),
+                    logger:             $app->make(SafePemLogger::class),
+                );
+            }
+        );
 
         // ---- UseCase Logger (SafePemLogger para todo el módulo Viafirma) ---------
         $this->app->when(\App\Modules\Viafirma\Application\UseCases\IssueCertificateUseCase::class)
@@ -198,6 +212,7 @@ final class ViafirmaServiceProvider extends ServiceProvider
                 \App\Console\Commands\Viafirma\ViafirmaMigrateCommand::class,
                 \App\Console\Commands\Viafirma\ViafirmaMigrateStatusCommand::class,
                 \App\Modules\Viafirma\Infrastructure\Console\ViafirmaHealthCheckCommand::class,
+                \App\Console\Commands\Viafirma\DebugViafirmaIssueCommand::class,
             ]);
         }
     }

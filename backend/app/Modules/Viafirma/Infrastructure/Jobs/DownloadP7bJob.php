@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Viafirma\Infrastructure\Jobs;
 
+use App\Enums\CertificateRequestStatusEnum;
+use App\Models\CertificateRequest;
+use App\Models\ChangeHistory;
 use App\Modules\Viafirma\Domain\Contracts\ViafirmaClient;
 use App\Modules\Viafirma\Domain\Enums\InternalState;
 use App\Modules\Viafirma\Domain\Exceptions\TransientHttpException;
@@ -102,6 +105,15 @@ final class DownloadP7bJob implements ShouldQueue, ShouldBeUnique
         $entity->internal_state   = InternalState::DOWNLOADED;
         $entity->downloaded_at    = now();
         $entity->save();
+
+        // Registrar en change_histories: trámite sigue en PROCESSING (descarga lista)
+        ChangeHistory::create([
+            'certificate_request_id' => $entity->certificate_request_id,
+            'status'                 => CertificateRequestStatusEnum::PROCESSING->value,
+            'comments'               => 'Certificado recibido del proveedor — preparando archivo final.',
+            'user_of_change'         => 'SYSTEM',
+            'user_id'                => null,
+        ]);
 
         $logger->info('viafirma.download.success', [
             'id'         => $entity->id,

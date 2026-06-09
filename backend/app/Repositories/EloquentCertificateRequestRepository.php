@@ -32,6 +32,7 @@ class EloquentCertificateRequestRepository implements CertificateRequestReposito
         'city:id,name_city',
         'files:id,certificate_request_id,file_name,file_path,extension_file,mime_type,file_size,last_modified,status,document_type',
         'company:id,company_name,dni,dv,address,email,phone',
+        'history'
     ];
 
     public function findByCompany(int $companyId, array $filters = []): LengthAwarePaginator

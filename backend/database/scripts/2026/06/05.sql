@@ -40,3 +40,11 @@ ALTER TABLE `certificate_requests`
 ALTER TABLE `certificate_requests`
     ADD `legal_rep_first_name` VARCHAR(120) NULL AFTER `legal_representative`,
     ADD `legal_rep_last_name` VARCHAR(120) NULL AFTER `legal_rep_first_name`;
+
+
+ALTER TABLE `change_histories`
+    CHANGE COLUMN `user_id` `user_id` BIGINT(20) UNSIGNED NULL DEFAULT NULL AFTER `certificate_request_id`;
+
+ALTER TABLE `change_histories`
+    CHANGE COLUMN `user_of_change` `user_of_change` ENUM('USER','MANAGER','SYSTEM','PROVIDER') NOT NULL COLLATE 'utf8mb4_general_ci' AFTER `user_id`;
+

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Viafirma\Application\UseCases;
 
+use App\Enums\CertificateRequestStatusEnum;
 use App\Models\CertificateRequest;
 use App\Models\ChangeHistory;
 use App\Modules\Viafirma\Application\Commands\IssueCertificateCommand;
@@ -188,8 +189,8 @@ final class IssueCertificateUseCase
 
                 ChangeHistory::create([
                     'certificate_request_id' => $cr->id,
-                    'status'                 => 'VIAFIRMA_SUBMITTED',
-                    'comments'               => "Solicitud Viafirma enviada (codRequest={$submitResult->codRequest})",
+                    'status'                 => CertificateRequestStatusEnum::PROCESSING->value,
+                    'comments'               => 'Solicitud de certificado enviada al proveedor para emisión automática.',
                     'user_of_change'         => 'SYSTEM',
                     'user_id'                => $cmd->requestedByUserId,
                 ]);

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Viafirma\Infrastructure\Jobs;
 
+use App\Enums\CertificateRequestStatusEnum;
+use App\Models\CertificateRequest;
+use App\Models\ChangeHistory;
 use App\Modules\Viafirma\Domain\Contracts\CryptoServiceContract;
 use App\Modules\Viafirma\Domain\Contracts\KeyVault;
 use App\Modules\Viafirma\Domain\Enums\InternalState;
-use App\Modules\Viafirma\Domain\Events\ViafirmaStatusChanged;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -165,6 +167,18 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
 
             $logger->info('viafirma.assemble.completed', ['id' => $entity->id]);
 
+            // ── Actualizar la solicitud principal a PROCESSED ──────────────
+            CertificateRequest::where('id', $entity->certificate_request_id)
+                ->update(['request_status' => CertificateRequestStatusEnum::PROCESSED->value]);
+
+            ChangeHistory::create([
+                'certificate_request_id' => $entity->certificate_request_id,
+                'status'                 => CertificateRequestStatusEnum::PROCESSED->value,
+                'comments'               => 'Certificado digital generado exitosamente y listo para descarga.',
+                'user_of_change'         => 'SYSTEM',
+                'user_id'                => null,
+            ]);
+
         } catch (\Throwable $e) {
             $logger->error('viafirma.assemble.failed', [
                 'id'      => $entity->id,
@@ -175,6 +189,14 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
             $entity->last_error_code    = 'ASSEMBLE_FAILED';
             $entity->last_error_message = substr($e->getMessage(), 0, 500);
             $entity->save();
+
+            ChangeHistory::create([
+                'certificate_request_id' => $entity->certificate_request_id,
+                'status'                 => CertificateRequestStatusEnum::PROCESSING->value,
+                'comments'               => 'Error al generar el certificado digital — el sistema reintentará automáticamente.',
+                'user_of_change'         => 'SYSTEM',
+                'user_id'                => null,
+            ]);
 
             throw $e;
         }

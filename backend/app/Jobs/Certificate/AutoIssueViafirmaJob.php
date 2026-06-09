@@ -78,9 +78,10 @@ class AutoIssueViafirmaJob implements ShouldQueue
             );
 
             Log::info('AutoIssueViafirmaJob: llamando al orquestador', [
-                'cr_id'            => $cr->id,
+                'cr_id'             => $cr->id,
                 'organization_type' => $organizationType ?? 'null (PN)',
-                'attempt'          => $this->attempts(),
+                'attempt'           => $this->attempts(),
+                'requestDto'        => $requestDto,
             ]);
 
             // dispatchAsSystem respeta el providerHint sin requerir callerIsAdmin

@@ -290,69 +290,145 @@ namespace App\Http\Controllers;
  *     schema="IssueCertificateBody",
  *     description="Payload del endpoint unificado de emisión: POST /certificate-request/{id}/issue. Todos los campos son opcionales — el sistema resuelve el proveedor activo (mail/viafirma) por config + reglas de la empresa.",
  *     @OA\Property(property="provider", type="string", nullable=true, enum={"mail","viafirma"}, example="viafirma", description="Override del proveedor. Sólo se honra si el caller es admin y la config CERTIFICATE_ISSUANCE_ALLOW_OVERRIDE está activa."),
- *     @OA\Property(property="email_certificate", type="string", format="email", nullable=true, example="rep.legal@empresa.com", description="Email de notificación KYC. OBLIGATORIO cuando el provider resuelto/forzado es 'viafirma'."),
- *     @OA\Property(property="organization_type", type="string", nullable=true, enum={"RM","PROP","RUNEOL","RNT","ESAL","ESOL","JUEGOS","EXTRANJERAS"}, example="RM", description="Tipo de organización Viafirma. Obligatorio para Persona Jurídica."),
- *     @OA\Property(property="identity_type_override", type="string", nullable=true, enum={"IDC","PAS"}, example=null, description="Override del tipo de identidad del solicitante. Si null se deriva del catálogo."),
+ *     @OA\Property(property="email_certificate", type="string", format="email", nullable=true, example="rep.legal@empresa.com", description="Email del representante legal. OBLIGATORIO para el proveedor 'viafirma'. Recibe notificaciones del proceso KYC."),
+ *     @OA\Property(property="organization_type", type="string", nullable=true, enum={"RM","PROP","RUNEOL","RNT","ESAL","ESOL","JUEGOS","EXTRANJERAS"}, example="EXTRANJERAS", description="Tipo de organización DIAN. OBLIGATORIO para perfil FE-PJ (Persona Jurídica). NO debe enviarse para FE-PN (Persona Natural). Valores: RM=Registro Mercantil, PROP=Propietario, RUNEOL=RUNEOL, RNT=Registro Nacional de Turismo, ESAL=Entidad sin ánimo de lucro, ESOL=ESOL, JUEGOS=Juegos de azar, EXTRANJERAS=Empresa extranjera."),
+ *     @OA\Property(property="identity_type_override", type="string", nullable=true, enum={"IDC","PAS"}, example=null, description="Override del tipo de documento de identidad. IDC=Cédula de ciudadanía, PAS=Pasaporte. Si null se deriva automáticamente del catálogo identity_documents."),
  *     @OA\Property(property="comments", type="string", nullable=true, maxLength=1000, example="Solicitud expedita por convenio empresarial"),
  *     @OA\Property(property="metadata", type="object", nullable=true, description="Metadatos libres adjuntos a la auditoría")
  * )
  *
  * @OA\Schema(
  *     schema="IssuanceResultData",
- *     description="Resultado normalizado de cualquier proveedor de emisión (mail, viafirma, ...).",
+ *     description="Resultado normalizado de cualquier proveedor de emisión (mail, viafirma, ...). El campo 'data' contiene información extendida específica del proveedor.",
  *     @OA\Property(property="provider", type="string", enum={"mail","viafirma"}, example="viafirma"),
- *     @OA\Property(property="status", type="string", enum={"sent","submitted","processing","ready","completed","failed","unsupported"}, example="submitted"),
- *     @OA\Property(property="message", type="string", example="Solicitud Viafirma creada exitosamente."),
- *     @OA\Property(property="external_id", type="string", nullable=true, example="PYJR5N4QC", description="ID externo del proveedor (cod_request en Viafirma)."),
- *     @OA\Property(property="resource_id", type="integer", nullable=true, example=1, description="ID interno del agregado de emisión."),
- *     @OA\Property(property="data", type="object", description="Payload extendido específico del proveedor. Ejemplo Viafirma: public_id, internal_state, remote_status.")
+ *     @OA\Property(property="status", type="string",
+ *         enum={"sent","submitted","processing","ready","completed","failed","unsupported"},
+ *         example="submitted",
+ *         description="sent=correo enviado (mail). submitted=solicitud enviada a Viafirma RA. processing=en proceso (polling activo). ready=listo para descargar. completed=certificado ensamblado. failed=error irrecuperable. unsupported=solicitud no tiene trámite."
+ *     ),
+ *     @OA\Property(property="message", type="string", example="Solicitud de certificado enviada al proveedor para emisión automática."),
+ *     @OA\Property(property="external_id", type="string", nullable=true, example="D4AZEQQG6", description="Código de solicitud Viafirma RA (cod_request). Null para proveedor mail."),
+ *     @OA\Property(property="resource_id", type="integer", nullable=true, example=5, description="ID interno del registro viafirma_certificate_requests. Null para proveedor mail."),
+ *     @OA\Property(property="data", ref="#/components/schemas/IssuanceViafirmaData", nullable=true, description="Datos extendidos Viafirma. Null para proveedor mail.")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="IssuanceViafirmaData",
+ *     description="Datos extendidos del trámite Viafirma dentro de IssuanceResultData.data.",
+ *     @OA\Property(property="public_id", type="string", nullable=true, example="fab8d88e0c5a4cab8bfc2b72be05a098", description="ID público Viafirma. Usado internamente para descargar el P7B."),
+ *     @OA\Property(property="profile_type", type="string", nullable=true, enum={"FE-PJ","FE-PN"}, example="FE-PN", description="Perfil del certificado: FE-PJ=Persona Jurídica, FE-PN=Persona Natural."),
+ *     @OA\Property(property="identity_type", type="string", nullable=true, enum={"IDC","PAS"}, example="IDC"),
+ *     @OA\Property(property="internal_state", type="string", nullable=true,
+ *         enum={"DRAFT","CSR_GENERATED","SUBMITTED","POLLING","READY_TO_DOWNLOAD","DOWNLOADED","ASSEMBLED","COMPLETED","FAILED","FAILED_RECOVERABLE","EXPIRED"},
+ *         example="SUBMITTED",
+ *         description="Estado interno del proceso en Certificate Manager. Progresa automáticamente vía jobs de cola."
+ *     ),
+ *     @OA\Property(property="remote_status", type="string", nullable=true, example="accreditation", description="Estado reportado por Viafirma RA. Valores posibles: accreditation, Generated_Not_Downloaded, error, etc."),
+ *     @OA\Property(property="submitted_at", type="string", format="date-time", nullable=true, example="2026-06-08T00:00:00Z"),
+ *     @OA\Property(property="expires_at", type="string", format="date-time", nullable=true, example="2026-06-11T00:00:00Z", description="Expiración del trámite en Certificate Manager (72h por defecto). Pasada esta fecha el job de purga elimina las llaves."),
+ *     @OA\Property(property="history_count", type="integer", nullable=true, example=3, description="Número de entradas en viafirma_status_history. Solo presente en GET /issuance.")
  * )
  *
  * @OA\Schema(
  *     schema="IssuanceResponse",
  *     description="Envoltura estándar de los endpoints de emisión.",
  *     @OA\Property(property="success", type="boolean", example=true),
- *     @OA\Property(property="message", type="string", example="Solicitud Viafirma creada exitosamente."),
- *     @OA\Property(property="data", ref="#/components/schemas/IssuanceResultData")
+ *     @OA\Property(property="message", type="string", example="Solicitud de certificado enviada al proveedor para emisión automática."),
+ *     @OA\Property(property="dataRecords", ref="#/components/schemas/IssuanceResultData")
  * )
  *
  * @OA\Schema(
  *     schema="IssuanceDownloadMetadata",
- *     description="Metadata de descarga del P12 (sólo proveedor Viafirma cuando el estado interno es ASSEMBLED/COMPLETED).",
+ *     description="Metadata de descarga del certificado P12. Disponible cuando internal_state es ASSEMBLED o COMPLETED. El PIN se almacena cifrado hasta que el job de purga lo elimine (72h por defecto).",
  *     @OA\Property(property="success", type="boolean", example=true),
- *     @OA\Property(property="p12_pin", type="string", example="X3kP9aQ1mZv7", description="PIN temporal para abrir el archivo P12."),
- *     @OA\Property(property="p12_filename", type="string", example="empresa_900400300.p12"),
- *     @OA\Property(property="download_url", type="string", format="uri", nullable=true, description="URL firmada temporal (24h) para descarga directa. Null si el disco no soporta URLs firmadas."),
- *     @OA\Property(property="expires_at", type="string", format="date-time", example="2026-05-20T18:00:00Z")
+ *     @OA\Property(property="p12_pin", type="string", example="X3kP9aQ1mZv7nR2sYwQe8BcZ4uVhKpTf", description="PIN de 32 caracteres para abrir el archivo .p12 en cualquier aplicación de certificados (ej. Certmanager, OpenSSL). Guárdelo en un lugar seguro — solo se muestra una vez por solicitud."),
+ *     @OA\Property(property="p12_filename", type="string", example="D4AZEQQG6.p12"),
+ *     @OA\Property(property="download_url", type="string", format="uri", nullable=true, example="https://s3.amazonaws.com/...", description="URL firmada con vigencia de 24 horas para descarga directa. Null cuando el disco de almacenamiento es local (sin soporte de URLs firmadas)."),
+ *     @OA\Property(property="expires_at", type="string", format="date-time", example="2026-06-09T00:00:00Z", description="Expiración de la URL firmada (24h). Después debe solicitarse nuevamente.")
  * )
  *
  * @OA\Schema(
  *     schema="ViafirmaCertificateRequest",
- *     description="Solicitud de certificado Viafirma (agregado del bounded context Viafirma Issuance)",
- *     @OA\Property(property="id", type="integer", readOnly=true, example=1),
- *     @OA\Property(property="certificate_request_id", type="integer", example=42),
- *     @OA\Property(property="company_id", type="integer", example=7),
- *     @OA\Property(property="requested_by_user_id", type="integer", nullable=true, example=1),
- *     @OA\Property(property="cod_request", type="string", nullable=true, example="PYJR5N4QC", description="Código de solicitud Viafirma"),
- *     @OA\Property(property="public_id", type="string", nullable=true, example="bd6eda8d0f2d", description="ID público Viafirma para URL de KYC"),
- *     @OA\Property(property="ra_code", type="string", example="viafirmaco"),
- *     @OA\Property(property="profile_type", type="string", enum={"FE-PJ","FE-PN"}, example="FE-PJ"),
- *     @OA\Property(property="profile_type_label", type="string", example="Persona Jurídica"),
- *     @OA\Property(property="identity_type", type="string", enum={"IDC","PAS"}, example="IDC"),
+ *     description="Agregado completo del trámite Viafirma. Retornado por GET /certificate-request/{id}/issuance cuando el proveedor activo es 'viafirma'.",
+ *     @OA\Property(property="id", type="integer", readOnly=true, example=5),
+ *     @OA\Property(property="certificate_request_id", type="integer", example=636),
+ *     @OA\Property(property="company_id", type="integer", example=1),
+ *     @OA\Property(property="requested_by_user_id", type="integer", nullable=true, example=null, description="Null para emisiones automáticas del sistema (SYSTEM)."),
+ *
+ *     @OA\Property(property="cod_request", type="string", nullable=true, example="D4AZEQQG6", description="Código único asignado por Viafirma RA al crear la solicitud. Usar para soporte técnico."),
+ *     @OA\Property(property="public_id", type="string", nullable=true, example="fab8d88e0c5a4cab8bfc2b72be05a098", description="ID público Viafirma. Usado para descargar el P7B una vez aprobado."),
+ *     @OA\Property(property="ra_code", type="string", example="viafirmaco", description="Código de la RA (Registration Authority) configurada."),
+ *
+ *     @OA\Property(property="profile_type", type="string", enum={"FE-PJ","FE-PN"}, example="FE-PN", description="Perfil del certificado DIAN: FE-PJ=Factura Electrónica Persona Jurídica, FE-PN=Factura Electrónica Persona Natural."),
+ *     @OA\Property(property="profile_type_label", type="string", example="Persona Natural", description="Descripción legible del perfil."),
+ *     @OA\Property(property="identity_type", type="string", enum={"IDC","PAS"}, example="IDC", description="Tipo de documento: IDC=Cédula de ciudadanía, PAS=Pasaporte."),
  *     @OA\Property(property="country_code", type="string", example="CO"),
- *     @OA\Property(property="organization_type", type="string", nullable=true, enum={"RM","PROP","RUNEOL","RNT","ESAL","ESOL","JUEGOS","EXTRANJERAS"}, example="RM"),
- *     @OA\Property(property="validity_days", type="integer", example=730),
- *     @OA\Property(property="internal_state", type="string", enum={"DRAFT","CSR_GENERATED","SUBMITTED","POLLING","READY_TO_DOWNLOAD","DOWNLOADED","ASSEMBLED","COMPLETED","FAILED","FAILED_RECOVERABLE","EXPIRED"}, example="SUBMITTED"),
- *     @OA\Property(property="remote_status", type="string", nullable=true, example="accreditation"),
- *     @OA\Property(property="is_terminal", type="boolean", example=false),
- *     @OA\Property(property="is_failed", type="boolean", example=false),
- *     @OA\Property(property="has_expired", type="boolean", example=false),
- *     @OA\Property(property="csr_fingerprint", type="string", example="a1b2c3d4e5f6...", description="SHA-256 hex del CSR"),
- *     @OA\Property(property="poll_attempts", type="integer", example=0),
- *     @OA\Property(property="submitted_at", type="string", format="date-time", nullable=true),
- *     @OA\Property(property="expires_at", type="string", format="date-time", nullable=true),
- *     @OA\Property(property="last_error_code", type="string", nullable=true),
+ *     @OA\Property(property="organization_type", type="string", nullable=true, enum={"RM","PROP","RUNEOL","RNT","ESAL","ESOL","JUEGOS","EXTRANJERAS"}, example=null, description="Tipo de organización. Solo presente para FE-PJ."),
+ *     @OA\Property(property="validity_days", type="integer", example=730, description="Vigencia del certificado en días (configurada en VIAFIRMA_CERTIFICATE_VALIDITY_DAYS)."),
+ *
+ *     @OA\Property(property="internal_state", type="string",
+ *         enum={"DRAFT","CSR_GENERATED","SUBMITTED","POLLING","READY_TO_DOWNLOAD","DOWNLOADED","ASSEMBLED","COMPLETED","FAILED","FAILED_RECOVERABLE","EXPIRED"},
+ *         example="SUBMITTED",
+ *         description="Máquina de estados interna. Flujo normal: SUBMITTED → POLLING → READY_TO_DOWNLOAD → DOWNLOADED → ASSEMBLED → COMPLETED."
+ *     ),
+ *     @OA\Property(property="remote_status", type="string", nullable=true, example="accreditation", description="Último estado reportado por Viafirma RA en el polling. 'Generated_Not_Downloaded' indica que el certificado está listo para descarga."),
+ *     @OA\Property(property="is_terminal", type="boolean", example=false, description="True cuando internal_state es COMPLETED, FAILED o EXPIRED."),
+ *     @OA\Property(property="is_failed", type="boolean", example=false, description="True cuando internal_state es FAILED, FAILED_RECOVERABLE o EXPIRED."),
+ *     @OA\Property(property="has_expired", type="boolean", example=false, description="True cuando expires_at ha pasado."),
+ *
+ *     @OA\Property(property="csr_fingerprint", type="string", example="b5a403ff5dd3ce1a790565a8be9d8a90...", description="SHA-256 hex del CSR PKCS#10 enviado a Viafirma RA. La llave pública está embebida en el CSR."),
+ *     @OA\Property(property="poll_attempts", type="integer", example=3, description="Número de intentos de polling realizados."),
+ *     @OA\Property(property="next_poll_at", type="string", format="date-time", nullable=true, description="Próxima ejecución programada del polling (cada 60s)."),
+ *     @OA\Property(property="last_polled_at", type="string", format="date-time", nullable=true),
+ *
+ *     @OA\Property(property="submitted_at", type="string", format="date-time", nullable=true, description="Momento en que se envió el CSR a Viafirma RA."),
+ *     @OA\Property(property="downloaded_at", type="string", format="date-time", nullable=true, description="Momento en que se descargó el P7B desde Viafirma RA."),
+ *     @OA\Property(property="assembled_at", type="string", format="date-time", nullable=true, description="Momento en que se ensambló el P12 (llave privada + certificado P7B)."),
+ *     @OA\Property(property="expires_at", type="string", format="date-time", nullable=true, description="Expiración del trámite en Certificate Manager. Pasada esta fecha se purgan las llaves criptográficas."),
+ *
+ *     @OA\Property(property="last_error_code", type="string", nullable=true, example="ASSEMBLE_FAILED"),
  *     @OA\Property(property="last_error_message", type="string", nullable=true),
+ *     @OA\Property(property="created_at", type="string", format="date-time", readOnly=true),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", readOnly=true)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="ViafirmaStatusHistoryItem",
+ *     description="Entrada del historial interno de estados del trámite Viafirma (tabla viafirma_status_history). Registra cada transición de estado.",
+ *     @OA\Property(property="id", type="integer", readOnly=true, example=1),
+ *     @OA\Property(property="viafirma_certificate_request_id", type="integer", example=5),
+ *     @OA\Property(property="previous_state", type="string",
+ *         enum={"DRAFT","CSR_GENERATED","SUBMITTED","POLLING","READY_TO_DOWNLOAD","DOWNLOADED","ASSEMBLED","COMPLETED","FAILED","FAILED_RECOVERABLE","EXPIRED"},
+ *         example="DRAFT"
+ *     ),
+ *     @OA\Property(property="new_state", type="string",
+ *         enum={"DRAFT","CSR_GENERATED","SUBMITTED","POLLING","READY_TO_DOWNLOAD","DOWNLOADED","ASSEMBLED","COMPLETED","FAILED","FAILED_RECOVERABLE","EXPIRED"},
+ *         example="SUBMITTED"
+ *     ),
+ *     @OA\Property(property="remote_status", type="string", nullable=true, example="accreditation"),
+ *     @OA\Property(property="raw_response", type="object", nullable=true, description="Respuesta cruda de Viafirma RA o acción interna."),
+ *     @OA\Property(property="attempt_number", type="integer", example=0),
+ *     @OA\Property(property="occurred_at", type="string", format="date-time", example="2026-06-08T00:00:00Z")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="ChangeHistoryItem",
+ *     description="Entrada del historial de cambios de una solicitud (tabla change_histories). Visible en el seguimiento del trámite.",
+ *     @OA\Property(property="id", type="integer", readOnly=true, example=3358),
+ *     @OA\Property(property="uuid", type="string", format="uuid", readOnly=true),
+ *     @OA\Property(property="certificate_request_id", type="integer", example=636),
+ *     @OA\Property(property="user_id", type="integer", nullable=true, example=null, description="Null para acciones automáticas del sistema."),
+ *     @OA\Property(property="user_of_change", type="string",
+ *         enum={"USER","MANAGER","SYSTEM","PROVIDER"},
+ *         example="SYSTEM",
+ *         description="Origen del cambio: USER=usuario final, MANAGER=gestor/admin, SYSTEM=job automático, PROVIDER=proveedor externo."
+ *     ),
+ *     @OA\Property(property="status", type="string",
+ *         enum={"DRAFT","SENT","CANCELLED","REJECTED","ON_HOLD","DEFINITIVE","CLOSED","OPEN","DELETED","PENDING","ACCEPTED","PROCESSING","PROCESSED","UNKNOWN"},
+ *         example="PROCESSING",
+ *         description="Estado de la solicitud en el momento del cambio. PROCESSING=en proceso de emisión automática. PROCESSED=certificado generado y listo."
+ *     ),
+ *     @OA\Property(property="comments", type="string", example="Solicitud de certificado enviada al proveedor para emisión automática."),
  *     @OA\Property(property="created_at", type="string", format="date-time", readOnly=true)
  * )
  */

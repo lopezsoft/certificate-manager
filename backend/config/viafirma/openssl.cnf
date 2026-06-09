@@ -1,11 +1,16 @@
 # Minimal OpenSSL config bundled with Certificate Manager (módulo Viafirma).
 # Es suficiente para generar pares RSA y CSRs PKCS#10 sin depender del
 # openssl.cnf del sistema (que en muchos Windows/WAMP no existe).
+#
+# NOTA: RANDFILE se omite intencionalmente.
+# En OpenSSL 1.1+ (WAMP/Windows) ya NO se necesita: la entropía viene de
+# CryptGenRandom (Windows) o /dev/urandom (Linux). Incluirlo con $ENV::HOME
+# causaba que openssl_pkey_new() se colgara esperando un archivo .rnd
+# que no existía o no era escribible.
 
-HOME            = .
-RANDFILE        = $ENV::HOME/.rnd
+HOME = .
 
-oid_section     = new_oids
+oid_section = new_oids
 
 [ new_oids ]
 
@@ -22,4 +27,3 @@ string_mask         = utf8only
 # Subject DN is provided programmatically via openssl_csr_new()
 
 [ req_attributes ]
-

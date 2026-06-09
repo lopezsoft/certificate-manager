@@ -61,10 +61,17 @@ final class CertificateIssuanceServiceProvider extends ServiceProvider
             ->needs(LoggerInterface::class)
             ->give(fn () => $this->app->make('certificate.issuance.logger'));
 
-        // Singleton para evitar reconstrucción costosa (DI profunda) en cada llamada
-        // del queue:work daemon. Sin esto, cada job en el daemon loop reconstruye la
-        // cadena completa →  stack overflow en Windows (PHP stack size limitado).
-        $this->app->singleton(ViafirmaIssuanceProvider::class);
+        // Singleton EXPLÍCITO para ViafirmaIssuanceProvider.
+        // ⚠️  Windows / WAMP: el autowiring (singleton sin closure) usa reflection
+        // y provoca stack overflow silencioso en la cadena profunda de DI.
+        // La factory closure resuelve cada dep de forma plana (sin recursión).
+        $this->app->singleton(ViafirmaIssuanceProvider::class, function ($app): ViafirmaIssuanceProvider {
+            return new ViafirmaIssuanceProvider(
+                useCase:    $app->make(\App\Modules\Viafirma\Application\UseCases\IssueCertificateUseCase::class),
+                repository: $app->make(\App\Modules\Viafirma\Domain\Contracts\ViafirmaCertificateRequestRepositoryContract::class),
+                logger:     $app->make('certificate.issuance.logger'),
+            );
+        });
         $this->app->singleton(MailIssuanceProvider::class);
     }
 }

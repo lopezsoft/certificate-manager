@@ -1,25 +1,24 @@
 @if (timelineData?.length > 0) {
-  <div class="timeline-container">
-    <ul>
-      @for (event of timelineData; track event) {
-        <li class="timeline-item">
-          <div class="timeline-marker"></div>
-          <div class="timeline-content" [ngClass]="getStatusClass(event.status)">
-            <span class="time">{{ event.created_at_formatted }}</span>
-            <h4>
-              {{ documentStatusDescription[event.status] | uppercase }}
-              <span class="actor">({{ event.user_of_change }})</span>
-              <span class="actor-name">
-                {{ event.user.first_name }} {{ event.user.last_name }}
-              </span>
-            </h4>
-            <div [innerHTML]="event.comments"></div>
-          </div>
-        </li>
-      }
-    </ul>
-  </div>
+<div class="timeline-container">
+  <ul>
+    @for (event of timelineData; track event) {
+    <li class="timeline-item">
+      <div class="timeline-marker"></div>
+      <div class="timeline-content" [ngClass]="getStatusClass(event.status)">
+        <span class="time">{{ event.created_at_formatted }}</span>
+        <h4>
+          {{ documentStatusDescription[event.status] | uppercase }}
+          <span class="actor">({{ event.user_of_change }})</span>
+          <span class="actor-name">
+            {{ event.user?.first_name || 'AUTOMÁTICO' }} {{ event.user?.last_name || '' }}
+          </span>
+        </h4>
+        <div [innerHTML]="event.comments || ''"></div>
+      </div>
+    </li>
+    }
+  </ul>
+</div>
 } @else {
-  <p>No hay historial disponible para mostrar.</p>
+<p>No hay historial disponible para mostrar.</p>
 }
-
