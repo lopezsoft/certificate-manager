@@ -81,6 +81,16 @@ Route::group(['prefix' => 'v1'], function () {
                     ->name('v1.certificate-request.issuance.download.file');
 
             });
+
+            // ── Viafirma: Revocación y KYC ────────────────────────────
+            Route::post('/{id}/revoke', [
+                \App\Modules\Viafirma\Presentation\Http\Controllers\RevocationController::class, 'revoke',
+            ])->name('v1.certificate-request.revoke');
+
+            Route::get('/{id}/kyc-link', [
+                \App\Modules\Viafirma\Presentation\Http\Controllers\KycLinkController::class, 'show',
+            ])->name('v1.certificate-request.kyc-link');
+
         });
 
         // Company

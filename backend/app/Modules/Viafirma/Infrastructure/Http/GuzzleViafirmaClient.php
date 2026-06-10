@@ -243,6 +243,69 @@ final class GuzzleViafirmaClient implements ViafirmaClient
         return $binary;
     }
 
+    // ── Nuevos endpoints ───────────────────────────────────────────────────
+
+    public function revokeCertificate(string $revokingCode, int $revocationReason): string
+    {
+        if ($revokingCode === '') {
+            throw new ViafirmaClientException('revokingCode no puede ser vacío.');
+        }
+
+        $url     = $this->urlFor('/request/revoke/code/' . rawurlencode($revokingCode));
+        $payload = ['revocationReason' => $revocationReason];
+
+        $this->logger->info('viafirma.revoke.request', [
+            'url'              => $url,
+            'revocationReason' => $revocationReason,
+        ]);
+
+        $decoded = $this->send('POST', $url, jsonBody: $payload);
+
+        $newCode = (string) ($decoded['code'] ?? '');
+        if ($newCode === '') {
+            throw new ViafirmaClientException(
+                'Respuesta de revokeCertificate sin campo `code`: ' . json_encode($decoded)
+            );
+        }
+
+        $this->logger->info('viafirma.revoke.response', [
+            'revokingCode' => $revokingCode,
+            'newCode'      => $newCode,
+        ]);
+
+        return $newCode;
+    }
+
+    public function getAccreditationLink(string $codRequest): string
+    {
+        if ($codRequest === '') {
+            throw new ViafirmaClientException('codRequest no puede ser vacío.');
+        }
+
+        $url = $this->urlFor('/services/accreditation/' . rawurlencode($codRequest));
+
+        $this->logger->info('viafirma.kyc_link.request', [
+            'codRequest' => $codRequest,
+            'url'        => $url,
+        ]);
+
+        $decoded = $this->send('GET', $url);
+
+        $link = (string) ($decoded['link'] ?? '');
+        if ($link === '') {
+            throw new ViafirmaClientException(
+                "Respuesta de getAccreditationLink sin campo `link` para codRequest={$codRequest}: " . json_encode($decoded)
+            );
+        }
+
+        $this->logger->info('viafirma.kyc_link.response', [
+            'codRequest' => $codRequest,
+            'link'       => $link,
+        ]);
+
+        return $link;
+    }
+
     // ── Internals ──────────────────────────────────────────────────────────
 
     /**

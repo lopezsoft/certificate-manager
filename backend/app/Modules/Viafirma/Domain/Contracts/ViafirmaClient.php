@@ -55,5 +55,35 @@ interface ViafirmaClient
      * @throws \App\Modules\Viafirma\Domain\Exceptions\TransientHttpException
      */
     public function downloadP7b(string $publicId): string;
+
+    /**
+     * POST /request/revoke/code/{revokingCode}
+     *
+     * Revoca un certificado ya emitido utilizando el código de revocación
+     * que Viafirma envió al usuario final por correo tras la emisión.
+     *
+     * Body: { "revocationReason": <int> }
+     * Respuesta 200: { "code": "new-revocation-requestCode" }
+     *
+     * @param string $revokingCode    Código de revocación recibido por el usuario.
+     * @param int    $revocationReason Código del motivo (0,1,2,3,4,5,9,10).
+     * @return string El nuevo revocation requestCode devuelto por Viafirma.
+     *
+     * @throws \App\Modules\Viafirma\Domain\Exceptions\ViafirmaClientException
+     */
+    public function revokeCertificate(string $revokingCode, int $revocationReason): string;
+
+    /**
+     * GET /services/accreditation/{codRequest}
+     *
+     * Obtiene el enlace del portal KYC para que el usuario inicie el proceso
+     * de verificación de identidad (onboarding).
+     * Solo disponible cuando remote_status === 'accreditation'.
+     *
+     * Respuesta 200: { "link": "https://..." }
+     *
+     * @throws \App\Modules\Viafirma\Domain\Exceptions\ViafirmaClientException
+     */
+    public function getAccreditationLink(string $codRequest): string;
 }
 

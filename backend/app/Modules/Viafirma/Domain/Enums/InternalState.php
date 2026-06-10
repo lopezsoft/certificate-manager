@@ -14,9 +14,10 @@ namespace App\Modules\Viafirma\Domain\Enums;
  *   DRAFT ─► CSR_GENERATED ─► SUBMITTED ─► POLLING ─► READY_TO_DOWNLOAD
  *                                                    │
  *                                                    ▼
- *                                              DOWNLOADED ─► ASSEMBLED ─► COMPLETED
+ *                                              DOWNLOADED ─► ASSEMBLED ─► COMPLETED ─► REVOKED
  *
  *   Cualquier estado puede transicionar a FAILED, FAILED_RECOVERABLE o EXPIRED.
+ *   COMPLETED puede transicionar a REVOKED (revocación voluntaria del certificado emitido).
  */
 enum InternalState: string
 {
@@ -28,6 +29,7 @@ enum InternalState: string
     case DOWNLOADED         = 'DOWNLOADED';
     case ASSEMBLED          = 'ASSEMBLED';
     case COMPLETED          = 'COMPLETED';
+    case REVOKED            = 'REVOKED';
     case FAILED             = 'FAILED';
     case FAILED_RECOVERABLE = 'FAILED_RECOVERABLE';
     case EXPIRED            = 'EXPIRED';
@@ -37,6 +39,7 @@ enum InternalState: string
     {
         return in_array($this, [
             self::COMPLETED,
+            self::REVOKED,
             self::FAILED,
             self::EXPIRED,
         ], true);

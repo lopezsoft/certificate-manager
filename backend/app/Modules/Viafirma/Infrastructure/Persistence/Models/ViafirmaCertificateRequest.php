@@ -94,6 +94,8 @@ class ViafirmaCertificateRequest extends Model
         'expires_at',
         'last_error_code',
         'last_error_message',
+        'revocation_request_code',
+        'revoked_at',
     ];
 
     protected $casts = [
@@ -111,6 +113,7 @@ class ViafirmaCertificateRequest extends Model
         'downloaded_at'        => 'datetime',
         'assembled_at'         => 'datetime',
         'expires_at'           => 'datetime',
+        'revoked_at'           => 'datetime',
     ];
 
     /**
