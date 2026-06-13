@@ -8,6 +8,10 @@ use Illuminate\Http\Request;
 
 class LocationController extends Controller
 {
+    public function __construct(
+        private readonly LocationService $service,
+    ) {}
+
     /**
      * @OA\Get(
      *     path="/countries",
@@ -31,7 +35,7 @@ class LocationController extends Controller
      */
     public function getCountries(): JsonResponse
     {
-        return LocationService::getCountries();
+        return $this->service->getCountries();
     }
 
     /**
@@ -57,7 +61,7 @@ class LocationController extends Controller
      */
     public function getDepartments(): JsonResponse
     {
-       return LocationService::getDepartments();
+        return $this->service->getDepartments();
     }
 
     /**
@@ -87,6 +91,6 @@ class LocationController extends Controller
      */
     public function getCities(Request $request): JsonResponse
     {
-        return LocationService::getCities($request);
+        return $this->service->getCities($request);
     }
 }

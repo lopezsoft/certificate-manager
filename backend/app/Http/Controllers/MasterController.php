@@ -7,6 +7,10 @@ use Illuminate\Http\JsonResponse;
 
 class MasterController extends Controller
 {
+    public function __construct(
+        private readonly ReferencedTablesService $service,
+    ) {}
+
     /**
      * @OA\Get(
      *     path="/organization-type",
@@ -30,7 +34,7 @@ class MasterController extends Controller
      */
     public function getTypeOrganization(): JsonResponse
     {
-        return ReferencedTablesService::getTypeOrganization();
+        return $this->service->getTypeOrganization();
     }
 
     /**
@@ -57,12 +61,7 @@ class MasterController extends Controller
      */
     public function getIdentityDocuments(): JsonResponse
     {
-        return ReferencedTablesService::getIdentityDocuments();
-    }
-
-    public function getCurrencies(): JsonResponse
-    {
-        return ReferencedTablesService::getCurrencies();
+        return $this->service->getIdentityDocuments();
     }
 
     /**
@@ -90,6 +89,6 @@ class MasterController extends Controller
      */
     public function getEntityDocumentTypes(): JsonResponse
     {
-        return ReferencedTablesService::getEntityDocumentTypes();
+        return $this->service->getEntityDocumentTypes();
     }
 }

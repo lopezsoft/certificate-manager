@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Common\HttpResponseMessages;
@@ -8,41 +10,52 @@ use App\Models\Location\Cities;
 use App\Models\Location\Department;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class LocationService
 {
-    public static function getCountries(): JsonResponse
+    /** TTL de caché para catálogos geográficos (raramente cambian) */
+    private const CACHE_TTL_HOURS = 24;
+
+    public function getCountries(): JsonResponse
     {
+        $data = Cache::remember('location.countries', now()->addHours(self::CACHE_TTL_HOURS), fn () =>
+            Countries::query()->where('active', true)->get()
+        );
+
         return HttpResponseMessages::getResponse([
-            "dataRecords" => [
-                "data"  => Countries::query()->where('active', true)->get(),
-            ]
+            'dataRecords' => ['data' => $data],
         ]);
     }
-    public static function getDepartments(): JsonResponse
+
+    public function getDepartments(): JsonResponse
     {
+        $data = Cache::remember('location.departments', now()->addHours(self::CACHE_TTL_HOURS), fn () =>
+            Department::all()
+        );
+
         return HttpResponseMessages::getResponse([
-            "dataRecords" => [
-                "data"  => Department::all(),
-            ]
+            'dataRecords' => ['data' => $data],
         ]);
     }
-    public static function getCities(Request $request): JsonResponse
+
+    public function getCities(Request $request): JsonResponse
     {
         $query  = Cities::query()->with(['postalCode']);
         $search = $request->input('query');
         $code   = $request->input('code');
+
         if ($search) {
             $query->where('name_city', 'like', "%$search%")
                 ->orWhere('city_code', 'like', "%$search%");
         }
+
         if ($code) {
             $query->where('city_code', $code);
         }
+
         return HttpResponseMessages::getResponse([
-            "dataRecords" => [
-                "data"  => $query->get(),
-            ]
+            'dataRecords' => ['data' => $query->get()],
         ]);
     }
 }
