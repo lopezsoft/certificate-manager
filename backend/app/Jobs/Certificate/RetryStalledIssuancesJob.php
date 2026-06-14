@@ -40,7 +40,9 @@ class RetryStalledIssuancesJob implements ShouldQueue
                 ->join('companies', 'companies.id', '=', 'certificate_requests.company_id')
                 ->where('certificate_requests.request_status', CertificateRequestStatusEnum::PROCESSING->value)
                 ->where('certificate_requests.created_at', '<', $stalledThreshold)
-                ->where('companies.issuance_provider', 'viafirma')
+                // Filtro explícito: solo solicitudes cuya empresa usa Viafirma como proveedor.
+                // Evita contaminar solicitudes de otros proveedores (email, etc.) con este watchdog.
+                ->where('companies.issuance_provider', '=', 'viafirma')
                 ->whereNotNull('certificate_requests.legal_rep_email')
                 ->whereNotExists(function ($query) {
                     $query->select(DB::raw(1))

@@ -32,7 +32,15 @@ final class ViafirmaCircuitBreaker
         $config = (array) config('viafirma.circuit_breaker', []);
         $this->threshold       = (int) ($config['failure_threshold'] ?? 5);
         $this->recoverySeconds = (int) ($config['recovery_seconds'] ?? 300);
-        $this->cacheStore      = (string) ($config['cache_store'] ?? config('cache.default', 'file'));
+
+        // Se prioriza el store explícito de config('viafirma.circuit_breaker.cache_store').
+        // Si no está definido, se usa 'redis' en producción para garantizar que el estado
+        // del circuit breaker sea compartido entre todos los workers (multi-nodo).
+        // En entornos locales sin Redis se puede sobrescribir con VIAFIRMA_CB_STORE=file.
+        $explicitStore = (string) ($config['cache_store'] ?? '');
+        $this->cacheStore = $explicitStore !== ''
+            ? $explicitStore
+            : (app()->isProduction() ? 'redis' : config('cache.default', 'file'));
     }
 
     /**

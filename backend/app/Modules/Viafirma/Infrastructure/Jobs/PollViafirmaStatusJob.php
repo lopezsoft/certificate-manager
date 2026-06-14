@@ -14,6 +14,7 @@ use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Facades\Cache;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -26,7 +27,10 @@ use Psr\Log\LoggerInterface;
  *   4. Si estado terminal o fallo → detiene polling
  *   5. Si sigue en curso → reprograma a los 60 s
  *
- * ShouldBeUnique evita polls concurrentes sobre la misma solicitud.
+ * ShouldBeUnique evita que el mismo job se encole dos veces simultáneamente.
+ * Adicionalmente se usa un mutex de Cache para proteger la sección crítica
+ * de escritura en BD contra race conditions entre workers concurrentes
+ * (ej: ReviveStalledViafirmaPollsJob + auto-reprogramación simultánea).
  */
 final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
 {
@@ -58,6 +62,37 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
     }
 
     public function handle(
+        ViafirmaClient $client,
+        PollingScheduler $scheduler,
+        StateMachine $fsm,
+        LoggerInterface $logger,
+    ): void {
+        // ── Mutex distribuido: protege la sección crítica contra race conditions ──
+        // ShouldBeUnique previene doble encolamiento, pero no protege contra
+        // ejecución simultánea de dos workers que tomaron el job antes de que
+        // el lock de unicidad se liberara (ej: watchdog + auto-reprogramación).
+        $mutexKey = "viafirma:poll:mutex:{$this->requestId}";
+        $lock = Cache::lock($mutexKey, 30); // TTL = timeout del job + margen
+
+        if (!$lock->get()) {
+            $logger->info('viafirma.poll.mutex_busy', [
+                'id'   => $this->requestId,
+                'hint' => 'Otro worker ya está procesando este poll — se omite.',
+            ]);
+            return;
+        }
+
+        try {
+            $this->executePolling($client, $scheduler, $fsm, $logger);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    /**
+     * Lógica de polling extraída para mantener handle() limpio.
+     */
+    private function executePolling(
         ViafirmaClient $client,
         PollingScheduler $scheduler,
         StateMachine $fsm,

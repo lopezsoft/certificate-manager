@@ -188,6 +188,18 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
             $entity->internal_state     = InternalState::FAILED;
             $entity->last_error_code    = 'ASSEMBLE_FAILED';
             $entity->last_error_message = substr($e->getMessage(), 0, 500);
+
+            // Marcar referencias del vault como PURGED para evitar referencias huérfanas.
+            // Si el ensamblaje falló, las llaves ya no son recuperables de forma segura
+            // y el PurgeExpiredKeysJob las eliminará en su próxima ejecución.
+            // Esto previene que un reintento manual intente recuperar material inexistente.
+            if ($entity->key_vault_ref && $entity->key_vault_ref !== 'PURGED') {
+                $entity->key_vault_ref = 'PURGED';
+            }
+            if ($entity->p12_password_ref && $entity->p12_password_ref !== 'PURGED') {
+                $entity->p12_password_ref = 'PURGED';
+            }
+
             $entity->save();
 
             ChangeHistory::create([

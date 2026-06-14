@@ -29,11 +29,13 @@ final class SafePemLogger implements LoggerInterface
         ['pattern' => '/-----BEGIN (?:RSA |EC |DSA |ENCRYPTED |)PRIVATE KEY-----[\s\S]+?-----END (?:RSA |EC |DSA |ENCRYPTED |)PRIVATE KEY-----/', 'label' => 'PRIVATE_KEY'],
         // Public keys
         ['pattern' => '/-----BEGIN PUBLIC KEY-----[\s\S]+?-----END PUBLIC KEY-----/', 'label' => 'PUBLIC_KEY'],
-        // CSR
-        ['pattern' => '/-----BEGIN CERTIFICATE REQUEST-----[\s\S]+?-----END CERTIFICATE REQUEST-----/', 'label' => 'CSR'],
+        // CSR (NEW CERTIFICATE REQUEST y variante sin NEW)
+        ['pattern' => '/-----BEGIN (?:NEW )?CERTIFICATE REQUEST-----[\s\S]+?-----END (?:NEW )?CERTIFICATE REQUEST-----/', 'label' => 'CSR'],
         // PKCS#7 / certificate
         ['pattern' => '/-----BEGIN PKCS7-----[\s\S]+?-----END PKCS7-----/', 'label' => 'PKCS7'],
         ['pattern' => '/-----BEGIN CERTIFICATE-----[\s\S]+?-----END CERTIFICATE-----/', 'label' => 'CERTIFICATE'],
+        // PKCS#12 en base64 (blob binario codificado)
+        ['pattern' => '/-----BEGIN PKCS12-----[\s\S]+?-----END PKCS12-----/', 'label' => 'PKCS12'],
     ];
 
     /** Claves de contexto que se redactan completamente (case-insensitive). */
@@ -42,6 +44,12 @@ final class SafePemLogger implements LoggerInterface
         'p12', 'p12_password', 'pin', 'password',
         'oauth_signature', 'oauth_token', 'access_token', 'authorization',
         'client_secret', 'viafirma_client_secret',
+        // Rutas de storage con material criptográfico
+        'p7b_path', 'p12_path', 'p7b_storage_path', 'p12_storage_path',
+        // CSR en texto plano (puede contener datos del DN)
+        'csr_pem', 'csr',
+        // Referencia al vault (no exponer IDs internos)
+        'key_vault_ref', 'p12_password_ref',
     ];
 
     public function __construct(private readonly LoggerInterface $inner) {}
