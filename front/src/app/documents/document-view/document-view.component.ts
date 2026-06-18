@@ -1,4 +1,4 @@
-import {Component, ElementRef, ViewChild, Output, EventEmitter} from '@angular/core';
+import {Component, ElementRef, OnDestroy, ViewChild, Output, EventEmitter} from '@angular/core';
 import {animate, style, transition, trigger} from "@angular/animations";
 import {ShippingService} from "../../services/shipping.service";
 import {FormatsService} from "../../services/formats.service";
@@ -15,8 +15,11 @@ import {LoadMaskService} from "../../services/load-mask.service";
 import {Router} from "@angular/router";
 import {DocumentViewerService} from "../../services/document-viewer.service";
 import {IssuanceService} from "../../services/issuance.service";
-import {IssuanceStatus, IssuanceDownloadMeta} from "../../interfaces/issuance.interface";
+import {IssuanceStatus, IssuanceDownloadMeta, ViafirmaStatus, RedownloadResult} from "../../interfaces/issuance.interface";
 import {DebugService} from "../../utils/debug.service";
+import TokenService from "../../utils/token.service";
+import {Subject, interval, Subscription} from "rxjs";
+import {takeUntil, switchMap} from "rxjs/operators";
 
 @Component({
     selector: 'app-document-view',
@@ -35,7 +38,7 @@ import {DebugService} from "../../utils/debug.service";
     ],
     standalone: false
 })
-export class DocumentViewComponent {
+export class DocumentViewComponent implements OnDestroy {
 	@ViewChild('fileUploadCc', { static: false}) fileUploadCc: ElementRef;
 	@ViewChild('fileUploadPayment', { static: false}) fileUploadPayment: ElementRef;
 	@Output() onDeleted = new EventEmitter<void>();
@@ -59,6 +62,19 @@ export class DocumentViewComponent {
 	protected issuanceComments: string = '';
 	protected showIssuanceForm = false;
 
+	/** Re-descarga Viafirma (solo Admin) */
+	protected viafirmaStatus: ViafirmaStatus | null = null;
+	protected isRedownloading = false;
+	protected redownloadResult: RedownloadResult | null = null;
+	protected showRedownloadPinModal = false;
+	protected pinCopied = false;
+
+	/** Polling Viafirma */
+	private readonly viafirmaTerminalStates = ['assembled', 'completed', 'failed', 'failed_recoverable', 'expired'];
+	private viafirmaPolling$: Subscription | null = null;
+	private destroy$ = new Subject<void>();
+	protected readonly isAdmin: boolean;
+
 	constructor(
 		public shipping: ShippingService,
 		public format: FormatsService,
@@ -69,11 +85,23 @@ export class DocumentViewComponent {
 		private router: Router,
 		private issuanceService: IssuanceService,
 		private debug: DebugService,
+		private tokenService: TokenService,
 	) {
+		this.isAdmin = this.tokenService.isAdmin();
 	}
 
 	initData() {
 		this.getChangeHistory();
+		// Reset estado Viafirma al cambiar de solicitud
+		this.viafirmaStatus = null;
+		this.redownloadResult = null;
+		this.showRedownloadPinModal = false;
+		this.issuanceStatus = null;
+		this.issuanceDownloadMeta = null;
+		this.stopViafirmaPolling();
+		if (this.currentShipping?.request_status === this.DocumentStatusEnum.PROCESSING) {
+			this.onCheckIssuanceStatus();
+		}
 	}
 
 	protected getChangeHistory() {
@@ -380,5 +408,145 @@ export class DocumentViewComponent {
 		const requestId = this.currentShipping.id;
 		const url = this.issuanceService.getDownloadFileUrl(requestId);
 		window.open(url, '_blank');
+	}
+
+	// ─── Re-descarga Viafirma (Admin) ────────────────────────────────────────
+
+	/**
+	 * Determina si el estado de Viafirma permite mostrar el botón de re-descarga.
+	 * Visible: assembled, completed, failed, downloaded
+	 */
+	protected get canShowRedownload(): boolean {
+		const visibleStates = ['assembled', 'completed', 'failed', 'downloaded'];
+		return visibleStates.includes(this.viafirmaStatus?.internal_state);
+	}
+
+	/**
+	 * Determina si el botón de re-descarga está habilitado (no disabled).
+	 * Habilitado: assembled, completed, downloaded
+	 */
+	protected get canRedownload(): boolean {
+		const allowedStates = ['assembled', 'completed', 'downloaded'];
+		return allowedStates.includes(this.viafirmaStatus?.internal_state);
+	}
+
+	/**
+	 * Determina si el polling está activo (estado no terminal).
+	 */
+	protected get isPolling(): boolean {
+		const pollingStates = ['submitted', 'polling', 'ready_to_download'];
+		return pollingStates.includes(this.viafirmaStatus?.internal_state);
+	}
+
+	/**
+	 * Carga el estado Viafirma e inicia polling si el estado no es terminal.
+	 */
+	protected loadViafirmaStatus(): void {
+		const requestId = this.currentShipping?.id;
+		if (!requestId) return;
+		this.issuanceService.getViafirmaStatus(requestId).subscribe({
+			next: (status) => {
+				this.viafirmaStatus = status;
+				if (!this.viafirmaTerminalStates.includes(status.internal_state)) {
+					this.startViafirmaPolling();
+				} else {
+					this.stopViafirmaPolling();
+				}
+			},
+			error: (err) => {
+				this.debug.error('DocumentViewComponent', 'Error al consultar estado Viafirma', err);
+			}
+		});
+	}
+
+	/**
+	 * Inicia el polling cada 30 segundos hasta alcanzar un estado terminal.
+	 */
+	private startViafirmaPolling(): void {
+		if (this.viafirmaPolling$) return; // Ya está corriendo
+		this.viafirmaPolling$ = interval(30000).pipe(
+			takeUntil(this.destroy$),
+			switchMap(() => this.issuanceService.getViafirmaStatus(this.currentShipping.id))
+		).subscribe({
+			next: (status) => {
+				this.viafirmaStatus = status;
+				if (this.viafirmaTerminalStates.includes(status.internal_state)) {
+					this.stopViafirmaPolling();
+				}
+			},
+			error: (err) => {
+				this.debug.error('DocumentViewComponent', 'Error en polling Viafirma', err);
+				this.stopViafirmaPolling();
+			}
+		});
+	}
+
+	private stopViafirmaPolling(): void {
+		this.viafirmaPolling$?.unsubscribe();
+		this.viafirmaPolling$ = null;
+	}
+
+	/**
+	 * Ejecuta el flujo de re-descarga: confirmación → POST → modal con PIN.
+	 */
+	protected onRedownload(): void {
+		this.msg.confirm(
+			'Re-descargar Certificado',
+			'<strong>Esta acción:</strong><ul style="text-align:left;margin:8px 0"><li>Consultará el estado actual en Viafirma</li><li>Descargará nuevamente el archivo del certificado</li><li>Generará un <strong>NUEVO PIN</strong> de acceso</li></ul><span class="text-warning"><i class="fas fa-exclamation-triangle"></i> El PIN anterior quedará inválido.</span>',
+		).then((result) => {
+			if (!result.isConfirmed) return;
+			this.isRedownloading = true;
+			this.mask.showBlockUI('Re-descargando certificado...');
+			this.issuanceService.redownloadCertificate(this.currentShipping.id).subscribe({
+				next: (redownload) => {
+					this.mask.hideBlockUI();
+					this.isRedownloading = false;
+					this.redownloadResult = redownload;
+					this.showRedownloadPinModal = true;
+					this.pinCopied = false;
+					this.loadViafirmaStatus();
+					this.getChangeHistory();
+				},
+				error: (err) => {
+					this.mask.hideBlockUI();
+					this.isRedownloading = false;
+					const status = err?.status;
+					const messages: Record<number, string> = {
+						403: 'No tiene permisos para realizar esta operación.',
+						404: 'No se encontró el trámite de certificado.',
+						409: `El certificado aún no está disponible para descarga. Estado: ${err?.error?.remote_status ?? 'desconocido'}`,
+						422: 'La llave privada fue purgada. Contacte al soporte para una nueva emisión.',
+						502: 'Error de comunicación con Viafirma. Intente nuevamente en unos minutos.',
+					};
+					this.msg.errorMessage('Error en re-descarga', messages[status] ?? 'Error inesperado. Contacte al soporte técnico.');
+					this.debug.error('DocumentViewComponent', 'Error en re-descarga Viafirma', err);
+				}
+			});
+		});
+	}
+
+	/**
+	 * Copia el PIN al portapapeles.
+	 */
+	protected copyPin(): void {
+		if (!this.redownloadResult?.pin) return;
+		navigator.clipboard.writeText(this.redownloadResult.pin).then(() => {
+			this.pinCopied = true;
+			setTimeout(() => this.pinCopied = false, 3000);
+		});
+	}
+
+	/**
+	 * Cierra el modal de PIN (solo cuando el admin haya confirmado copiarlo).
+	 */
+	protected closePinModal(): void {
+		this.showRedownloadPinModal = false;
+		this.redownloadResult = null;
+	}
+
+	ngOnDestroy(): void {
+		this.destroy$.next();
+		this.destroy$.complete();
+		this.stopViafirmaPolling();
 	}
 }

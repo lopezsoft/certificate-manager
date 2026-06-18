@@ -6,6 +6,8 @@ import {
   IssuanceRequest,
   IssuanceStatus,
   IssuanceDownloadMeta,
+  ViafirmaStatus,
+  RedownloadResult,
 } from '../interfaces/issuance.interface';
 import { DebugService } from '../utils/debug.service';
 import { environment } from '../../environments/environment';
@@ -75,5 +77,34 @@ export class IssuanceService {
    */
   getDownloadFileUrl(requestId: number): string {
     return `${environment.APIURL}/certificate-request/${requestId}/issuance/download/file`;
+  }
+
+  /**
+   * Consulta el estado detallado del trámite Viafirma.
+   * Devuelve internal_state, poll_attempts y otros metadatos.
+   */
+  getViafirmaStatus(requestId: number): Observable<ViafirmaStatus> {
+    return this.http.get(`/certificate-request/${requestId}/issuance`).pipe(
+      map((res: any) => {
+        // El endpoint puede devolver el estado anidado en dataRecords.viafirma o en dataRecords directamente
+        const data = res.dataRecords?.viafirma ?? res.dataRecords;
+        this.debug.log('IssuanceService', `Estado Viafirma solicitud #${requestId}`, data);
+        return data as ViafirmaStatus;
+      }),
+    );
+  }
+
+  /**
+   * Re-descarga el certificado P7B desde Viafirma y regenera el P12 con un nuevo PIN.
+   * Solo para administradores. Aplica cuando internal_state es assembled, completed o downloaded.
+   */
+  redownloadCertificate(requestId: number): Observable<RedownloadResult> {
+    return this.http.post(`/certificate-request/${requestId}/issuance/redownload`, {}).pipe(
+      map((res: any) => {
+        const result = res.dataRecords as RedownloadResult;
+        this.debug.log('IssuanceService', `Re-descarga completada solicitud #${requestId}`, result);
+        return result;
+      }),
+    );
   }
 }

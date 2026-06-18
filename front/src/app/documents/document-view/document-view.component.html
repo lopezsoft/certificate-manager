@@ -450,6 +450,19 @@
             <button class="btn btn-success btn-sm" (click)="onDownloadP12()">
               <i class="fas fa-download me-1"></i> Descargar P12
             </button>
+            <!-- Botón Re-descargar: Solo Admin y cuando internal_state lo permite -->
+            @if (isAdmin && canShowRedownload) {
+            <button class="btn btn-warning btn-sm" (click)="onRedownload()"
+              [disabled]="!canRedownload || isRedownloading"
+              title="Re-descarga el P7B y genera un nuevo PIN. El PIN anterior quedará inválido.">
+              @if (isRedownloading) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+              } @else {
+              <i class="fas fa-redo me-1"></i>
+              }
+              {{ isRedownloading ? 'Re-descargando...' : 'Re-descargar Certificado' }}
+            </button>
+            }
           </div>
         </div>
         }
@@ -493,6 +506,52 @@
     </div>
   </div>
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: Nuevo PIN tras re-descarga (no cerrable accidentalmente)   -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+@if (showRedownloadPinModal && redownloadResult) {
+<div class="modal-backdrop-pin" style="position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1050;display:flex;align-items:center;justify-content:center;">
+  <div class="card" style="width:520px;max-width:95vw;z-index:1060;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+    <div class="card-header d-flex align-items-center gap-2" style="background:linear-gradient(135deg,#1e7e34,#28a745);color:#fff;border-radius:12px 12px 0 0;">
+      <i class="fas fa-check-circle fa-lg"></i>
+      <span class="card-title text-white mb-0">Certificado Re-descargado Exitosamente</span>
+    </div>
+    <div class="card-body">
+      <p class="text-muted mb-2">El certificado fue re-descargado y se generó un nuevo PIN de acceso:</p>
+      <!-- PIN display -->
+      <div class="pin-box" style="background:#f4f6fa;border:2px dashed #28a745;border-radius:8px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;">
+        <code style="font-size:1.15rem;letter-spacing:2px;word-break:break-all;flex:1;">{{ redownloadResult.pin }}</code>
+        <button class="btn btn-sm" [ngClass]="pinCopied ? 'btn-success' : 'btn-outline-secondary'" (click)="copyPin()" style="white-space:nowrap;">
+          <i [ngClass]="pinCopied ? 'fas fa-check' : 'fas fa-copy'"></i>
+          {{ pinCopied ? '¡Copiado!' : 'Copiar PIN' }}
+        </button>
+      </div>
+      <!-- Advertencias -->
+      <div class="alert alert-warning py-2 mb-2">
+        <i class="fas fa-exclamation-triangle me-1"></i>
+        <strong>Guarde este PIN. No se mostrará nuevamente.</strong><br>
+        <small>El PIN anterior ha quedado inválido.</small>
+      </div>
+      @if (redownloadResult.expires_at) {
+      <small class="text-muted d-block mb-2">
+        <i class="fas fa-clock me-1"></i> Expira: {{ redownloadResult.expires_at }}
+      </small>
+      }
+    </div>
+    <div class="card-footer d-flex justify-content-between align-items-center">
+      <button class="btn custom-button btn-primary btn-sm" (click)="onDownloadP12()">
+        <i class="fas fa-download me-1"></i> Descargar P12
+      </button>
+      <button class="btn btn-outline-secondary btn-sm" (click)="closePinModal()" [disabled]="!pinCopied"
+        [title]="pinCopied ? 'Cerrar' : 'Debe copiar el PIN antes de cerrar'">
+        <i class="fas fa-times me-1"></i>
+        {{ pinCopied ? 'Cerrar' : 'Copie el PIN para cerrar' }}
+      </button>
+    </div>
+  </div>
+</div>
+}
 @if (!canAddFile && canAddPaymentFile) {
 <app-notification-card (onCloseCard)="canAddPaymentFile = false">
   <div class="card">
