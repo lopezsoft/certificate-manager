@@ -155,6 +155,23 @@ final class ViafirmaServiceProvider extends ServiceProvider
             ->needs(\Psr\Log\LoggerInterface::class)
             ->give(SafePemLogger::class);
 
+        // ---- RedownloadCertificateUseCase (Admin re-descarga P12) ------------
+        $this->app->singleton(
+            \App\Modules\Viafirma\Application\UseCases\RedownloadCertificateUseCase::class,
+            function ($app): \App\Modules\Viafirma\Application\UseCases\RedownloadCertificateUseCase {
+                return new \App\Modules\Viafirma\Application\UseCases\RedownloadCertificateUseCase(
+                    client: $app->make(\App\Modules\Viafirma\Domain\Contracts\ViafirmaClient::class),
+                    crypto: $app->make(\App\Modules\Viafirma\Domain\Contracts\CryptoServiceContract::class),
+                    vault:  $app->make(\App\Modules\Viafirma\Domain\Contracts\KeyVault::class),
+                    logger: $app->make(SafePemLogger::class),
+                );
+            }
+        );
+
+        $this->app->when(\App\Modules\Viafirma\Application\UseCases\RedownloadCertificateUseCase::class)
+            ->needs(\Psr\Log\LoggerInterface::class)
+            ->give(SafePemLogger::class);
+
         // El antiguo ViafirmaCertificateController fue eliminado (Fase 3,
         // 2026-05-19). Su funcionalidad vive ahora en
         // App\Http\Controllers\Certificate\CertificateIssuanceController + ViafirmaIssuanceProvider.

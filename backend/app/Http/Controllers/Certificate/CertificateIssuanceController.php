@@ -11,6 +11,8 @@ use App\Exceptions\Certificate\CertificateIssuanceException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Certificate\IssueCertificateRequest;
 use App\Modules\Viafirma\Application\Services\ViafirmaDownloadService;
+use App\Modules\Viafirma\Application\UseCases\RedownloadCertificateUseCase;
+use App\Modules\Viafirma\Domain\Exceptions\ViafirmaException;
 use App\Services\Certificate\CertificateIssuanceOrchestrator;
 use App\Services\Certificate\Providers\ViafirmaIssuanceProvider;
 use Exception;
@@ -36,6 +38,7 @@ class CertificateIssuanceController extends Controller
     public function __construct(
         private readonly CertificateIssuanceOrchestrator $orchestrator,
         private readonly ViafirmaDownloadService $viafirmaDownload,
+        private readonly RedownloadCertificateUseCase $redownloadUseCase,
     ) {}
 
     /**
@@ -186,6 +189,69 @@ class CertificateIssuanceController extends Controller
             }
 
             return $this->viafirmaDownload->streamFor($id, $request->user()?->id);
+        } catch (Exception $e) {
+            return MessageExceptionResponse::response($e);
+        }
+    }
+
+    /**
+     * Re-descarga el P7B y regenera el P12 con un nuevo PIN. Solo ADMIN.
+     *
+     * @OA\Post(
+     *     path="/certificate-request/{id}/issuance/redownload",
+     *     operationId="certificateRequestIssuanceRedownload",
+     *     tags={"Emisión de Certificados"},
+     *     summary="[ADMIN] Re-descargar P7B y regenerar P12 con nuevo PIN",
+     *     description="Consulta el estado remoto en Viafirma, descarga nuevamente el P7B y ensambla un nuevo P12 con PIN renovado. Solo disponible para administradores. útil cuando el archivo P12 se corrompió o el PIN fue purgado antes de que el cliente lo descargara.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, description="ID de la solicitud (certificate_requests.id)", @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="P12 regenerado exitosamente", @OA\JsonContent(
+     *         @OA\Property(property="success", type="boolean", example=true),
+     *         @OA\Property(property="message", type="string"),
+     *         @OA\Property(property="dataRecords", type="object",
+     *             @OA\Property(property="pin", type="string", description="Nuevo PIN para abrir el P12"),
+     *             @OA\Property(property="download_url", type="string"),
+     *             @OA\Property(property="expires_at", type="string", nullable=true),
+     *             @OA\Property(property="viafirma_id", type="integer"),
+     *             @OA\Property(property="internal_state", type="string"),
+     *             @OA\Property(property="remote_status", type="string")
+     *         )
+     *     )),
+     *     @OA\Response(response=403, description="No es administrador", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
+     *     @OA\Response(response=404, description="Trámite Viafirma no encontrado", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
+     *     @OA\Response(response=409, description="Estado remoto no permite re-descarga", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
+     *     @OA\Response(response=422, description="Llave privada purgada", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
+     *     @OA\Response(response=502, description="Error al consultar Viafirma", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
+     *     @OA\Response(response=401, description="No autenticado")
+     * )
+     */
+    public function redownload(Request $request, int $id): JsonResponse
+    {
+        // Verificar autorización de administrador
+        if (!$this->callerIsAdmin($request)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No autorizado. Esta operación requiere permisos de administrador.',
+            ], JsonResponse::HTTP_FORBIDDEN);
+        }
+
+        try {
+            $result = $this->redownloadUseCase->handle($id, $request->user()?->id ?? 0);
+
+            return HttpResponseMessages::getResponse([
+                'message'     => 'Certificado re-descargado y P12 regenerado exitosamente.',
+                'dataRecords' => $result->toArray(),
+            ]);
+        } catch (ViafirmaException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], $e->getCode() ?: JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+            return response()->json([
+                'success' => false,
+                'message' => "No se encontró un trámite Viafirma para la solicitud {$id}.",
+            ], JsonResponse::HTTP_NOT_FOUND);
         } catch (Exception $e) {
             return MessageExceptionResponse::response($e);
         }
