@@ -20,7 +20,8 @@ return [
     'client_id'     => env('VIAFIRMA_CLIENT_ID'),
     'client_secret' => env('VIAFIRMA_CLIENT_SECRET'),
     'ra_code'       => env('VIAFIRMA_RA_CODE'),
-    'cod_profile'   => env('VIAFIRMA_COD_PROFILE'),
+    'cod_profile_corporate' => env('VIAFIRMA_COD_PROFILE_CORPORATE'),
+    'cod_profile_individual' => env('VIAFIRMA_COD_PROFILE_INDIVIDUAL'),
 
     // TTL (segundos) del caché de perfiles del RA en memoria local.
     // Los perfiles cambian rarísimo; cachearlos evita un HTTP GET en cada emisión.

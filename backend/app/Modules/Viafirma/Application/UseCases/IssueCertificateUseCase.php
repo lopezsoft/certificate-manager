@@ -96,9 +96,20 @@ final class IssueCertificateUseCase
             throw new ViafirmaException('config(viafirma.ra_code) está vacío — verifique VIAFIRMA_RA_CODE.');
         }
 
-        $codProfile = (string) config('viafirma.cod_profile');
+        // Seleccionar el cod_profile según el tipo de persona:
+        //   FE_PJ (Persona Jurídica)  → VIAFIRMA_COD_PROFILE_CORPORATE
+        //   FE_PN (Persona Natural)   → VIAFIRMA_COD_PROFILE_INDIVIDUAL
+        $codProfile = $profile === CertificateProfile::FE_PJ
+            ? (string) config('viafirma.cod_profile_corporate')
+            : (string) config('viafirma.cod_profile_individual');
+
         if ($codProfile === '') {
-            throw new ViafirmaException('config(viafirma.cod_profile) está vacío — verifique VIAFIRMA_COD_PROFILE.');
+            $envVar = $profile === CertificateProfile::FE_PJ
+                ? 'VIAFIRMA_COD_PROFILE_CORPORATE'
+                : 'VIAFIRMA_COD_PROFILE_INDIVIDUAL';
+            throw new ViafirmaException(
+                "config(viafirma.cod_profile_{$profile->value}) está vacío — verifique {$envVar}."
+            );
         }
 
         $validityDays = (int) config('viafirma.certificate_validity_days', 730);
