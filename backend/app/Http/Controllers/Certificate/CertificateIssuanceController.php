@@ -29,23 +29,28 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  *   - GET   /issuance
  *   - GET   /issuance/download
  *   - GET   /issuance/download/file
+ *   - POST  /issuance/redownload  [solo ADMIN]
+ *
+ * ⚠️  DISEÑO INTENCIONAL — Inyección de método (no constructor) para servicios Viafirma:
+ *
+ *     ViafirmaDownloadService y RedownloadCertificateUseCase NO se inyectan en
+ *     el constructor. Estos servicios tiran del stack completo Viafirma:
+ *     KeyVault → EncryptedLocalKeyVault (disk I/O en Windows) y
+ *     GuzzleViafirmaClient (requiere VIAFIRMA_BASE_URL configurado).
+ *
+ *     Si se inyectan en el constructor, el controller bloquea/falla al construirse
+ *     en CADA request del grupo, incluyendo rutas que no necesitan Viafirma.
+ *
+ *     Con inyección de método, Laravel los resuelve SOLO cuando la acción
+ *     específica (download, downloadFile, redownload) es invocada.
  *
  * Este controller NO conoce los detalles de cada proveedor — sólo orquesta
  * a través de {@see CertificateIssuanceOrchestrator}.
  */
 class CertificateIssuanceController extends Controller
 {
-    /**
-     * NOTA: RedownloadCertificateUseCase NO se inyecta en el constructor
-     * intencionalmente. Se usa inyección de método en redownload() para que
-     * el stack completo de Viafirma (GuzzleClient + crypto + vault) se
-     * instancie SOLO cuando esa acción específica es invocada, evitando
-     * fallos en el boot del controller cuando VIAFIRMA_BASE_URL no está
-     * configurada o el provider está deshabilitado.
-     */
     public function __construct(
         private readonly CertificateIssuanceOrchestrator $orchestrator,
-        private readonly ViafirmaDownloadService $viafirmaDownload,
     ) {}
 
     /**
@@ -146,7 +151,7 @@ class CertificateIssuanceController extends Controller
      *     @OA\Response(response=401, description="No autenticado")
      * )
      */
-    public function download(Request $request, int $id): JsonResponse
+    public function download(Request $request, int $id, ViafirmaDownloadService $viafirmaDownload): JsonResponse
     {
         try {
             $provider = $this->orchestrator->providerFor($id, $this->callerIsAdmin($request));
@@ -157,7 +162,7 @@ class CertificateIssuanceController extends Controller
                 ]);
             }
 
-            return $this->viafirmaDownload->metadataFor($id, $request->user()?->id);
+            return $viafirmaDownload->metadataFor($id, $request->user()?->id);
         } catch (Exception $e) {
             return MessageExceptionResponse::response($e);
         }
@@ -184,7 +189,7 @@ class CertificateIssuanceController extends Controller
      *     @OA\Response(response=401, description="No autenticado")
      * )
      */
-    public function downloadFile(Request $request, int $id): StreamedResponse|JsonResponse
+    public function downloadFile(Request $request, int $id, ViafirmaDownloadService $viafirmaDownload): StreamedResponse|JsonResponse
     {
         try {
             $provider = $this->orchestrator->providerFor($id, $this->callerIsAdmin($request));
@@ -195,7 +200,7 @@ class CertificateIssuanceController extends Controller
                 ]);
             }
 
-            return $this->viafirmaDownload->streamFor($id, $request->user()?->id);
+            return $viafirmaDownload->streamFor($id, $request->user()?->id);
         } catch (Exception $e) {
             return MessageExceptionResponse::response($e);
         }
@@ -209,7 +214,7 @@ class CertificateIssuanceController extends Controller
      *     operationId="certificateRequestIssuanceRedownload",
      *     tags={"Emisión de Certificados"},
      *     summary="[ADMIN] Re-descargar P7B y regenerar P12 con nuevo PIN",
-     *     description="Consulta el estado remoto en Viafirma, descarga nuevamente el P7B y ensambla un nuevo P12 con PIN renovado. Solo disponible para administradores. útil cuando el archivo P12 se corrompió o el PIN fue purgado antes de que el cliente lo descargara.",
+     *     description="Consulta el estado remoto en Viafirma, descarga nuevamente el P7B y ensambla un nuevo P12 con PIN renovado. Solo disponible para administradores. Útil cuando el archivo P12 se corrompió o el PIN fue purgado antes de que el cliente lo descargara.",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, description="ID de la solicitud (certificate_requests.id)", @OA\Schema(type="integer")),
      *     @OA\Response(response=200, description="P12 regenerado exitosamente", @OA\JsonContent(
@@ -234,7 +239,6 @@ class CertificateIssuanceController extends Controller
      */
     public function redownload(Request $request, int $id, RedownloadCertificateUseCase $useCase): JsonResponse
     {
-        // Verificar autorización de administrador
         if (!$this->callerIsAdmin($request)) {
             return response()->json([
                 'success' => false,
