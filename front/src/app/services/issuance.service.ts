@@ -88,6 +88,9 @@ export class IssuanceService {
       map((res: any) => {
         // El endpoint puede devolver el estado anidado en dataRecords.data o en dataRecords directamente
         const data = res.dataRecords?.data ?? res.dataRecords;
+        if (data && data.internal_state) {
+          data.internal_state = data.internal_state.toUpperCase();
+        }
         this.debug.log('IssuanceService', `Estado Viafirma solicitud #${requestId}`, data);
         return data as ViafirmaStatus;
       }),
@@ -102,6 +105,9 @@ export class IssuanceService {
     return this.http.post(`/certificate-request/${requestId}/issuance/redownload`, {}).pipe(
       map((res: any) => {
         const result = res.dataRecords as RedownloadResult;
+        if (result && result.internal_state) {
+          result.internal_state = result.internal_state.toUpperCase() as any;
+        }
         this.debug.log('IssuanceService', `Re-descarga completada solicitud #${requestId}`, result);
         return result;
       }),
