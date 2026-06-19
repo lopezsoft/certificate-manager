@@ -114,7 +114,7 @@ final class RedownloadCertificateUseCase
         ]);
 
         // ── 6. Generar nuevo PIN CSPRNG ──────────────────────────────────────
-        $newPin = Str::random(32);
+        $newPin = Str::random(16);
 
         // ── 7. Recuperar llave privada del KeyVault ──────────────────────────
         $privateKeyPem = $this->vault->retrieve($state->key_vault_ref);
@@ -220,6 +220,7 @@ final class RedownloadCertificateUseCase
             viafirmaId:    $entity->id,
             internalState: InternalState::ASSEMBLED->value,
             remoteStatus:  $statusResult->status->value,
+            expiresAt:     $cr?->expiration_date_formatted,
         );
     }
 }

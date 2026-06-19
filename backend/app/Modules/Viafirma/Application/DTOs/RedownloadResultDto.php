@@ -15,6 +15,7 @@ final class RedownloadResultDto
         public readonly int    $viafirmaId,
         public readonly string $internalState,
         public readonly string $remoteStatus,
+        public readonly ?string $expiresAt = null,
     ) {}
 
     public function toArray(): array
@@ -22,7 +23,7 @@ final class RedownloadResultDto
         return [
             'pin'            => $this->pin,
             'download_url'   => $this->downloadUrl,
-            'expires_at'     => null,
+            'expires_at'     => $this->expiresAt,
             'viafirma_id'    => $this->viafirmaId,
             'internal_state' => $this->internalState,
             'remote_status'  => $this->remoteStatus,
