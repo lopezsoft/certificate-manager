@@ -49,6 +49,13 @@ final class MailIssuanceProvider implements CertificateIssuanceProvider
         return $cr->files->where('document_type', 'ATTACHED')->isNotEmpty();
     }
 
+    public function manages(int $certificateRequestId): bool
+    {
+        // Proveedor fallback por defecto: si la solicitud no está en Viafirma,
+        // asumimos que pertenece al flujo de correo legacy.
+        return true;
+    }
+
     public function issue(IssuanceRequest $request): IssuanceResult
     {
         // Construimos un HttpRequest sintético porque el servicio legacy lo exige.

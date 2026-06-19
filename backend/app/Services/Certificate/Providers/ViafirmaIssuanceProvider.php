@@ -66,6 +66,14 @@ final class ViafirmaIssuanceProvider implements CertificateIssuanceProvider
         return true;
     }
 
+    public function manages(int $certificateRequestId): bool
+    {
+        // Si hay un registro activo (o fallido, pero existe) en viafirma_certificate_requests,
+        // este proveedor gestiona la solicitud.
+        $existing = $this->repository->findByCertificateRequestId($certificateRequestId);
+        return $existing !== null;
+    }
+
     public function issue(IssuanceRequest $request): IssuanceResult
     {
         $command = new IssueCertificateCommand(

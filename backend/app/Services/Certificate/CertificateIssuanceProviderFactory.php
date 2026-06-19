@@ -143,41 +143,43 @@ final class CertificateIssuanceProviderFactory
     }
 
     /**
-     * Resuelve el proveedor para operaciones de CONSULTA (status, download).
-     *
-     * A diferencia de resolveFor(), este método NO requiere emailCertificate
-     * ni verifica prerrequisitos de emisión. Solo necesita saber qué proveedor
-     * ya gestionó la solicitud (leyendo viafirma_certificate_requests).
-     *
-     * Cascada:
-     *  1) Si existe registro en viafirma_certificate_requests → devuelve viafirma.
-     *  2) Si viafirma está habilitado pero aún no hay registro → devuelve viafirma
-     *     (para que status() retorne 404 con mensaje claro).
-     *  3) Fallback → mail.
+     * Resuelve el proveedor que actualmente gestiona la solicitud.
+     * Útil para consultar estado y descargas post-emisión.
      */
-    public function resolveForStatus(int $certificateRequestId): CertificateIssuanceProvider
+    public function resolveManagerFor(int $certificateRequestId): CertificateIssuanceProvider
     {
-        // Verificar si ya existe un trámite Viafirma para esta solicitud
-        $viafirmaClass = (array) config('certificate.issuance.providers', []);
-        $viafirmaProviderClass = $viafirmaClass['viafirma'] ?? null;
-
-        if ($viafirmaProviderClass && class_exists($viafirmaProviderClass)) {
-            /** @var \App\Contracts\CertificateIssuanceProvider $viafirmaProvider */
-            $viafirmaProvider = $this->container->make($viafirmaProviderClass);
-
-            // Si existe trámite Viafirma O Viafirma está habilitado globalmente → usar Viafirma
-            if ((bool) config('viafirma.feature_flag.enabled', false)) {
-                $this->logger->info('certificate.issuance.provider.selected', [
-                    'source' => 'status_lookup',
-                    'name'   => $viafirmaProvider->name(),
-                    'cr_id'  => $certificateRequestId,
-                ]);
-                return $viafirmaProvider;
+        $providers = (array) config('certificate.issuance.providers', []);
+        
+        // Primero preguntamos a todos los proveedores explícitos si lo manejan
+        // (por ejemplo, si tiene registro en BD de Viafirma)
+        foreach ($providers as $name => $class) {
+            if ($name === 'mail') continue; // Fallback al final
+            
+            try {
+                $provider = $this->make($name);
+                if ($provider->manages($certificateRequestId)) {
+                    return $provider;
+                }
+            } catch (CertificateIssuanceException) {
+                // Ignorar si un proveedor falla al instanciarse
             }
         }
 
-        // Fallback: mail provider
-        return $this->make('mail');
+        // Si nadie lo maneja de forma estricta, recae en el legacy mail
+        if (isset($providers['mail'])) {
+            try {
+                $mail = $this->make('mail');
+                if ($mail->manages($certificateRequestId)) {
+                    return $mail;
+                }
+            } catch (CertificateIssuanceException) {
+            }
+        }
+
+        throw new CertificateIssuanceException(
+            "Ningún proveedor gestiona la solicitud {$certificateRequestId}.",
+            404,
+        );
     }
 
     private function ensureSupports(

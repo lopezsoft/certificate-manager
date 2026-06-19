@@ -57,29 +57,29 @@ final class ReviveStalledViafirmaPollsJob implements ShouldQueue
             // Guard rápido: si no hay ningún registro huérfano, salir sin coste
             if (!$baseQuery->exists()) {
                 $logger->info('viafirma.watchdog.no_stalled');
-                return;
-            }
+            } else {
 
-            $stalled = $baseQuery->get(['id', 'viafirma_certificate_request_id', 'internal_state', 'next_poll_at', 'poll_attempts']);
+                $stalled = $baseQuery->get(['id', 'viafirma_certificate_request_id', 'internal_state', 'next_poll_at', 'poll_attempts']);
 
-            $logger->warning('viafirma.watchdog.reviving', ['count' => $stalled->count()]);
+                $logger->warning('viafirma.watchdog.reviving', ['count' => $stalled->count()]);
 
-            foreach ($stalled as $stateRecord) {
-                $delay = random_int(5, 30);
+                foreach ($stalled as $stateRecord) {
+                    $delay = random_int(5, 30);
 
-                PollViafirmaStatusJob::dispatch($stateRecord->viafirma_certificate_request_id)
-                    ->delay(now()->addSeconds($delay));
+                    PollViafirmaStatusJob::dispatch($stateRecord->viafirma_certificate_request_id)
+                        ->delay(now()->addSeconds($delay));
 
-                $stateRecord->update(['next_poll_at' => now()->addSeconds($delay)]);
+                    $stateRecord->update(['next_poll_at' => now()->addSeconds($delay)]);
 
-                $logger->info('viafirma.watchdog.revived', [
-                    'viafirma_id' => $stateRecord->viafirma_certificate_request_id,
-                    'state'       => $stateRecord->internal_state instanceof \App\Modules\Viafirma\Domain\Enums\InternalState
-                        ? $stateRecord->internal_state->value
-                        : $stateRecord->internal_state,
-                    'attempts'    => $stateRecord->poll_attempts,
-                    'delay_s'     => $delay,
-                ]);
+                    $logger->info('viafirma.watchdog.revived', [
+                        'viafirma_id' => $stateRecord->viafirma_certificate_request_id,
+                        'state'       => $stateRecord->internal_state instanceof \App\Modules\Viafirma\Domain\Enums\InternalState
+                            ? $stateRecord->internal_state->value
+                            : $stateRecord->internal_state,
+                        'attempts'    => $stateRecord->poll_attempts,
+                        'delay_s'     => $delay,
+                    ]);
+                }
             }
         } catch (\Throwable $e) {
             $logger->error('viafirma.watchdog.error', [

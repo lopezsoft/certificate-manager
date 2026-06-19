@@ -40,6 +40,13 @@ interface CertificateIssuanceProvider
     public function supports(IssuanceRequest $request): bool;
 
     /**
+     * Determina si este proveedor es el que actualmente gestiona o emitió la solicitud.
+     * Útil para enrutar consultas de estado o descargas al proveedor correcto
+     * después de que la emisión ya inició o concluyó.
+     */
+    public function manages(int $certificateRequestId): bool;
+
+    /**
      * Ejecuta el flujo de emisión (síncrono o asíncrono según el proveedor)
      * y devuelve un resultado normalizado para la capa de presentación.
      *

@@ -126,8 +126,7 @@ final class CertificateIssuanceOrchestrator
             );
         }
 
-        // resolveForStatus() no requiere emailCertificate — es solo consulta de estado.
-        $provider = $this->factory->resolveForStatus($certificateRequestId);
+        $provider = $this->factory->resolveManagerFor($certificateRequestId);
 
         return $provider->status($certificateRequestId);
     }
@@ -138,7 +137,6 @@ final class CertificateIssuanceOrchestrator
      */
     public function providerFor(int $certificateRequestId, bool $callerIsAdmin = false): CertificateIssuanceProvider
     {
-        // resolveForStatus() no requiere emailCertificate — es solo lookup de proveedor.
-        return $this->factory->resolveForStatus($certificateRequestId);
+        return $this->factory->resolveManagerFor($certificateRequestId);
     }
 }
