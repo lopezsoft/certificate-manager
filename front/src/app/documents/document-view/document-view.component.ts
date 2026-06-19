@@ -69,6 +69,22 @@ export class DocumentViewComponent implements OnDestroy {
 	protected showRedownloadPinModal = false;
 	protected pinCopied = false;
 
+	/** Revocación */
+	protected showRevokeModal = false;
+	protected revokeLoading = false;
+	protected revocationCode = '';
+	protected revocationReason = 0;
+	protected readonly revocationReasons = [
+		{ id: 0, label: 'Sin especificar' },
+		{ id: 1, label: 'Clave comprometida' },
+		{ id: 2, label: 'Autoridad de certificación comprometida' },
+		{ id: 3, label: 'Ha cambiado la afiliación' },
+		{ id: 4, label: 'Sustitución' },
+		{ id: 5, label: 'Cese de operaciones' },
+		{ id: 9, label: 'Permisos retirados' },
+		{ id: 10, label: 'AA comprometida' },
+	];
+
 	/** Polling Viafirma */
 	private readonly viafirmaTerminalStates = ['assembled', 'completed', 'failed', 'failed_recoverable', 'expired'];
 	private viafirmaPolling$: Subscription | null = null;
@@ -542,6 +558,57 @@ export class DocumentViewComponent implements OnDestroy {
 	protected closePinModal(): void {
 		this.showRedownloadPinModal = false;
 		this.redownloadResult = null;
+	}
+
+	// ─── Revocación (Frontend UI) ──────────────────────────────────────────────
+
+	protected openRevokeModal(): void {
+		this.revocationCode = '';
+		this.revocationReason = 0;
+		this.showRevokeModal = true;
+	}
+
+	protected closeRevokeModal(): void {
+		this.showRevokeModal = false;
+	}
+
+	protected onRevokeSubmit(): void {
+		if (!this.revocationCode || this.revocationCode.trim() === '') {
+			this.msg.errorMessage('Atención', 'El código de revocación es obligatorio');
+			return;
+		}
+
+		this.msg.confirm(
+			'¿Revocar Certificado?',
+			'<span class="text-danger"><i class="fas fa-exclamation-triangle"></i> Esta acción es irreversible.</span><br>El certificado dejará de ser válido inmediatamente.'
+		).then((result) => {
+			if (!result.isConfirmed) return;
+
+			this.revokeLoading = true;
+			this.mask.showBlockUI('Revocando certificado...');
+			this.issuanceService.revokeCertificate(this.currentShipping.id, this.revocationCode, this.revocationReason).subscribe({
+				next: () => {
+					this.mask.hideBlockUI();
+					this.revokeLoading = false;
+					this.showRevokeModal = false;
+					this.msg.toastMessage('Éxito', 'Certificado revocado exitosamente');
+					// Update visual status
+					this.currentShipping.request_status = this.DocumentStatusEnum.REJECTED;
+					this.getChangeHistory(); // Refrescar historial
+				},
+				error: (err) => {
+					this.mask.hideBlockUI();
+					this.revokeLoading = false;
+					const status = err?.status;
+					if (status === 400 || status === 422) {
+						this.msg.errorMessage('Error', 'El código de revocación no es válido.');
+					} else {
+						this.msg.errorMessage('Error', 'Ha ocurrido un error al intentar revocar el certificado.');
+					}
+					this.debug.error('DocumentViewComponent', 'Error al revocar certificado', err);
+				}
+			});
+		});
 	}
 
 	ngOnDestroy(): void {

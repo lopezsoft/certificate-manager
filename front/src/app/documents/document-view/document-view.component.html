@@ -463,6 +463,12 @@
               {{ isRedownloading ? 'Re-descargando...' : 'Re-descargar Certificado' }}
             </button>
             }
+            <!-- Botón Revocar -->
+            @if (viafirmaStatus?.internal_state === 'completed') {
+            <button class="btn btn-danger btn-sm" (click)="openRevokeModal()" title="Revocar certificado emitido">
+              <i class="fas fa-ban me-1"></i> Revocar Certificado
+            </button>
+            }
           </div>
         </div>
         }
@@ -547,6 +553,59 @@
         [title]="pinCopied ? 'Cerrar' : 'Debe copiar el PIN antes de cerrar'">
         <i class="fas fa-times me-1"></i>
         {{ pinCopied ? 'Cerrar' : 'Copie el PIN para cerrar' }}
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: Revocación de certificado                                  -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+@if (showRevokeModal) {
+<div class="modal-backdrop-pin" style="position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1050;display:flex;align-items:center;justify-content:center;">
+  <div class="card" style="width:520px;max-width:95vw;z-index:1060;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+    <div class="card-header d-flex align-items-center gap-2" style="background:linear-gradient(135deg,#c82333,#dc3545);color:#fff;border-radius:12px 12px 0 0;">
+      <i class="fas fa-ban fa-lg"></i>
+      <span class="card-title text-white mb-0">Revocar Certificado</span>
+    </div>
+    <div class="card-body py-2">
+      <div class="alert alert-warning py-2 mb-2">
+        <i class="fas fa-exclamation-triangle me-1"></i>
+        <strong>¡Advertencia!</strong><br>
+        Esta acción es destructiva e irreversible. El certificado digital quedará invalidado inmediatamente.
+      </div>
+      <div class="form-group mb-2">
+        <label>
+          <span class="asterisk text-danger">*</span>
+          Código de Revocación
+        </label>
+        <input class="form-control" type="text" [(ngModel)]="revocationCode" placeholder="Ingrese el código enviado a su correo" autocomplete="off">
+        <small class="text-muted d-block mt-1">Este código fue enviado al correo electrónico al momento de la emisión.</small>
+      </div>
+      <div class="form-group mb-2">
+        <label>
+          <span class="asterisk text-danger">*</span>
+          Motivo de la revocación
+        </label>
+        <ng-select [(ngModel)]="revocationReason" [clearable]="false" required>
+          @for (reason of revocationReasons; track reason.id) {
+          <ng-option [value]="reason.id">{{ reason.label }}</ng-option>
+          }
+        </ng-select>
+      </div>
+    </div>
+    <div class="card-footer d-flex justify-content-end gap-2">
+      <button class="btn custom-button border fas-fa-close" (click)="closeRevokeModal()" [disabled]="revokeLoading">
+        <i class="fas fa-times me-1"></i> Cancelar
+      </button>
+      <button class="btn btn-danger custom-button" (click)="onRevokeSubmit()" [disabled]="revokeLoading || !revocationCode">
+        @if (revokeLoading) {
+        <span class="spinner-border spinner-border-sm me-1"></span>
+        } @else {
+        <i class="fas fa-ban me-1"></i>
+        }
+        {{ revokeLoading ? 'Revocando...' : 'Confirmar Revocación' }}
       </button>
     </div>
   </div>
