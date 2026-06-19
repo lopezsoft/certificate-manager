@@ -151,7 +151,7 @@ final class OpenSslCryptoService implements CryptoServiceContract
             output:      $p12Binary,
             private_key: $privateKey,
             passphrase:  $exportPassword,
-            args:        empty($caChain) ? $args : array_merge($args, ['extracerts' => $caChain]),
+            options:     empty($caChain) ? $args : array_merge($args, ['extracerts' => $caChain]),
         );
 
         if (!$result || $p12Binary === '') {
