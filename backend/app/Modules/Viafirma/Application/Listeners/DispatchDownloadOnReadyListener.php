@@ -6,7 +6,7 @@ namespace App\Modules\Viafirma\Application\Listeners;
 
 use App\Modules\Viafirma\Domain\Events\ViafirmaReadyToDownload;
 use App\Modules\Viafirma\Infrastructure\Jobs\DownloadP7bJob;
-use Psr\Log\LoggerInterface;
+use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 
 /**
  * Escucha ViafirmaReadyToDownload y despacha el DownloadP7bJob (V-408).
@@ -17,7 +17,7 @@ use Psr\Log\LoggerInterface;
 final class DispatchDownloadOnReadyListener
 {
     public function __construct(
-        private readonly LoggerInterface $logger,
+        private readonly SafePemLogger $logger,
     ) {}
 
     public function handle(ViafirmaReadyToDownload $event): void

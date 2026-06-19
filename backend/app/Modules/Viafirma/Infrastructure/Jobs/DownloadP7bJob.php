@@ -17,7 +17,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Storage;
-use Psr\Log\LoggerInterface;
+use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 
 /**
  * Descarga el P7B emitido por Viafirma y lo persiste en storage (V-402).
@@ -56,7 +56,7 @@ final class DownloadP7bJob implements ShouldQueue, ShouldBeUnique
 
     public function handle(
         ViafirmaClient $client,
-        LoggerInterface $logger,
+        SafePemLogger $logger,
     ): void {
         $entity = ViafirmaCertificateRequest::find($this->requestId);
 

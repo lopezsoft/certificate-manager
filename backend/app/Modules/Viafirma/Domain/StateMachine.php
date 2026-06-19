@@ -11,7 +11,7 @@ use App\Modules\Viafirma\Domain\Events\ViafirmaRequestFailed;
 use App\Modules\Viafirma\Domain\Events\ViafirmaStatusChanged;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaStatusHistory;
-use Psr\Log\LoggerInterface;
+use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 
 /**
  * Máquina de estados finita del bounded context Viafirma (V-301).
@@ -31,7 +31,7 @@ use Psr\Log\LoggerInterface;
 final class StateMachine
 {
     public function __construct(
-        private readonly LoggerInterface $logger,
+        private readonly SafePemLogger $logger,
     ) {}
 
     /**

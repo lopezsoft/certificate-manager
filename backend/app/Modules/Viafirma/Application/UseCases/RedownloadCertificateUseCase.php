@@ -16,7 +16,7 @@ use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRe
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaStatusHistory;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Psr\Log\LoggerInterface;
+use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 
 /**
  * RedownloadCertificateUseCase — re-descarga el P7B de Viafirma y regenera el P12.

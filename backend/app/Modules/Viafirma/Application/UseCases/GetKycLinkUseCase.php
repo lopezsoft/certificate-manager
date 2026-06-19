@@ -8,7 +8,7 @@ use App\Modules\Viafirma\Domain\Contracts\ViafirmaClient;
 use App\Modules\Viafirma\Domain\Enums\RemoteStatus;
 use App\Modules\Viafirma\Domain\Exceptions\ViafirmaException;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
-use Psr\Log\LoggerInterface;
+use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 
 /**
  * GetKycLinkUseCase — obtiene el enlace del portal KYC (onboarding/acreditación).
@@ -20,7 +20,7 @@ final class GetKycLinkUseCase
 {
     public function __construct(
         private readonly ViafirmaClient $client,
-        private readonly LoggerInterface $logger,
+        private readonly SafePemLogger $logger,
     ) {}
 
     public function handle(int $viafirmaCertificateRequestId): string

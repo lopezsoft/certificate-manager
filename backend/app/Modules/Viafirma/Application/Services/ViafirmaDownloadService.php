@@ -7,10 +7,10 @@ namespace App\Modules\Viafirma\Application\Services;
 use App\Modules\Viafirma\Domain\Contracts\KeyVault;
 use App\Modules\Viafirma\Domain\Contracts\ViafirmaCertificateRequestRepositoryContract;
 use App\Modules\Viafirma\Domain\Enums\InternalState;
+use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -25,7 +25,7 @@ final class ViafirmaDownloadService
     public function __construct(
         private readonly ViafirmaCertificateRequestRepositoryContract $repository,
         private readonly KeyVault $vault,
-        private readonly LoggerInterface $logger,
+        private readonly SafePemLogger $logger,
     ) {}
 
     /**

@@ -9,7 +9,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Psr\Log\LoggerInterface;
+use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 
 /**
  * Watchdog de seguridad: revive solicitudes Viafirma huérfanas.
@@ -45,7 +45,7 @@ final class ReviveStalledViafirmaPollsJob implements ShouldQueue
         return ['viafirma:watchdog'];
     }
 
-    public function handle(LoggerInterface $logger): void
+    public function handle(SafePemLogger $logger): void
     {
         try {
             // Usar el scope del modelo de estado para encontrar huérfanas

@@ -19,7 +19,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Psr\Log\LoggerInterface;
+use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 
 /**
  * Orquesta el ensamblaje del .p12 (V-405):
@@ -65,7 +65,7 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
     public function handle(
         CryptoServiceContract $crypto,
         KeyVault $vault,
-        LoggerInterface $logger,
+        SafePemLogger $logger,
     ): void {
         $entity = ViafirmaCertificateRequest::with('state')->find($this->requestId);
 

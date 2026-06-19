@@ -12,7 +12,7 @@ use App\Modules\Viafirma\Domain\Exceptions\ViafirmaClientException;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
-use Psr\Log\LoggerInterface;
+use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 
 /**
  * Cliente Viafirma RA basado en Guzzle (sin Saloon — cero dependencias nuevas).
@@ -28,7 +28,7 @@ final class GuzzleViafirmaClient implements ViafirmaClient
         private readonly OAuth1Signer $signer,
         private readonly ProfileResponseParser $parser,
         private readonly string $baseUrl,
-        private readonly LoggerInterface $logger,
+        private readonly SafePemLogger $logger,
         private readonly int $timeout = 30,
     ) {
         if ($this->baseUrl === '') {

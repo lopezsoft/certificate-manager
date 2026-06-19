@@ -11,7 +11,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Psr\Log\LoggerInterface;
+use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 
 /**
  * Purga segura de llaves privadas de solicitudes COMPLETED/FAILED (V-410).
@@ -46,7 +46,7 @@ final class PurgeExpiredKeysJob implements ShouldQueue
 
     public function handle(
         KeyVault $vault,
-        LoggerInterface $logger,
+        SafePemLogger $logger,
     ): void {
         $retentionHours = 72;
         $cutoff = now()->subHours($retentionHours);

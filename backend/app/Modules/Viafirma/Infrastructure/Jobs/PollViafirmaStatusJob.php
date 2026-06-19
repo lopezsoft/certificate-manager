@@ -15,7 +15,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Cache;
-use Psr\Log\LoggerInterface;
+use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 
 /**
  * Polling de estado Viafirma — se auto-reprograma cada ~60 s hasta resolverse.
@@ -65,7 +65,7 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
         ViafirmaClient $client,
         PollingScheduler $scheduler,
         StateMachine $fsm,
-        LoggerInterface $logger,
+        SafePemLogger $logger,
     ): void {
         // ── Mutex distribuido: protege la sección crítica contra race conditions ──
         $mutexKey = "viafirma:poll:mutex:{$this->requestId}";
@@ -93,7 +93,7 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
         ViafirmaClient $client,
         PollingScheduler $scheduler,
         StateMachine $fsm,
-        LoggerInterface $logger,
+        SafePemLogger $logger,
     ): void {
         $entity = ViafirmaCertificateRequest::with('state')->find($this->requestId);
 

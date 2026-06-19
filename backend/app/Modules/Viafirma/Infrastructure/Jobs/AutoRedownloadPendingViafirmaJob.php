@@ -11,7 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Psr\Log\LoggerInterface;
+use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 use Throwable;
 
 /**
@@ -58,7 +58,7 @@ final class AutoRedownloadPendingViafirmaJob implements ShouldQueue
         return ['viafirma:watchdog', 'viafirma:auto-redownload'];
     }
 
-    public function handle(RedownloadCertificateUseCase $useCase, LoggerInterface $logger): void
+    public function handle(RedownloadCertificateUseCase $useCase, SafePemLogger $logger): void
     {
         try {
             // Consultar candidatos desde la tabla de estados (normalizada)

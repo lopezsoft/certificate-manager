@@ -150,37 +150,11 @@ final class ViafirmaServiceProvider extends ServiceProvider
             }
         );
 
-        // ---- UseCase Logger (SafePemLogger para todo el módulo Viafirma) ---------
-        $this->app->when(\App\Modules\Viafirma\Application\UseCases\IssueCertificateUseCase::class)
-            ->needs(\Psr\Log\LoggerInterface::class)
-            ->give(SafePemLogger::class);
-
-        // ---- RedownloadCertificateUseCase (Admin re-descarga P12) ------------
-        $this->app->singleton(
-            \App\Modules\Viafirma\Application\UseCases\RedownloadCertificateUseCase::class,
-            function ($app): \App\Modules\Viafirma\Application\UseCases\RedownloadCertificateUseCase {
-                return new \App\Modules\Viafirma\Application\UseCases\RedownloadCertificateUseCase(
-                    client: $app->make(\App\Modules\Viafirma\Domain\Contracts\ViafirmaClient::class),
-                    crypto: $app->make(\App\Modules\Viafirma\Domain\Contracts\CryptoServiceContract::class),
-                    vault:  $app->make(\App\Modules\Viafirma\Domain\Contracts\KeyVault::class),
-                    logger: $app->make(SafePemLogger::class),
-                );
-            }
-        );
-
-        $this->app->when(\App\Modules\Viafirma\Application\UseCases\RedownloadCertificateUseCase::class)
-            ->needs(\Psr\Log\LoggerInterface::class)
-            ->give(SafePemLogger::class);
-
-        // El antiguo ViafirmaCertificateController fue eliminado (Fase 3,
-        // 2026-05-19). Su funcionalidad vive ahora en
-        // App\Http\Controllers\Certificate\CertificateIssuanceController + ViafirmaIssuanceProvider.
-
-        // ViafirmaDownloadService (extraído del controller eliminado): usa el
-        // SafePemLogger del módulo Viafirma para preservar el filtrado PEM.
-        $this->app->when(\App\Modules\Viafirma\Application\Services\ViafirmaDownloadService::class)
-            ->needs(\Psr\Log\LoggerInterface::class)
-            ->give(SafePemLogger::class);
+        // ---- Logger base para el decorator ---------------------------------------
+        // Singleton global para SafePemLogger
+        $this->app->singleton(SafePemLogger::class, function ($app) {
+            return new SafePemLogger($app->make('log'));
+        });
 
         // ---- Sprint 3: Polling + FSM + Resiliencia ----------------------------
         $this->app->singleton(\App\Modules\Viafirma\Application\Services\PollingScheduler::class);
@@ -190,35 +164,6 @@ final class ViafirmaServiceProvider extends ServiceProvider
                 $app->make(SafePemLogger::class),
             );
         });
-
-        $this->app->when(\App\Modules\Viafirma\Infrastructure\Jobs\PollViafirmaStatusJob::class)
-            ->needs(\Psr\Log\LoggerInterface::class)
-            ->give(SafePemLogger::class);
-
-        $this->app->when(\App\Modules\Viafirma\Infrastructure\Jobs\ReviveStalledViafirmaPollsJob::class)
-            ->needs(\Psr\Log\LoggerInterface::class)
-            ->give(SafePemLogger::class);
-
-        $this->app->when(\App\Modules\Viafirma\Application\Listeners\NotifyClientOnAccreditationListener::class)
-            ->needs(\Psr\Log\LoggerInterface::class)
-            ->give(SafePemLogger::class);
-
-        // ---- Sprint 4: Descarga + Ensamblaje + Purga --------------------------
-        $this->app->when(\App\Modules\Viafirma\Infrastructure\Jobs\DownloadP7bJob::class)
-            ->needs(\Psr\Log\LoggerInterface::class)
-            ->give(SafePemLogger::class);
-
-        $this->app->when(\App\Modules\Viafirma\Infrastructure\Jobs\AssembleP12Job::class)
-            ->needs(\Psr\Log\LoggerInterface::class)
-            ->give(SafePemLogger::class);
-
-        $this->app->when(\App\Modules\Viafirma\Infrastructure\Jobs\PurgeExpiredKeysJob::class)
-            ->needs(\Psr\Log\LoggerInterface::class)
-            ->give(SafePemLogger::class);
-
-        $this->app->when(\App\Modules\Viafirma\Application\Listeners\DispatchDownloadOnReadyListener::class)
-            ->needs(\Psr\Log\LoggerInterface::class)
-            ->give(SafePemLogger::class);
     }
 
     public function boot(): void

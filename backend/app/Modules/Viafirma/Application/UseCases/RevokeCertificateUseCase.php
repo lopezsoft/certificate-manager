@@ -13,7 +13,7 @@ use App\Modules\Viafirma\Domain\Exceptions\ViafirmaException;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaStatusHistory;
 use Illuminate\Support\Facades\DB;
-use Psr\Log\LoggerInterface;
+use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 
 /**
  * RevokeCertificateUseCase — orquesta la revocación de un certificado Viafirma ya emitido.
@@ -30,7 +30,7 @@ final class RevokeCertificateUseCase
 {
     public function __construct(
         private readonly ViafirmaClient $client,
-        private readonly LoggerInterface $logger,
+        private readonly SafePemLogger $logger,
     ) {}
 
     public function handle(RevokeInputDto $dto): ViafirmaCertificateRequest

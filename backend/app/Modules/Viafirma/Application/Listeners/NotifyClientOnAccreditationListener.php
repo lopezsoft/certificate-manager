@@ -6,7 +6,7 @@ namespace App\Modules\Viafirma\Application\Listeners;
 
 use App\Modules\Viafirma\Domain\Enums\RemoteStatus;
 use App\Modules\Viafirma\Domain\Events\ViafirmaStatusChanged;
-use Psr\Log\LoggerInterface;
+use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 
 /**
  * Listener que envía notificación al cliente cuando el estado remoto
@@ -20,7 +20,7 @@ use Psr\Log\LoggerInterface;
 final class NotifyClientOnAccreditationListener
 {
     public function __construct(
-        private readonly LoggerInterface $logger,
+        private readonly SafePemLogger $logger,
     ) {}
 
     public function handle(ViafirmaStatusChanged $event): void

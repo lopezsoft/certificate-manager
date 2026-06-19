@@ -27,7 +27,7 @@ use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRe
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaStatusHistory;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Psr\Log\LoggerInterface;
+use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 
 /**
  * IssueCertificateUseCase — orquesta el ciclo completo de emisión:
@@ -57,7 +57,7 @@ final class IssueCertificateUseCase
         private readonly ViafirmaCertificateRequestRepositoryContract $repository,
         private readonly IdentityTypeMapper $identityTypeMapper,
         private readonly ProfileTypeMapper $profileTypeMapper,
-        private readonly LoggerInterface $logger,
+        private readonly SafePemLogger $logger,
     ) {}
 
     public function handle(IssueCertificateCommand $cmd): ViafirmaCertificateRequest
