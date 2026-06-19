@@ -18,8 +18,9 @@ export interface IssuanceRequest {
 export interface IssuanceStatus {
   status: string;
   provider: string;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
+  data?: ViafirmaStatus | any;
 }
 
 export interface IssuanceDownloadMeta {

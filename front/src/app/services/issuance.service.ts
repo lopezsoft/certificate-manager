@@ -46,13 +46,18 @@ export class IssuanceService {
 
   /**
    * Consulta el estado normalizado del trámite de emisión.
+   * Si el proveedor es Viafirma, incluye el metadata detallado en la propiedad "data".
    */
   getIssuanceStatus(requestId: number): Observable<IssuanceStatus> {
     return this.http.get(`/certificate-request/${requestId}/issuance`).pipe(
       map((res: any) => {
-        const status = res.dataRecords as IssuanceStatus;
-        this.debug.log('IssuanceService', `Estado emisión solicitud #${requestId}`, status);
-        return status;
+        const record = res.dataRecords;
+        // Transformar estado de viafirma a mayúsculas si existe
+        if (record?.data?.internal_state) {
+          record.data.internal_state = record.data.internal_state.toUpperCase();
+        }
+        this.debug.log('IssuanceService', `Estado emisión solicitud #${requestId}`, record);
+        return record as IssuanceStatus;
       }),
     );
   }
@@ -79,23 +84,6 @@ export class IssuanceService {
     return `${environment.APIURL}/certificate-request/${requestId}/issuance/download/file`;
   }
 
-  /**
-   * Consulta el estado detallado del trámite Viafirma.
-   * Devuelve internal_state, poll_attempts y otros metadatos.
-   */
-  getViafirmaStatus(requestId: number): Observable<ViafirmaStatus> {
-    return this.http.get(`/certificate-request/${requestId}/issuance`).pipe(
-      map((res: any) => {
-        // El endpoint puede devolver el estado anidado en dataRecords.data o en dataRecords directamente
-        const data = res.dataRecords?.data ?? res.dataRecords;
-        if (data && data.internal_state) {
-          data.internal_state = data.internal_state.toUpperCase();
-        }
-        this.debug.log('IssuanceService', `Estado Viafirma solicitud #${requestId}`, data);
-        return data as ViafirmaStatus;
-      }),
-    );
-  }
 
   /**
    * Re-descarga el certificado P7B desde Viafirma y regenera el P12 con un nuevo PIN.

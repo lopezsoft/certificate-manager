@@ -1,47 +1,47 @@
-import {Component, ElementRef, OnDestroy, ViewChild, Output, EventEmitter} from '@angular/core';
-import {animate, style, transition, trigger} from "@angular/animations";
-import {ShippingService} from "../../services/shipping.service";
-import {FormatsService} from "../../services/formats.service";
-import {CertificateRequest, FileManager} from "../../interfaces/file-manager.interface";
-import {convertBytesToMB} from "../../common/utils/conversion.helper";
-import {HttpResponsesService, MessagesService} from "../../utils";
+import { Component, ElementRef, OnDestroy, ViewChild, Output, EventEmitter } from '@angular/core';
+import { animate, style, transition, trigger } from "@angular/animations";
+import { ShippingService } from "../../services/shipping.service";
+import { FormatsService } from "../../services/formats.service";
+import { CertificateRequest, FileManager } from "../../interfaces/file-manager.interface";
+import { convertBytesToMB } from "../../common/utils/conversion.helper";
+import { HttpResponsesService, MessagesService } from "../../utils";
 import {
 	DocumentStatusComments,
 	DocumentStatusDescription,
 	DocumentStatusEnum,
 	FileDocumentTypeEnum
 } from "../../common/enums/DocumentStatus";
-import {LoadMaskService} from "../../services/load-mask.service";
-import {Router} from "@angular/router";
-import {DocumentViewerService} from "../../services/document-viewer.service";
-import {IssuanceService} from "../../services/issuance.service";
-import {IssuanceStatus, IssuanceDownloadMeta, ViafirmaStatus, RedownloadResult} from "../../interfaces/issuance.interface";
-import {DebugService} from "../../utils/debug.service";
+import { LoadMaskService } from "../../services/load-mask.service";
+import { Router } from "@angular/router";
+import { DocumentViewerService } from "../../services/document-viewer.service";
+import { IssuanceService } from "../../services/issuance.service";
+import { IssuanceStatus, IssuanceDownloadMeta, ViafirmaStatus, RedownloadResult } from "../../interfaces/issuance.interface";
+import { DebugService } from "../../utils/debug.service";
 import TokenService from "../../utils/token.service";
-import {Subject, interval, Subscription} from "rxjs";
-import {takeUntil, switchMap} from "rxjs/operators";
-import {ViafirmaInternalStateEnum} from "../../common/enums/ViafirmaInternalState";
+import { Subject, interval, Subscription } from "rxjs";
+import { takeUntil, switchMap } from "rxjs/operators";
+import { ViafirmaInternalStateEnum } from "../../common/enums/ViafirmaInternalState";
 
 @Component({
-    selector: 'app-document-view',
-    templateUrl: './document-view.component.html',
-    styleUrl: './document-view.component.scss',
-    animations: [
-        trigger('fadeInOut', [
-            transition(':enter', [
-                style({ opacity: 0 }),
-                animate('300ms', style({ opacity: 1 })),
-            ]),
-            transition(':leave', [
-                animate('300ms', style({ opacity: 0 })),
-            ])
-        ])
-    ],
-    standalone: false
+	selector: 'app-document-view',
+	templateUrl: './document-view.component.html',
+	styleUrl: './document-view.component.scss',
+	animations: [
+		trigger('fadeInOut', [
+			transition(':enter', [
+				style({ opacity: 0 }),
+				animate('300ms', style({ opacity: 1 })),
+			]),
+			transition(':leave', [
+				animate('300ms', style({ opacity: 0 })),
+			])
+		])
+	],
+	standalone: false
 })
 export class DocumentViewComponent implements OnDestroy {
-	@ViewChild('fileUploadCc', { static: false}) fileUploadCc: ElementRef;
-	@ViewChild('fileUploadPayment', { static: false}) fileUploadPayment: ElementRef;
+	@ViewChild('fileUploadCc', { static: false }) fileUploadCc: ElementRef;
+	@ViewChild('fileUploadPayment', { static: false }) fileUploadPayment: ElementRef;
 	@Output() onDeleted = new EventEmitter<void>();
 	protected selectedFile: FileManager;
 	protected readonly convertBytesToMB = convertBytesToMB;
@@ -104,7 +104,7 @@ export class DocumentViewComponent implements OnDestroy {
 		public format: FormatsService,
 		protected http: HttpResponsesService,
 		protected documentViewerService: DocumentViewerService,
-		private  msg: MessagesService,
+		private msg: MessagesService,
 		private mask: LoadMaskService,
 		private router: Router,
 		private issuanceService: IssuanceService,
@@ -249,10 +249,10 @@ export class DocumentViewComponent implements OnDestroy {
 		if (file.size > 1000000) { // 1000kb
 			this.fileUploadCc.nativeElement.value = '';
 			const size = (file.size / 1024).toFixed(2); // Convert to KB
-			this.msg.errorMessage('',`El archivo no debe ser mayor a 1000kb. Tamaño del archivo ${size}kb.`);
+			this.msg.errorMessage('', `El archivo no debe ser mayor a 1000kb. Tamaño del archivo ${size}kb.`);
 		} else {
 			this.files = [];
-			this.files.push({ data: file, inProgress: false, progress: 0});
+			this.files.push({ data: file, inProgress: false, progress: 0 });
 		}
 	}
 
@@ -275,10 +275,10 @@ export class DocumentViewComponent implements OnDestroy {
 		if (file.size > 2000000) { // 2000kb
 			this.fileUploadPayment.nativeElement.value = '';
 			const size = (file.size / 1024).toFixed(2); // Convert to KB
-			this.msg.errorMessage('',`El archivo no debe ser mayor a 2000kb. Tamaño del archivo ${size}kb.`);
+			this.msg.errorMessage('', `El archivo no debe ser mayor a 2000kb. Tamaño del archivo ${size}kb.`);
 		} else {
 			this.files = [];
-			this.files.push({ data: file, inProgress: false, progress: 0});
+			this.files.push({ data: file, inProgress: false, progress: 0 });
 		}
 	}
 
@@ -299,18 +299,18 @@ export class DocumentViewComponent implements OnDestroy {
 		this.mask.showBlockUI("Subiendo archivo...");
 		this.http.post(`/certificate-request/${this.currentShipping.id}/files`, this.formData)
 			.subscribe({
-			next: (resp: any) => {
-				this.currentShipping.files.push(resp.dataRecords.data[0]);
-				this.mask.hideBlockUI();
-				this.msg.toastMessage('Éxito', resp.message);
-				this.files = [];
-				this.canAddFile = false;
-				this.canAddPaymentFile = false;
-			},
-			error: () => {
-				this.mask.hideBlockUI();
-			}
-		});
+				next: (resp: any) => {
+					this.currentShipping.files.push(resp.dataRecords.data[0]);
+					this.mask.hideBlockUI();
+					this.msg.toastMessage('Éxito', resp.message);
+					this.files = [];
+					this.canAddFile = false;
+					this.canAddPaymentFile = false;
+				},
+				error: () => {
+					this.mask.hideBlockUI();
+				}
+			});
 	}
 
 	protected existFileZip(): boolean {
@@ -390,15 +390,25 @@ export class DocumentViewComponent implements OnDestroy {
 	}
 
 	/**
-	 * Consulta el estado del trámite de emisión.
+	 * Consulta el estado del trámite de emisión unificado.
+	 * Actualiza simultáneamente el estado general y el estado específico de Viafirma.
 	 */
 	protected onCheckIssuanceStatus(): void {
-		const requestId = this.currentShipping.id;
+		const requestId = this.currentShipping?.id;
+		if (!requestId) return;
 		this.issuanceLoading = true;
 		this.issuanceService.getIssuanceStatus(requestId).subscribe({
 			next: (status) => {
 				this.issuanceStatus = status;
 				this.issuanceLoading = false;
+				if (status.provider === 'viafirma' && status.data) {
+					this.viafirmaStatus = status.data;
+					if (!this.viafirmaTerminalStates.includes(this.viafirmaStatus.internal_state)) {
+						this.startViafirmaPolling();
+					} else {
+						this.stopViafirmaPolling();
+					}
+				}
 			},
 			error: (err) => {
 				this.issuanceLoading = false;
@@ -445,9 +455,10 @@ export class DocumentViewComponent implements OnDestroy {
 			ViafirmaInternalStateEnum.ASSEMBLED,
 			ViafirmaInternalStateEnum.COMPLETED,
 			ViafirmaInternalStateEnum.FAILED,
+			ViafirmaInternalStateEnum.FAILED_RECOVERABLE,
 			ViafirmaInternalStateEnum.DOWNLOADED
 		];
-		return visibleStates.includes(this.viafirmaStatus?.internal_state);
+		return visibleStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum);
 	}
 
 	/**
@@ -460,7 +471,7 @@ export class DocumentViewComponent implements OnDestroy {
 			ViafirmaInternalStateEnum.COMPLETED,
 			ViafirmaInternalStateEnum.DOWNLOADED
 		];
-		return allowedStates.includes(this.viafirmaStatus?.internal_state);
+		return allowedStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum);
 	}
 
 	/**
@@ -472,28 +483,7 @@ export class DocumentViewComponent implements OnDestroy {
 			ViafirmaInternalStateEnum.POLLING,
 			ViafirmaInternalStateEnum.READY_TO_DOWNLOAD
 		];
-		return pollingStates.includes(this.viafirmaStatus?.internal_state);
-	}
-
-	/**
-	 * Carga el estado Viafirma e inicia polling si el estado no es terminal.
-	 */
-	protected loadViafirmaStatus(): void {
-		const requestId = this.currentShipping?.id;
-		if (!requestId) return;
-		this.issuanceService.getViafirmaStatus(requestId).subscribe({
-			next: (status) => {
-				this.viafirmaStatus = status;
-				if (!this.viafirmaTerminalStates.includes(status.internal_state)) {
-					this.startViafirmaPolling();
-				} else {
-					this.stopViafirmaPolling();
-				}
-			},
-			error: (err) => {
-				this.debug.error('DocumentViewComponent', 'Error al consultar estado Viafirma', err);
-			}
-		});
+		return pollingStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum);
 	}
 
 	/**
@@ -503,12 +493,15 @@ export class DocumentViewComponent implements OnDestroy {
 		if (this.viafirmaPolling$) return; // Ya está corriendo
 		this.viafirmaPolling$ = interval(30000).pipe(
 			takeUntil(this.destroy$),
-			switchMap(() => this.issuanceService.getViafirmaStatus(this.currentShipping.id))
+			switchMap(() => this.issuanceService.getIssuanceStatus(this.currentShipping.id))
 		).subscribe({
 			next: (status) => {
-				this.viafirmaStatus = status;
-				if (this.viafirmaTerminalStates.includes(status.internal_state)) {
-					this.stopViafirmaPolling();
+				this.issuanceStatus = status;
+				if (status.provider === 'viafirma' && status.data) {
+					this.viafirmaStatus = status.data;
+					if (this.viafirmaTerminalStates.includes(this.viafirmaStatus.internal_state)) {
+						this.stopViafirmaPolling();
+					}
 				}
 			},
 			error: (err) => {
@@ -541,7 +534,7 @@ export class DocumentViewComponent implements OnDestroy {
 					this.redownloadResult = redownload;
 					this.showRedownloadPinModal = true;
 					this.pinCopied = false;
-					this.loadViafirmaStatus();
+					this.onCheckIssuanceStatus();
 					this.getChangeHistory();
 				},
 				error: (err) => {
