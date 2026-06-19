@@ -35,10 +35,17 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class CertificateIssuanceController extends Controller
 {
+    /**
+     * NOTA: RedownloadCertificateUseCase NO se inyecta en el constructor
+     * intencionalmente. Se usa inyección de método en redownload() para que
+     * el stack completo de Viafirma (GuzzleClient + crypto + vault) se
+     * instancie SOLO cuando esa acción específica es invocada, evitando
+     * fallos en el boot del controller cuando VIAFIRMA_BASE_URL no está
+     * configurada o el provider está deshabilitado.
+     */
     public function __construct(
         private readonly CertificateIssuanceOrchestrator $orchestrator,
         private readonly ViafirmaDownloadService $viafirmaDownload,
-        private readonly RedownloadCertificateUseCase $redownloadUseCase,
     ) {}
 
     /**
@@ -225,7 +232,7 @@ class CertificateIssuanceController extends Controller
      *     @OA\Response(response=401, description="No autenticado")
      * )
      */
-    public function redownload(Request $request, int $id): JsonResponse
+    public function redownload(Request $request, int $id, RedownloadCertificateUseCase $useCase): JsonResponse
     {
         // Verificar autorización de administrador
         if (!$this->callerIsAdmin($request)) {
@@ -236,7 +243,7 @@ class CertificateIssuanceController extends Controller
         }
 
         try {
-            $result = $this->redownloadUseCase->handle($id, $request->user()?->id ?? 0);
+            $result = $useCase->handle($id, $request->user()?->id ?? 0);
 
             return HttpResponseMessages::getResponse([
                 'message'     => 'Certificado re-descargado y P12 regenerado exitosamente.',
