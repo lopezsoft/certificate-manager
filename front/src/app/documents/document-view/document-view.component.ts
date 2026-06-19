@@ -20,7 +20,7 @@ import { DebugService } from "../../utils/debug.service";
 import TokenService from "../../utils/token.service";
 import { Subject, interval, Subscription } from "rxjs";
 import { takeUntil, switchMap } from "rxjs/operators";
-import { ViafirmaInternalStateEnum } from "../../common/enums/ViafirmaInternalState";
+import { ViafirmaInternalStateEnum, ViafirmaInternalStateDescription } from "../../common/enums/ViafirmaInternalState";
 
 @Component({
 	selector: 'app-document-view',
@@ -49,6 +49,7 @@ export class DocumentViewComponent implements OnDestroy {
 	protected readonly DocumentStatusEnum = DocumentStatusEnum;
 	protected readonly DocumentStatusComments = DocumentStatusComments;
 	protected readonly ViafirmaInternalStateEnum = ViafirmaInternalStateEnum;
+	protected readonly viafirmaInternalStateDescription = ViafirmaInternalStateDescription;
 	protected canAddFile: boolean;
 	protected files = [];
 	protected formData: FormData;

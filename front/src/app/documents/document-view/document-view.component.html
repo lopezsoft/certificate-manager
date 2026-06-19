@@ -472,13 +472,12 @@
           <div class="alert alert-info d-flex align-items-center">
             <i class="fas fa-info-circle me-2"></i>
             <div>
-              <strong>Estado:</strong> {{
-              (documentStatusDescription[issuanceStatus.status.toUpperCase()] |
-              uppercase) ||
-              (issuanceStatus.status | uppercase) }}
+              <strong>Estado:</strong> {{ (documentStatusDescription[issuanceStatus.status.toUpperCase()] || issuanceStatus.status) | uppercase }}
               @if (issuanceStatus.provider) {
-              <span> | Proveedor: {{ issuanceStatus.provider |
-                uppercase}}</span>
+              <span> | Proveedor: {{ issuanceStatus.provider | uppercase }}</span>
+              }
+              @if (viafirmaStatus?.internal_state) {
+              <span> | Trámite Viafirma: {{ (viafirmaInternalStateDescription[viafirmaStatus.internal_state] || viafirmaStatus.internal_state) | uppercase }}</span>
               }
             </div>
           </div>
