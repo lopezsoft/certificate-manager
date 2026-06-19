@@ -86,8 +86,8 @@ export class IssuanceService {
   getViafirmaStatus(requestId: number): Observable<ViafirmaStatus> {
     return this.http.get(`/certificate-request/${requestId}/issuance`).pipe(
       map((res: any) => {
-        // El endpoint puede devolver el estado anidado en dataRecords.viafirma o en dataRecords directamente
-        const data = res.dataRecords?.viafirma ?? res.dataRecords;
+        // El endpoint puede devolver el estado anidado en dataRecords.data o en dataRecords directamente
+        const data = res.dataRecords?.data ?? res.dataRecords;
         this.debug.log('IssuanceService', `Estado Viafirma solicitud #${requestId}`, data);
         return data as ViafirmaStatus;
       }),

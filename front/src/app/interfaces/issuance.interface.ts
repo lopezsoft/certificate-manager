@@ -1,3 +1,5 @@
+import { ViafirmaInternalStateEnum } from '../common/enums/ViafirmaInternalState';
+
 /**
  * Interfaces para los endpoints de emisión de certificados
  *
@@ -26,22 +28,9 @@ export interface IssuanceDownloadMeta {
   expires_at: string;
 }
 
-/** Estados internos del trámite Viafirma */
-export type ViafirmaInternalState =
-  | 'draft'
-  | 'submitted'
-  | 'polling'
-  | 'ready_to_download'
-  | 'downloaded'
-  | 'assembled'
-  | 'completed'
-  | 'failed'
-  | 'failed_recoverable'
-  | 'expired';
-
 /** Estado detallado del trámite Viafirma */
 export interface ViafirmaStatus {
-  internal_state: ViafirmaInternalState;
+  internal_state: ViafirmaInternalStateEnum;
   remote_status: string;
   public_id: string | null;
   cod_request: string | null;
@@ -59,6 +48,6 @@ export interface RedownloadResult {
   download_url: string;
   expires_at: string | null;
   viafirma_id: number;
-  internal_state: ViafirmaInternalState;
+  internal_state: ViafirmaInternalStateEnum;
   remote_status: string;
 }

@@ -20,6 +20,7 @@ import {DebugService} from "../../utils/debug.service";
 import TokenService from "../../utils/token.service";
 import {Subject, interval, Subscription} from "rxjs";
 import {takeUntil, switchMap} from "rxjs/operators";
+import {ViafirmaInternalStateEnum} from "../../common/enums/ViafirmaInternalState";
 
 @Component({
     selector: 'app-document-view',
@@ -47,6 +48,7 @@ export class DocumentViewComponent implements OnDestroy {
 	protected readonly documentStatusDescription = DocumentStatusDescription;
 	protected readonly DocumentStatusEnum = DocumentStatusEnum;
 	protected readonly DocumentStatusComments = DocumentStatusComments;
+	protected readonly ViafirmaInternalStateEnum = ViafirmaInternalStateEnum;
 	protected canAddFile: boolean;
 	protected files = [];
 	protected formData: FormData;
@@ -86,7 +88,13 @@ export class DocumentViewComponent implements OnDestroy {
 	];
 
 	/** Polling Viafirma */
-	private readonly viafirmaTerminalStates = ['assembled', 'completed', 'failed', 'failed_recoverable', 'expired'];
+	private readonly viafirmaTerminalStates = [
+		ViafirmaInternalStateEnum.ASSEMBLED,
+		ViafirmaInternalStateEnum.COMPLETED,
+		ViafirmaInternalStateEnum.FAILED,
+		ViafirmaInternalStateEnum.FAILED_RECOVERABLE,
+		ViafirmaInternalStateEnum.EXPIRED
+	];
 	private viafirmaPolling$: Subscription | null = null;
 	private destroy$ = new Subject<void>();
 	protected readonly isAdmin: boolean;
@@ -430,19 +438,28 @@ export class DocumentViewComponent implements OnDestroy {
 
 	/**
 	 * Determina si el estado de Viafirma permite mostrar el botón de re-descarga.
-	 * Visible: assembled, completed, failed, downloaded
+	 * Visible: ASSEMBLED, COMPLETED, FAILED, DOWNLOADED
 	 */
 	protected get canShowRedownload(): boolean {
-		const visibleStates = ['assembled', 'completed', 'failed', 'downloaded'];
+		const visibleStates = [
+			ViafirmaInternalStateEnum.ASSEMBLED,
+			ViafirmaInternalStateEnum.COMPLETED,
+			ViafirmaInternalStateEnum.FAILED,
+			ViafirmaInternalStateEnum.DOWNLOADED
+		];
 		return visibleStates.includes(this.viafirmaStatus?.internal_state);
 	}
 
 	/**
 	 * Determina si el botón de re-descarga está habilitado (no disabled).
-	 * Habilitado: assembled, completed, downloaded
+	 * Habilitado: ASSEMBLED, COMPLETED, DOWNLOADED
 	 */
 	protected get canRedownload(): boolean {
-		const allowedStates = ['assembled', 'completed', 'downloaded'];
+		const allowedStates = [
+			ViafirmaInternalStateEnum.ASSEMBLED,
+			ViafirmaInternalStateEnum.COMPLETED,
+			ViafirmaInternalStateEnum.DOWNLOADED
+		];
 		return allowedStates.includes(this.viafirmaStatus?.internal_state);
 	}
 
@@ -450,7 +467,11 @@ export class DocumentViewComponent implements OnDestroy {
 	 * Determina si el polling está activo (estado no terminal).
 	 */
 	protected get isPolling(): boolean {
-		const pollingStates = ['submitted', 'polling', 'ready_to_download'];
+		const pollingStates = [
+			ViafirmaInternalStateEnum.SUBMITTED,
+			ViafirmaInternalStateEnum.POLLING,
+			ViafirmaInternalStateEnum.READY_TO_DOWNLOAD
+		];
 		return pollingStates.includes(this.viafirmaStatus?.internal_state);
 	}
 

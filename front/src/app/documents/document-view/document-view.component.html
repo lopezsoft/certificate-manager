@@ -464,7 +464,7 @@
             </button>
             }
             <!-- Botón Revocar -->
-            @if (viafirmaStatus?.internal_state === 'completed') {
+            @if (viafirmaStatus?.internal_state === ViafirmaInternalStateEnum.COMPLETED) {
             <button class="btn btn-danger btn-sm" (click)="openRevokeModal()" title="Revocar certificado emitido">
               <i class="fas fa-ban me-1"></i> Revocar Certificado
             </button>
