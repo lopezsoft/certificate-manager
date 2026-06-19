@@ -22,7 +22,7 @@ use Psr\Log\LoggerInterface;
  *
  * Flujo:
  *   1. GET /request/{codRequest}/status
- *   2. FSM actualiza internal_state + remote_status
+ *   2. FSM actualiza internal_state + remote_status (en $entity->state)
  *   3. Si estado = Generated_Not_Downloaded → despacha DownloadP7bJob (descarga)
  *   4. Si estado terminal o fallo → detiene polling
  *   5. Si sigue en curso → reprograma a los 60 s
@@ -68,11 +68,8 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
         LoggerInterface $logger,
     ): void {
         // ── Mutex distribuido: protege la sección crítica contra race conditions ──
-        // ShouldBeUnique previene doble encolamiento, pero no protege contra
-        // ejecución simultánea de dos workers que tomaron el job antes de que
-        // el lock de unicidad se liberara (ej: watchdog + auto-reprogramación).
         $mutexKey = "viafirma:poll:mutex:{$this->requestId}";
-        $lock = Cache::lock($mutexKey, 30); // TTL = timeout del job + margen
+        $lock = Cache::lock($mutexKey, 30);
 
         if (!$lock->get()) {
             $logger->info('viafirma.poll.mutex_busy', [
@@ -98,18 +95,20 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
         StateMachine $fsm,
         LoggerInterface $logger,
     ): void {
-        $entity = ViafirmaCertificateRequest::find($this->requestId);
+        $entity = ViafirmaCertificateRequest::with('state')->find($this->requestId);
 
         if ($entity === null) {
             $logger->warning('viafirma.poll.entity_not_found', ['id' => $this->requestId]);
             return;
         }
 
+        $state = $entity->state;
+
         // Guard: estado terminal → no hacer nada más
         if ($entity->isTerminal()) {
             $logger->info('viafirma.poll.skip_terminal', [
                 'id'    => $entity->id,
-                'state' => $entity->internal_state->value,
+                'state' => $state->internal_state->value,
             ]);
             return;
         }
@@ -117,10 +116,10 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
         // Guard: SLA o máximo de intentos superado → expirar
         if ($entity->hasExpired() || $scheduler->hasExceededSla($entity) || $scheduler->hasExceededMaxAttempts($entity)) {
             $fsm->markExpired($entity);
-            $entity->save();
+            $state->save();
             $logger->warning('viafirma.poll.expired', [
                 'id'       => $entity->id,
-                'attempts' => $entity->poll_attempts,
+                'attempts' => $state->poll_attempts,
             ]);
             return;
         }
@@ -132,11 +131,10 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
         }
 
         // ── Consultar estado en Viafirma ──────────────────────────────────
-        $entity->poll_attempts++;
-        $entity->last_polled_at = now();
+        $state->poll_attempts++;
+        $state->last_polled_at = now();
 
         try {
-            // GET /request/{codRequest}/status — responde {"code": "<estado>"}
             $statusResult = $client->getStatus($entity->cod_request);
         } catch (TransientHttpException $e) {
             // Error de red o 5xx — reprogramar y continuar
@@ -145,8 +143,8 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
                 'message' => $e->getMessage(),
             ]);
             $delay = $scheduler->retryAfter($entity);
-            $entity->next_poll_at = now()->addSeconds($delay);
-            $entity->save();
+            $state->next_poll_at = now()->addSeconds($delay);
+            $state->save();
             self::dispatch($this->requestId)->delay(now()->addSeconds($delay));
             return;
         }
@@ -156,25 +154,23 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
 
         // ── Decidir próximo paso ──────────────────────────────────────────
         if ($entity->isReadyToDownload()) {
-            // Estado Generated_Not_Downloaded → despachar descarga del P7B
-            $entity->next_poll_at = null;
-            $entity->save();
+            $state->next_poll_at = null;
+            $state->save();
             $logger->info('viafirma.poll.ready_to_download', [
-                'id'        => $entity->id,
-                'publicId'  => $entity->public_id,
-                'remote'    => $statusResult->status->value,
+                'id'       => $entity->id,
+                'publicId' => $entity->public_id,
+                'remote'   => $statusResult->status->value,
             ]);
-            // GET /downloadCertificateServlet?req={publicId}
             DownloadP7bJob::dispatch($entity->id)->delay(now()->addSeconds(5));
             return;
         }
 
         if ($entity->isTerminal() || $entity->isFailed()) {
-            $entity->next_poll_at = null;
-            $entity->save();
+            $state->next_poll_at = null;
+            $state->save();
             $logger->info('viafirma.poll.stopped', [
                 'id'     => $entity->id,
-                'state'  => $entity->internal_state->value,
+                'state'  => $state->internal_state->value,
                 'remote' => $statusResult->status->value,
             ]);
             return;
@@ -182,8 +178,8 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
 
         // Sigue en curso → reprogramar en ~60 s
         $delay = $scheduler->nextDelay($entity);
-        $entity->next_poll_at = now()->addSeconds($delay);
-        $entity->save();
+        $state->next_poll_at = now()->addSeconds($delay);
+        $state->save();
 
         self::dispatch($this->requestId)->delay(now()->addSeconds($delay));
 
@@ -191,7 +187,7 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
             'id'       => $entity->id,
             'remote'   => $statusResult->status->value,
             'delay_s'  => $delay,
-            'attempts' => $entity->poll_attempts,
+            'attempts' => $state->poll_attempts,
         ]);
     }
 }

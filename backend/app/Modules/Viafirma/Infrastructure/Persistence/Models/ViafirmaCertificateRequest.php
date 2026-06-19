@@ -15,12 +15,19 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Agregado raíz del bounded context "Viafirma Issuance".
+ * Agregado raíz del bounded context "Viafirma Issuance" — Identidad del trámite.
  *
  * 1:1 con {@see CertificateRequest} (el agregado de negocio histórico).
+ * 1:1 con {@see ViafirmaCertificateRequestState} (ciclo de vida y estado).
+ *
+ * Esta tabla contiene únicamente los datos de identidad del trámite:
+ * quién lo solicitó, para qué empresa, con qué perfil y parámetros.
+ * Todo lo relacionado con el ciclo de vida (estado FSM, polling, criptografía)
+ * se encuentra en {@see ViafirmaCertificateRequestState}.
  *
  * @property int $id
  * @property int $certificate_request_id
@@ -35,25 +42,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $country_code
  * @property OrganizationType|null $organization_type
  * @property int $validity_days
- * @property InternalState $internal_state
- * @property string|null $remote_status
- * @property string $key_vault_ref
- * @property string $csr_fingerprint
- * @property string|null $csr_pem
- * @property string|null $p7b_storage_path
- * @property string|null $p12_storage_path
- * @property string|null $p12_password_ref
- * @property array|null $request_payload
- * @property array|null $last_status_response
- * @property int $poll_attempts
- * @property \Illuminate\Support\Carbon|null $next_poll_at
- * @property \Illuminate\Support\Carbon|null $last_polled_at
- * @property \Illuminate\Support\Carbon|null $submitted_at
- * @property \Illuminate\Support\Carbon|null $downloaded_at
- * @property \Illuminate\Support\Carbon|null $assembled_at
- * @property \Illuminate\Support\Carbon|null $expires_at
- * @property string|null $last_error_code
- * @property string|null $last_error_message
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ *
+ * @property-read ViafirmaCertificateRequestState|null $state
  */
 class ViafirmaCertificateRequest extends Model
 {
@@ -75,60 +68,28 @@ class ViafirmaCertificateRequest extends Model
         'country_code',
         'organization_type',
         'validity_days',
-        'internal_state',
-        'remote_status',
-        'key_vault_ref',
-        'csr_fingerprint',
-        'csr_pem',
-        'p7b_storage_path',
-        'p12_storage_path',
-        'p12_password_ref',
-        'request_payload',
-        'last_status_response',
-        'poll_attempts',
-        'next_poll_at',
-        'last_polled_at',
-        'submitted_at',
-        'downloaded_at',
-        'assembled_at',
-        'expires_at',
-        'last_error_code',
-        'last_error_message',
-        'revocation_request_code',
-        'revoked_at',
     ];
 
     protected $casts = [
-        'profile_type'         => CertificateProfile::class,
-        'identity_type'        => IdentityType::class,
-        'organization_type'    => OrganizationType::class,
-        'internal_state'       => InternalState::class,
-        'validity_days'        => 'integer',
-        'poll_attempts'        => 'integer',
-        'request_payload'      => 'array',
-        'last_status_response' => 'array',
-        'next_poll_at'         => 'datetime',
-        'last_polled_at'       => 'datetime',
-        'submitted_at'         => 'datetime',
-        'downloaded_at'        => 'datetime',
-        'assembled_at'         => 'datetime',
-        'expires_at'           => 'datetime',
-        'revoked_at'           => 'datetime',
-    ];
-
-    /**
-     * Oculta artefactos sensibles por defecto — evita serializaciones
-     * accidentales en respuestas API.
-     */
-    protected $hidden = [
-        'csr_pem',
-        'key_vault_ref',
-        'p12_password_ref',
-        'request_payload',
-        'last_status_response',
+        'profile_type'      => CertificateProfile::class,
+        'identity_type'     => IdentityType::class,
+        'organization_type' => OrganizationType::class,
+        'validity_days'     => 'integer',
     ];
 
     // ── Relaciones ─────────────────────────────────────────────────────────
+
+    /**
+     * Estado y ciclo de vida del trámite (1:1).
+     * Acceso: $entity->state->internal_state
+     */
+    public function state(): HasOne
+    {
+        return $this->hasOne(
+            ViafirmaCertificateRequestState::class,
+            'viafirma_certificate_request_id'
+        );
+    }
 
     public function certificateRequest(): BelongsTo
     {
@@ -150,28 +111,52 @@ class ViafirmaCertificateRequest extends Model
         return $this->hasMany(ViafirmaStatusHistory::class, 'viafirma_certificate_request_id');
     }
 
-    // ── Helpers de FSM ─────────────────────────────────────────────────────
+    // ── Helpers de FSM (delegados al estado) ───────────────────────────────
 
+    /**
+     * Verifica si el trámite está en un estado terminal.
+     * Requiere que la relación `state` esté cargada.
+     */
     public function isTerminal(): bool
     {
-        return $this->internal_state instanceof InternalState
-            && $this->internal_state->isTerminal();
+        return $this->state?->isTerminal() ?? false;
     }
 
+    /**
+     * Verifica si el certificado ha expirado.
+     * Requiere que la relación `state` esté cargada.
+     */
     public function hasExpired(): bool
     {
-        return $this->expires_at !== null && $this->expires_at->isPast();
+        return $this->state?->hasExpired() ?? false;
     }
 
+    /**
+     * Verifica si el trámite está listo para descargar.
+     * Requiere que la relación `state` esté cargada.
+     */
     public function isReadyToDownload(): bool
     {
-        return $this->internal_state === InternalState::READY_TO_DOWNLOAD;
+        return $this->state?->isReadyToDownload() ?? false;
     }
 
+    /**
+     * Verifica si el trámite está en un estado de fallo.
+     * Requiere que la relación `state` esté cargada.
+     */
     public function isFailed(): bool
     {
-        return $this->internal_state instanceof InternalState
-            && $this->internal_state->isFailureLike();
+        return $this->state?->isFailed() ?? false;
+    }
+
+    // ── Accesores de conveniencia (proxy al estado) ─────────────────────────
+
+    /**
+     * Acceso directo al internal_state sin necesidad de $entity->state->internal_state.
+     * Útil para compatibilidad con código existente.
+     */
+    public function getInternalStateAttribute(): ?InternalState
+    {
+        return $this->state?->internal_state;
     }
 }
-

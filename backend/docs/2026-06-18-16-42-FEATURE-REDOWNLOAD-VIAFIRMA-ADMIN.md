@@ -107,6 +107,7 @@ RedownloadCertificateUseCase::handle(int $certificateRequestId, int $adminUserId
 |---|---|---|
 | `RedownloadCertificateUseCase` | UseCase | `app/Modules/Viafirma/Application/UseCases/` |
 | `RedownloadResultDto` | DTO | `app/Modules/Viafirma/Application/DTOs/` |
+| `AutoRedownloadPendingViafirmaJob` | Job (Watchdog) | `app/Modules/Viafirma/Infrastructure/Jobs/` |
 
 ### 3.3 Componentes Modificados
 
@@ -114,6 +115,8 @@ RedownloadCertificateUseCase::handle(int $certificateRequestId, int $adminUserId
 |---|---|
 | `CertificateIssuanceController` | Agregar método `redownload()` |
 | `routes/api.php` | Agregar ruta `POST /{id}/issuance/redownload` |
+| `ViafirmaCertificateRequest` | Agregar scope `pendingAutoRedownload()` |
+| `app/Console/Kernel.php` | Registrar `AutoRedownloadPendingViafirmaJob` en scheduler (cada 5 min) |
 
 ---
 
@@ -290,6 +293,232 @@ Route::post('/{id}/issuance/redownload', 'redownload')
 
 ---
 
+### 5.4 Job Automático: AutoRedownloadPendingViafirmaJob
+
+#### 5.4.1 Problema Real (Caso de Uso)
+
+Durante la operación normal del sistema se puede presentar el siguiente escenario:
+
+1. `AssembleP12Job` descarga el P7B y ensambla el P12 exitosamente en Viafirma (estado remoto: `Generated_And_Downloaded`).
+2. Sin embargo, **un error transitorio** (timeout de red, fallo de S3, excepción en el vault) ocurre **después** de la descarga pero **antes** de que se actualice el estado interno en BD.
+3. El job falla y Laravel marca el intento como `FAILED`. Tras agotar los reintentos, el estado interno queda en `FAILED_RECOVERABLE`.
+4. **Resultado:** El certificado existe y está disponible en Viafirma (`Generated_And_Downloaded`), pero la BD lo reporta como fallido. El cliente no puede descargarlo.
+
+Este job actúa como **watchdog automático** que detecta y corrige esta inconsistencia sin intervención manual.
+
+---
+
+#### 5.4.2 Flujo de Ejecución
+
+```
+[Scheduler] Cada 5 minutos
+    │
+    ▼
+AutoRedownloadPendingViafirmaJob::handle()
+    │
+    ├─ 1. Buscar candidatos con scope pendingAutoRedownload()
+    │       ViafirmaCertificateRequest::pendingAutoRedownload()->get()
+    │       └─ Si no hay candidatos → Log::info + return (sin coste)
+    │
+    ├─ 2. Para cada candidato:
+    │       │
+    │       ├─ 2a. Consultar estado remoto en Viafirma
+    │       │       GET {VIAFIRMA_RA_URL}/request/{codRequest}/status
+    │       │       └─ Si falla → Log::warning + continuar con el siguiente
+    │       │
+    │       ├─ 2b. Validar estado remoto
+    │       │       ¿code == "Generated_And_Downloaded" || "Generated_Not_Downloaded"?
+    │       │       └─ Si no → Log::info('estado no apto') + continuar
+    │       │
+    │       ├─ 2c. Validar que key_vault_ref no sea 'PURGED'
+    │       │       └─ Si purgada → marcar FAILED_PERMANENT + continuar
+    │       │
+    │       ├─ 2d. Despachar RedownloadCertificateUseCase (reutiliza la lógica del endpoint admin)
+    │       │       con delay aleatorio (5-30s) para evitar thundering herd
+    │       │
+    │       └─ 2e. Log::info('viafirma.auto_redownload.dispatched', [cr_id, viafirma_id])
+    │
+    └─ 3. Log::info con total de candidatos procesados
+```
+
+---
+
+#### 5.4.3 Scope `pendingAutoRedownload()` en `ViafirmaCertificateRequest`
+
+El scope filtra los registros que son candidatos para re-descarga automática:
+
+```php
+// app/Modules/Viafirma/Infrastructure/Persistence/Models/ViafirmaCertificateRequest.php
+
+/**
+ * Candidatos para re-descarga automática:
+ * - Estado interno FAILED_RECOVERABLE (el job de ensamblado falló pero es recuperable)
+ * - La llave privada NO fue purgada (key_vault_ref != 'PURGED' y no es null)
+ * - Llevan al menos 2 minutos en ese estado (evitar colisión con reintentos activos)
+ * - No han superado el máximo de intentos de re-descarga automática (max: 5)
+ */
+public function scopePendingAutoRedownload(Builder $query): Builder
+{
+    return $query
+        ->where('internal_state', InternalState::FAILED_RECOVERABLE->value)
+        ->where('key_vault_ref', '!=', 'PURGED')
+        ->whereNotNull('key_vault_ref')
+        ->where('updated_at', '<', now()->subMinutes(2))
+        ->where(function (Builder $q) {
+            $q->whereNull('auto_redownload_attempts')
+              ->orWhere('auto_redownload_attempts', '<', 5);
+        });
+}
+```
+
+**Criterios de exclusión:**
+- `internal_state != FAILED_RECOVERABLE` → No es candidato (ya está en COMPLETED, POLLING, etc.)
+- `key_vault_ref == 'PURGED'` → La llave fue destruida; requiere nueva emisión completa
+- `key_vault_ref IS NULL` → Sin referencia de vault; no se puede ensamblar el P12
+- `updated_at >= now() - 2min` → Gracia para evitar colisión con `AssembleP12Job` en curso
+- `auto_redownload_attempts >= 5` → Máximo de intentos automáticos alcanzado; requiere intervención manual
+
+---
+
+#### 5.4.4 Implementación del Job
+
+```php
+// app/Modules/Viafirma/Infrastructure/Jobs/AutoRedownloadPendingViafirmaJob.php
+
+declare(strict_types=1);
+
+namespace App\Modules\Viafirma\Infrastructure\Jobs;
+
+use App\Modules\Viafirma\Application\UseCases\RedownloadCertificateUseCase;
+use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use Throwable;
+
+/**
+ * Watchdog automático que detecta certificados Viafirma en estado FAILED_RECOVERABLE
+ * cuyo estado remoto ya es Generated_And_Downloaded, y los re-descarga automáticamente.
+ *
+ * Ejecutado por el scheduler cada 5 minutos.
+ */
+final class AutoRedownloadPendingViafirmaJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    /** Intentos del watchdog en sí (no de cada re-descarga individual). */
+    public int $tries = 1;
+
+    /** Timeout del watchdog: suficiente para consultar BD + despachar jobs. */
+    public int $timeout = 60;
+
+    public function handle(RedownloadCertificateUseCase $useCase): void
+    {
+        $candidates = ViafirmaCertificateRequest::pendingAutoRedownload()->get();
+
+        if ($candidates->isEmpty()) {
+            Log::info('viafirma.auto_redownload.no_candidates');
+            return;
+        }
+
+        Log::info('viafirma.auto_redownload.candidates_found', [
+            'count' => $candidates->count(),
+        ]);
+
+        $dispatched = 0;
+
+        foreach ($candidates as $entity) {
+            try {
+                // Incrementar contador de intentos automáticos antes de despachar
+                $entity->increment('auto_redownload_attempts');
+
+                // Despachar con delay aleatorio para evitar thundering herd
+                dispatch(function () use ($useCase, $entity) {
+                    $useCase->handle(
+                        certificateRequestId: $entity->certificate_request_id,
+                        adminUserId:          null, // Sistema — no hay usuario admin
+                    );
+                })->delay(now()->addSeconds(random_int(5, 30)));
+
+                $dispatched++;
+
+                Log::info('viafirma.auto_redownload.dispatched', [
+                    'viafirma_id' => $entity->id,
+                    'cr_id'       => $entity->certificate_request_id,
+                    'attempt'     => $entity->auto_redownload_attempts,
+                ]);
+
+            } catch (Throwable $e) {
+                // NO relanzar — continuar con el siguiente candidato
+                Log::error('viafirma.auto_redownload.dispatch_error', [
+                    'viafirma_id' => $entity->id,
+                    'cr_id'       => $entity->certificate_request_id,
+                    'error'       => $e->getMessage(),
+                    'class'       => get_class($e),
+                ]);
+            }
+        }
+
+        Log::info('viafirma.auto_redownload.completed', [
+            'total_candidates' => $candidates->count(),
+            'dispatched'       => $dispatched,
+        ]);
+    }
+}
+```
+
+---
+
+#### 5.4.5 Configuración en Kernel.php
+
+```php
+// app/Console/Kernel.php — dentro de schedule()
+
+// ====================================================================
+// VIAFIRMA AUTO RE-DESCARGA
+// ====================================================================
+
+/**
+ * Job 9: Re-descarga automática de certificados Viafirma en FAILED_RECOVERABLE
+ *
+ * Frecuencia: Cada 5 minutos
+ * Función: Detecta certificados cuyo estado remoto es Generated_And_Downloaded
+ *          pero el estado interno es FAILED_RECOVERABLE, y los re-descarga
+ *          automáticamente reutilizando RedownloadCertificateUseCase.
+ * Queue: default
+ */
+$schedule->job(new \App\Modules\Viafirma\Infrastructure\Jobs\AutoRedownloadPendingViafirmaJob())
+    ->everyFiveMinutes()
+    ->timezone('America/Bogota')
+    ->name('viafirma:auto-redownload-pending')
+    ->withoutOverlapping(10)
+    ->onOneServer()
+    ->appendOutputTo(storage_path('logs/scheduled-viafirma-auto-redownload.log'));
+```
+
+---
+
+#### 5.4.6 Manejo de Errores y Reintentos
+
+| Escenario | Comportamiento |
+|---|---|
+| **Viafirma no responde** | `Log::warning` + continuar con el siguiente candidato. El watchdog no falla. |
+| **Estado remoto no apto** | `Log::info` + continuar. El candidato permanece en `FAILED_RECOVERABLE` para el próximo ciclo. |
+| **Llave privada purgada** | Marcar `internal_state = FAILED_PERMANENT` + `Log::error`. No reintentar. |
+| **Error en `RedownloadCertificateUseCase`** | `Log::error` + continuar. El contador `auto_redownload_attempts` ya fue incrementado. |
+| **`auto_redownload_attempts >= 5`** | El scope excluye el candidato. Requiere intervención manual del ADMIN vía endpoint. |
+| **Circuit Breaker OPEN** | `ViafirmaCircuitBreaker` lanza excepción → capturada por el try/catch del loop. |
+
+**Relación con el endpoint admin:**
+- El job **reutiliza `RedownloadCertificateUseCase`** — misma lógica, sin duplicación.
+- El endpoint admin permite recuperar casos donde `auto_redownload_attempts >= 5`.
+- El job actúa como **primera línea de recuperación automática**; el endpoint como **segunda línea manual**.
+
+---
+
 ## 6. Seguridad
 
 | Aspecto | Implementación |
@@ -357,27 +586,43 @@ RedownloadControllerTest:
 
 ## 9. Checklist de Implementación
 
+### 9.1 Endpoint Admin (Re-descarga Manual)
 - [ ] Crear `RedownloadResultDto`
 - [ ] Crear `RedownloadCertificateUseCase`
 - [ ] Registrar UseCase en `ViafirmaServiceProvider`
 - [ ] Agregar método `redownload()` en `CertificateIssuanceController`
 - [ ] Agregar ruta en `routes/api.php`
 - [ ] Agregar throttle rate limiter en `RouteServiceProvider` (opcional)
-- [ ] Escribir tests unitarios
-- [ ] Escribir tests de integración
+- [ ] Escribir tests unitarios (`RedownloadCertificateUseCaseTest`)
+- [ ] Escribir tests de integración (`RedownloadControllerTest`)
 - [ ] Actualizar documentación OpenAPI (anotaciones `@OA`)
+
+### 9.2 Job Automático (Re-descarga Watchdog)
+- [ ] Agregar columna `auto_redownload_attempts` (integer, nullable, default 0) en migración de `viafirma_certificate_requests`
+- [ ] Agregar scope `pendingAutoRedownload()` en `ViafirmaCertificateRequest`
+- [ ] Crear `AutoRedownloadPendingViafirmaJob` en `app/Modules/Viafirma/Infrastructure/Jobs/`
+- [ ] Registrar `AutoRedownloadPendingViafirmaJob` en `Kernel.php` (scheduler cada 5 min)
+- [ ] Escribir tests unitarios (`AutoRedownloadPendingViafirmaJobTest`)
+- [ ] Verificar que `RedownloadCertificateUseCase` acepta `adminUserId = null` (invocación desde sistema)
 
 ---
 
 ## 10. Commit Sugerido
 
 ```
-feat(viafirma): endpoint admin para re-descarga y regeneración de P12
+feat(viafirma): endpoint admin + job watchdog para re-descarga y regeneración de P12
 
-- POST /api/v1/certificate-request/{id}/issuance/redownload
-- Valida estado remoto antes de proceder (Generated_Not_Downloaded | Generated_And_Downloaded)
-- Regenera P12 con nuevo PIN CSPRNG
-- Destruye PIN anterior del vault
-- Registra auditoría en viafirma_status_history
-- Solo accesible para usuarios con rol admin
+- POST /api/v1/certificate-request/{id}/issuance/redownload (endpoint admin)
+  · Valida estado remoto antes de proceder (Generated_Not_Downloaded | Generated_And_Downloaded)
+  · Regenera P12 con nuevo PIN CSPRNG
+  · Destruye PIN anterior del vault
+  · Registra auditoría en viafirma_status_history
+  · Solo accesible para usuarios con rol admin
+
+- AutoRedownloadPendingViafirmaJob (watchdog automático cada 5 min)
+  · Detecta certificados en FAILED_RECOVERABLE con estado remoto Generated_And_Downloaded
+  · Reutiliza RedownloadCertificateUseCase (sin duplicación de lógica)
+  · Máximo 5 intentos automáticos; escala a intervención manual vía endpoint admin
+  · Scope pendingAutoRedownload() en ViafirmaCertificateRequest
+  · Columna auto_redownload_attempts en viafirma_certificate_requests
 ```

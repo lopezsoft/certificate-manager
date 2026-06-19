@@ -24,6 +24,9 @@ use Psr\Log\LoggerInterface;
  *
  * NO modifica campos de polling (eso lo hace el job).
  * NO persiste la entidad (eso lo hace el caller).
+ *
+ * NOTA: Tras la normalización, los campos de estado se encuentran en
+ * $entity->state (ViafirmaCertificateRequestState). La FSM muta ese objeto.
  */
 final class StateMachine
 {
@@ -34,7 +37,7 @@ final class StateMachine
     /**
      * Aplica una transición de estado a la entidad basándose en el estado remoto.
      *
-     * @param ViafirmaCertificateRequest $entity  Entidad (se muta in-place)
+     * @param ViafirmaCertificateRequest $entity  Entidad (se muta in-place via $entity->state)
      * @param RemoteStatus              $remote  Estado remoto reportado por Viafirma
      * @param array                     $rawResponse  Payload crudo (auditoría)
      *
@@ -45,8 +48,10 @@ final class StateMachine
         RemoteStatus $remote,
         array $rawResponse = [],
     ): bool {
-        $previousInternal = $entity->internal_state;
-        $previousRemote   = $entity->remote_status;
+        $state = $entity->state;
+
+        $previousInternal = $state->internal_state;
+        $previousRemote   = $state->remote_status;
 
         // Guard: no transicionar desde estado terminal
         if ($entity->isTerminal()) {
@@ -60,26 +65,26 @@ final class StateMachine
         $newInternal = $remote->toInternalState();
 
         // Actualizar estado remoto siempre (el remoto es informativo)
-        $entity->remote_status       = $remote->value;
-        $entity->last_status_response = $rawResponse;
+        $state->remote_status        = $remote->value;
+        $state->last_status_response = $rawResponse;
 
         // Determinar si hay cambio de internal_state
         $stateChanged = $previousInternal !== $newInternal;
 
         if ($stateChanged) {
-            $entity->internal_state = $newInternal;
+            $state->internal_state = $newInternal;
 
             // Registrar errores si aplica
             if ($newInternal->isFailureLike()) {
-                $entity->last_error_code    = $remote->value;
-                $entity->last_error_message = $this->buildErrorMessage($remote);
+                $state->last_error_code    = $remote->value;
+                $state->last_error_message = $this->buildErrorMessage($remote);
             }
 
             $this->logger->info('viafirma.fsm.transition', [
-                'id'          => $entity->id,
-                'from'        => $previousInternal->value,
-                'to'          => $newInternal->value,
-                'remote'      => $remote->value,
+                'id'     => $entity->id,
+                'from'   => $previousInternal->value,
+                'to'     => $newInternal->value,
+                'remote' => $remote->value,
             ]);
         }
 
@@ -102,15 +107,16 @@ final class StateMachine
         string $errorCode,
         string $errorMessage,
     ): void {
-        $previous = $entity->internal_state;
+        $state    = $entity->state;
+        $previous = $state->internal_state;
 
         if ($entity->isTerminal()) {
             return;
         }
 
-        $entity->internal_state    = InternalState::FAILED;
-        $entity->last_error_code   = $errorCode;
-        $entity->last_error_message = $errorMessage;
+        $state->internal_state     = InternalState::FAILED;
+        $state->last_error_code    = $errorCode;
+        $state->last_error_message = $errorMessage;
 
         $this->recordHistory(
             $entity,
@@ -123,8 +129,8 @@ final class StateMachine
         event(new ViafirmaRequestFailed($entity, $errorCode, $errorMessage));
 
         $this->logger->warning('viafirma.fsm.marked_failed', [
-            'id'    => $entity->id,
-            'code'  => $errorCode,
+            'id'   => $entity->id,
+            'code' => $errorCode,
         ]);
     }
 
@@ -133,15 +139,16 @@ final class StateMachine
      */
     public function markExpired(ViafirmaCertificateRequest $entity): void
     {
-        $previous = $entity->internal_state;
+        $state    = $entity->state;
+        $previous = $state->internal_state;
 
         if ($entity->isTerminal()) {
             return;
         }
 
-        $entity->internal_state    = InternalState::EXPIRED;
-        $entity->last_error_code   = 'POLL_EXPIRED';
-        $entity->last_error_message = 'SLA de acreditación superado (72h).';
+        $state->internal_state     = InternalState::EXPIRED;
+        $state->last_error_code    = 'POLL_EXPIRED';
+        $state->last_error_message = 'SLA de acreditación superado (72h).';
 
         $this->recordHistory(
             $entity,
@@ -151,7 +158,7 @@ final class StateMachine
             ['reason' => 'expiration_hours_exceeded'],
         );
 
-        event(new ViafirmaRequestFailed($entity, 'POLL_EXPIRED', $entity->last_error_message));
+        event(new ViafirmaRequestFailed($entity, 'POLL_EXPIRED', $state->last_error_message));
 
         $this->logger->warning('viafirma.fsm.expired', ['id' => $entity->id]);
     }
@@ -171,7 +178,7 @@ final class StateMachine
             'new_state'                       => $newState->value,
             'remote_status'                   => $remote?->value,
             'raw_response'                    => $rawResponse ?: null,
-            'attempt_number'                  => $entity->poll_attempts,
+            'attempt_number'                  => $entity->state->poll_attempts,
             'occurred_at'                     => now(),
         ]);
     }
@@ -191,8 +198,8 @@ final class StateMachine
         if ($new->isFailureLike()) {
             event(new ViafirmaRequestFailed(
                 $entity,
-                $entity->last_error_code ?? $remote->value,
-                $entity->last_error_message ?? 'Estado remoto: ' . $remote->value,
+                $entity->state->last_error_code ?? $remote->value,
+                $entity->state->last_error_message ?? 'Estado remoto: ' . $remote->value,
             ));
         }
     }

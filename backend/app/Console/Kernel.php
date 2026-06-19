@@ -171,6 +171,29 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->appendOutputTo(storage_path('logs/scheduled-viafirma-retry-issuances.log'));
 
+        // ====================================================================
+        // VIAFIRMA AUTO RE-DESCARGA
+        // ====================================================================
+
+        /**
+         * Job 9: Re-descarga automática de certificados Viafirma en FAILED_RECOVERABLE
+         *
+         * Frecuencia: Cada 5 minutos
+         * Función: Detecta certificados cuyo estado remoto es Generated_And_Downloaded
+         *          pero el estado interno es FAILED_RECOVERABLE, y los re-descarga
+         *          automáticamente reutilizando RedownloadCertificateUseCase.
+         *          Máximo 5 intentos automáticos; superado ese límite, el candidato
+         *          requiere intervención manual del ADMIN vía endpoint redownload.
+         * Queue: default
+         */
+        $schedule->job(new \App\Modules\Viafirma\Infrastructure\Jobs\AutoRedownloadPendingViafirmaJob())
+            ->everyFiveMinutes()
+            ->timezone('America/Bogota')
+            ->name('viafirma:auto-redownload-pending')
+            ->withoutOverlapping(10)
+            ->onOneServer()
+            ->appendOutputTo(storage_path('logs/scheduled-viafirma-auto-redownload.log'));
+
         /**
          * Job 8: Purga segura de llaves privadas expiradas (Sprint 4)
          *

@@ -11,6 +11,7 @@ use App\Modules\Viafirma\Domain\Contracts\CryptoServiceContract;
 use App\Modules\Viafirma\Domain\Contracts\KeyVault;
 use App\Modules\Viafirma\Domain\Enums\InternalState;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
+use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaStatusHistory;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -29,7 +30,7 @@ use Psr\Log\LoggerInterface;
  *  4. CryptoService::assembleP12()
  *  5. Guarda .p12 en storage
  *  6. Guarda PIN cifrado en KeyVault
- *  7. Transiciona a ASSEMBLED
+ *  7. Transiciona a ASSEMBLED (en $entity->state)
  *  8. Despacha notificación al cliente
  */
 final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
@@ -66,18 +67,20 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
         KeyVault $vault,
         LoggerInterface $logger,
     ): void {
-        $entity = ViafirmaCertificateRequest::find($this->requestId);
+        $entity = ViafirmaCertificateRequest::with('state')->find($this->requestId);
 
         if ($entity === null) {
             $logger->warning('viafirma.assemble.entity_not_found', ['id' => $this->requestId]);
             return;
         }
 
+        $state = $entity->state;
+
         // Guard: solo ensamblar si está en DOWNLOADED
-        if ($entity->internal_state !== InternalState::DOWNLOADED) {
+        if ($state->internal_state !== InternalState::DOWNLOADED) {
             $logger->info('viafirma.assemble.skip_wrong_state', [
                 'id'    => $entity->id,
-                'state' => $entity->internal_state->value,
+                'state' => $state->internal_state->value,
             ]);
             return;
         }
@@ -86,14 +89,14 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
 
         try {
             // 1. Recuperar llave privada del KeyVault
-            $privateKeyPem = $vault->retrieve($entity->key_vault_ref);
+            $privateKeyPem = $vault->retrieve($state->key_vault_ref);
 
             // 2. Leer P7B del storage
-            $p7bDisk = config('viafirma.storage.p7b_disk', 'local');
-            $p7bBinary = Storage::disk($p7bDisk)->get($entity->p7b_storage_path);
+            $p7bDisk   = config('viafirma.storage.p7b_disk', 'local');
+            $p7bBinary = Storage::disk($p7bDisk)->get($state->p7b_storage_path);
 
             if ($p7bBinary === null || $p7bBinary === '') {
-                throw new \RuntimeException("P7B no encontrado en {$entity->p7b_storage_path}");
+                throw new \RuntimeException("P7B no encontrado en {$state->p7b_storage_path}");
             }
 
             // 3. Generar PIN CSPRNG
@@ -102,19 +105,17 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
             // 4. Ensamblar P12
             $friendlyName = $entity->cod_request ?? 'viafirma-cert';
             $p12Binary = $crypto->assembleP12(
-                privateKeyPem: $privateKeyPem,
-                p7bDer:        $p7bBinary,
-                friendlyName:  $friendlyName,
+                privateKeyPem:  $privateKeyPem,
+                p7bDer:         $p7bBinary,
+                friendlyName:   $friendlyName,
                 exportPassword: $exportPin,
             );
 
-            // Limpiar llave de memoria
-            // PHP no tiene sodium_memzero universal, pero la variable sale del scope pronto
             unset($privateKeyPem);
 
             // 5. Guardar P12 en storage
-            $p12Disk = config('viafirma.storage.p12_disk', 'local');
-            $p12Path = config('viafirma.storage.p12_path', 'viafirma/p12');
+            $p12Disk     = config('viafirma.storage.p12_disk', 'local');
+            $p12Path     = config('viafirma.storage.p12_path', 'viafirma/p12');
             $p12Filename = "{$p12Path}/{$entity->cod_request}.p12";
 
             Storage::disk($p12Disk)->put($p12Filename, $p12Binary);
@@ -128,21 +129,20 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
             unset($exportPin);
 
             // 7. Transicionar a ASSEMBLED
-            $previousState = $entity->internal_state;
-            $entity->p12_storage_path = $p12Filename;
-            $entity->p12_password_ref = $pinRef;
-            $entity->internal_state   = InternalState::ASSEMBLED;
-            $entity->assembled_at     = now();
-            $entity->save();
+            $previousState = $state->internal_state;
+            $state->p12_storage_path  = $p12Filename;
+            $state->p12_password_ref  = $pinRef;
+            $state->internal_state    = InternalState::ASSEMBLED;
+            $state->assembled_at      = now();
+            $state->save();
 
-            // Registrar en historial
-            \App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaStatusHistory::create([
+            ViafirmaStatusHistory::create([
                 'viafirma_certificate_request_id' => $entity->id,
                 'previous_state'                  => $previousState->value,
                 'new_state'                       => InternalState::ASSEMBLED->value,
-                'remote_status'                   => $entity->remote_status,
+                'remote_status'                   => $state->remote_status,
                 'raw_response'                    => ['action' => 'p12_assembled', 'p12_path' => $p12Filename],
-                'attempt_number'                  => $entity->poll_attempts,
+                'attempt_number'                  => $state->poll_attempts,
                 'occurred_at'                     => now(),
             ]);
 
@@ -152,16 +152,16 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
             ]);
 
             // 8. Transicionar a COMPLETED
-            $entity->internal_state = InternalState::COMPLETED;
-            $entity->save();
+            $state->internal_state = InternalState::COMPLETED;
+            $state->save();
 
-            \App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaStatusHistory::create([
+            ViafirmaStatusHistory::create([
                 'viafirma_certificate_request_id' => $entity->id,
                 'previous_state'                  => InternalState::ASSEMBLED->value,
                 'new_state'                       => InternalState::COMPLETED->value,
-                'remote_status'                   => $entity->remote_status,
+                'remote_status'                   => $state->remote_status,
                 'raw_response'                    => ['action' => 'completed'],
-                'attempt_number'                  => $entity->poll_attempts,
+                'attempt_number'                  => $state->poll_attempts,
                 'occurred_at'                     => now(),
             ]);
 
@@ -181,26 +181,23 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
 
         } catch (\Throwable $e) {
             $logger->error('viafirma.assemble.failed', [
-                'id'      => $entity->id,
-                'error'   => $e->getMessage(),
+                'id'    => $entity->id,
+                'error' => $e->getMessage(),
             ]);
 
-            $entity->internal_state     = InternalState::FAILED;
-            $entity->last_error_code    = 'ASSEMBLE_FAILED';
-            $entity->last_error_message = substr($e->getMessage(), 0, 500);
+            $state->internal_state     = InternalState::FAILED;
+            $state->last_error_code    = 'ASSEMBLE_FAILED';
+            $state->last_error_message = substr($e->getMessage(), 0, 500);
 
             // Marcar referencias del vault como PURGED para evitar referencias huérfanas.
-            // Si el ensamblaje falló, las llaves ya no son recuperables de forma segura
-            // y el PurgeExpiredKeysJob las eliminará en su próxima ejecución.
-            // Esto previene que un reintento manual intente recuperar material inexistente.
-            if ($entity->key_vault_ref && $entity->key_vault_ref !== 'PURGED') {
-                $entity->key_vault_ref = 'PURGED';
+            if ($state->key_vault_ref && $state->key_vault_ref !== 'PURGED') {
+                $state->key_vault_ref = 'PURGED';
             }
-            if ($entity->p12_password_ref && $entity->p12_password_ref !== 'PURGED') {
-                $entity->p12_password_ref = 'PURGED';
+            if ($state->p12_password_ref && $state->p12_password_ref !== 'PURGED') {
+                $state->p12_password_ref = 'PURGED';
             }
 
-            $entity->save();
+            $state->save();
 
             ChangeHistory::create([
                 'certificate_request_id' => $entity->certificate_request_id,

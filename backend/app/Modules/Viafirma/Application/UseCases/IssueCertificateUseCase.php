@@ -34,25 +34,18 @@ use Psr\Log\LoggerInterface;
  *
  *   1) Resolver perfil (FE_PJ/FE_PN) y datos del CSR desde catálogos productivos.
  *   2) Leer `ra_code` y `cod_profile` desde config (VIAFIRMA_RA_CODE / VIAFIRMA_COD_PROFILE).
- *      El endpoint GET /ra/available-profiles solo se llama UNA VEZ de forma manual
- *      para obtener estos valores, los cuales se persisten en .env.
  *   3) Generar par RSA-2048 LOCALMENTE.
  *   4) Construir el CSR con el builder correspondiente (Strategy).
  *   5) Guardar la llave privada cifrada en el KeyVault.
- *   6) `POST /request/fromCSR` → obtener codRequest + publicId (ambos directos, API v3.4.53).
- *      El campo `csr` lleva el PEM COMPLETO codificado en base64 (con headers BEGIN/END).
- *   7) Persistir el agregado `viafirma_certificate_requests` (estado SUBMITTED).
+ *   6) `POST /request/fromCSR` → obtener codRequest + publicId.
+ *   7) Persistir el agregado `viafirma_certificate_requests` (identidad) +
+ *      `viafirma_certificate_request_states` (estado SUBMITTED).
  *   8) Auditoría: `change_histories` + `viafirma_status_history`.
  *   9) Despachar el primer poll job.
  *
- *  Payload FE-PJ: identityType, countryCode, identity, ra, codProfile,
- *                 emailCertificate, organizationType, csr
- *  Payload FE-PN: identityType, countryCode, identity, ra, codProfile,
- *                 emailCertificate, csr  (sin organizationType)
- *
- *  Las llamadas HTTP (submitCsr) ocurren FUERA de la transacción de BD para no
- *  mantener locks durante I/O de red. Solo los writes a BD (pasos 7-8) van en
- *  transacción. Si submitCsr falla, la llave del vault se destruye.
+ * NOTA: Tras la normalización, los datos de identidad van en viafirma_certificate_requests
+ * y los datos de estado/ciclo de vida van en viafirma_certificate_request_states.
+ * El repositorio crea ambos registros en create().
  */
 final class IssueCertificateUseCase
 {
@@ -76,7 +69,7 @@ final class IssueCertificateUseCase
         $existing = $this->repository->findByCertificateRequestId($cr->id);
         if ($existing !== null && !$existing->isFailed()) {
             throw new ViafirmaException(
-                "La solicitud {$cr->id} ya tiene un trámite Viafirma en curso (id={$existing->id}, state={$existing->internal_state?->value})."
+                "La solicitud {$cr->id} ya tiene un trámite Viafirma en curso (id={$existing->id}, state={$existing->state?->internal_state?->value})."
             );
         }
 
@@ -88,17 +81,11 @@ final class IssueCertificateUseCase
         $this->enforceOrganizationTypeRule($profile, $cmd->organizationType);
 
         // ── 2) Leer ra_code y cod_profile desde config (.env) ─────────────
-        // El endpoint GET /ra/available-profiles se ejecuta UNA SOLA VEZ de
-        // forma manual para obtener estos valores y persistirlos en .env.
-        // No hay necesidad de llamarlo en cada emisión.
         $raCode = (string) config('viafirma.ra_code');
         if ($raCode === '') {
             throw new ViafirmaException('config(viafirma.ra_code) está vacío — verifique VIAFIRMA_RA_CODE.');
         }
 
-        // Seleccionar el cod_profile según el tipo de persona:
-        //   FE_PJ (Persona Jurídica)  → VIAFIRMA_COD_PROFILE_CORPORATE
-        //   FE_PN (Persona Natural)   → VIAFIRMA_COD_PROFILE_INDIVIDUAL
         $codProfile = $profile === CertificateProfile::FE_PJ
             ? (string) config('viafirma.cod_profile_corporate')
             : (string) config('viafirma.cod_profile_individual');
@@ -138,12 +125,9 @@ final class IssueCertificateUseCase
 
         try {
             // ── 6) Submit remoto ──────────────────────────────────────────
-            // FE-PJ: incluye organizationType en el payload.
-            // FE-PN: organizationType = null → no se envía (ver SubmitCsrInputDto::toViafirmaPayload).
-            // El campo `csr` lleva el PEM completo codificado en base64 (con headers BEGIN/END).
             $this->logger->info('viafirma.issue.submitting_csr', [
-                'cr_id'      => $cr->id,
-                'profile'    => $profile->value,
+                'cr_id'       => $cr->id,
+                'profile'     => $profile->value,
                 'cod_profile' => substr($codProfile, 0, 12) . '…',
             ]);
 
@@ -164,7 +148,10 @@ final class IssueCertificateUseCase
                 $cr, $cmd, $profile, $identityType, $countryCode, $codProfile, $raCode,
                 $csrResult, $keyRef, $submitInput, $submitResult, $validityDays
             ) {
+                // El repositorio crea viafirma_certificate_requests (identidad)
+                // y viafirma_certificate_request_states (estado) en una sola llamada.
                 $entity = $this->repository->create([
+                    // ── Identidad ──────────────────────────────────────────
                     'certificate_request_id' => $cr->id,
                     'company_id'             => $cr->company_id,
                     'requested_by_user_id'   => $cmd->requestedByUserId,
@@ -177,6 +164,7 @@ final class IssueCertificateUseCase
                     'country_code'           => $countryCode,
                     'organization_type'      => $cmd->organizationType?->value,
                     'validity_days'          => $validityDays,
+                    // ── Estado (va a viafirma_certificate_request_states) ──
                     'internal_state'         => InternalState::SUBMITTED->value,
                     'remote_status'          => $submitResult->initialStatus,
                     'key_vault_ref'          => $keyRef,
@@ -217,7 +205,7 @@ final class IssueCertificateUseCase
                     'profile'     => $profile->value,
                 ]);
 
-                return $entity->fresh();
+                return $entity->fresh(['state']);
             });
         } catch (\Throwable $e) {
             $this->keyVault->destroy($keyRef);
@@ -258,7 +246,6 @@ final class IssueCertificateUseCase
         }
     }
 
-
     private function buildCsrInput(
         CertificateRequest $cr,
         CertificateProfile $profile,
@@ -298,8 +285,8 @@ final class IssueCertificateUseCase
         return new CsrInputDto(
             profile:          $profile,
             country:          $countryCode,
-            state:            null,     // API v3.4.53: FE-PN no lleva ST
-            locality:         null,     // API v3.4.53: FE-PN no lleva L
+            state:            null,
+            locality:         null,
             street:           $street,
             serialNumber:     (string) ($cr->dni),
             email:            (string) ($cr->email ?? $company->email ?? $cmd->emailCertificate),
@@ -315,8 +302,6 @@ final class IssueCertificateUseCase
         CertificateProfile $profile,
         IssueCertificateCommand $cmd,
     ): string {
-        // document_number SIEMPRE es la cédula del representante legal.
-        // Para PJ y PN es el mismo campo; el NIT de la empresa está en `dni`.
         return (string) ($cr->document_number ?? '');
     }
 
@@ -336,4 +321,3 @@ final class IssueCertificateUseCase
         return implode(' ', $parts);
     }
 }
-

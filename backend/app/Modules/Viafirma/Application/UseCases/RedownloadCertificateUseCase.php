@@ -19,7 +19,11 @@ use Illuminate\Support\Str;
 use Psr\Log\LoggerInterface;
 
 /**
- * RedownloadCertificateUseCase — re-descarga el P7B de Viafirma y regenera el P12 (solo ADMIN).
+ * RedownloadCertificateUseCase — re-descarga el P7B de Viafirma y regenera el P12.
+ *
+ * Puede ser invocado por:
+ *  - Un ADMIN vía POST /api/v1/certificate-request/{id}/issuance/redownload
+ *  - El sistema automáticamente vía AutoRedownloadPendingViafirmaJob (adminUserId = null)
  *
  * Flujo de ejecución (§3.1 del spec):
  *   1. Buscar ViafirmaCertificateRequest por certificate_request_id  → 404 si no existe
@@ -33,10 +37,13 @@ use Psr\Log\LoggerInterface;
  *   9. Guardar P12 en storage (sobrescribir)
  *  10. Destruir PIN anterior del vault (si existe y no es PURGED)
  *  11. Guardar nuevo PIN en KeyVault
- *  12. Actualizar ViafirmaCertificateRequest → ASSEMBLED
+ *  12. Actualizar ViafirmaCertificateRequestState → ASSEMBLED
  *  13. Registrar en viafirma_status_history
  *  14. Registrar en change_histories
  *  15. Retornar RedownloadResultDto { pin, download_url, expires_at, viafirma_id, ... }
+ *
+ * NOTA: Tras la normalización, los campos de estado se encuentran en
+ * $entity->state (ViafirmaCertificateRequestState).
  */
 final class RedownloadCertificateUseCase
 {
@@ -48,16 +55,21 @@ final class RedownloadCertificateUseCase
     ) {}
 
     /**
+     * @param int $certificateRequestId  ID de certificate_requests.id
+     * @param int|null $adminUserId      ID del usuario admin; null cuando lo invoca el sistema (job automático)
+     *
      * @throws ViafirmaException Con código HTTP embebido (409, 422)
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException 404
      * @throws \Throwable 502 cuando Viafirma falla
      */
-    public function handle(int $certificateRequestId, int $adminUserId): RedownloadResultDto
+    public function handle(int $certificateRequestId, ?int $adminUserId): RedownloadResultDto
     {
         // ── 1. Buscar entidad ────────────────────────────────────────────────
         $entity = ViafirmaCertificateRequest::where('certificate_request_id', $certificateRequestId)
-            ->with('certificateRequest')
+            ->with(['state', 'certificateRequest'])
             ->firstOrFail();
+
+        $state = $entity->state;
 
         $this->logger->info('viafirma.redownload.start', [
             'viafirma_id'            => $entity->id,
@@ -78,7 +90,7 @@ final class RedownloadCertificateUseCase
         }
 
         // ── 4. Validar que la llave privada no fue purgada ───────────────────
-        if (empty($entity->key_vault_ref) || $entity->key_vault_ref === 'PURGED') {
+        if (empty($state->key_vault_ref) || $state->key_vault_ref === 'PURGED') {
             throw new ViafirmaException(
                 'La llave privada de esta solicitud fue purgada y no puede regenerarse el P12. ' .
                 'Se requiere una nueva emisión.',
@@ -90,7 +102,7 @@ final class RedownloadCertificateUseCase
         $p7bBinary = $this->client->downloadP7b($entity->public_id);
 
         $p7bDisk = config('viafirma.storage.p7b_disk', 'local');
-        $p7bPath = $entity->p7b_storage_path
+        $p7bPath = $state->p7b_storage_path
             ?? ('viafirma/p7b/' . $entity->cod_request . '.p7b');
 
         Storage::disk($p7bDisk)->put($p7bPath, $p7bBinary);
@@ -105,7 +117,7 @@ final class RedownloadCertificateUseCase
         $newPin = Str::random(32);
 
         // ── 7. Recuperar llave privada del KeyVault ──────────────────────────
-        $privateKeyPem = $this->vault->retrieve($entity->key_vault_ref);
+        $privateKeyPem = $this->vault->retrieve($state->key_vault_ref);
 
         // ── 8. Ensamblar nuevo P12 ───────────────────────────────────────────
         $friendlyName = $entity->cod_request ?? 'viafirma-cert';
@@ -116,7 +128,6 @@ final class RedownloadCertificateUseCase
             exportPassword: $newPin,
         );
 
-        // Limpiar de memoria lo antes posible
         unset($privateKeyPem, $p7bBinary);
 
         // ── 9. Guardar P12 en storage (sobrescribir) ─────────────────────────
@@ -133,12 +144,11 @@ final class RedownloadCertificateUseCase
         ]);
 
         // ── 10. Destruir PIN anterior del vault ──────────────────────────────
-        $oldPinRef = $entity->p12_password_ref;
+        $oldPinRef = $state->p12_password_ref;
         if (!empty($oldPinRef) && $oldPinRef !== 'PURGED') {
             try {
                 $this->vault->destroy($oldPinRef);
             } catch (\Throwable $e) {
-                // No fatal — el vault puede ya no tener la referencia
                 $this->logger->warning('viafirma.redownload.old_pin_destroy_failed', [
                     'viafirma_id' => $entity->id,
                     'error'       => $e->getMessage(),
@@ -153,17 +163,17 @@ final class RedownloadCertificateUseCase
             'action'     => 'admin_redownload',
         ]);
 
-        // ── 12. Actualizar entidad ────────────────────────────────────────────
-        $previousState = $entity->internal_state;
+        // ── 12. Actualizar estado ─────────────────────────────────────────────
+        $previousState = $state->internal_state;
 
-        $entity->p7b_storage_path  = $p7bPath;
-        $entity->p12_storage_path  = $p12Filename;
-        $entity->p12_password_ref  = $newPinRef;
-        $entity->internal_state    = InternalState::ASSEMBLED;
-        $entity->assembled_at      = now();
-        $entity->last_error_code   = null;
-        $entity->last_error_message = null;
-        $entity->save();
+        $state->p7b_storage_path   = $p7bPath;
+        $state->p12_storage_path   = $p12Filename;
+        $state->p12_password_ref   = $newPinRef;
+        $state->internal_state     = InternalState::ASSEMBLED;
+        $state->assembled_at       = now();
+        $state->last_error_code    = null;
+        $state->last_error_message = null;
+        $state->save();
 
         // ── 13. Registrar en viafirma_status_history ──────────────────────────
         ViafirmaStatusHistory::create([
@@ -178,7 +188,7 @@ final class RedownloadCertificateUseCase
                 'p12_path'       => $p12Filename,
                 'remote_status'  => $statusResult->status->value,
             ],
-            'attempt_number' => $entity->poll_attempts,
+            'attempt_number' => $state->poll_attempts,
             'occurred_at'    => now(),
         ]);
 
@@ -188,9 +198,9 @@ final class RedownloadCertificateUseCase
             ChangeHistory::create([
                 'certificate_request_id' => $cr->id,
                 'user_id'                => $adminUserId,
-                'user_of_change'         => 'Admin (Re-descarga Viafirma)',
+                'user_of_change'         => $adminUserId ? 'Admin (Re-descarga Viafirma)' : 'SYSTEM (Auto Re-descarga)',
                 'status'                 => CertificateRequestStatusEnum::PROCESSED->value,
-                'comments'               => 'Certificado P12 regenerado por administrador. ' .
+                'comments'               => 'Certificado P12 regenerado. ' .
                                             "Estado remoto Viafirma: {$statusResult->status->value}.",
             ]);
         }

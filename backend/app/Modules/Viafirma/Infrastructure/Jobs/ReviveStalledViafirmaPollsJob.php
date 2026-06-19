@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Viafirma\Infrastructure\Jobs;
 
-use App\Modules\Viafirma\Domain\Enums\InternalState;
-use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
+use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequestState;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -25,6 +24,10 @@ use Psr\Log\LoggerInterface;
  *
  * Para cada huérfana: despacha PollViafirmaStatusJob con delay aleatorio
  * (5-30s) para escalonar los polls y evitar ráfagas simultáneas.
+ *
+ * NOTA: Tras la normalización, los campos de estado se encuentran en
+ * viafirma_certificate_request_states. El scope orphanedPolling() está
+ * definido en ViafirmaCertificateRequestState.
  */
 final class ReviveStalledViafirmaPollsJob implements ShouldQueue
 {
@@ -45,19 +48,10 @@ final class ReviveStalledViafirmaPollsJob implements ShouldQueue
     public function handle(LoggerInterface $logger): void
     {
         try {
-            $stalledThreshold = now()->subMinutes(20);
-
-            $pollingStates = [
-                InternalState::SUBMITTED->value,
-                InternalState::POLLING->value,
-            ];
-
-            $baseQuery = ViafirmaCertificateRequest::query()
-                ->whereIn('internal_state', $pollingStates)
-                ->whereNotNull('cod_request')
-                ->where(function ($q) use ($stalledThreshold) {
-                    $q->whereNull('next_poll_at')
-                        ->orWhere('next_poll_at', '<', $stalledThreshold);
+            // Usar el scope del modelo de estado para encontrar huérfanas
+            $baseQuery = ViafirmaCertificateRequestState::orphanedPolling(20)
+                ->whereHas('viafirmaCertificateRequest', function ($q) {
+                    $q->whereNotNull('cod_request');
                 });
 
             // Guard rápido: si no hay ningún registro huérfano, salir sin coste
@@ -66,30 +60,28 @@ final class ReviveStalledViafirmaPollsJob implements ShouldQueue
                 return;
             }
 
-            $stalled = $baseQuery->get(['id', 'internal_state', 'next_poll_at', 'poll_attempts']);
+            $stalled = $baseQuery->get(['id', 'viafirma_certificate_request_id', 'internal_state', 'next_poll_at', 'poll_attempts']);
 
             $logger->warning('viafirma.watchdog.reviving', ['count' => $stalled->count()]);
 
-            foreach ($stalled as $entity) {
+            foreach ($stalled as $stateRecord) {
                 $delay = random_int(5, 30);
 
-                PollViafirmaStatusJob::dispatch($entity->id)
+                PollViafirmaStatusJob::dispatch($stateRecord->viafirma_certificate_request_id)
                     ->delay(now()->addSeconds($delay));
 
-                $entity->update(['next_poll_at' => now()->addSeconds($delay)]);
+                $stateRecord->update(['next_poll_at' => now()->addSeconds($delay)]);
 
                 $logger->info('viafirma.watchdog.revived', [
-                    'id'       => $entity->id,
-                    'state'    => $entity->internal_state instanceof InternalState
-                        ? $entity->internal_state->value
-                        : $entity->internal_state,
-                    'attempts' => $entity->poll_attempts,
-                    'delay_s'  => $delay,
+                    'viafirma_id' => $stateRecord->viafirma_certificate_request_id,
+                    'state'       => $stateRecord->internal_state instanceof \App\Modules\Viafirma\Domain\Enums\InternalState
+                        ? $stateRecord->internal_state->value
+                        : $stateRecord->internal_state,
+                    'attempts'    => $stateRecord->poll_attempts,
+                    'delay_s'     => $delay,
                 ]);
             }
         } catch (\Throwable $e) {
-            // Registrar el error pero NO relanzar — el job debe terminar con "done"
-            // incluso si la tabla no existe, la BD no responde o hay un error inesperado.
             $logger->error('viafirma.watchdog.error', [
                 'message' => $e->getMessage(),
                 'class'   => get_class($e),

@@ -26,9 +26,9 @@ use Psr\Log\LoggerInterface;
  * `viafirma_certificate_requests` detrás del contrato agnóstico
  * {@see CertificateIssuanceProvider}.
  *
- * No expone ninguna ruta propia: la capa HTTP llama al orquestador, que
- * delega aquí. De este modo el cliente no necesita saber que el backend
- * está hablando con Viafirma.
+ * NOTA: Tras la normalización, los datos de estado se acceden vía $entity->state.
+ * El accesor getInternalStateAttribute() en ViafirmaCertificateRequest provee
+ * compatibilidad con $entity->internal_state para código existente.
  */
 final class ViafirmaIssuanceProvider implements CertificateIssuanceProvider
 {
@@ -94,10 +94,10 @@ final class ViafirmaIssuanceProvider implements CertificateIssuanceProvider
                     'public_id'      => $entity->public_id,
                     'profile_type'   => $entity->profile_type,
                     'identity_type'  => $entity->identity_type,
-                    'internal_state' => $entity->internal_state?->value,
-                    'remote_status'  => $entity->remote_status,
-                    'submitted_at'   => optional($entity->submitted_at)?->toISOString(),
-                    'expires_at'     => optional($entity->expires_at)?->toISOString(),
+                    'internal_state' => $entity->state?->internal_state?->value,
+                    'remote_status'  => $entity->state?->remote_status,
+                    'submitted_at'   => optional($entity->state?->submitted_at)?->toISOString(),
+                    'expires_at'     => optional($entity->state?->expires_at)?->toISOString(),
                 ],
             );
         } catch (ViafirmaException $e) {
@@ -146,7 +146,7 @@ final class ViafirmaIssuanceProvider implements CertificateIssuanceProvider
             );
         }
 
-        $entity->load(['certificateRequest', 'company', 'statusHistory']);
+        $entity->load(['certificateRequest', 'company', 'statusHistory', 'state']);
 
         return new IssuanceResult(
             providerName: self::NAME,
@@ -158,10 +158,10 @@ final class ViafirmaIssuanceProvider implements CertificateIssuanceProvider
                 'public_id'      => $entity->public_id,
                 'profile_type'   => $entity->profile_type,
                 'identity_type'  => $entity->identity_type,
-                'internal_state' => $entity->internal_state?->value,
-                'remote_status'  => $entity->remote_status,
-                'submitted_at'   => optional($entity->submitted_at)?->toISOString(),
-                'expires_at'     => optional($entity->expires_at)?->toISOString(),
+                'internal_state' => $entity->state?->internal_state?->value,
+                'remote_status'  => $entity->state?->remote_status,
+                'submitted_at'   => optional($entity->state?->submitted_at)?->toISOString(),
+                'expires_at'     => optional($entity->state?->expires_at)?->toISOString(),
                 'history_count'  => $entity->statusHistory?->count() ?? 0,
             ],
         );
@@ -172,7 +172,7 @@ final class ViafirmaIssuanceProvider implements CertificateIssuanceProvider
      */
     private function mapInternalStateToStatus(ViafirmaCertificateRequest $entity): string
     {
-        $state = $entity->internal_state?->value;
+        $state = $entity->state?->internal_state?->value;
 
         return match ($state) {
             'COMPLETED', 'ASSEMBLED' => IssuanceResult::STATUS_READY,
@@ -182,4 +182,3 @@ final class ViafirmaIssuanceProvider implements CertificateIssuanceProvider
         };
     }
 }
-
