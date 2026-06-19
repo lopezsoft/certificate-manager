@@ -126,10 +126,8 @@ final class CertificateIssuanceOrchestrator
             );
         }
 
-        $dummyRequest = new IssuanceRequest(
-            certificateRequestId: $certificateRequestId,
-        );
-        $provider = $this->factory->resolveFor($dummyRequest, $callerIsAdmin);
+        // resolveForStatus() no requiere emailCertificate — es solo consulta de estado.
+        $provider = $this->factory->resolveForStatus($certificateRequestId);
 
         return $provider->status($certificateRequestId);
     }
@@ -140,9 +138,7 @@ final class CertificateIssuanceOrchestrator
      */
     public function providerFor(int $certificateRequestId, bool $callerIsAdmin = false): CertificateIssuanceProvider
     {
-        $dummyRequest = new IssuanceRequest(
-            certificateRequestId: $certificateRequestId,
-        );
-        return $this->factory->resolveFor($dummyRequest, $callerIsAdmin);
+        // resolveForStatus() no requiere emailCertificate — es solo lookup de proveedor.
+        return $this->factory->resolveForStatus($certificateRequestId);
     }
 }

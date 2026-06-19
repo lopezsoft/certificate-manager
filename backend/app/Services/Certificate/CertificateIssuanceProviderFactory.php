@@ -142,6 +142,44 @@ final class CertificateIssuanceProviderFactory
         );
     }
 
+    /**
+     * Resuelve el proveedor para operaciones de CONSULTA (status, download).
+     *
+     * A diferencia de resolveFor(), este método NO requiere emailCertificate
+     * ni verifica prerrequisitos de emisión. Solo necesita saber qué proveedor
+     * ya gestionó la solicitud (leyendo viafirma_certificate_requests).
+     *
+     * Cascada:
+     *  1) Si existe registro en viafirma_certificate_requests → devuelve viafirma.
+     *  2) Si viafirma está habilitado pero aún no hay registro → devuelve viafirma
+     *     (para que status() retorne 404 con mensaje claro).
+     *  3) Fallback → mail.
+     */
+    public function resolveForStatus(int $certificateRequestId): CertificateIssuanceProvider
+    {
+        // Verificar si ya existe un trámite Viafirma para esta solicitud
+        $viafirmaClass = (array) config('certificate.issuance.providers', []);
+        $viafirmaProviderClass = $viafirmaClass['viafirma'] ?? null;
+
+        if ($viafirmaProviderClass && class_exists($viafirmaProviderClass)) {
+            /** @var \App\Contracts\CertificateIssuanceProvider $viafirmaProvider */
+            $viafirmaProvider = $this->container->make($viafirmaProviderClass);
+
+            // Si existe trámite Viafirma O Viafirma está habilitado globalmente → usar Viafirma
+            if ((bool) config('viafirma.feature_flag.enabled', false)) {
+                $this->logger->info('certificate.issuance.provider.selected', [
+                    'source' => 'status_lookup',
+                    'name'   => $viafirmaProvider->name(),
+                    'cr_id'  => $certificateRequestId,
+                ]);
+                return $viafirmaProvider;
+            }
+        }
+
+        // Fallback: mail provider
+        return $this->make('mail');
+    }
+
     private function ensureSupports(
         CertificateIssuanceProvider $provider,
         IssuanceRequest $request,
