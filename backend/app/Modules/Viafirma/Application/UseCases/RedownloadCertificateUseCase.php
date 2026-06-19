@@ -114,7 +114,7 @@ final class RedownloadCertificateUseCase
         ]);
 
         // ── 6. Generar nuevo PIN CSPRNG ──────────────────────────────────────
-        $newPin = Str::random(16);
+        $newPin = Str::random(32);
 
         // ── 7. Recuperar llave privada del KeyVault ──────────────────────────
         $privateKeyPem = $this->vault->retrieve($state->key_vault_ref);
@@ -133,7 +133,12 @@ final class RedownloadCertificateUseCase
         // ── 9. Guardar P12 en storage (sobrescribir) ─────────────────────────
         $p12Disk     = config('viafirma.storage.p12_disk', 'local');
         $p12BasePath = config('viafirma.storage.p12_path', 'viafirma/p12');
-        $p12Filename = "{$p12BasePath}/{$entity->cod_request}.p12";
+        $p12Filename = "{$p12BasePath}/{$entity->certificate_request_id}_{$entity->cod_request}.p12";
+
+        // Delete the old file if the path has changed (e.g. migration to new naming convention)
+        if ($state->p12_storage_path && $state->p12_storage_path !== $p12Filename) {
+            Storage::disk($p12Disk)->delete($state->p12_storage_path);
+        }
 
         Storage::disk($p12Disk)->put($p12Filename, $p12Binary);
         unset($p12Binary);

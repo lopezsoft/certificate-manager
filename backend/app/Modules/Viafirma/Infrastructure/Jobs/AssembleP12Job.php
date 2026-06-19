@@ -116,7 +116,7 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
             // 5. Guardar P12 en storage
             $p12Disk     = config('viafirma.storage.p12_disk', 'local');
             $p12Path     = config('viafirma.storage.p12_path', 'viafirma/p12');
-            $p12Filename = "{$p12Path}/{$entity->cod_request}.p12";
+            $p12Filename = "{$p12Path}/{$entity->certificate_request_id}_{$entity->cod_request}.p12";
 
             Storage::disk($p12Disk)->put($p12Filename, $p12Binary);
             unset($p12Binary);
