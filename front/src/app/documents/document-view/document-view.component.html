@@ -3,7 +3,8 @@
   <span class="card-text">
     SELECCIONE UN DOCUMENTO PARA VER SU INFORMACIÓN
   </span>
-  <img class="img-fluid" src="/assets/img/search-document.svg" alt="Búsqueda documento">
+  <img class="img-fluid" src="/assets/img/search-document.svg"
+    alt="Búsqueda documento">
 </div>
 }
 @if (currentShipping) {
@@ -18,14 +19,16 @@
               <div class="justify-content">
                 @if (canSendEmail()) {
                 <button class="btn custom-button border me-25 fas-fa-mail-send"
-                  (click)="updateStatus(DocumentStatusEnum.SENT)" appCustomTooltip="Enviar solicitud">
+                  (click)="updateStatus(DocumentStatusEnum.SENT)"
+                  appCustomTooltip="Enviar solicitud">
                   <i class="fas fa-paper-plane fa-cursor fas-fa-mail-send"></i>
                   Enviar solicitud
                 </button>
                 }
                 @if (canSendEmail()) {
                 <button class="btn custom-button border me-50 fas-fa-warning"
-                  (click)="updateStatus(DocumentStatusEnum.CANCELLED)" appCustomTooltip="Anular solicitud">
+                  (click)="updateStatus(DocumentStatusEnum.CANCELLED)"
+                  appCustomTooltip="Anular solicitud">
                   <i class="fas fa-paper-plane fa-cursor fas-fa-warning"></i>
                   Anular solicitud
                 </button>
@@ -33,21 +36,26 @@
                 <!-- Restaurar -->
                 @if (currentShipping.request_status === 'CANCELLED') {
                 <button class="btn custom-button border me-50 fas-fa-warning"
-                  (click)="updateStatus(DocumentStatusEnum.DRAFT)" appCustomTooltip="Restaurar solicitud">
+                  (click)="updateStatus(DocumentStatusEnum.DRAFT)"
+                  appCustomTooltip="Restaurar solicitud">
                   <i class="fas fa-paper-plane fa-cursor fas-fa-warning"></i>
                   Restaurar solicitud
                 </button>
                 }
                 <!-- Editar -->
-                <button [disabled]="!canSendEmail()" class="btn custom-button border me-50 fas-fa-ok" (click)="onEdit()"
+                <button [disabled]="!canSendEmail()"
+                  class="btn custom-button border me-50 fas-fa-ok"
+                  (click)="onEdit()"
                   appCustomTooltip="Editar solicitud">
                   <i class="fas fa-edit fa-cursor fas-fa-ok"></i>
                   Editar
                 </button>
                 <!-- Eliminar -->
-                @if (currentShipping.request_status === 'DRAFT' || currentShipping.request_status === 'REJECTED' ||
+                @if (currentShipping.request_status === 'DRAFT' ||
+                currentShipping.request_status === 'REJECTED' ||
                 currentShipping.request_status === 'DELETED') {
-                <button class="btn custom-button border me-50 text-danger" (click)="onDeleteRequest()"
+                <button class="btn custom-button border me-50 text-danger"
+                  (click)="onDeleteRequest()"
                   appCustomTooltip="Eliminar solicitud">
                   <i class="fas fa-trash fa-cursor"></i>
                   Eliminar
@@ -80,8 +88,10 @@
             <div class="form-group">
               <label>Estado de la solicitud</label>
               <div class="card-text d-grid">
-                <span class="w-100 text-center" [class]="'document-status-'+currentShipping.request_status">
-                  {{ documentStatusDescription[currentShipping.request_status] | uppercase }}
+                <span class="w-100 text-center"
+                  [class]="'document-status-'+currentShipping.request_status">
+                  {{ documentStatusDescription[currentShipping.request_status] |
+                  uppercase }}
                 </span>
               </div>
             </div>
@@ -90,19 +100,22 @@
             <div class="form-group">
               <small class="text-muted font-small-2 d-block">
                 <i class="fas fa-info-circle"></i>
-                {{ DocumentStatusComments[currentShipping.request_status] | uppercase }}
+                {{ DocumentStatusComments[currentShipping.request_status] |
+                uppercase }}
               </small>
             </div>
           </div>
         </div>
       </div>
     </div>
-    @if (existFileZip() && currentShipping.request_status === DocumentStatusEnum.PROCESSED) {
+    @if (existFileZip() && currentShipping.request_status ===
+    DocumentStatusEnum.PROCESSED) {
     <div class="card">
       <div class="card-body">
         <div class="row">
           <div class="col-sm-12">
-            <app-camerfirma-info [pin]="currentShipping.pin"></app-camerfirma-info>
+            <app-camerfirma-info
+              [pin]="currentShipping.pin"></app-camerfirma-info>
           </div>
           <hr>
           <div class="col-sm-6">
@@ -120,7 +133,8 @@
               <label>Fecha de expiración del certificado</label>
               <div class="card-text d-grid">
                 <span class="w-100">
-                  <strong> {{ currentShipping.expiration_date_formatted }} </strong>
+                  <strong> {{ currentShipping.expiration_date_formatted }}
+                  </strong>
                 </span>
               </div>
             </div>
@@ -131,11 +145,14 @@
               <div class="row row-cols-1 row-cols-sm-1 row-cols-md-1 g-50">
                 @for (file of getFilesZip(); track file; let i = $index) {
                 <div class="col">
-                  <div class="card card-accounting-voucher h-100" [ngClass]="{'selected': file.id === selectedFile?.id}"
+                  <div class="card card-accounting-voucher h-100"
+                    [ngClass]="{'selected': file.id === selectedFile?.id}"
                     (dblclick)="selectFile(null)" (click)="selectFile(file)">
                     <div class="card-body">
                       <div class="img-container">
-                        <img src="assets/files/128/{{file.extension_file.toLowerCase()}}.png" class="img-fluid"
+                        <img
+                          src="assets/files/128/{{file.extension_file.toLowerCase()}}.png"
+                          class="img-fluid"
                           alt="{{ file.file_name }}">
                       </div>
                       <div class="card-body-content">
@@ -143,17 +160,20 @@
                           {{ file.file_name }}
                         </p>
                         <div class="content-p">
-                          <p class="card-text" title="Tamaño">
+                          <p class="card-text" appCustomTooltip="Tamaño">
                             <i class="fas fa-hdd"></i>
                             {{ convertBytesToMB(file.file_size) }}<br>
                           </p>
-                          <p class="card-text" title="Última modificación">
-                            <i class="fas fa-calendar-day"></i> {{ file.last_modified_formatted }}
+                          <p class="card-text"
+                            appCustomTooltip="Última modificación">
+                            <i class="fas fa-calendar-day"></i> {{
+                            file.last_modified_formatted }}
                           </p>
                         </div>
                       </div>
                       <div class="actions-content">
-                        <button class="btn custom-button fas-fa-save" (click)="onDownload(file)">
+                        <button class="btn custom-button fas-fa-save"
+                          (click)="onDownload(file)">
                           <i class="fas fa-download fas-fa-18 fas-fa-save"></i>
                         </button>
                       </div>
@@ -178,7 +198,8 @@
             <div class="form-group">
               <label>N.I.T</label>
               <p class="card-text">
-                <strong>{{ currentShipping.dni }}-{{currentShipping.dv}}</strong>
+                <strong>{{ currentShipping.dni
+                  }}-{{currentShipping.dv}}</strong>
               </p>
             </div>
           </div>
@@ -186,7 +207,8 @@
             <div class="form-group">
               <label>Tipo de contribuyente</label>
               <p class="card-text">
-                <strong>{{currentShipping.organization.description | uppercase}}</strong>
+                <strong>{{currentShipping.organization.description |
+                  uppercase}}</strong>
               </p>
             </div>
           </div>
@@ -310,17 +332,19 @@
         <span class="card-title">Lista de archivos adjuntos</span>
         <div class="card-header-actions">
           @if (canSendEmail() && currentShipping.files.length <= 5) { <button
-            class="btn custom-button fas-fa-plus fas-fa-save me-25" (click)="onAddFile()"
+            class="btn custom-button fas-fa-plus fas-fa-save me-25"
+            (click)="onAddFile()"
             appCustomTooltip="Agregar archivo">
             <i class="fas fa-plus fas-fa-16 fas-fa-save"></i>
             Agregar archivo
-            </button>
-            }
-            <button class="btn custom-button fas-fa-plus fas-fa-ok" (click)="onAddFilePayment()"
-              appCustomTooltip="Agregar comprobante de pago">
-              <i class="fas fa-plus fas-fa-16 fas-fa-ok"></i>
-              Agregar pago
-            </button>
+          </button>
+          }
+          <button class="btn custom-button fas-fa-plus fas-fa-ok"
+            (click)="onAddFilePayment()"
+            appCustomTooltip="Agregar comprobante de pago">
+            <i class="fas fa-plus fas-fa-16 fas-fa-ok"></i>
+            Agregar pago
+          </button>
         </div>
       </div>
       <div class="card-body">
@@ -328,11 +352,14 @@
           <div class="row row-cols-1 row-cols-sm-1 row-cols-md-1 g-50">
             @for (file of getFiles(); track file; let i = $index) {
             <div class="col">
-              <div class="card card-accounting-voucher h-100" [ngClass]="{'selected': file.id === selectedFile?.id}"
+              <div class="card card-accounting-voucher h-100"
+                [ngClass]="{'selected': file.id === selectedFile?.id}"
                 (dblclick)="selectFile(null)" (click)="selectFile(file)">
                 <div class="card-body" [title]="file.file_name">
                   <div class="img-container">
-                    <img src="assets/files/128/{{file.extension_file.toLowerCase()}}.png" class="img-fluid"
+                    <img
+                      src="assets/files/128/{{file.extension_file.toLowerCase()}}.png"
+                      class="img-fluid"
                       alt="{{ file.file_name }}">
                   </div>
                   <div class="card-body-content">
@@ -340,21 +367,27 @@
                       {{ file.file_name }} - <b>{{file.document_type}}</b>
                     </small>
                     <div class="content-p">
-                      <p class="card-text" title="Tamaño">
+                      <p class="card-text" appCustomTooltip="Tamaño">
                         <i class="fas fa-hdd"></i>
                         {{ convertBytesToMB(file.file_size) }}<br>
                       </p>
-                      <p class="card-text" title="Última modificación">
-                        <i class="fas fa-calendar-day"></i> {{ file.last_modified_formatted }}
+                      <p class="card-text"
+                        appCustomTooltip="Última modificación">
+                        <i class="fas fa-calendar-day"></i> {{
+                        file.last_modified_formatted }}
                       </p>
                     </div>
                   </div>
                   <div class="actions-content">
-                    <button [disabled]="!canSendEmail() && !isPaymentFile(file)" appCustomTooltip="Eliminar archivo"
-                      class="btn custom-button fas-fa-trash fas-fa-delete" (click)="onDeleteFile(file)">
-                      <i class="fas fa-trash fas-fa-16 fas-fa-trash fas-fa-delete"></i>
+                    <button [disabled]="!canSendEmail() && !isPaymentFile(file)"
+                      appCustomTooltip="Eliminar archivo"
+                      class="btn custom-button fas-fa-trash fas-fa-delete"
+                      (click)="onDeleteFile(file)">
+                      <i
+                        class="fas fa-trash fas-fa-16 fas-fa-trash fas-fa-delete"></i>
                     </button>
-                    <button appCustomTooltip="Descargar archivo" class="btn custom-button fas-fa-save"
+                    <button appCustomTooltip="Descargar archivo"
+                      class="btn custom-button fas-fa-save"
                       (click)="onDownload(file)">
                       <i class="fas fa-download fas-fa-16 fas-fa-save"></i>
                     </button>
@@ -386,9 +419,11 @@
         @if (canIssue() && !showIssuanceForm && !issuanceStatus) {
         <div>
           <p class="text-muted mb-2">
-            La solicitud ha sido aceptada. Puede iniciar la emisión del certificado digital.
+            La solicitud ha sido aceptada. Puede iniciar la emisión del
+            certificado digital.
           </p>
-          <button class="btn custom-button fas-fa-ok" (click)="toggleIssuanceForm()" [disabled]="issuanceLoading">
+          <button class="btn custom-button fas-fa-ok"
+            (click)="toggleIssuanceForm()" [disabled]="issuanceLoading">
             <i class="fas fa-play-circle me-1"></i> Emitir certificado
           </button>
         </div>
@@ -400,19 +435,22 @@
             <div class="col-md-6">
               <div class="form-group">
                 <label>Correo para el certificado (opcional)</label>
-                <input type="email" class="form-control" [(ngModel)]="issuanceEmail" placeholder="usuario@empresa.com">
+                <input type="email" class="form-control"
+                  [(ngModel)]="issuanceEmail" placeholder="usuario@empresa.com">
               </div>
             </div>
             <div class="col-md-6">
               <div class="form-group">
                 <label>Comentarios (opcional)</label>
-                <input type="text" class="form-control" [(ngModel)]="issuanceComments"
+                <input type="text" class="form-control"
+                  [(ngModel)]="issuanceComments"
                   placeholder="Emitir con prioridad">
               </div>
             </div>
           </div>
           <div class="d-flex gap-2 mt-2">
-            <button class="btn custom-button fas-fa-ok" (click)="onIssue()" [disabled]="issuanceLoading">
+            <button class="btn custom-button fas-fa-ok" (click)="onIssue()"
+              [disabled]="issuanceLoading">
               @if (issuanceLoading) {
               <span class="spinner-border spinner-border-sm me-1"></span>
               }
@@ -421,7 +459,8 @@
               }
               Confirmar emisión
             </button>
-            <button class="btn btn-outline-secondary" (click)="toggleIssuanceForm()">
+            <button class="btn btn-outline-secondary"
+              (click)="toggleIssuanceForm()">
               Cancelar
             </button>
           </div>
@@ -433,39 +472,50 @@
           <div class="alert alert-info d-flex align-items-center">
             <i class="fas fa-info-circle me-2"></i>
             <div>
-              <strong>Estado:</strong> {{ documentStatusDescription[issuanceStatus.status.toUpperCase()] || issuanceStatus.status }}
+              <strong>Estado:</strong> {{
+              (documentStatusDescription[issuanceStatus.status.toUpperCase()] |
+              uppercase) ||
+              (issuanceStatus.status | uppercase) }}
               @if (issuanceStatus.provider) {
-              <span> | Proveedor: {{ issuanceStatus.provider }}</span>
+              <span> | Proveedor: {{ issuanceStatus.provider |
+                uppercase}}</span>
               }
             </div>
           </div>
           <div class="d-flex gap-2">
-            <button class="btn btn-outline-primary btn-sm" (click)="onCheckIssuanceStatus()"
+            <button class="btn btn-outline-primary btn-sm"
+              (click)="onCheckIssuanceStatus()"
               [disabled]="issuanceLoading">
               <i class="fas fa-sync-alt me-1"></i> Actualizar estado
             </button>
-            <button class="btn btn-outline-success btn-sm" (click)="onGetDownloadMeta()" [disabled]="issuanceLoading">
+            @if(canShowDownloadP12) {
+            <button class="btn btn-outline-success btn-sm"
+              (click)="onGetDownloadMeta()" [disabled]="issuanceLoading">
               <i class="fas fa-key me-1"></i> Obtener PIN de descarga
             </button>
             <button class="btn btn-success btn-sm" (click)="onDownloadP12()">
               <i class="fas fa-download me-1"></i> Descargar P12
             </button>
+            }
             <!-- Botón Re-descargar: Solo Admin y cuando internal_state lo permite -->
             @if (isAdmin && canShowRedownload) {
             <button class="btn btn-warning btn-sm" (click)="onRedownload()"
               [disabled]="!canRedownload || isRedownloading"
-              title="Re-descarga el P7B y genera un nuevo PIN. El PIN anterior quedará inválido.">
+              appCustomTooltip="Re-descarga el P7B y genera un nuevo PIN. El PIN anterior quedará inválido.">
               @if (isRedownloading) {
               <span class="spinner-border spinner-border-sm me-1"></span>
               } @else {
               <i class="fas fa-redo me-1"></i>
               }
-              {{ isRedownloading ? 'Re-descargando...' : 'Re-descargar Certificado' }}
+              {{ isRedownloading ? 'Re-descargando...' :
+              'Re-descargar Certificado' }}
             </button>
             }
             <!-- Botón Revocar -->
-            @if (viafirmaStatus?.internal_state === ViafirmaInternalStateEnum.COMPLETED) {
-            <button class="btn btn-danger btn-sm" (click)="openRevokeModal()" title="Revocar certificado emitido">
+            @if (viafirmaStatus?.internal_state ===
+            ViafirmaInternalStateEnum.COMPLETED) {
+            <button class="btn btn-danger btn-sm" (click)="openRevokeModal()"
+              appCustomTooltip="Revocar certificado emitido">
               <i class="fas fa-ban me-1"></i> Revocar Certificado
             </button>
             }
@@ -484,10 +534,12 @@
                 </div>
                 <div class="col-md-4">
                   <strong>Expira:</strong>
-                  <span class="ms-2">{{ issuanceDownloadMeta.expires_at }}</span>
+                  <span class="ms-2">{{ issuanceDownloadMeta.expires_at
+                    }}</span>
                 </div>
                 <div class="col-md-4 text-end">
-                  <button class="btn btn-success btn-sm" (click)="onDownloadP12()">
+                  <button class="btn btn-success btn-sm"
+                    (click)="onDownloadP12()">
                     <i class="fas fa-download me-1"></i> Descargar archivo .p12
                   </button>
                 </div>
@@ -517,18 +569,28 @@
 <!-- MODAL: Nuevo PIN tras re-descarga (no cerrable accidentalmente)   -->
 <!-- ═══════════════════════════════════════════════════════════════════ -->
 @if (showRedownloadPinModal && redownloadResult) {
-<div class="modal-backdrop-pin" style="position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1050;display:flex;align-items:center;justify-content:center;">
-  <div class="card" style="width:520px;max-width:95vw;z-index:1060;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
-    <div class="card-header d-flex align-items-center gap-2" style="background:linear-gradient(135deg,#1e7e34,#28a745);color:#fff;border-radius:12px 12px 0 0;">
+<div class="modal-backdrop-pin"
+  style="position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1050;display:flex;align-items:center;justify-content:center;">
+  <div class="card"
+    style="width:520px;max-width:95vw;z-index:1060;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+    <div class="card-header d-flex align-items-center gap-2"
+      style="background:linear-gradient(135deg,#1e7e34,#28a745);color:#fff;border-radius:12px 12px 0 0;">
       <i class="fas fa-check-circle fa-lg"></i>
-      <span class="card-title text-white mb-0">Certificado Re-descargado Exitosamente</span>
+      <span class="card-title text-white mb-0">Certificado Re-descargado
+        Exitosamente</span>
     </div>
     <div class="card-body">
-      <p class="text-muted mb-2">El certificado fue re-descargado y se generó un nuevo PIN de acceso:</p>
+      <p class="text-muted mb-2">El certificado fue re-descargado y se generó un
+        nuevo PIN de acceso:</p>
       <!-- PIN display -->
-      <div class="pin-box" style="background:#f4f6fa;border:2px dashed #28a745;border-radius:8px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;">
-        <code style="font-size:1.15rem;letter-spacing:2px;word-break:break-all;flex:1;">{{ redownloadResult.pin }}</code>
-        <button class="btn btn-sm" [ngClass]="pinCopied ? 'btn-success' : 'btn-outline-secondary'" (click)="copyPin()" style="white-space:nowrap;">
+      <div class="pin-box"
+        style="background:#f4f6fa;border:2px dashed #28a745;border-radius:8px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;">
+        <code
+          style="font-size:1.15rem;letter-spacing:2px;word-break:break-all;flex:1;">{{
+          redownloadResult.pin }}</code>
+        <button class="btn btn-sm"
+          [ngClass]="pinCopied ? 'btn-success' : 'btn-outline-secondary'"
+          (click)="copyPin()" style="white-space:nowrap;">
           <i [ngClass]="pinCopied ? 'fas fa-check' : 'fas fa-copy'"></i>
           {{ pinCopied ? '¡Copiado!' : 'Copiar PIN' }}
         </button>
@@ -541,15 +603,18 @@
       </div>
       @if (redownloadResult.expires_at) {
       <small class="text-muted d-block mb-2">
-        <i class="fas fa-clock me-1"></i> Expira: {{ redownloadResult.expires_at }}
+        <i class="fas fa-clock me-1"></i> Expira: {{ redownloadResult.expires_at
+        }}
       </small>
       }
     </div>
     <div class="card-footer d-flex justify-content-between align-items-center">
-      <button class="btn custom-button btn-primary btn-sm" (click)="onDownloadP12()">
+      <button class="btn custom-button btn-primary btn-sm"
+        (click)="onDownloadP12()">
         <i class="fas fa-download me-1"></i> Descargar P12
       </button>
-      <button class="btn btn-outline-secondary btn-sm" (click)="closePinModal()" [disabled]="!pinCopied"
+      <button class="btn btn-outline-secondary btn-sm" (click)="closePinModal()"
+        [disabled]="!pinCopied"
         [title]="pinCopied ? 'Cerrar' : 'Debe copiar el PIN antes de cerrar'">
         <i class="fas fa-times me-1"></i>
         {{ pinCopied ? 'Cerrar' : 'Copie el PIN para cerrar' }}
@@ -563,9 +628,12 @@
 <!-- MODAL: Revocación de certificado                                  -->
 <!-- ═══════════════════════════════════════════════════════════════════ -->
 @if (showRevokeModal) {
-<div class="modal-backdrop-pin" style="position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1050;display:flex;align-items:center;justify-content:center;">
-  <div class="card" style="width:520px;max-width:95vw;z-index:1060;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
-    <div class="card-header d-flex align-items-center gap-2" style="background:linear-gradient(135deg,#c82333,#dc3545);color:#fff;border-radius:12px 12px 0 0;">
+<div class="modal-backdrop-pin"
+  style="position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1050;display:flex;align-items:center;justify-content:center;">
+  <div class="card"
+    style="width:520px;max-width:95vw;z-index:1060;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+    <div class="card-header d-flex align-items-center gap-2"
+      style="background:linear-gradient(135deg,#c82333,#dc3545);color:#fff;border-radius:12px 12px 0 0;">
       <i class="fas fa-ban fa-lg"></i>
       <span class="card-title text-white mb-0">Revocar Certificado</span>
     </div>
@@ -573,15 +641,19 @@
       <div class="alert alert-warning py-2 mb-2">
         <i class="fas fa-exclamation-triangle me-1"></i>
         <strong>¡Advertencia!</strong><br>
-        Esta acción es destructiva e irreversible. El certificado digital quedará invalidado inmediatamente.
+        Esta acción es destructiva e irreversible. El certificado digital
+        quedará invalidado inmediatamente.
       </div>
       <div class="form-group mb-2">
         <label>
           <span class="asterisk text-danger">*</span>
           Código de Revocación
         </label>
-        <input class="form-control" type="text" [(ngModel)]="revocationCode" placeholder="Ingrese el código enviado a su correo" autocomplete="off">
-        <small class="text-muted d-block mt-1">Este código fue enviado al correo electrónico al momento de la emisión.</small>
+        <input class="form-control" type="text" [(ngModel)]="revocationCode"
+          placeholder="Ingrese el código enviado a su correo"
+          autocomplete="off">
+        <small class="text-muted d-block mt-1">Este código fue enviado al correo
+          electrónico al momento de la emisión.</small>
       </div>
       <div class="form-group mb-2">
         <label>
@@ -596,10 +668,12 @@
       </div>
     </div>
     <div class="card-footer d-flex justify-content-end gap-2">
-      <button class="btn custom-button border fas-fa-close" (click)="closeRevokeModal()" [disabled]="revokeLoading">
+      <button class="btn custom-button border fas-fa-close"
+        (click)="closeRevokeModal()" [disabled]="revokeLoading">
         <i class="fas fa-times me-1"></i> Cancelar
       </button>
-      <button class="btn btn-danger custom-button" (click)="onRevokeSubmit()" [disabled]="revokeLoading || !revocationCode">
+      <button class="btn btn-danger custom-button" (click)="onRevokeSubmit()"
+        [disabled]="revokeLoading || !revocationCode">
         @if (revokeLoading) {
         <span class="spinner-border spinner-border-sm me-1"></span>
         } @else {
@@ -617,7 +691,8 @@
     <div class="card-header">
       <span class="card-title">AGREGAR COMPROBANTE DE PAGO</span>
       <div class="card-header-actions">
-        <button class="btn custom-button fas-fa-close" (click)="canAddPaymentFile = false" appCustomTooltip="Cerrar">
+        <button class="btn custom-button fas-fa-close"
+          (click)="canAddPaymentFile = false" appCustomTooltip="Cerrar">
           <i class="fas fa-times fas-fa-16"></i>
         </button>
       </div>
@@ -625,35 +700,44 @@
     <div class="card-body p-1">
       <app-help-information>
         <p>
-          Estimado usuario, por favor sube el comprobante de pago que deseas adjuntar a la solicitud.<br>
-          <strong>Nota:</strong> El archivo debe ser un <b>PDF/PNG/JPG</b> y no debe pesar más de <b>1MB</b>.
+          Estimado usuario, por favor sube el comprobante de pago que deseas
+          adjuntar a la solicitud.<br>
+          <strong>Nota:</strong> El archivo debe ser un <b>PDF/PNG/JPG</b> y no
+          debe pesar más de <b>1MB</b>.
           <br>
-          <strong>Nota:</strong> Procura no cerrar ni actualizar la página durante el proceso.
+          <strong>Nota:</strong> Procura no cerrar ni actualizar la página
+          durante el proceso.
         </p>
       </app-help-information>
       <div class="row">
         <div class="col-md-12">
           <small class="text-info">
             <i class="fas fa-info-circle"></i>
-            Aquí puedes subir el archivo PDF del soporte de pago que deseas adjuntar a la solicitud.<br>
+            Aquí puedes subir el archivo PDF del soporte de pago que deseas
+            adjuntar a la solicitud.<br>
             <i class="fas fa-info-circle"></i>
-            <strong>Nota:</strong> El archivo debe ser un <b>PDF/PNG/JPG</b> y no debe pesar más de <b>1MB</b>.
+            <strong>Nota:</strong> El archivo debe ser un <b>PDF/PNG/JPG</b> y
+            no debe pesar más de <b>1MB</b>.
             <br>
           </small>
-          <input type="file" id="fileUploadPayment" #fileUploadPayment name="fileUploadPayment"
+          <input type="file" id="fileUploadPayment" #fileUploadPayment
+            name="fileUploadPayment"
             class="form-control primary" required (change)="onUploadPayment()">
           <small class="text-muted font-small-2 d-block">
-            Formato permitido: <strong>PDF/PNG/JPG</strong>. Procura no cerrar ni actualizar la página durante el
+            Formato permitido: <strong>PDF/PNG/JPG</strong>. Procura no cerrar
+            ni actualizar la página durante el
             proceso.
           </small>
         </div>
       </div>
       <div class="d-flex justify-content-end mt-1">
-        <button class="btn custom-button border fas-fa-close me-25" (click)="canAddPaymentFile = false">
+        <button class="btn custom-button border fas-fa-close me-25"
+          (click)="canAddPaymentFile = false">
           <i class="fas fa-times fas-fa-16"></i>
           Cancelar
         </button>
-        <button class="btn custom-button border fas-fa-save" (click)="onUploadFile()"
+        <button class="btn custom-button border fas-fa-save"
+          (click)="onUploadFile()"
           [disabled]="!fileUploadPayment?.files?.length">
           <i class="fas fa-save fas-fa-16 fas-fa-save"></i>
           Guardar
@@ -669,7 +753,8 @@
     <div class="card-header">
       <span class="card-title">AGREGAR ARCHIVO</span>
       <div class="card-header-actions">
-        <button class="btn custom-button fas-fa-close" (click)="canAddFile = false" appCustomTooltip="Cerrar">
+        <button class="btn custom-button fas-fa-close"
+          (click)="canAddFile = false" appCustomTooltip="Cerrar">
           <i class="fas fa-times fas-fa-16"></i>
         </button>
       </div>
@@ -677,34 +762,42 @@
     <div class="card-body p-1">
       <app-help-information>
         <p>
-          Estimado usuario, en esta sección puedes agregar un archivo adicional a la solicitud de certificado. <br>
-          <strong>Recuerda que el archivo no debe pesar más de 1000kb(1mb).</strong>
+          Estimado usuario, en esta sección puedes agregar un archivo adicional
+          a la solicitud de certificado. <br>
+          <strong>Recuerda que el archivo no debe pesar más de
+            1000kb(1mb).</strong>
         </p>
       </app-help-information>
       <div class="row">
         <div class="col-md-12">
           <small class="text-info">
             <i class="fas fa-info-circle"></i>
-            Aquí puedes subir el archivo de: <br> <b>Copia de la cedula del representante legal</b>.
+            Aquí puedes subir el archivo de: <br> <b>Copia de la cedula del
+              representante legal</b>.
             <br>
             <i class="fas fa-info-circle"></i>
-            El archivo debe ser un PDF,JPG O PNG y no debe pesar más de <b>1000kb(1mb)</b>.
+            El archivo debe ser un PDF,JPG O PNG y no debe pesar más de
+            <b>1000kb(1mb)</b>.
             <br>
           </small>
-          <input type="file" id="fileUploadCc" #fileUploadCc name="fileUploadCc" class="form-control primary" required
+          <input type="file" id="fileUploadCc" #fileUploadCc name="fileUploadCc"
+            class="form-control primary" required
             (change)="onUploadCC()">
           <small class="text-muted font-small-2 d-block">
-            Formato permitido: <strong>.PDF, JPG, PNG, ZIP</strong>. Procura no cerrar ni actualizar la página durante
+            Formato permitido: <strong>.PDF, JPG, PNG, ZIP</strong>. Procura no
+            cerrar ni actualizar la página durante
             el proceso.
           </small>
         </div>
       </div>
       <div class="d-flex justify-content-end mt-1">
-        <button class="btn custom-button border fas-fa-close me-25" (click)="canAddFile = false">
+        <button class="btn custom-button border fas-fa-close me-25"
+          (click)="canAddFile = false">
           <i class="fas fa-times fas-fa-16"></i>
           Cancelar
         </button>
-        <button class="btn custom-button border fas-fa-save" (click)="onUploadFile()"
+        <button class="btn custom-button border fas-fa-save"
+          (click)="onUploadFile()"
           [disabled]="!fileUploadCc?.files?.length">
           <i class="fas fa-save fas-fa-16 fas-fa-save"></i>
           Guardar

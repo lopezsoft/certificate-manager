@@ -51,7 +51,7 @@ final class RedownloadCertificateUseCase
         private readonly ViafirmaClient      $client,
         private readonly CryptoServiceContract $crypto,
         private readonly KeyVault            $vault,
-        private readonly LoggerInterface     $logger,
+        private readonly SafePemLogger       $logger,
     ) {}
 
     /**

@@ -469,9 +469,23 @@ export class DocumentViewComponent implements OnDestroy {
 		const allowedStates = [
 			ViafirmaInternalStateEnum.ASSEMBLED,
 			ViafirmaInternalStateEnum.COMPLETED,
-			ViafirmaInternalStateEnum.DOWNLOADED
+			ViafirmaInternalStateEnum.DOWNLOADED,
+			ViafirmaInternalStateEnum.FAILED_RECOVERABLE
 		];
 		return allowedStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum);
+	}
+
+	/**
+	 * Determina si el botón para descargar el P12 está visible.
+	 * Visible solo cuando el estado es READY_TO_DOWNLOAD o DOWNLOADED.
+	 */
+	protected get canShowDownloadP12(): boolean {
+		const downloadReadyStates = [
+			ViafirmaInternalStateEnum.READY_TO_DOWNLOAD,
+			ViafirmaInternalStateEnum.DOWNLOADED,
+			ViafirmaInternalStateEnum.COMPLETED
+		];
+		return downloadReadyStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum);
 	}
 
 	/**
