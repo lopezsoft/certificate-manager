@@ -433,7 +433,7 @@
           <div class="alert alert-info d-flex align-items-center">
             <i class="fas fa-info-circle me-2"></i>
             <div>
-              <strong>Estado:</strong> {{ issuanceStatus.status }}
+              <strong>Estado:</strong> {{ documentStatusDescription[issuanceStatus.status.toUpperCase()] || issuanceStatus.status }}
               @if (issuanceStatus.provider) {
               <span> | Proveedor: {{ issuanceStatus.provider }}</span>
               }
