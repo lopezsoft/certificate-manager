@@ -43,4 +43,35 @@ class CertificateValidatorService
         }
         return $expirationDate;
     }
+
+    /**
+     * Extrae las fechas de validez del certificado contenido en un P12 binario (no base64).
+     *
+     * Pensado para los flujos de emisión Viafirma (AssembleP12Job / RedownloadCertificateUseCase),
+     * donde el P12 ya está disponible como binario en memoria y conocemos el PIN de exportación.
+     *
+     * @return array{validFrom: \Carbon\CarbonImmutable, validTo: \Carbon\CarbonImmutable}
+     * @throws Exception Si el P12 no puede leerse con el PIN provisto.
+     */
+    public static function parseValidity(string $p12Binary, string $password): array
+    {
+        $cert = [];
+
+        if (!openssl_pkcs12_read($p12Binary, $cert, $password)) {
+            $opensslErrors = [];
+            while ($msg = openssl_error_string()) {
+                $opensslErrors[] = $msg;
+            }
+            $detail = !empty($opensslErrors) ? implode('; ', $opensslErrors) : 'No disponible';
+            Log::error('No se pudo leer el P12 para extraer la validez. Errores OpenSSL: ' . $detail);
+            throw new Exception('No se pudo leer el certificado P12 para extraer su validez. ' . $detail, 400);
+        }
+
+        $parsed = openssl_x509_parse(openssl_x509_read($cert['cert']));
+
+        return [
+            'validFrom' => \Carbon\CarbonImmutable::createFromTimestampUTC($parsed['validFrom_time_t']),
+            'validTo'   => \Carbon\CarbonImmutable::createFromTimestampUTC($parsed['validTo_time_t']),
+        ];
+    }
 }

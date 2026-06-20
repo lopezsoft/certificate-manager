@@ -20,7 +20,13 @@
       "Bash(git -C 'd:\\\\wamp64\\\\www\\\\certificate-manager\\\\backend' add app/Console/Kernel.php app/Console/Commands/NotifyExpiringCertificatesCommand.php app/Console/Commands/SendCertificatesAdminReportCommand.php app/Console/Commands/SendCertificatesMonthlyReportCommand.php app/Http/Controllers/NotificationController.php app/Http/Controllers/SwaggerDefinitions.php app/Jobs/SendExpiringCertificatesNotificationsJob.php app/Notifications/CertificateExpiringNotification.php routes/api.php CHANGELOG.md docs/SCHEDULED_TASKS_CERTIFICATES.md docs/2026-02-19-INFORME-SISTEMA-NOTIFICACIONES-VENCIMIENTOS.md docs/2026-01-27-10-30-GUIA-USO-API-TOKENS-DESARROLLADORES.md docs/2026-01-27-13-30-REFRESH-TOKENS-EN-SISTEMAS-PAT.md docs/ANALYTICS-TOKEN-PROTECTION.md)",
       "Bash(git -C 'd:\\\\wamp64\\\\www\\\\certificate-manager\\\\backend' status --short)",
       "Bash(git -C 'd:\\\\wamp64\\\\www\\\\certificate-manager\\\\backend' add storage/api-docs/api-docs.json)",
-      "Bash(git -C:*)"
+      "Bash(git -C:*)",
+      "Bash(php -l app/Services/CertificateValidatorService.php)",
+      "Bash(php -l app/Modules/Viafirma/Infrastructure/Jobs/AssembleP12Job.php)",
+      "Bash(php -l app/Modules/Viafirma/Application/UseCases/RedownloadCertificateUseCase.php)",
+      "Bash(php -l app/Console/Commands/Certificates/CertificatesMigrateCommand.php)",
+      "Bash(php -l database/migrations/certificates/2026_06_20_000001_add_issuance_dates_to_certificate_requests.php)",
+      "Bash(php artisan *)"
     ],
     "additionalDirectories": [
       "d:\\wamp64\\www\\certificate-manager\\front"

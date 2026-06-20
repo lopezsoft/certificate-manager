@@ -7,6 +7,7 @@ namespace App\Modules\Viafirma\Infrastructure\Jobs;
 use App\Enums\CertificateRequestStatusEnum;
 use App\Models\CertificateRequest;
 use App\Models\ChangeHistory;
+use App\Services\CertificateValidatorService;
 use App\Modules\Viafirma\Domain\Contracts\CryptoServiceContract;
 use App\Modules\Viafirma\Domain\Contracts\KeyVault;
 use App\Modules\Viafirma\Domain\Enums\InternalState;
@@ -113,6 +114,9 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
 
             unset($privateKeyPem);
 
+            // 4.bis Extraer validez real del certificado (validFrom / validTo) desde el P12 recién ensamblado.
+            $validity = CertificateValidatorService::parseValidity($p12Binary, $exportPin);
+
             // 5. Guardar P12 en storage
             $p12Disk     = config('viafirma.storage.p12_disk', 'local');
             $p12Path     = config('viafirma.storage.p12_path', 'viafirma/p12');
@@ -167,9 +171,21 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
 
             $logger->info('viafirma.assemble.completed', ['id' => $entity->id]);
 
-            // ── Actualizar la solicitud principal a PROCESSED ──────────────
-            CertificateRequest::where('id', $entity->certificate_request_id)
-                ->update(['request_status' => CertificateRequestStatusEnum::PROCESSED->value]);
+            // ── Actualizar la solicitud principal a PROCESSED + ciclo de vida ──────────────
+            // certificate_requests es la fuente de verdad del ciclo de vida y vencimientos.
+            // - issued_at      = validFrom real del X.509
+            // - cert_valid_to  = validTo real del X.509 (Viafirma ~2 años; auditoría)
+            // - expiration_date = vencimiento COMERCIAL = issued_at + life años
+            $certificateRequest = CertificateRequest::find($entity->certificate_request_id);
+            if ($certificateRequest !== null) {
+                $life = (int) ($certificateRequest->life ?: 1);
+
+                $certificateRequest->request_status  = CertificateRequestStatusEnum::PROCESSED->value;
+                $certificateRequest->issued_at       = $validity['validFrom'];
+                $certificateRequest->cert_valid_to   = $validity['validTo'];
+                $certificateRequest->expiration_date = $validity['validFrom']->addYears($life);
+                $certificateRequest->save();
+            }
 
             ChangeHistory::create([
                 'certificate_request_id' => $entity->certificate_request_id,

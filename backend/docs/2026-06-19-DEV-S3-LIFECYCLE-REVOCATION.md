@@ -12,6 +12,35 @@ aceptación. Premisa rectora: **`certificate_requests` es la fuente de verdad de
 
 ---
 
+## Estado de avance (vivo)
+
+| Fase | Estado | Notas |
+|------|--------|-------|
+| **Fase 0** — Persistir emisión/vencimiento | ✅ **Completada** (2026-06-20) | Migración aplicada en local; ver detalle abajo. |
+| Fase 0.bis — Renovación | ⬜ Pendiente | |
+| Fase 1 — Estados unificados + mapper | ⬜ Pendiente | |
+| Fase 2 — Storage genérico + S3 + migración | ⬜ Pendiente | |
+| Fase 3 — Revocación automática + expiración | ⬜ Pendiente | D2 (usuario sistema) por confirmar. |
+
+### Detalle Fase 0 (hecho)
+- **Path de migraciones del ciclo de vida:** nuevas migraciones del núcleo viven en
+  `database/migrations/certificates/` y se ejecutan **individualmente** con el comando wrapper
+  `php artisan certificates:migrate {file} [--apply] [--force]` (modelado en `viafirma:migrate`;
+  dry-run por defecto). `php artisan migrate` NO recursa en ese subdirectorio.
+- **Migración aplicada:** `2026_06_20_000001_add_issuance_dates_to_certificate_requests.php` →
+  añade `issued_at` y `cert_valid_to` a `certificate_requests` (columnas verificadas).
+- **`CertificateValidatorService::parseValidity($p12Binary, $pin)`** → devuelve
+  `['validFrom' => CarbonImmutable, 'validTo' => CarbonImmutable]` parseando el X.509 del P12.
+- **`AssembleP12Job`** y **`RedownloadCertificateUseCase`**: tras ensamblar el P12 persisten en
+  `certificate_requests`: `issued_at = validFrom`, `cert_valid_to = validTo`,
+  `expiration_date = validFrom + life años` (comercial) y `request_status = PROCESSED`.
+- **Modelo:** `issued_at`/`cert_valid_to` añadidos a `$fillable` de `CertificateRequest`.
+- **Tests:** `AssembleP12Test` pasa (5/6); el único fallo (`it rejects mismatched key and cert`) es
+  **preexistente y ajeno** (assert con desajuste de mayúsculas en mensaje de `CryptoService`).
+- **Pendiente menor:** registrar la ejecución de la migración en `CHANGELOG.md`.
+
+---
+
 ## Decisiones previas requeridas (bloquean Fase 4)
 
 | # | Decisión | Estado |

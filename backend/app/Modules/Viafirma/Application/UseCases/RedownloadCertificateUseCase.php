@@ -14,6 +14,7 @@ use App\Modules\Viafirma\Domain\Enums\InternalState;
 use App\Modules\Viafirma\Domain\Exceptions\ViafirmaException;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaStatusHistory;
+use App\Services\CertificateValidatorService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
@@ -130,6 +131,9 @@ final class RedownloadCertificateUseCase
 
         unset($privateKeyPem, $p7bBinary);
 
+        // ── 8.bis Extraer validez real (validFrom / validTo) del P12 reensamblado ──
+        $validity = CertificateValidatorService::parseValidity($p12Binary, $newPin);
+
         // ── 9. Guardar P12 en storage (sobrescribir) ─────────────────────────
         $p12Disk     = config('viafirma.storage.p12_disk', 'local');
         $p12BasePath = config('viafirma.storage.p12_path', 'viafirma/p12');
@@ -197,9 +201,17 @@ final class RedownloadCertificateUseCase
             'occurred_at'    => now(),
         ]);
 
-        // ── 14. Registrar en change_histories ────────────────────────────────
+        // ── 14. Actualizar ciclo de vida en certificate_requests + change_histories ──
         $cr = $entity->certificateRequest;
         if ($cr) {
+            // certificate_requests es la fuente de verdad del ciclo de vida y vencimientos.
+            $life = (int) ($cr->life ?: 1);
+            $cr->request_status  = CertificateRequestStatusEnum::PROCESSED->value;
+            $cr->issued_at       = $validity['validFrom'];
+            $cr->cert_valid_to   = $validity['validTo'];
+            $cr->expiration_date = $validity['validFrom']->addYears($life);
+            $cr->save();
+
             ChangeHistory::create([
                 'certificate_request_id' => $cr->id,
                 'user_id'                => $adminUserId,

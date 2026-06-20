@@ -36,7 +36,7 @@ class CertificateRequest extends CoreModel
         'company_name', 'dni', 'dv', 'address', 'document_number',
         'phone', 'mobile', 'legal_representative', 'legal_rep_first_name', 'legal_rep_last_name', 'legal_rep_email', 'info', 'request_status',
         'company_id', 'postal_code', 'life', 'base_path', 'document_type',
-        'pin', 'expiration_date',
+        'pin', 'expiration_date', 'issued_at', 'cert_valid_to',
     ];
 
     protected $casts = [
