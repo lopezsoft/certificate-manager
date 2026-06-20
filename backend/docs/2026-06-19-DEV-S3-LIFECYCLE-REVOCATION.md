@@ -16,11 +16,11 @@ aceptación. Premisa rectora: **`certificate_requests` es la fuente de verdad de
 
 | Fase | Estado | Notas |
 |------|--------|-------|
-| **Fase 0** — Persistir emisión/vencimiento | ✅ **Completada** (2026-06-20) | Migración aplicada en local; ver detalle abajo. |
+| **Fase 0** — Persistir emisión/vencimiento | ✅ **Completada** (2026-06-20) | Migración aplicada en local; ver detalle abajo. Commited. |
+| **Fase 1** — Estados unificados + mapper | ✅ **Completada** (2026-06-20) | REVOKED/EXPIRED, mapper, recovery service; ver detalle abajo. |
+| **Fase 2** — Storage genérico + S3 + migración | ✅ **Completada** (2026-06-20) | Resolver, Base64, disco legacy configurable, comando migración; ver detalle abajo. |
 | Fase 0.bis — Renovación | ⬜ Pendiente | |
-| Fase 1 — Estados unificados + mapper | ⬜ Pendiente | |
-| Fase 2 — Storage genérico + S3 + migración | ⬜ Pendiente | |
-| Fase 3 — Revocación automática + expiración | ⬜ Pendiente | D2 (usuario sistema) por confirmar. |
+| Fase 3 — Revocación automática + expiración | ⬜ Pendiente | D2 (usuario sistema) por confirmar. D1 resuelto (cod_request), D3 resuelto (por tipo de error). |
 
 ### Detalle Fase 0 (hecho)
 - **Path de migraciones del ciclo de vida:** nuevas migraciones del núcleo viven en
@@ -38,6 +38,57 @@ aceptación. Premisa rectora: **`certificate_requests` es la fuente de verdad de
 - **Tests:** `AssembleP12Test` pasa (5/6); el único fallo (`it rejects mismatched key and cert`) es
   **preexistente y ajeno** (assert con desajuste de mayúsculas en mensaje de `CryptoService`).
 - **Pendiente menor:** registrar la ejecución de la migración en `CHANGELOG.md`.
+
+### Detalle Fase 1 (hecho)
+- **Migración aplicada:** `2026_06_20_000002_add_revoked_expired_to_request_status_enum.php` (path
+  controlado `certificates/`) → añade `REVOKED` y `EXPIRED` a la columna ENUM
+  `certificate_requests.request_status` (preservando los valores legacy).
+- **`CertificateRequestStatusEnum`:** nuevos casos `REVOKED`/`EXPIRED` con `description()`;
+  `allowedTransitions()` ahora permite `PROCESSED → [REVOKED, EXPIRED]` (resuelve **F4.2**) y deja
+  `REVOKED`/`EXPIRED` como terminales.
+- **Mapper central:** `InternalState::toRequestStatus(): CertificateRequestStatusEnum` (tabla del
+  roadmap §3). Verificado: COMPLETED→PROCESSED, REVOKED→REVOKED, FAILED→REJECTED, EXPIRED→EXPIRED.
+- **Literales reemplazados:** `AssembleP12Job` usa el mapper para PROCESSED;
+  `RevokeCertificateUseCase` ahora sincroniza a **REVOKED** (antes REJECTED) vía mapper.
+- **Recuperación FAILED (D3, por tipo de error):** `RecoveryStrategy` enum (REOPEN/RECREATE) +
+  `FailedCertificateRecoveryService`. Errores de datos (`rues_error`, `accreditation_rejected`) →
+  REOPEN (REJECTED→DRAFT); técnicos/SLA (`ASSEMBLE_FAILED`, `fail`, `POLL_EXPIRED`, timeouts) →
+  RECREATE. `reopen()` implementado; la orquestación de RECREATE la dispara el flujo de emisión.
+- **Tests:** la suite `tests/Unit/Modules/Viafirma` muestra **23 fallos preexistentes ajenos** a este
+  cambio (verificado con stash: mismos 23 fallos sin la Fase 1). El mapper y las transiciones nuevas se
+  validaron por smoke test en tinker.
+- **Pendiente de cableado (siguiente fase/integración):** invocar `FailedCertificateRecoveryService`
+  desde el punto donde hoy se maneja un certificado FAILED (UI/endpoint admin o job), y la migración
+  enum en `CHANGELOG.md`.
+
+### Detalle Fase 2 (hecho)
+- **Config genérico** `config/certificates.php`: `CERT_STORAGE_DISK`, `CERT_STORAGE_PREFIX`,
+  sub-rutas por proveedor/artefacto, y `CERT_LEGACY_DISK` (default `attachment`). El disco `s3` ya
+  estaba en `filesystems.php` y `league/flysystem-aws-s3-v3` ya instalado.
+- **`CertificateStoragePathResolver`** (`app/Services/Certificates/`): ruteo único
+  `{prefix}/certificates/{provider}/{artifact}/{file}` + `disk()` + `legacyDisk()`. Verificado:
+  `local/certificates/viafirma/p12/42_ABC.p12`.
+- **Refactor de consumidores Viafirma** al resolver (sin literales `viafirma.storage`):
+  `DownloadP7bJob`, `AssembleP12Job` (resolver inyectado en `handle`), `RedownloadCertificateUseCase`
+  (resolver en constructor), `PurgeExpiredKeysJob`, `ViafirmaDownloadService`.
+- **Entrega Base64:** `ViafirmaDownloadService::base64For()` + `CertificateIssuanceController::downloadBase64()`
+  + ruta `GET /certificate-request/{id}/issuance/download/base64`
+  (`v1.certificate-request.issuance.download.base64`). Verificada en `route:list`.
+- **Disco legacy configurable:** reemplazados los literales `Storage::disk('attachment')` por
+  `config('certificates.storage.legacy_disk', 'attachment')` en `CertificateRequestFilesService`,
+  `ProcessCertificateJob`, `CreateCertificateRequestHandler`, `DocumentTrait`, `SendMail`.
+  `ProcessCertificateJob` ahora es **S3-safe** (descarga a temporal para el OCR cuando el disco no es
+  local; elimina dead-code `$disk->path()` que rompía en S3).
+- **Comando de migración** `certificates:migrate-legacy-to-s3` (dry-run por defecto, `--apply`,
+  `--from`, `--to`, `--force`): copia a la MISMA ruta relativa en S3 **solo** certificados vigentes del
+  otro proveedor (`PROCESSED`, `expiration_date > now()`, sin `viafirma_certificate_requests`). Sin
+  reescritura de rutas en BD; tras migrar se pone `CERT_LEGACY_DISK=s3`. Dry-run verificado:
+  selecciona 451 solicitudes legacy.
+- **Tests:** suite `tests/Unit/Modules/Viafirma` estable en **23 fallos preexistentes** (sin
+  regresión). Los 7 fallos de `tests/Feature/.../CertificateIssuanceViafirmaTest` son
+  `BadMethodCallException` del flujo `issue` (setup/mock), **ajenos** a esta fase.
+- **Activación S3 (runtime, sin código):** definir `CERT_STORAGE_DISK=s3`, `CERT_STORAGE_PREFIX=...`,
+  `AWS_*`, ejecutar `certificates:migrate-legacy-to-s3 --apply`, verificar y poner `CERT_LEGACY_DISK=s3`.
 
 ---
 

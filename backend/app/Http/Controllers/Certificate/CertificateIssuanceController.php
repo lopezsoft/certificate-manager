@@ -207,6 +207,41 @@ class CertificateIssuanceController extends Controller
     }
 
     /**
+     * Descarga del P12 codificado en Base64 (uso desatendido por el cliente).
+     *
+     * @OA\Get(
+     *     path="/certificate-request/{id}/issuance/download/base64",
+     *     operationId="certificateRequestIssuanceDownloadBase64",
+     *     tags={"Emisión de Certificados"},
+     *     summary="Descarga del P12 en Base64",
+     *     description="Devuelve el .p12 codificado en Base64 + PIN, para uso desatendido. Sólo proveedor Viafirma en estado ASSEMBLED/COMPLETED.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="P12 en Base64 + PIN"),
+     *     @OA\Response(response=404, description="Trámite no encontrado", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
+     *     @OA\Response(response=409, description="El estado actual no permite descarga / proveedor no soporta descarga", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
+     *     @OA\Response(response=410, description="El PIN del certificado fue purgado", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
+     *     @OA\Response(response=401, description="No autenticado")
+     * )
+     */
+    public function downloadBase64(Request $request, int $id, ViafirmaDownloadService $viafirmaDownload): JsonResponse
+    {
+        try {
+            $provider = $this->orchestrator->providerFor($id, $this->callerIsAdmin($request));
+
+            if ($provider->name() !== ViafirmaIssuanceProvider::NAME) {
+                return HttpResponseMessages::getResponse409([
+                    'message' => "El proveedor '{$provider->name()}' no soporta descarga binaria.",
+                ]);
+            }
+
+            return $viafirmaDownload->base64For($id, $request->user()?->id);
+        } catch (Exception $e) {
+            return MessageExceptionResponse::response($e);
+        }
+    }
+
+    /**
      * Re-descarga el P7B y regenera el P12 con un nuevo PIN. Solo ADMIN.
      *
      * @OA\Post(

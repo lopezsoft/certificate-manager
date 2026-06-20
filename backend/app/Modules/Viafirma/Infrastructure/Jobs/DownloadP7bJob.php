@@ -94,10 +94,10 @@ final class DownloadP7bJob implements ShouldQueue, ShouldBeUnique
             return;
         }
 
-        // Guardar en storage
-        $disk = config('viafirma.storage.p7b_disk', 'local');
-        $path = config('viafirma.storage.p7b_path', 'viafirma/p7b');
-        $filename = "{$path}/{$entity->cod_request}.p7b";
+        // Guardar en storage (ruteo genérico agnóstico de proveedor)
+        $resolver = app(\App\Services\Certificates\CertificateStoragePathResolver::class);
+        $disk     = $resolver->disk();
+        $filename = $resolver->path('viafirma', 'p7b', "{$entity->cod_request}.p7b");
 
         Storage::disk($disk)->put($filename, $p7bBinary);
 

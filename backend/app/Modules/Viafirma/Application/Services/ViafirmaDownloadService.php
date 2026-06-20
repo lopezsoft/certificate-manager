@@ -26,6 +26,7 @@ final class ViafirmaDownloadService
         private readonly ViafirmaCertificateRequestRepositoryContract $repository,
         private readonly KeyVault $vault,
         private readonly SafePemLogger $logger,
+        private readonly \App\Services\Certificates\CertificateStoragePathResolver $pathResolver,
     ) {}
 
     /**
@@ -64,7 +65,7 @@ final class ViafirmaDownloadService
         }
 
         $pin = $this->vault->retrieve($entity->p12_password_ref);
-        $disk = (string) config('viafirma.storage.p12_disk', 'local');
+        $disk = $this->pathResolver->disk();
 
         $temporaryUrl = null;
         try {
@@ -119,7 +120,7 @@ final class ViafirmaDownloadService
             ], 409);
         }
 
-        $disk     = (string) config('viafirma.storage.p12_disk', 'local');
+        $disk     = $this->pathResolver->disk();
         $filename = basename($entity->p12_storage_path);
 
         $this->logger->info('viafirma.download.file_streamed', [
@@ -131,6 +132,68 @@ final class ViafirmaDownloadService
         return Storage::disk($disk)->download($entity->p12_storage_path, $filename, [
             'Content-Type'        => 'application/x-pkcs12',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
+    }
+
+    /**
+     * Devuelve el P12 codificado en Base64 + PIN, para uso desatendido por el cliente.
+     * Funciona igual con cualquier disco (S3 o local).
+     */
+    public function base64For(int $certificateRequestId, ?int $userId = null): JsonResponse
+    {
+        $entity = $this->repository->findByCertificateRequestId($certificateRequestId);
+
+        if ($entity === null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No existe un trámite Viafirma para esta solicitud.',
+            ], 404);
+        }
+
+        if (!$this->canDownload($entity)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Estado {$entity->internal_state?->value} no permite descarga.",
+            ], 409);
+        }
+
+        if (empty($entity->p12_storage_path)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Archivo P12 no disponible.',
+            ], 409);
+        }
+
+        if (empty($entity->p12_password_ref) || $entity->p12_password_ref === 'PURGED') {
+            return response()->json([
+                'success' => false,
+                'message' => 'El PIN del certificado ha sido purgado. Contacte soporte.',
+            ], 410);
+        }
+
+        $disk   = $this->pathResolver->disk();
+        $binary = Storage::disk($disk)->get($entity->p12_storage_path);
+
+        if ($binary === null || $binary === '') {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pudo leer el archivo P12 del almacenamiento.',
+            ], 410);
+        }
+
+        $pin = $this->vault->retrieve($entity->p12_password_ref);
+
+        $this->logger->info('viafirma.download.base64_served', [
+            'cr_id' => $certificateRequestId,
+            'vf_id' => $entity->id,
+            'user'  => $userId,
+        ]);
+
+        return response()->json([
+            'success'      => true,
+            'p12_pin'      => $pin,
+            'p12_filename' => basename($entity->p12_storage_path),
+            'p12_base64'   => base64_encode($binary),
         ]);
     }
 

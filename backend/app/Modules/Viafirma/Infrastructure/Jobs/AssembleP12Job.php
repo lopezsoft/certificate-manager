@@ -67,6 +67,7 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
         CryptoServiceContract $crypto,
         KeyVault $vault,
         SafePemLogger $logger,
+        \App\Services\Certificates\CertificateStoragePathResolver $pathResolver,
     ): void {
         $entity = ViafirmaCertificateRequest::with('state')->find($this->requestId);
 
@@ -92,9 +93,9 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
             // 1. Recuperar llave privada del KeyVault
             $privateKeyPem = $vault->retrieve($state->key_vault_ref);
 
-            // 2. Leer P7B del storage
-            $p7bDisk   = config('viafirma.storage.p7b_disk', 'local');
-            $p7bBinary = Storage::disk($p7bDisk)->get($state->p7b_storage_path);
+            // 2. Leer P7B del storage (disco genérico de certificados)
+            $disk      = $pathResolver->disk();
+            $p7bBinary = Storage::disk($disk)->get($state->p7b_storage_path);
 
             if ($p7bBinary === null || $p7bBinary === '') {
                 throw new \RuntimeException("P7B no encontrado en {$state->p7b_storage_path}");
@@ -117,12 +118,10 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
             // 4.bis Extraer validez real del certificado (validFrom / validTo) desde el P12 recién ensamblado.
             $validity = CertificateValidatorService::parseValidity($p12Binary, $exportPin);
 
-            // 5. Guardar P12 en storage
-            $p12Disk     = config('viafirma.storage.p12_disk', 'local');
-            $p12Path     = config('viafirma.storage.p12_path', 'viafirma/p12');
-            $p12Filename = "{$p12Path}/{$entity->certificate_request_id}_{$entity->cod_request}.p12";
+            // 5. Guardar P12 en storage (ruteo genérico agnóstico de proveedor)
+            $p12Filename = $pathResolver->path('viafirma', 'p12', "{$entity->certificate_request_id}_{$entity->cod_request}.p12");
 
-            Storage::disk($p12Disk)->put($p12Filename, $p12Binary);
+            Storage::disk($disk)->put($p12Filename, $p12Binary);
             unset($p12Binary);
 
             // 6. Guardar PIN cifrado en KeyVault

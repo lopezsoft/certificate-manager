@@ -53,6 +53,7 @@ final class RedownloadCertificateUseCase
         private readonly CryptoServiceContract $crypto,
         private readonly KeyVault            $vault,
         private readonly SafePemLogger       $logger,
+        private readonly \App\Services\Certificates\CertificateStoragePathResolver $pathResolver,
     ) {}
 
     /**
@@ -102,11 +103,11 @@ final class RedownloadCertificateUseCase
         // ── 5. Descargar P7B nuevamente ──────────────────────────────────────
         $p7bBinary = $this->client->downloadP7b($entity->public_id);
 
-        $p7bDisk = config('viafirma.storage.p7b_disk', 'local');
+        $disk    = $this->pathResolver->disk();
         $p7bPath = $state->p7b_storage_path
-            ?? ('viafirma/p7b/' . $entity->cod_request . '.p7b');
+            ?? $this->pathResolver->path('viafirma', 'p7b', $entity->cod_request . '.p7b');
 
-        Storage::disk($p7bDisk)->put($p7bPath, $p7bBinary);
+        Storage::disk($disk)->put($p7bPath, $p7bBinary);
 
         $this->logger->info('viafirma.redownload.p7b_saved', [
             'viafirma_id' => $entity->id,
@@ -135,16 +136,14 @@ final class RedownloadCertificateUseCase
         $validity = CertificateValidatorService::parseValidity($p12Binary, $newPin);
 
         // ── 9. Guardar P12 en storage (sobrescribir) ─────────────────────────
-        $p12Disk     = config('viafirma.storage.p12_disk', 'local');
-        $p12BasePath = config('viafirma.storage.p12_path', 'viafirma/p12');
-        $p12Filename = "{$p12BasePath}/{$entity->certificate_request_id}_{$entity->cod_request}.p12";
+        $p12Filename = $this->pathResolver->path('viafirma', 'p12', "{$entity->certificate_request_id}_{$entity->cod_request}.p12");
 
         // Delete the old file if the path has changed (e.g. migration to new naming convention)
         if ($state->p12_storage_path && $state->p12_storage_path !== $p12Filename) {
-            Storage::disk($p12Disk)->delete($state->p12_storage_path);
+            Storage::disk($disk)->delete($state->p12_storage_path);
         }
 
-        Storage::disk($p12Disk)->put($p12Filename, $p12Binary);
+        Storage::disk($disk)->put($p12Filename, $p12Binary);
         unset($p12Binary);
 
         $this->logger->info('viafirma.redownload.p12_saved', [

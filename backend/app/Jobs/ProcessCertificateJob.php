@@ -274,13 +274,25 @@ class ProcessCertificateJob implements ShouldQueue
                 return;
             }
 
-            // Get file paths
+            // Get file paths. El OCR necesita rutas LOCALES legibles; si el disco es de nube
+            // (S3) descargamos a archivos temporales que se limpian al final.
             $documentPaths = [];
-            $disk = Storage::disk('attachment');
-            
+            $tempFiles     = [];
+            $diskName      = config('certificates.storage.legacy_disk', 'attachment');
+            $disk          = Storage::disk($diskName);
+            $isLocalDisk   = (config("filesystems.disks.{$diskName}.driver") === 'local');
+
             foreach ($files as $file) {
-                if ($disk->exists($file->file_path)) {
+                if (!$disk->exists($file->file_path)) {
+                    continue;
+                }
+                if ($isLocalDisk) {
                     $documentPaths[] = $disk->path($file->file_path);
+                } else {
+                    $tmp = tempnam(sys_get_temp_dir(), 'cert_doc_');
+                    file_put_contents($tmp, $disk->get($file->file_path));
+                    $documentPaths[] = $tmp;
+                    $tempFiles[]     = $tmp;
                 }
             }
 
@@ -293,7 +305,13 @@ class ProcessCertificateJob implements ShouldQueue
 
             // Perform comprehensive document analysis
             $documentAnalysisService = app(DocumentAnalysisService::class);
-            $analysisResults = $documentAnalysisService->analyzeDocumentSet($documentPaths, $certificateRequestId);
+            try {
+                $analysisResults = $documentAnalysisService->analyzeDocumentSet($documentPaths, $certificateRequestId);
+            } finally {
+                foreach ($tempFiles as $tmp) {
+                    @unlink($tmp);
+                }
+            }
 
             // Update certificate request with analyzed data
             static::updateCertificateRequestFromAnalysis($certificateRequestId, $analysisResults);

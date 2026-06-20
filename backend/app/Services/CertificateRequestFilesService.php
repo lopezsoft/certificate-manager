@@ -58,7 +58,7 @@ class CertificateRequestFilesService
             }
             $company        = CompanyQueries::getCompany();
             $pin            = $request->input('pin');
-            $disk           = Storage::disk('attachment');
+            $disk           = Storage::disk(config('certificates.storage.legacy_disk', 'attachment'));
             $basePath       = $certificateRequest->base_path;
             if (!$basePath) {
                 $year           = date('Y');
@@ -164,7 +164,7 @@ class CertificateRequestFilesService
             if (!$file) {
                 throw new Exception("No se ha encontrado el archivo.", 400);
             }
-            Storage::disk('attachment')->delete($file->file_path);
+            Storage::disk(config('certificates.storage.legacy_disk', 'attachment'))->delete($file->file_path);
             $file->delete();
             return HttpResponseMessages::getResponse([
                 'message' => 'Archivo eliminado correctamente.',
@@ -209,11 +209,8 @@ class CertificateRequestFilesService
                 return;
             }
 
-            // Get the full path to the file
-            $disk = Storage::disk('attachment');
-            $fullPath = $disk->path($file->file_path);
-
             // Check if file exists before processing
+            $disk = Storage::disk(config('certificates.storage.legacy_disk', 'attachment'));
             if (!$disk->exists($file->file_path)) {
                 Log::error("File not found for AI processing", [
                     'file_id' => $file->id,

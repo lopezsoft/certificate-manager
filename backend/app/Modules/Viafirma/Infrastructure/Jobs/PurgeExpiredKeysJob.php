@@ -93,20 +93,21 @@ final class PurgeExpiredKeysJob implements ShouldQueue
                     $stateRecord->p12_password_ref = 'PURGED';
                 }
 
+                // Disco genérico de certificados (las rutas exactas vienen de BD).
+                $disk = app(\App\Services\Certificates\CertificateStoragePathResolver::class)->disk();
+
                 // Eliminar archivo P12 físico
                 if ($stateRecord->p12_storage_path) {
-                    $p12Disk = config('viafirma.storage.p12_disk', 'local');
-                    if (Storage::disk($p12Disk)->exists($stateRecord->p12_storage_path)) {
-                        Storage::disk($p12Disk)->delete($stateRecord->p12_storage_path);
+                    if (Storage::disk($disk)->exists($stateRecord->p12_storage_path)) {
+                        Storage::disk($disk)->delete($stateRecord->p12_storage_path);
                     }
                     $stateRecord->p12_storage_path = null;
                 }
 
                 // Eliminar archivo P7b físico
                 if ($stateRecord->p7b_storage_path) {
-                    $p7bDisk = config('viafirma.storage.p7b_disk', 'local');
-                    if (Storage::disk($p7bDisk)->exists($stateRecord->p7b_storage_path)) {
-                        Storage::disk($p7bDisk)->delete($stateRecord->p7b_storage_path);
+                    if (Storage::disk($disk)->exists($stateRecord->p7b_storage_path)) {
+                        Storage::disk($disk)->delete($stateRecord->p7b_storage_path);
                     }
                     $stateRecord->p7b_storage_path = null;
                 }
