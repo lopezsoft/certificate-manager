@@ -15,6 +15,6 @@ final class RevokeInputDto
         public readonly int $viafirmaCertificateRequestId,
         public readonly string $revokingCode,
         public readonly RevocationReason $revocationReason,
-        public readonly int $revokedByUserId,
+        public readonly ?int $revokedByUserId = null,
     ) {}
 }

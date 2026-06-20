@@ -86,6 +86,11 @@ return [
         'enabled'             => (bool) env('VIAFIRMA_PKCS10_ENABLED', true),
         'rollout_percentage'  => (int) env('VIAFIRMA_PKCS10_ROLLOUT_PCT', 100),
     ],
+
+    // Sprint 7: Revocación Comercial
+    'revocation' => [
+        'grace_days' => (int) env('VIAFIRMA_REVOCATION_GRACE_DAYS', 15),
+    ],
 ];
 
 

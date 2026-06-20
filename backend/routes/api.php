@@ -86,6 +86,9 @@ Route::group(['prefix' => 'v1'], function () {
                 Route::post('/{id}/issuance/redownload', 'redownload')
                     ->name('v1.certificate-request.issuance.redownload');
 
+                Route::post('/{id}/issuance/renew', 'renew')
+                    ->name('v1.certificate-request.issuance.renew');
+
             });
 
             // ── Viafirma: Revocación y KYC ────────────────────────────

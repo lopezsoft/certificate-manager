@@ -93,7 +93,7 @@ final class RevokeCertificateUseCase
                 ChangeHistory::create([
                     'certificate_request_id' => $cr->id,
                     'user_id'                => $dto->revokedByUserId,
-                    'user_of_change'         => 'Sistema (Revocación Viafirma)',
+                    'user_of_change'         => $dto->revokedByUserId ? 'Admin (Revocación Manual)' : 'SYSTEM (Auto Revocación)',
                     'status'                 => $revokedStatus,
                     'comments'               => "Certificado revocado. Motivo: {$dto->revocationReason->label()}. " .
                                                 "Código de revocación Viafirma: {$newRevocationCode}.",

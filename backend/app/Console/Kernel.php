@@ -208,6 +208,24 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping(10)
             ->onOneServer()
             ->appendOutputTo(storage_path('logs/scheduled-viafirma-purge.log'));
+
+        // Job 10: Revocación Comercial Automática (Fase 3)
+        $schedule->job(new \App\Modules\Viafirma\Infrastructure\Jobs\AutoRevokeUnpaidCertificatesJob())
+            ->dailyAt('03:00')
+            ->timezone('America/Bogota')
+            ->name('viafirma:auto-revoke')
+            ->withoutOverlapping(10)
+            ->onOneServer()
+            ->appendOutputTo(storage_path('logs/scheduled-viafirma-auto-revoke.log'));
+
+        // Job 11: Marcar expiración técnica/comercial (Fase 3)
+        $schedule->job(new \App\Modules\Viafirma\Infrastructure\Jobs\MarkExpiredCertificatesJob())
+            ->dailyAt('04:00')
+            ->timezone('America/Bogota')
+            ->name('viafirma:mark-expired')
+            ->withoutOverlapping(10)
+            ->onOneServer()
+            ->appendOutputTo(storage_path('logs/scheduled-viafirma-mark-expired.log'));
     }
 
     /**

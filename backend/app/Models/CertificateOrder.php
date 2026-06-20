@@ -17,6 +17,8 @@ class CertificateOrder extends Model
 
     protected $fillable = [
         'uuid',
+        'order_type',
+        'certificate_request_id',
         'company_id',
         'user_id',
         'quantity',
@@ -59,6 +61,11 @@ class CertificateOrder extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function certificateRequest(): BelongsTo
+    {
+        return $this->belongsTo(CertificateRequest::class);
     }
 
     public function items(): HasMany

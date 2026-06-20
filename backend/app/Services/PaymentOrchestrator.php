@@ -135,13 +135,48 @@ class PaymentOrchestrator
             ]);
 
             if ($status === 'APPROVED') {
-                $this->createOrderItems($order);
-                Log::info('[PAYMENT] Orden pagada — items creados.', [
-                    'order_id' => $order->id,
-                    'quantity' => $order->quantity,
-                ]);
+                if ($order->order_type === 'CERTIFICATE_RENEWAL') {
+                    $this->processCertificateRenewal($order);
+                } else {
+                    $this->createOrderItems($order);
+                    Log::info('[PAYMENT] Orden pagada — items creados.', [
+                        'order_id' => $order->id,
+                        'quantity' => $order->quantity,
+                    ]);
+                }
             }
         });
+    }
+
+    private function processCertificateRenewal(CertificateOrder $order): void
+    {
+        $cr = $order->certificateRequest;
+        if (! $cr) {
+            Log::error('[PAYMENT] Orden de renovación sin certificado asociado.', ['order_id' => $order->id]);
+            return;
+        }
+
+        // Extender vida y expiración
+        $newLife = 2;
+        $newExpiration = $cr->issued_at ? \Carbon\Carbon::parse($cr->issued_at)->addYears(2) : \Carbon\Carbon::now()->addYears(2);
+
+        $cr->update([
+            'life' => $newLife,
+            'expiration_date' => $newExpiration,
+        ]);
+
+        \App\Models\ChangeHistory::create([
+            'certificate_request_id' => $cr->id,
+            'user_id'                => null,
+            'user_of_change'         => 'SYSTEM (Renovación Pagada)',
+            'status'                 => $cr->request_status,
+            'comments'               => "Certificado renovado exitosamente vía orden {$order->uuid}.",
+        ]);
+
+        Log::info('[PAYMENT] Renovación procesada exitosamente.', [
+            'order_id'               => $order->id,
+            'certificate_request_id' => $cr->id,
+        ]);
     }
 
     private function createOrderItems(CertificateOrder $order): void
