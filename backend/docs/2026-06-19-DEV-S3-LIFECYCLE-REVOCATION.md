@@ -19,8 +19,8 @@ aceptación. Premisa rectora: **`certificate_requests` es la fuente de verdad de
 | **Fase 0** — Persistir emisión/vencimiento | ✅ **Completada** (2026-06-20) | Migración aplicada en local; ver detalle abajo. Commited. |
 | **Fase 1** — Estados unificados + mapper | ✅ **Completada** (2026-06-20) | REVOKED/EXPIRED, mapper, recovery service; ver detalle abajo. |
 | **Fase 2** — Storage genérico + S3 + migración | ✅ **Completada** (2026-06-20) | Resolver, Base64, disco legacy configurable, comando migración; ver detalle abajo. |
-| Fase 0.bis — Renovación | ⬜ Pendiente | |
-| Fase 3 — Revocación automática + expiración | ⬜ Pendiente | D2 (usuario sistema) por confirmar. D1 resuelto (cod_request), D3 resuelto (por tipo de error). |
+| Fase 0.bis — Renovación | ✅ **Completada** (2026-06-20) | Endpoint de renovación, orden CERTIFICATE_RENEWAL y extensión de vigencia. |
+| Fase 3 — Revocación automática + expiración | ✅ **Completada** (2026-06-20) | D2 resuelto (null->SYSTEM). Job de revocación y expiración configurados diarios. |
 
 ### Detalle Fase 0 (hecho)
 - **Path de migraciones del ciclo de vida:** nuevas migraciones del núcleo viven en
@@ -97,7 +97,7 @@ aceptación. Premisa rectora: **`certificate_requests` es la fuente de verdad de
 | # | Decisión | Estado |
 |---|----------|--------|
 | D1 | **Origen del `revokingCode`.** Hoy NO se persiste: el operador lo escribe en el body del endpoint manual (`RevocationController` → `$request->string('revoking_code')`). **Decisión (2026-06-20):** usar **`cod_request`** (ya persistido en `viafirma_certificate_requests`) como `revokingCode` para la revocación automática; más adelante se evaluará si se requiere otro campo. → **No se necesita columna nueva** para la Fase 3. | ✅ Resuelto: usar `cod_request` |
-| D2 | **Usuario "sistema"** para `revokedByUserId` en revocación automática (hoy `RevokeInputDto` exige un user id; el manual usa `auth()->id()`). Definir un ID fijo o `null` + etiqueta `SYSTEM`. | ⛔ Confirmar |
+| D2 | **Usuario "sistema"** para `revokedByUserId` en revocación automática (hoy `RevokeInputDto` exige un user id; el manual usa `auth()->id()`). Definir un ID fijo o `null` + etiqueta `SYSTEM`. | ✅ Resuelto: se usa `null` y etiqueta `SYSTEM (Auto Revocación)` |
 | D3 | **Criterio FAILED → reenviar vs. recrear** (qué `last_error_code` son corregibles vs. irrecuperables). | ⛔ Confirmar |
 
 ---
