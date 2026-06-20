@@ -17,6 +17,8 @@ enum CertificateRequestStatusEnum: string
     case PROCESSING = 'PROCESSING';
     case PROCESSED  = 'PROCESSED';
     case REJECTED   = 'REJECTED';
+    case REVOKED    = 'REVOKED';
+    case EXPIRED    = 'EXPIRED';
 
     /**
      * Descripción legible del estado.
@@ -31,6 +33,8 @@ enum CertificateRequestStatusEnum: string
             self::PROCESSING => 'En Proceso',
             self::PROCESSED  => 'Procesada',
             self::REJECTED   => 'Rechazada',
+            self::REVOKED    => 'Revocada',
+            self::EXPIRED    => 'Vencida',
         };
     }
 
@@ -104,8 +108,12 @@ enum CertificateRequestStatusEnum: string
             self::PENDING->value    => [self::ACCEPTED->value, self::REJECTED->value],
             self::ACCEPTED->value   => [self::PROCESSING->value, self::REJECTED->value],
             self::PROCESSING->value => [self::PROCESSED->value, self::REJECTED->value],
-            self::PROCESSED->value  => [], // Estado final
+            // PROCESSED ya no es absolutamente terminal: un certificado emitido puede
+            // revocarse (revocación comercial/voluntaria) o vencer naturalmente.
+            self::PROCESSED->value  => [self::REVOKED->value, self::EXPIRED->value],
             self::REJECTED->value   => [self::DRAFT->value], // Permite reabrir
+            self::REVOKED->value    => [], // Estado final
+            self::EXPIRED->value    => [], // Estado final
         ];
     }
 

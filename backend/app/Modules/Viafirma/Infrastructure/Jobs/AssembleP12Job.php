@@ -180,7 +180,8 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
             if ($certificateRequest !== null) {
                 $life = (int) ($certificateRequest->life ?: 1);
 
-                $certificateRequest->request_status  = CertificateRequestStatusEnum::PROCESSED->value;
+                // Estado unificado vía mapper central (COMPLETED → PROCESSED).
+                $certificateRequest->request_status  = InternalState::COMPLETED->toRequestStatus()->value;
                 $certificateRequest->issued_at       = $validity['validFrom'];
                 $certificateRequest->cert_valid_to   = $validity['validTo'];
                 $certificateRequest->expiration_date = $validity['validFrom']->addYears($life);

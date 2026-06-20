@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Viafirma\Domain\Enums;
 
+use App\Enums\CertificateRequestStatusEnum;
+
 /**
  * Estados internos del agregado `viafirma_certificate_requests` — FSM propia
  * de Certificate Manager (NO los estados remotos de Viafirma, que viajan en
@@ -48,6 +50,30 @@ enum InternalState: string
     public function isFailureLike(): bool
     {
         return in_array($this, [self::FAILED, self::FAILED_RECOVERABLE, self::EXPIRED], true);
+    }
+
+    /**
+     * Mapeo único y centralizado del estado técnico de Viafirma al estado unificado de
+     * `certificate_requests` (fuente de verdad del ciclo de vida, agnóstica de proveedor).
+     *
+     * Evita literales dispersos en jobs/use-cases. Ver roadmap §3.
+     */
+    public function toRequestStatus(): CertificateRequestStatusEnum
+    {
+        return match ($this) {
+            self::DRAFT              => CertificateRequestStatusEnum::DRAFT,
+            self::CSR_GENERATED      => CertificateRequestStatusEnum::SENT,
+            self::SUBMITTED,
+            self::POLLING,
+            self::READY_TO_DOWNLOAD,
+            self::DOWNLOADED,
+            self::ASSEMBLED,
+            self::FAILED_RECOVERABLE => CertificateRequestStatusEnum::PROCESSING,
+            self::COMPLETED          => CertificateRequestStatusEnum::PROCESSED,
+            self::REVOKED            => CertificateRequestStatusEnum::REVOKED,
+            self::FAILED             => CertificateRequestStatusEnum::REJECTED,
+            self::EXPIRED            => CertificateRequestStatusEnum::EXPIRED,
+        };
     }
 }
 

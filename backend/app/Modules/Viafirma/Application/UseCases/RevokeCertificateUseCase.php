@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Viafirma\Application\UseCases;
 
-use App\Enums\CertificateRequestStatusEnum;
 use App\Models\ChangeHistory;
 use App\Modules\Viafirma\Application\DTOs\RevokeInputDto;
 use App\Modules\Viafirma\Domain\Contracts\ViafirmaClient;
@@ -23,7 +22,7 @@ use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
  *   2) Llama a Viafirma API: POST /request/revoke/code/{revokingCode}
  *   3) Persiste el revocation_request_code devuelto + marca revoked_at.
  *   4) Transiciona internal_state → REVOKED.
- *   5) Sincroniza CertificateRequest.request_status → REJECTED.
+ *   5) Sincroniza CertificateRequest.request_status → REVOKED (vía InternalState::toRequestStatus()).
  *   6) Registra en change_histories + viafirma_status_history para auditoría.
  */
 final class RevokeCertificateUseCase
@@ -84,17 +83,18 @@ final class RevokeCertificateUseCase
                 'occurred_at'    => now(),
             ]);
 
-            // Sincronizar CertificateRequest principal → REJECTED
+            // Sincronizar CertificateRequest principal → REVOKED (estado unificado vía mapper).
             $cr = $entity->certificateRequest;
             if ($cr) {
-                $cr->update(['request_status' => CertificateRequestStatusEnum::REJECTED->value]);
+                $revokedStatus = InternalState::REVOKED->toRequestStatus()->value;
+                $cr->update(['request_status' => $revokedStatus]);
 
                 // Registrar en change_histories del módulo legacy
                 ChangeHistory::create([
                     'certificate_request_id' => $cr->id,
                     'user_id'                => $dto->revokedByUserId,
                     'user_of_change'         => 'Sistema (Revocación Viafirma)',
-                    'status'                 => CertificateRequestStatusEnum::REJECTED->value,
+                    'status'                 => $revokedStatus,
                     'comments'               => "Certificado revocado. Motivo: {$dto->revocationReason->label()}. " .
                                                 "Código de revocación Viafirma: {$newRevocationCode}.",
                 ]);
