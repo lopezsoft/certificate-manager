@@ -303,6 +303,41 @@ class CertificateIssuanceController extends Controller
         }
     }
 
+    /**
+     * Endpoint para renovar un certificado (genera orden de pago).
+     *
+     * @OA\Post(
+     *     path="/certificate-request/{id}/issuance/renew",
+     *     operationId="certificateRequestIssuanceRenew",
+     *     tags={"Emisión de Certificados"},
+     *     summary="Genera orden de renovación de un certificado",
+     *     description="Crea una orden de pago WOMPI para renovar la vigencia del certificado por 1 año adicional (llegando a 2 años de vida comercial total). Retorna la orden creada.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, description="ID de la solicitud", @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Orden de renovación generada exitosamente"),
+     *     @OA\Response(response=400, description="Error al procesar la renovación (ej. ya tiene vida máxima)"),
+     *     @OA\Response(response=401, description="No autenticado"),
+     *     @OA\Response(response=404, description="Trámite no encontrado")
+     * )
+     */
+    public function renew(Request $request, int $id, \App\Modules\Viafirma\Application\UseCases\RenewCertificateUseCase $useCase): JsonResponse
+    {
+        try {
+            $order = $useCase->handle($id, auth()->id());
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Orden de renovación generada exitosamente.',
+                'data'    => $order->toArray(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al procesar la renovación: ' . $e->getMessage(),
+            ], 400);
+        }
+    }
+
     private function callerIsAdmin(Request $request): bool
     {
         $user = $request->user();

@@ -1577,6 +1577,48 @@
                 ]
             }
         },
+        "/certificate-request/{id}/history": {
+            "get": {
+                "tags": [
+                    "Solicitudes de Certificado"
+                ],
+                "summary": "Obtener el historial de cambios de una solicitud de certificado",
+                "operationId": "78e0656646734abca73c742c93f9ad93",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Historial obtenido con éxito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Solicitud no encontrada"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/certificate-request/{id}/status": {
             "put": {
                 "tags": [
@@ -2293,6 +2335,234 @@
                     },
                     "401": {
                         "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/certificate-request/{id}/issuance/download/base64": {
+            "get": {
+                "tags": [
+                    "Emisión de Certificados"
+                ],
+                "summary": "Descarga del P12 en Base64",
+                "description": "Devuelve el .p12 codificado en Base64 + PIN, para uso desatendido. Sólo proveedor Viafirma en estado ASSEMBLED/COMPLETED.",
+                "operationId": "certificateRequestIssuanceDownloadBase64",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "P12 en Base64 + PIN"
+                    },
+                    "404": {
+                        "description": "Trámite no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "El estado actual no permite descarga / proveedor no soporta descarga",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "410": {
+                        "description": "El PIN del certificado fue purgado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/certificate-request/{id}/issuance/redownload": {
+            "post": {
+                "tags": [
+                    "Emisión de Certificados"
+                ],
+                "summary": "[ADMIN] Re-descargar P7B y regenerar P12 con nuevo PIN",
+                "description": "Consulta el estado remoto en Viafirma, descarga nuevamente el P7B y ensambla un nuevo P12 con PIN renovado. Solo disponible para administradores. Útil cuando el archivo P12 se corrompió o el PIN fue purgado antes de que el cliente lo descargara.",
+                "operationId": "certificateRequestIssuanceRedownload",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la solicitud (certificate_requests.id)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "P12 regenerado exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "pin": {
+                                                    "description": "Nuevo PIN para abrir el P12",
+                                                    "type": "string"
+                                                },
+                                                "download_url": {
+                                                    "type": "string"
+                                                },
+                                                "expires_at": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "viafirma_id": {
+                                                    "type": "integer"
+                                                },
+                                                "internal_state": {
+                                                    "type": "string"
+                                                },
+                                                "remote_status": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No es administrador",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Trámite Viafirma no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Estado remoto no permite re-descarga",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Llave privada purgada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "502": {
+                        "description": "Error al consultar Viafirma",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/certificate-request/{id}/issuance/renew": {
+            "post": {
+                "tags": [
+                    "Emisión de Certificados"
+                ],
+                "summary": "Genera orden de renovación de un certificado",
+                "description": "Crea una orden de pago WOMPI para renovar la vigencia del certificado por 1 año adicional (llegando a 2 años de vida comercial total). Retorna la orden creada.",
+                "operationId": "certificateRequestIssuanceRenew",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la solicitud",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Orden de renovación generada exitosamente"
+                    },
+                    "400": {
+                        "description": "Error al procesar la renovación (ej. ya tiene vida máxima)"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    },
+                    "404": {
+                        "description": "Trámite no encontrado"
                     }
                 },
                 "security": [
@@ -4625,6 +4895,125 @@
                 ]
             }
         },
+        "/certificate-request/{id}/kyc-link": {
+            "get": {
+                "tags": [
+                    "Viafirma"
+                ],
+                "summary": "Obtener link del portal KYC de acreditación",
+                "operationId": "a15f636cb8c9416294cbfb7b04af9a64",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la solicitud de certificado (certificate_requests.id)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Link KYC generado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "link": {
+                                                    "type": "string",
+                                                    "example": "https://kyc.viafirma.com/..."
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "La solicitud no está en estado 'accreditation'"
+                    },
+                    "404": {
+                        "description": "Solicitud no encontrada"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/certificate-request/{id}/revoke": {
+            "post": {
+                "tags": [
+                    "Viafirma"
+                ],
+                "summary": "Revocar un certificado Viafirma ya emitido",
+                "operationId": "c52d2d4bd5e7ef8cb0d8bd3981f01c2e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la solicitud de certificado (certificate_requests.id)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "revoking_code": {
+                                        "description": "Código de revocación recibido por el usuario",
+                                        "type": "string"
+                                    },
+                                    "revocation_reason": {
+                                        "description": "Motivo: 0,1,2,3,4,5,9,10",
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Certificado revocado exitosamente"
+                    },
+                    "400": {
+                        "description": "Error de negocio (estado inválido o código erróneo)"
+                    },
+                    "404": {
+                        "description": "Solicitud no encontrada"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/webhooks/wompi": {
             "post": {
                 "tags": [
@@ -6810,6 +7199,10 @@
         {
             "name": "Cupos",
             "description": "Cupos"
+        },
+        {
+            "name": "Viafirma",
+            "description": "Viafirma"
         }
     ]
 }
