@@ -21,7 +21,7 @@
         "laravel/passport": "^v11.8.7",
         "laravel/tinker": "^2.5",
         "laraveles/spanish": "^1.5",
-        "league/flysystem-aws-s3-v3": "3.0",
+        "league/flysystem-aws-s3-v3": "^3.32",
         "lopezsoft/jasperphp": "^2.9",
         "lopezsoft/numbers-to-letters": "^1.1",
         "lopezsoft/ubl21dian": "^3.1",
