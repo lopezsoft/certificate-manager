@@ -7,6 +7,7 @@ namespace App\Modules\Viafirma\Application\UseCases;
 use App\Enums\CertificateRequestStatusEnum;
 use App\Models\CertificateRequest;
 use App\Models\ChangeHistory;
+use App\Models\FileManager;
 use App\Modules\Viafirma\Application\Commands\IssueCertificateCommand;
 use App\Modules\Viafirma\Application\DTOs\CsrInputDto;
 use App\Modules\Viafirma\Application\DTOs\SubmitCsrInputDto;
@@ -192,6 +193,18 @@ final class IssueCertificateUseCase
                     'comments'               => 'Solicitud de certificado enviada al proveedor para emisión automática.',
                     'user_of_change'         => 'SYSTEM',
                     'user_id'                => $cmd->requestedByUserId,
+                ]);
+
+                // ── Registrar referencia de llave privada en file_managers ────────────────────
+                FileManager::create([
+                    'certificate_request_id' => $cr->id,
+                    'file_path'              => 'vault://' . $keyRef,
+                    'file_name'              => 'private_key_reference',
+                    'extension_file'         => 'key',
+                    'mime_type'              => 'application/x-pkcs12-key',
+                    'document_type'          => 'PRIVATE_KEY',
+                    'file_size'              => 0,
+                    'status'                 => 'ACTIVE',
                 ]);
 
                 // Primer poll job — 15 s de delay para dar tiempo a que Viafirma procese
