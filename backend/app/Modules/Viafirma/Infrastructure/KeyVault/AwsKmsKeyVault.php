@@ -20,14 +20,14 @@ use Illuminate\Support\Str;
  *  3. destroy(): Elimina del Storage Y del cache
  *
  * IMPORTANTE: El envelope se guarda en Storage PERSISTENTE (no solo en cache).
- *   En producción configurar VIAFIRMA_VAULT_DISK=s3 para que los keys
+ *   En producción configurar VIAFIRMA_DISK=s3 para que los keys
  *   sobrevivan reinicios de Redis/Memcached.
  *
  * Prerequisitos:
  *  - `aws/aws-sdk-php` en composer.json (ya presente por S3 driver)
  *  - Variable `AWS_KMS_KEY_ID` configurada con el ARN del CMK
  *  - IAM role con permisos kms:GenerateDataKey, kms:Decrypt
- *  - VIAFIRMA_VAULT_DISK=s3 (o el disco persistente deseado)
+ *  - VIAFIRMA_DISK=s3 (o el disco persistente deseado)
  */
 final class AwsKmsKeyVault implements KeyVault
 {
@@ -41,7 +41,7 @@ final class AwsKmsKeyVault implements KeyVault
     public function __construct()
     {
         $this->kmsKeyId    = (string) config('viafirma.crypto.aws_kms_key_id');
-        $this->vaultDisk   = (string) config('viafirma.crypto.vault_disk', 'local');
+        $this->vaultDisk   = (string) config('viafirma.crypto.disk', config('certificate.storage.disk', 'local'));
         $this->vaultPath   = (string) config('viafirma.crypto.vault_path', 'viafirma/vault');
         $this->cachePrefix = 'viafirma:kms:';
 

@@ -21,6 +21,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
+use App\Models\FileManager;
 
 /**
  * Orquesta el ensamblaje del .p12 (V-405):
@@ -118,10 +119,25 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
             // 4.bis Extraer validez real del certificado (validFrom / validTo) desde el P12 recién ensamblado.
             $validity = CertificateValidatorService::parseValidity($p12Binary, $exportPin);
 
-            // 5. Guardar P12 en storage (ruteo genérico agnóstico de proveedor)
-            $p12Filename = $pathResolver->path('viafirma', 'p12', "{$entity->certificate_request_id}_{$entity->cod_request}.p12");
+            // 5. Guardar P12 en storage bajo base_path centralizado
+            $basePath = $entity->certificateRequest->base_path;
+            if (empty($basePath)) {
+                throw new \RuntimeException(
+                    "El base_path de la solicitud de certificado {$entity->certificate_request_id} no está configurado."
+                );
+            }
 
-            Storage::disk($disk)->put($p12Filename, $p12Binary);
+            // Crear ZIP con el P12
+            $p12Filename = "{$entity->certificate_request_id}_{$entity->cod_request}.p12";
+            $zipFilename = $basePath . '/' . "{$entity->certificate_request_id}_{$entity->cod_request}.zip";
+
+            $zip = new \ZipArchive();
+            $zipPath = Storage::path($zipFilename);
+            if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+                $zip->addFromString($p12Filename, $p12Binary);
+                $zip->close();
+            }
+
             unset($p12Binary);
 
             // 6. Guardar PIN cifrado en KeyVault
@@ -133,7 +149,7 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
 
             // 7. Transicionar a ASSEMBLED
             $previousState = $state->internal_state;
-            $state->p12_storage_path  = $p12Filename;
+            $state->p12_storage_path  = $zipFilename;
             $state->p12_password_ref  = $pinRef;
             $state->internal_state    = InternalState::ASSEMBLED;
             $state->assembled_at      = now();
@@ -169,6 +185,41 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
             ]);
 
             $logger->info('viafirma.assemble.completed', ['id' => $entity->id]);
+
+            // ── Registrar ZIP en file_managers ────────────────────────────────────────────
+            $zipSize = Storage::disk($disk)->size($zipFilename);
+            FileManager::updateOrCreate(
+                [
+                    'certificate_request_id' => $entity->certificate_request_id,
+                    'file_path' => $zipFilename,
+                ],
+                [
+                    'file_name' => basename($zipFilename),
+                    'extension_file' => 'zip',
+                    'mime_type' => 'application/zip',
+                    'document_type' => 'CERTIFICATE',
+                    'file_size' => $zipSize,
+                    'status' => 'COMPLETED',
+                ]
+            );
+
+            // ── Registrar referencia de llave privada en file_managers ────────────────────
+            if ($state->key_vault_ref && $state->key_vault_ref !== 'PURGED') {
+                FileManager::updateOrCreate(
+                    [
+                        'certificate_request_id' => $entity->certificate_request_id,
+                        'file_path' => 'vault://' . $state->key_vault_ref,
+                    ],
+                    [
+                        'file_name' => 'private_key_reference',
+                        'extension_file' => 'key',
+                        'mime_type' => 'application/x-pkcs12-key',
+                        'document_type' => 'PRIVATE_KEY',
+                        'file_size' => 0,
+                        'status' => 'ACTIVE',
+                    ]
+                );
+            }
 
             // ── Actualizar la solicitud principal a PROCESSED + ciclo de vida ──────────────
             // certificate_requests es la fuente de verdad del ciclo de vida y vencimientos.

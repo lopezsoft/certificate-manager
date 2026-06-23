@@ -142,7 +142,7 @@
           (onRefreshPagination)="onRefreshPagination($event)">
         </exodo-pagination>
       </div>
-      @for (item of shipping.shippingData; track item; let i = $index) {
+      @for (item of shipping.shippingData; track item.id; let i = $index) {
         <div class="col">
           <div class="card cursor layout-content-card single full-height position-relative"
             [ngClass]="{'is-selected': item.checked}"

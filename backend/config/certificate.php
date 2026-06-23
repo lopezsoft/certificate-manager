@@ -226,6 +226,38 @@ return [
 
         // Enviar copia a gerencia cuando se envía una solicitud
         'send_to_support' => env('SEND_MAIL_TO_SUPPORT', false),
+     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Storage Configuration (Certificate Artifacts)
+    |--------------------------------------------------------------------------
+    |
+    | Almacenamiento de artefactos de certificados (agnóstico de proveedor).
+    | El almacenamiento es una responsabilidad transversal que NO pertenece a
+    | un proveedor concreto. Conviven Viafirma y otros proveedores.
+    |
+    | Estructura de rutas:
+    |   {disk}://{prefix}/certificates/{provider}/{artifact}/{filename}
+    |
+    | El path por proveedor/artefacto se resuelve en CertificateStoragePathResolver.
+    | `prefix` es un nombre libre por entorno (no APP_ENV) para evitar colisiones.
+    |
+    */
+    'storage' => [
+        'disk'   => env('CERT_STORAGE_DISK', env('VIAFIRMA_DISK', 'local')),
+        'prefix' => env('CERT_STORAGE_PREFIX', 'local'),
+
+        // Disco del proveedor LEGACY (otro proveedor). Históricamente 'attachment'.
+        // Al migrar a S3 se cambia a 's3' y, como los archivos se copian a la MISMA
+        // ruta relativa, las lecturas siguen funcionando sin reescribir rutas en BD.
+        'legacy_disk' => env('CERT_LEGACY_DISK', 'attachment'),
+
+        // Sub-rutas por proveedor/artefacto, relativas a {prefix}/certificates/.
+        'paths' => [
+            'viafirma_p12' => env('VIAFIRMA_P12_PATH', 'viafirma/p12'),
+            'viafirma_p7b' => env('VIAFIRMA_P7B_PATH', 'viafirma/p7b'),
+        ],
     ],
 
-];
+ ];

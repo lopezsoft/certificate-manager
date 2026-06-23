@@ -71,7 +71,7 @@ final class ViafirmaServiceProvider extends ServiceProvider
             $driver = (string) config('viafirma.crypto.key_vault_driver', 'encrypted_local');
             return match ($driver) {
                 'encrypted_local' => new EncryptedLocalKeyVault(
-                    disk: Storage::disk((string) config('viafirma.crypto.vault_disk', 'local')),
+                    disk: Storage::disk((string) config('viafirma.crypto.disk', config('certificate.storage.disk', 'local'))),
                     crypt: $app->make(Encrypter::class),
                     vaultPath: (string) config('viafirma.crypto.vault_path', 'viafirma/vault'),
                 ),

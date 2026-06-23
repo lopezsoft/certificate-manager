@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Viafirma\Infrastructure\Jobs;
 
-use App\Modules\Viafirma\Domain\Contracts\KeyVault;
 use App\Modules\Viafirma\Domain\Enums\InternalState;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequestState;
 use Illuminate\Bus\Queueable;
@@ -46,26 +45,22 @@ final class PurgeExpiredKeysJob implements ShouldQueue
     }
 
     public function handle(
-        KeyVault $vault,
         SafePemLogger $logger,
     ): void {
-        $retentionHours = 72;
-        $cutoff = now()->subHours($retentionHours);
+        // Criterios de purga:
+        // 1. Certificados ya vencidos (expiration_date < now())
+        // 2. Certificados revocados o marcados como DELETE (request_status = 'DELETE')
 
-        // Consultar directamente la tabla de estados (normalizada)
         $candidates = ViafirmaCertificateRequestState::query()
-            ->whereIn('internal_state', [
-                InternalState::COMPLETED->value,
-                InternalState::FAILED->value,
-                InternalState::EXPIRED->value,
-            ])
-            ->whereNotNull('key_vault_ref')
-            ->where('key_vault_ref', '!=', 'PURGED')
-            ->where(function ($q) use ($cutoff) {
-                $q->where('assembled_at', '<', $cutoff)
-                  ->orWhere('updated_at', '<', $cutoff);
+            ->where('internal_state', InternalState::COMPLETED->value)
+            ->with('viafirmaCertificateRequest.certificateRequest')
+            ->whereHas('viafirmaCertificateRequest.certificateRequest', function ($q) {
+                $q->where(function ($q2) {
+                    $q2->where('expiration_date', '<', now())
+                       ->orWhere('request_status', 'DELETE');
+                });
             })
-            ->get(['id', 'viafirma_certificate_request_id', 'key_vault_ref', 'p12_password_ref', 'internal_state', 'p12_storage_path', 'p7b_storage_path']);
+            ->get(['id', 'viafirma_certificate_request_id', 'internal_state', 'p12_storage_path', 'p7b_storage_path', 'key_vault_ref']);
 
         if ($candidates->isEmpty()) {
             $logger->info('viafirma.purge.no_candidates');
@@ -77,40 +72,33 @@ final class PurgeExpiredKeysJob implements ShouldQueue
 
         foreach ($candidates as $stateRecord) {
             try {
-                // Purgar llave privada
-                if ($stateRecord->key_vault_ref && $stateRecord->key_vault_ref !== 'PURGED') {
-                    if ($vault->exists($stateRecord->key_vault_ref)) {
-                        $vault->destroy($stateRecord->key_vault_ref);
-                    }
-                    $stateRecord->key_vault_ref = 'PURGED';
-                }
-
-                // Purgar PIN del P12 (si aplica)
-                if ($stateRecord->p12_password_ref && $stateRecord->p12_password_ref !== 'PURGED') {
-                    if ($vault->exists($stateRecord->p12_password_ref)) {
-                        $vault->destroy($stateRecord->p12_password_ref);
-                    }
-                    $stateRecord->p12_password_ref = 'PURGED';
-                }
-
                 // Disco genérico de certificados (las rutas exactas vienen de BD).
                 $disk = app(\App\Services\Certificates\CertificateStoragePathResolver::class)->disk();
 
-                // Eliminar archivo P12 físico
+                // Eliminar archivo P12 físico (ZIP comprimido)
                 if ($stateRecord->p12_storage_path) {
                     if (Storage::disk($disk)->exists($stateRecord->p12_storage_path)) {
                         Storage::disk($disk)->delete($stateRecord->p12_storage_path);
                     }
+                    // Marcar en file_managers como DELETED
+                    \App\Models\FileManager::where('file_path', $stateRecord->p12_storage_path)
+                        ->update(['status' => 'DELETED']);
                     $stateRecord->p12_storage_path = null;
                 }
 
-                // Eliminar archivo P7b físico
+                // Eliminar archivo P7B físico
                 if ($stateRecord->p7b_storage_path) {
                     if (Storage::disk($disk)->exists($stateRecord->p7b_storage_path)) {
                         Storage::disk($disk)->delete($stateRecord->p7b_storage_path);
                     }
+                    // Marcar en file_managers como DELETED
+                    \App\Models\FileManager::where('file_path', $stateRecord->p7b_storage_path)
+                        ->update(['status' => 'DELETED']);
                     $stateRecord->p7b_storage_path = null;
                 }
+
+                // Mantener referencia de llave privada (NO eliminar)
+                // Las llaves se guardan en KeyVault y no se purgan en el nuevo modelo de negocio
 
                 $stateRecord->save();
                 $purged++;

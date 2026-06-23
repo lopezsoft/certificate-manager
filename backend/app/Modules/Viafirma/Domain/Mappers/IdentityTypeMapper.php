@@ -14,21 +14,32 @@ use App\Modules\Viafirma\Domain\Exceptions\UnsupportedIdentityDocumentException;
  *
  * Mapeo (códigos DIAN):
  *   '13' (CC, Cédula de Ciudadanía)  → IDC
+ *   '21' (TE, Tarjeta de extranjería) → IDC
  *   '22' (CE, Cédula de Extranjería) → IDC
+ *   '31' (NIT, Número de Identificación Tributaria) → IDC
  *   '41' (PAS, Pasaporte — seeder opcional §3.0.4) → PAS
- *   '31' (NIT) → ❌ no es solicitante, lanza excepción.
+ *   '42' (DE, Documento de identificación extranjero) → IDC
+ *   '47' (PEP, PEP (Permiso Especial de Permanencia)) → IDC
+ *   '48' (PPT, Permiso Protección Temporal) → IDC
+ *   '50' (NOP, NIT de otro país) → IDC
  *
  * Patrón: Anti-Corruption Layer.
  */
 final class IdentityTypeMapper
 {
-    private const IDC_CODES = ['13', '22'];
+    private const IDC_CODES = ['13', '21', '22', '31', '42', '47', '48', '50'];
     private const PAS_CODES = ['41'];
 
     /** Mapa: abbreviation → IdentityType (fallback robusto si no hay code DIAN). */
     private const ABBREVIATION_MAP = [
         'CC'  => IdentityType::IDC,
         'CE'  => IdentityType::IDC,
+        'TE'  => IdentityType::IDC,
+        'NIT' => IdentityType::IDC,
+        'DE'  => IdentityType::IDC,
+        'PEP' => IdentityType::IDC,
+        'PPT' => IdentityType::IDC,
+        'NOP' => IdentityType::IDC,
         'PAS' => IdentityType::PAS,
     ];
 
@@ -51,7 +62,7 @@ final class IdentityTypeMapper
 
         throw new UnsupportedIdentityDocumentException(
             "IdentityDocument id={$document->id} (code='{$code}', abbreviation='{$abbreviation}') "
-            . 'no es válido como identityType de Viafirma (sólo CC/CE → IDC y Pasaporte → PAS son aceptados).'
+            . 'no es válido como identityType de Viafirma RA. '
         );
     }
 }

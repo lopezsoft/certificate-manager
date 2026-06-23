@@ -18,6 +18,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Storage;
 use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
+use App\Models\FileManager;
 
 /**
  * Descarga el P7B emitido por Viafirma y lo persiste en storage (V-402).
@@ -94,10 +95,18 @@ final class DownloadP7bJob implements ShouldQueue, ShouldBeUnique
             return;
         }
 
-        // Guardar en storage (ruteo genérico agnóstico de proveedor)
+        // Guardar en storage bajo base_path centralizado
         $resolver = app(\App\Services\Certificates\CertificateStoragePathResolver::class);
         $disk     = $resolver->disk();
-        $filename = $resolver->path('viafirma', 'p7b', "{$entity->cod_request}.p7b");
+        
+        $basePath = $entity->certificateRequest->base_path;
+        if (empty($basePath)) {
+            throw new \RuntimeException(
+                "El base_path de la solicitud de certificado {$entity->certificate_request_id} no está configurado."
+            );
+        }
+
+        $filename = $basePath . '/' . "{$entity->certificate_request_id}_{$entity->cod_request}.p7b";
 
         Storage::disk($disk)->put($filename, $p7bBinary);
 
@@ -115,10 +124,27 @@ final class DownloadP7bJob implements ShouldQueue, ShouldBeUnique
             'user_id'                => null,
         ]);
 
+        // ── Registrar P7B en file_managers ────────────────────────────────────────────
+        $p7bSize = strlen($p7bBinary);
+        FileManager::updateOrCreate(
+            [
+                'certificate_request_id' => $entity->certificate_request_id,
+                'file_path' => $filename,
+            ],
+            [
+                'file_name' => basename($filename),
+                'extension_file' => 'p7b',
+                'mime_type' => 'application/pkcs7-mime',
+                'document_type' => 'P7B_CERTIFICATE',
+                'file_size' => $p7bSize,
+                'status' => 'COMPLETED',
+            ]
+        );
+
         $logger->info('viafirma.download.success', [
             'id'         => $entity->id,
             'p7b_path'   => $filename,
-            'size_bytes' => strlen($p7bBinary),
+            'size_bytes' => $p7bSize,
         ]);
 
         // Despachar ensamblaje P12

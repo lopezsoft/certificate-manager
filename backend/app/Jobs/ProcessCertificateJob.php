@@ -278,7 +278,7 @@ class ProcessCertificateJob implements ShouldQueue
             // (S3) descargamos a archivos temporales que se limpian al final.
             $documentPaths = [];
             $tempFiles     = [];
-            $diskName      = config('certificates.storage.legacy_disk', 'attachment');
+            $diskName      = config('certificate.storage.legacy_disk', 'attachment');
             $disk          = Storage::disk($diskName);
             $isLocalDisk   = (config("filesystems.disks.{$diskName}.driver") === 'local');
 

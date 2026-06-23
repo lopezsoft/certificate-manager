@@ -57,16 +57,17 @@ return [
         'openssl_conf'    => env('VIAFIRMA_OPENSSL_CONF', config_path('viafirma/openssl.cnf')),
         'key_vault_driver' => env('VIAFIRMA_KEY_VAULT_DRIVER', 'encrypted_local'), // encrypted_local | aws_kms
         'aws_kms_key_id'  => env('AWS_KMS_KEY_ID'),
-        // Directorio relativo en el disco configurado para guardar material cifrado (driver local).
-        'vault_disk'      => env('VIAFIRMA_VAULT_DISK', 'local'),
+        // Disco unificado para guardar material cifrado (vault, p7b, p12).
+        // En producción: s3 | En desarrollo: local
+        'disk'            => env('CERT_STORAGE_DISK', 'local'),
         'vault_path'      => env('VIAFIRMA_VAULT_PATH', 'viafirma/vault'),
     ],
 
     'storage' => [
-        // Discos donde se guardan los artefactos descargados/ensamblados.
-        'p7b_disk' => env('VIAFIRMA_P7B_DISK', 'local'),
+        // Disco unificado para guardar los artefactos descargados/ensamblados.
+        // En producción: s3 | En desarrollo: local
+        'disk'     => env('CERT_STORAGE_DISK', 'local'),
         'p7b_path' => env('VIAFIRMA_P7B_PATH', 'viafirma/p7b'),
-        'p12_disk' => env('VIAFIRMA_P12_DISK', 'local'),
         'p12_path' => env('VIAFIRMA_P12_PATH', 'viafirma/p12'),
     ],
 

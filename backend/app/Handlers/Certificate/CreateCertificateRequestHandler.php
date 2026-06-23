@@ -43,7 +43,7 @@ class CreateCertificateRequestHandler
             // Resolver el proveedor de emisión de la empresa
             $company  = Company::find($command->companyId);
             $provider = $company?->issuance_provider
-                ?? config('certificate.issuance.default_provider', 'mail');
+                ?? config('certificate.issuance.default_provider', 'viafirma');
             $requiresFiles = $provider !== 'viafirma';
 
             // Solo validar archivos si el proveedor los requiere (mail)
@@ -65,14 +65,13 @@ class CreateCertificateRequestHandler
             if ($provider === 'viafirma') {
                 if (empty($command->legalRepFirstName) || empty($command->legalRepLastName)) {
                     return HttpResponseMessages::getResponse422([
-                        'message' => 'Para solicitudes de Viafirma, los nombres y apellidos del representante legal (legal_rep_first_name, legal_rep_last_name) deben enviarse por separado.',
+                        'message' => 'Los nombres y apellidos del representante legal (legal_rep_first_name, legal_rep_last_name) deben enviarse por separado.',
                     ]);
                 }
             }
-
-            $disk        = Storage::disk('attachment');
+            $diskName    = config('certificate.storage.disk', 'local');
+            $disk        = Storage::disk($diskName);
             $folderName  = $this->buildFolderName($command->companyId, $command->dni, $dv);
-            $disk->makeDirectory($folderName);
 
             DB::beginTransaction();
 

@@ -152,11 +152,6 @@ final class RedownloadCertificateUseCase
         $p12Filename = "{$entity->certificate_request_id}_{$entity->cod_request}.p12";
         $zipFilename = $basePath . '/' . "{$entity->certificate_request_id}_{$entity->cod_request}.zip";
 
-        // Validar y crear el directorio si no existe
-        if (!Storage::disk($disk)->exists($basePath)) {
-            Storage::disk($disk)->makeDirectory($basePath, 0755, true);
-        }
-
         // Delete the old file if the path has changed (e.g. migration to new naming convention)
         if ($state->p12_storage_path && $state->p12_storage_path !== $zipFilename) {
             Storage::disk($disk)->delete($state->p12_storage_path);
@@ -266,6 +261,7 @@ final class RedownloadCertificateUseCase
         FileManager::updateOrCreate(
             [
                 'certificate_request_id' => $certificateRequestId,
+                'file_name'              => basename($zipFilename),
             ],
             [
                 'file_name'              => basename($zipFilename),

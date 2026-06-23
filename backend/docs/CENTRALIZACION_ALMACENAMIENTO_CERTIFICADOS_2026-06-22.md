@@ -118,14 +118,14 @@ Estructura esperada:
 
 ---
 
-### 4.2 AssembleP12Job.php (Pendiente)
+### 4.2 AssembleP12Job.php ✅ (Ya implementado)
 
-**Cambios necesarios:**
-- Cambiar línea 122: usar `$certificateRequest->base_path` en lugar de `$pathResolver->path('viafirma', 'p12', ...)`
-- Crear directorio si no existe
-- Guardar ZIP en lugar de P12 sin comprimir
-- Registrar en `file_managers` con `document_type = 'CERTIFICATE'`
-- Registrar referencia de llave privada con `document_type = 'PRIVATE_KEY'`
+**Cambios realizados:**
+- ✅ Usar `$certificateRequest->base_path` para guardar ZIP
+- ✅ Crear directorio si no existe
+- ✅ Guardar ZIP con P12 comprimido
+- ✅ Registrar en `file_managers` con `document_type = 'CERTIFICATE'`
+- ✅ Registrar referencia de llave privada con `document_type = 'PRIVATE_KEY'`
 
 **Pseudocódigo:**
 ```php
@@ -157,12 +157,12 @@ FileManager::create([
 
 ---
 
-### 4.3 DownloadP7bJob.php (Pendiente)
+### 4.3 DownloadP7bJob.php ✅ (Ya implementado)
 
-**Cambios necesarios:**
-- Usar `$certificateRequest->base_path` para guardar P7B
-- Crear directorio si no existe
-- Registrar en `file_managers` con `document_type = 'P7B_CERTIFICATE'`
+**Cambios realizados:**
+- ✅ Usar `$certificateRequest->base_path` para guardar P7B
+- ✅ Crear directorio si no existe
+- ✅ Registrar en `file_managers` con `document_type = 'P7B_CERTIFICATE'`
 
 **Pseudocódigo:**
 ```php
@@ -184,13 +184,13 @@ FileManager::create([
 
 ---
 
-### 4.4 PurgeExpiredKeysJob.php (Cambiar propósito: limpiar archivos viejos)
+### 4.4 PurgeExpiredKeysJob.php ✅ (Ya implementado)
 
-**Cambios necesarios:**
+**Cambios realizados:**
 - ❌ Eliminar lógica de purga de KeyVault (ya no se purgan llaves)
-- ✅ Agregar lógica de limpieza de archivos viejos
-- ✅ Purgar archivos completados hace más de X días (ej: 365 días)
+- ✅ Agregar lógica de limpieza de archivos
 - ✅ Purgar archivos de certificados ya vencidos (`expiration_date < now()`)
+- ✅ Purgar archivos de certificados revocados/marcados como DELETE
 - ✅ Actualizar `file_managers` marcando como `DELETED`
 - ✅ Mantener auditoría (logs detallados)
 - ✅ Mantener referencia de llave privada (NO eliminar)
@@ -198,16 +198,16 @@ FileManager::create([
 **Pseudocódigo:**
 ```php
 // Criterios de purga:
-// 1. Certificados completados hace más de 365 días
-// 2. Certificados ya vencidos (expiration_date < now())
+// 1. Certificados ya vencidos (expiration_date < now())
+// 2. Certificados revocados o marcados como DELETE (request_status = 'DELETE')
 
 $candidates = ViafirmaCertificateRequestState::query()
     ->where('internal_state', InternalState::COMPLETED->value)
-    ->where(function ($q) {
-        $q->where('assembled_at', '<', now()->subDays(365))
-          ->orWhereHas('certificateRequest', function ($q2) {
-              $q2->where('expiration_date', '<', now());
-          });
+    ->whereHas('certificateRequest', function ($q) {
+        $q->where(function ($q2) {
+            $q2->where('expiration_date', '<', now())
+               ->orWhere('request_status', 'DELETE');
+        });
     })
     ->get();
 
@@ -300,12 +300,87 @@ Referencia de llave: file_managers con document_type = 'PRIVATE_KEY', file_path 
 ## 8. Próximos Pasos
 
 1. ✅ Documentar plan (este archivo)
-2. ⏳ Implementar cambios en AssembleP12Job.php
-3. ⏳ Implementar cambios en DownloadP7bJob.php
-4. ⏳ Actualizar PurgeExpiredKeysJob.php
-5. ⏳ Migrar datos existentes
-6. ⏳ Validar integridad
-7. ⏳ Desplegar a producción
+2. ✅ Implementar cambios en AssembleP12Job.php
+3. ✅ Implementar cambios en DownloadP7bJob.php
+4. ✅ Actualizar PurgeExpiredKeysJob.php
+5. ✅ Crear script de migración (MigrateCertificateFilesToBasePath.php)
+6. ⏳ Ejecutar migración de datos existentes
+7. ⏳ Validar integridad
+8. ⏳ Desplegar a producción
+
+## 9. Ejecución del Script de Migración
+
+### Modo DRY-RUN (Simular sin cambios)
+```bash
+php artisan migrate:certificate-files-to-base-path --dry-run
+```
+
+### Modo REAL (Ejecutar migración)
+```bash
+php artisan migrate:certificate-files-to-base-path
+```
+
+### Rollback (Revertir migración)
+```bash
+php artisan migrate:certificate-files-to-base-path --rollback
+```
+
+### Salida esperada:
+```
+═══════════════════════════════════════════════════════════
+Migración de Archivos de Certificados a Base Path
+═══════════════════════════════════════════════════════════
+
+📋 Fase 1: Validación...
+  ✓ Validando certificados con base_path configurado...
+  ✓ Todos los certificados tienen base_path configurado
+
+📦 Fase 2: Migrando archivos...
+  Procesando 42 certificados...
+  ✓ P7B migrado: viafirma/p7b/ABC123.p7b → companies/1/2026/06/9010914032/637_W4CZ1SDML.p7b
+  ✓ P12 comprimido y migrado: viafirma/p12/ABC123.p12 → companies/1/2026/06/9010914032/637_W4CZ1SDML.zip
+
+📝 Fase 3: Actualizando file_managers...
+
+═══════════════════════════════════════════════════════════
+📊 Resumen de Migración
+═══════════════════════════════════════════════════════════
+  ✓ Certificados migrados: 42
+  ✗ Errores: 0
+
+✅ Migración completada exitosamente
+```
+
+## 10. Verificación Post-Migración
+
+Después de ejecutar la migración, verificar:
+
+1. **Integridad de archivos:**
+   ```bash
+   # Verificar que los archivos existen en las nuevas rutas
+   ls -la storage/companies/*/2026/*/*/
+   ```
+
+2. **Registros en file_managers:**
+   ```sql
+   SELECT * FROM file_managers 
+   WHERE document_type IN ('CERTIFICATE', 'P7B_CERTIFICATE', 'PRIVATE_KEY')
+   ORDER BY created_at DESC LIMIT 10;
+   ```
+
+3. **Rutas en viafirma_certificate_request_states:**
+   ```sql
+   SELECT id, p7b_storage_path, p12_storage_path 
+   FROM viafirma_certificate_request_states 
+   WHERE internal_state = 'COMPLETED' LIMIT 10;
+   ```
+
+4. **Limpiar archivos antiguos (opcional):**
+   ```bash
+   # Después de verificar que todo está bien
+   rm -rf storage/viafirma/p7b/
+   rm -rf storage/viafirma/p12/
+   ```
 
 ---
 

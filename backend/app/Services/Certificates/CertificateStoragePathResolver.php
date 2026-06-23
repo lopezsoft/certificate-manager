@@ -10,7 +10,7 @@ namespace App\Services\Certificates;
  * Compone rutas con el formato:
  *   {prefix}/certificates/{sub}/{filename}
  *
- * donde {sub} se define por proveedor/artefacto en config/certificates.php
+ * donde {sub} se define por proveedor/artefacto en config/certificate.php
  * (clave "{provider}_{artifact}", p.ej. "viafirma_p12"). Centraliza la lógica
  * para que jobs y use-cases no repitan literales (SOLID: una sola responsabilidad).
  */
@@ -19,21 +19,21 @@ final class CertificateStoragePathResolver
     /** Disco de Laravel configurado para certificados (s3 | local | ...). */
     public function disk(): string
     {
-        return (string) config('certificates.storage.disk', 'local');
+        return (string) config('certificate.storage.disk', 'local');
     }
 
     /** Disco del proveedor legacy (otro proveedor). Default histórico: 'attachment'. */
     public function legacyDisk(): string
     {
-        return (string) config('certificates.storage.legacy_disk', 'attachment');
+        return (string) config('certificate.storage.legacy_disk', 'attachment');
     }
 
     /** Directorio (sin nombre de archivo) para un proveedor/artefacto. */
     public function directory(string $provider, string $artifact): string
     {
-        $prefix = trim((string) config('certificates.storage.prefix', 'local'), '/');
+        $prefix = trim((string) config('certificate.storage.prefix', 'local'), '/');
         $sub    = trim((string) config(
-            "certificates.storage.paths.{$provider}_{$artifact}",
+            "certificate.storage.paths.{$provider}_{$artifact}",
             "{$provider}/{$artifact}",
         ), '/');
 
