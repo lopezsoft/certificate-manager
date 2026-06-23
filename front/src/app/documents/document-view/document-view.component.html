@@ -472,12 +472,17 @@
           <div class="alert alert-info d-flex align-items-center">
             <i class="fas fa-info-circle me-2"></i>
             <div>
-              <strong>Estado:</strong> {{ (documentStatusDescription[issuanceStatus.status.toUpperCase()] || issuanceStatus.status) | uppercase }}
+              <strong>Estado:</strong> {{
+              (documentStatusDescription[issuanceStatus.status.toUpperCase()] ||
+              issuanceStatus.status) | uppercase }}
               @if (issuanceStatus.provider) {
-              <span> | Proveedor: {{ issuanceStatus.provider | uppercase }}</span>
+              <span> | Proveedor: {{ issuanceStatus.provider | uppercase
+                }}</span>
               }
               @if (viafirmaStatus?.internal_state) {
-              <span> | Trámite Viafirma: {{ (viafirmaInternalStateDescription[viafirmaStatus.internal_state] || viafirmaStatus.internal_state) | uppercase }}</span>
+              <span> | Trámite Viafirma: {{
+                (viafirmaInternalStateDescription[viafirmaStatus.internal_state]
+                || viafirmaStatus.internal_state) | uppercase }}</span>
               }
             </div>
           </div>
@@ -573,15 +578,18 @@
   [showFooter]="false"
   size="md"
   (onClose)="closePinModal()">
-  
+
   <div class="px-2 py-1">
-    <p class="text-muted mb-3">El certificado fue re-descargado y se generó un nuevo PIN de acceso:</p>
+    <p class="text-muted mb-3">El certificado fue re-descargado y se generó un
+      nuevo PIN de acceso:</p>
     <div class="d-flex align-items-center justify-content-between p-3 mb-3"
       style="background-color:#f8f9fa; border:2px dashed #28a745; border-radius:8px;">
-      <span class="fs-4 fw-bold text-success font-monospace text-break" style="letter-spacing:2px;">
+      <span class="fs-4 fw-bold text-success font-monospace text-break"
+        style="letter-spacing:2px;">
         {{ redownloadResult?.pin }}
       </span>
-      <button class="btn btn-outline-success ms-3 text-nowrap" (click)="copyPin()" [disabled]="pinCopied">
+      <button class="btn btn-outline-success ms-3 text-nowrap"
+        (click)="copyPin()" [disabled]="pinCopied">
         @if (pinCopied) {
         <i class="fas fa-check"></i> ¡Copiado!
         } @else {
@@ -595,10 +603,12 @@
       El PIN anterior ha quedado inválido.
     </div>
     <div class="d-flex justify-content-between align-items-center mt-4">
-      <button class="btn custom-button btn-primary btn-sm" (click)="onDownloadP12()">
+      <button class="btn border custom-button fas-fa-save"
+        (click)="onDownloadP12()">
         <i class="fas fa-download me-1"></i> Descargar P12
       </button>
-      <button class="btn btn-outline-secondary btn-sm" (click)="closePinModal()" [disabled]="!pinCopied"
+      <button class="btn custom-button border fas-fa-close"
+        (click)="closePinModal()" [disabled]="pinCopied"
         [title]="pinCopied ? 'Cerrar' : 'Debe copiar el PIN antes de cerrar'">
         <i class="fas fa-times me-1"></i>
         {{ pinCopied ? 'Cerrar' : 'Copie el PIN para cerrar' }}
@@ -616,20 +626,23 @@
   [showFooter]="false"
   size="md"
   (onClose)="revokeLoading ? null : closeRevokeModal()">
-  
+
   <div class="px-2 py-1">
     <div class="alert alert-warning py-2 mb-3">
       <i class="fas fa-exclamation-triangle me-1"></i>
       <strong>¡Advertencia!</strong><br>
-      Esta acción es destructiva e irreversible. El certificado digital quedará invalidado inmediatamente.
+      Esta acción es destructiva e irreversible. El certificado digital quedará
+      invalidado inmediatamente.
     </div>
     <div class="form-group mb-3">
       <label>
         <span class="asterisk text-danger">*</span>
         Código de Revocación
       </label>
-      <input class="form-control" type="text" [(ngModel)]="revocationCode" placeholder="Ingrese el código enviado a su correo" autocomplete="off">
-      <small class="text-muted d-block mt-1">Este código fue enviado al correo electrónico al momento de la emisión.</small>
+      <input class="form-control" type="text" [(ngModel)]="revocationCode"
+        placeholder="Ingrese el código enviado a su correo" autocomplete="off">
+      <small class="text-muted d-block mt-1">Este código fue enviado al correo
+        electrónico al momento de la emisión.</small>
     </div>
     <div class="form-group mb-4">
       <label>
@@ -643,10 +656,12 @@
       </ng-select>
     </div>
     <div class="d-flex justify-content-end gap-2 mt-2">
-      <button class="btn custom-button border fas-fa-close" (click)="closeRevokeModal()" [disabled]="revokeLoading">
+      <button class="btn custom-button border fas-fa-close"
+        (click)="closeRevokeModal()" [disabled]="revokeLoading">
         <i class="fas fa-times me-1"></i> Cancelar
       </button>
-      <button class="btn btn-danger custom-button" (click)="onRevokeSubmit()" [disabled]="revokeLoading || !revocationCode">
+      <button class="btn btn-danger custom-button" (click)="onRevokeSubmit()"
+        [disabled]="revokeLoading || !revocationCode">
         @if (revokeLoading) {
         <span class="spinner-border spinner-border-sm me-1"></span>
         } @else {

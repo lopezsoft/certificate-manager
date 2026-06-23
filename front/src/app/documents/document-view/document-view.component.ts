@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, ViewChild, Output, EventEmitter } from '@angular/core';
+import { Component, ElementRef, OnDestroy, ViewChild, Output, EventEmitter, inject } from '@angular/core';
 import { animate, style, transition, trigger } from "@angular/animations";
 import { ShippingService } from "../../services/shipping.service";
 import { FormatsService } from "../../services/formats.service";
@@ -21,6 +21,7 @@ import TokenService from "../../utils/token.service";
 import { Subject, interval, Subscription } from "rxjs";
 import { takeUntil, switchMap } from "rxjs/operators";
 import { ViafirmaInternalStateEnum, ViafirmaInternalStateDescription } from "../../common/enums/ViafirmaInternalState";
+import { IssuanceProviderService } from 'app/services/issuance-provider.service';
 
 @Component({
 	selector: 'app-document-view',
@@ -99,7 +100,7 @@ export class DocumentViewComponent implements OnDestroy {
 	private viafirmaPolling$: Subscription | null = null;
 	private destroy$ = new Subject<void>();
 	protected readonly isAdmin: boolean;
-
+	protected issuanceProvider: IssuanceProviderService = inject(IssuanceProviderService);
 	constructor(
 		public shipping: ShippingService,
 		public format: FormatsService,
@@ -124,7 +125,9 @@ export class DocumentViewComponent implements OnDestroy {
 		this.issuanceStatus = null;
 		this.issuanceDownloadMeta = null;
 		this.stopViafirmaPolling();
-		if (this.currentShipping?.request_status === this.DocumentStatusEnum.PROCESSING) {
+		const curr = this.currentShipping;
+		if ((curr.request_status === this.DocumentStatusEnum.PROCESSING
+			|| curr.request_status === this.DocumentStatusEnum.PROCESSED)) {
 			this.onCheckIssuanceStatus();
 		}
 	}
@@ -571,14 +574,52 @@ export class DocumentViewComponent implements OnDestroy {
 	}
 
 	/**
-	 * Copia el PIN al portapapeles.
+	 * Copia el PIN al portapapeles usando fallback a textarea si es necesario.
 	 */
 	protected copyPin(): void {
 		if (!this.redownloadResult?.pin) return;
-		navigator.clipboard.writeText(this.redownloadResult.pin).then(() => {
-			this.pinCopied = true;
-			setTimeout(() => this.pinCopied = false, 3000);
-		});
+
+		// Intentar usar Clipboard API (HTTPS requerido)
+		if (navigator?.clipboard?.writeText) {
+			navigator.clipboard.writeText(this.redownloadResult.pin).then(() => {
+				this.pinCopied = true;
+				this.msg.toastMessage('Éxito', 'PIN copiado al portapapeles');
+				setTimeout(() => this.pinCopied = false, 3000);
+			}).catch((err) => {
+				this.debug.error('DocumentViewComponent', 'Error al copiar PIN con Clipboard API', err);
+				this.copyPinFallback();
+			});
+		} else {
+			// Fallback para navegadores sin soporte o contexto no seguro
+			this.copyPinFallback();
+		}
+	}
+
+	/**
+	 * Fallback para copiar PIN usando textarea (compatible con todos los navegadores).
+	 */
+	private copyPinFallback(): void {
+		try {
+			const textarea = document.createElement('textarea');
+			textarea.value = this.redownloadResult.pin;
+			textarea.style.position = 'fixed';
+			textarea.style.opacity = '0';
+			document.body.appendChild(textarea);
+			textarea.select();
+			const success = document.execCommand('copy');
+			document.body.removeChild(textarea);
+
+			if (success) {
+				this.pinCopied = true;
+				this.msg.toastMessage('Éxito', 'PIN copiado al portapapeles');
+				setTimeout(() => this.pinCopied = false, 3000);
+			} else {
+				this.msg.errorMessage('Error', 'No se pudo copiar el PIN. Intente copiar manualmente.');
+			}
+		} catch (err) {
+			this.debug.error('DocumentViewComponent', 'Error en fallback de copia', err);
+			this.msg.errorMessage('Error', 'No se pudo copiar el PIN. Intente copiar manualmente.');
+		}
 	}
 
 	/**

@@ -6,6 +6,7 @@ namespace App\Modules\Viafirma\Application\UseCases;
 
 use App\Enums\CertificateRequestStatusEnum;
 use App\Models\ChangeHistory;
+use App\Models\FileManager;
 use App\Modules\Viafirma\Application\DTOs\RedownloadResultDto;
 use App\Modules\Viafirma\Domain\Contracts\CryptoServiceContract;
 use App\Modules\Viafirma\Domain\Contracts\KeyVault;
@@ -41,7 +42,8 @@ use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
  *  12. Actualizar ViafirmaCertificateRequestState → ASSEMBLED
  *  13. Registrar en viafirma_status_history
  *  14. Registrar en change_histories
- *  15. Retornar RedownloadResultDto { pin, download_url, expires_at, viafirma_id, ... }
+ *  15. Guardar P12 en file_managers (crear o actualizar)
+ *  16. Retornar RedownloadResultDto { pin, download_url, expires_at, viafirma_id, ... }
  *
  * NOTA: Tras la normalización, los campos de estado se encuentran en
  * $entity->state (ViafirmaCertificateRequestState).
@@ -135,20 +137,44 @@ final class RedownloadCertificateUseCase
         // ── 8.bis Extraer validez real (validFrom / validTo) del P12 reensamblado ──
         $validity = CertificateValidatorService::parseValidity($p12Binary, $newPin);
 
+        $cr = $entity->certificateRequest;
+
         // ── 9. Guardar P12 en storage (sobrescribir) ─────────────────────────
-        $p12Filename = $this->pathResolver->path('viafirma', 'p12', "{$entity->certificate_request_id}_{$entity->cod_request}.p12");
+        // Usar base_path de certificate_requests como base para guardar el ZIP
+        if (empty($cr->base_path)) {
+            throw new ViafirmaException(
+                'El base_path de la solicitud de certificado no está configurado.',
+                422,
+            );
+        }
+        
+        $basePath = $cr->base_path;
+        $p12Filename = "{$entity->certificate_request_id}_{$entity->cod_request}.p12";
+        $zipFilename = $basePath . '/' . "{$entity->certificate_request_id}_{$entity->cod_request}.zip";
+
+        // Validar y crear el directorio si no existe
+        if (!Storage::disk($disk)->exists($basePath)) {
+            Storage::disk($disk)->makeDirectory($basePath, 0755, true);
+        }
 
         // Delete the old file if the path has changed (e.g. migration to new naming convention)
-        if ($state->p12_storage_path && $state->p12_storage_path !== $p12Filename) {
+        if ($state->p12_storage_path && $state->p12_storage_path !== $zipFilename) {
             Storage::disk($disk)->delete($state->p12_storage_path);
         }
 
-        Storage::disk($disk)->put($p12Filename, $p12Binary);
+        // Crear archivo ZIP con el P12
+        $zip = new \ZipArchive();
+        $zipPath = Storage::path($zipFilename);
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+            $zip->addFromString($p12Filename, $p12Binary);
+            $zip->close();
+        }
+        
         unset($p12Binary);
 
         $this->logger->info('viafirma.redownload.p12_saved', [
             'viafirma_id' => $entity->id,
-            'path'        => $p12Filename,
+            'path'        => $zipFilename,
         ]);
 
         // ── 10. Destruir PIN anterior del vault ──────────────────────────────
@@ -175,9 +201,11 @@ final class RedownloadCertificateUseCase
         $previousState = $state->internal_state;
 
         $state->p7b_storage_path   = $p7bPath;
-        $state->p12_storage_path   = $p12Filename;
+        $state->p12_storage_path   = $zipFilename;
         $state->p12_password_ref   = $newPinRef;
         $state->internal_state     = InternalState::ASSEMBLED;
+        $state->remote_status      = $statusResult->status->value;
+        $state->downloaded_at      = now();
         $state->assembled_at       = now();
         $state->last_error_code    = null;
         $state->last_error_message = null;
@@ -193,7 +221,7 @@ final class RedownloadCertificateUseCase
                 'action'         => 'admin_redownload',
                 'admin_user_id'  => $adminUserId,
                 'p7b_path'       => $p7bPath,
-                'p12_path'       => $p12Filename,
+                'p12_path'       => $zipFilename,
                 'remote_status'  => $statusResult->status->value,
             ],
             'attempt_number' => $state->poll_attempts,
@@ -201,7 +229,6 @@ final class RedownloadCertificateUseCase
         ]);
 
         // ── 14. Actualizar ciclo de vida en certificate_requests + change_histories ──
-        $cr = $entity->certificateRequest;
         if ($cr) {
             // certificate_requests es la fuente de verdad del ciclo de vida y vencimientos.
             $life = (int) ($cr->life ?: 1);
@@ -209,6 +236,7 @@ final class RedownloadCertificateUseCase
             $cr->issued_at       = $validity['validFrom'];
             $cr->cert_valid_to   = $validity['validTo'];
             $cr->expiration_date = $validity['validFrom']->addYears($life);
+            $cr->pin             = $newPin;
             $cr->save();
 
             ChangeHistory::create([
@@ -221,13 +249,42 @@ final class RedownloadCertificateUseCase
             ]);
         }
 
+        // ── 15. Guardar P12 en file_managers (crear o actualizar) ────────────
+        try {
+            $fileSize = Storage::disk($disk)->size($zipFilename);
+            $lastModified = date('Y-m-d H:i:s', Storage::disk($disk)->lastModified($zipFilename));
+        } catch (\Throwable $e) {
+            $this->logger->warning('viafirma.redownload.file_metadata_error', [
+                'viafirma_id' => $entity->id,
+                'zip_path'    => $zipFilename,
+                'error'       => $e->getMessage(),
+            ]);
+            $fileSize = 0;
+            $lastModified = date('Y-m-d H:i:s');
+        }
+
+        FileManager::updateOrCreate(
+            [
+                'certificate_request_id' => $certificateRequestId,
+            ],
+            [
+                'file_name'              => basename($zipFilename),
+                'extension_file'         => 'zip',
+                'mime_type'              => 'application/zip',
+                'file_size'              => $fileSize,
+                'last_modified'          => $lastModified,
+                'status'                 => 'COMPLETED',
+                'document_type'          => 'CERTIFICATE',
+            ]
+        );
+
         $this->logger->info('viafirma.redownload.success', [
             'viafirma_id'   => $entity->id,
             'remote_status' => $statusResult->status->value,
-            'p12_path'      => $p12Filename,
+            'zip_path'      => $zipFilename,
         ]);
 
-        // ── 15. Retornar resultado ────────────────────────────────────────────
+        // ── 16. Retornar resultado ────────────────────────────────────────────
         $downloadUrl = route('v1.certificate-request.issuance.download.file', ['id' => $certificateRequestId]);
 
         return new RedownloadResultDto(
