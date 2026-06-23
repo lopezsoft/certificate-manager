@@ -20,6 +20,7 @@ return [
     'client_id'     => env('VIAFIRMA_CLIENT_ID'),
     'client_secret' => env('VIAFIRMA_CLIENT_SECRET'),
     'ra_code'       => env('VIAFIRMA_RA_CODE'),
+    'sandbox_mode'  => env('VIAFIRMA_SANDBOX_MODE', false),
     'cod_profile_corporate' => env('VIAFIRMA_COD_PROFILE_CORPORATE'),
     'cod_profile_individual' => env('VIAFIRMA_COD_PROFILE_INDIVIDUAL'),
 

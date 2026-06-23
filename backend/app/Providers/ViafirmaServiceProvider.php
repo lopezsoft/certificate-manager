@@ -109,7 +109,13 @@ final class ViafirmaServiceProvider extends ServiceProvider
                 timeout: (int) config('viafirma.timeout', 30),
             );
         });
-        $this->app->bind(ViafirmaClient::class, GuzzleViafirmaClient::class);
+
+        $this->app->bind(ViafirmaClient::class, function ($app) {
+            if (config('viafirma.sandbox_mode', false)) {
+                return $app->make(\App\Modules\Viafirma\Infrastructure\Http\MockViafirmaClient::class);
+            }
+            return $app->make(GuzzleViafirmaClient::class);
+        });
 
         // ---- Repository ---------------------------------------------------------
         $this->app->bind(
