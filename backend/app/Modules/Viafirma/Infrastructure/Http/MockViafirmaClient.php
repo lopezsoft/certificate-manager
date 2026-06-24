@@ -46,19 +46,19 @@ class MockViafirmaClient implements ViafirmaClient
     public function submitCsr(SubmitCsrInputDto $input): SubmitCsrResultDto
     {
         $codRequest = 'MOCK-REQ-' . strtoupper(uniqid());
-        $publicId = 'MOCK-PUB-' . strtoupper(uniqid());
+        $publicId   = 'MOCK-PUB-' . strtoupper(uniqid());
 
         // Inicializamos el estado simulado en Cache.
-        // Empezará en pending y luego pasará a status simulado.
+        // Empezará en RUES_CHECK (progressing) y avanzará en polls.
         Cache::put("mock_viafirma_status_{$codRequest}", [
-            'polls' => 0,
+            'polls'    => 0,
             'publicId' => $publicId,
         ], now()->addHours(2));
 
         return new SubmitCsrResultDto(
-            codRequest: $codRequest,
-            publicId: $publicId,
-            initialStatus: RemoteStatus::PENDING->value,
+            codRequest:    $codRequest,
+            publicId:      $publicId,
+            initialStatus: RemoteStatus::RUES_CHECK->value, // estado inicial válido (progressing)
             raw: [
                 'codRequest' => $codRequest,
                 'publicId'   => $publicId,
@@ -84,18 +84,18 @@ class MockViafirmaClient implements ViafirmaClient
         $state['polls']++;
         Cache::put($cacheKey, $state, now()->addHours(2));
 
-        // Simulamos un comportamiento de demora:
-        // Poll 1: pending
-        // Poll 2: generate_request
-        // Poll 3+: generated_not_downloaded (LISTO!)
+        // Simulamos demora realista usando estados válidos del enum RemoteStatus:
+        // Poll 1 -> rues_check  (progressing)
+        // Poll 2 -> inProcess   (progressing)
+        // Poll 3+ -> Generated_Not_Downloaded (listo!)
         $status = match (true) {
-            $state['polls'] === 1 => RemoteStatus::PENDING,
-            $state['polls'] === 2 => RemoteStatus::GENERATE_REQUEST,
-            default => RemoteStatus::GENERATED_NOT_DOWNLOADED,
+            $state['polls'] === 1 => RemoteStatus::RUES_CHECK,
+            $state['polls'] === 2 => RemoteStatus::IN_PROCESS,
+            default              => RemoteStatus::GENERATED_NOT_DOWNLOADED,
         };
 
         return new StatusResultDto(
-            status: $status,
+            status:    $status,
             codRequest: $codRequest,
             raw: ['mock' => true, 'polls' => $state['polls'], 'simulated_status' => $status->value]
         );

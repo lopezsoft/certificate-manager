@@ -294,12 +294,12 @@ final class IssueCertificateUseCase
             );
         }
 
-        // FE_PN — API v3.4.53: sin O, OU, L, ST en el CSR
+        // FE_PN — Documentación §3.2: 9 atributos incluyendo ST y L
         return new CsrInputDto(
             profile:          $profile,
             country:          $countryCode,
-            state:            null,
-            locality:         null,
+            state:            mb_strtoupper($department),
+            locality:         mb_strtoupper($cityName),
             street:           $street,
             serialNumber:     (string) ($cr->dni),
             email:            (string) ($cr->email ?? $company->email ?? $cmd->emailCertificate),
