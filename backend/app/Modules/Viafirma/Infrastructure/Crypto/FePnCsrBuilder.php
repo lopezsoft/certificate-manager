@@ -32,6 +32,7 @@ final class FePnCsrBuilder extends AbstractOpenSslCsrBuilder
             );
         }
 
+        // ── Campos obligatorios según §3.2 ──────────────────────────────────
         $this->assertNotBlank($input->country,      'C');
         $this->assertNotBlank($input->state,        'ST (departamento)');
         $this->assertNotBlank($input->locality,     'L (ciudad)');
@@ -41,18 +42,25 @@ final class FePnCsrBuilder extends AbstractOpenSslCsrBuilder
         $this->assertNotBlank($input->givenName,    'GN');
         $this->assertNotBlank($input->surname,      'SN');
 
-        // FE-PN no admite atributos de organización
-        if ($input->organization !== null && trim($input->organization) !== '') {
-            $input->organization = null; // Se ignora el valor, no se lanza excepción
-        }
-        if ($input->organizationUnit !== null && trim($input->organizationUnit) !== '') {
-            $input->organizationUnit = null; // Se ignora el valor, no se lanza excepción
+        // ── Validación de formato ────────────────────────────────────────────
+        // AJUSTE 1: El country code DEBE ser ISO 3166-1 alpha-2 (2 letras).
+        // No se silencia ni se sobreescribe el valor — el dato de origen es responsable.
+        if (strlen(trim($input->country)) !== 2) {
+            throw new CsrBuildException(
+                "El campo 'C' debe ser un código ISO 3166-1 alpha-2 de exactamente 2 letras; recibido: '{$input->country}'."
+            );
         }
 
-        if (strlen($input->country) !== 2) {
-            $input->country = 'CO';
-        }
+        // AJUSTE 2: O (organización) es ignorado silenciosamente si viene informado.
+        // FE-PN no lleva O en el DN; no se lanza excepción para no bloquear flujos
+        // que reutilizan el mismo DTO en ambos perfiles.
+        // (No hay acción: simplemente no se incluye en dn())
+
+        // AJUSTE 3: OU (unidad organizativa) — mismo criterio que O.
+        // Ignorado silenciosamente; el dn() lo omite por diseño.
+        // (No hay acción: simplemente no se incluye en dn())
     }
+
 
     protected function dn(CsrInputDto $input): array
     {
