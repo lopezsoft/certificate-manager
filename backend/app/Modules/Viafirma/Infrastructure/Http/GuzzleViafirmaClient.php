@@ -306,7 +306,37 @@ final class GuzzleViafirmaClient implements ViafirmaClient
         return $link;
     }
 
-    // ── Internals ──────────────────────────────────────────────────────────
+    public function getRevocationCode(string $codRequest): string
+    {
+        if ($codRequest === '') {
+            throw new ViafirmaClientException('codRequest no puede ser vacío.');
+        }
+
+        $url = $this->urlFor('/request/' . rawurlencode($codRequest) . '/revocationCode');
+
+        $this->logger->info('viafirma.revocation_code.request', [
+            'codRequest' => $codRequest,
+            'url'        => $url,
+        ]);
+
+        $decoded = $this->send('GET', $url);
+
+        $revocationCode = (string) ($decoded['revocationCode'] ?? '');
+        if ($revocationCode === '') {
+            throw new ViafirmaClientException(
+                "Respuesta de getRevocationCode sin campo `revocationCode` para codRequest={$codRequest}: " . json_encode($decoded)
+            );
+        }
+
+        $this->logger->info('viafirma.revocation_code.response', [
+            'codRequest'     => $codRequest,
+            'revocationCode' => $revocationCode,
+        ]);
+
+        return $revocationCode;
+    }
+
+    // ── Internals ────────────────────────────────────────────────────────────
 
     /**
      * @param array<string,string>  $queryParams

@@ -85,5 +85,17 @@ interface ViafirmaClient
      * @throws \App\Modules\Viafirma\Domain\Exceptions\ViafirmaClientException
      */
     public function getAccreditationLink(string $codRequest): string;
+
+    /**
+     * GET /request/{codRequest}/revocationCode
+     *
+     * Obtiene el código de revocación asociado a una solicitud.
+     * Solo disponible cuando el status es inProcess o superior (idealmente en Generated_Not_Downloaded).
+     *
+     * Respuesta 200: { "revocationCode": "string", ... }
+     *
+     * @throws \App\Modules\Viafirma\Domain\Exceptions\ViafirmaClientException
+     */
+    public function getRevocationCode(string $codRequest): string;
 }
 

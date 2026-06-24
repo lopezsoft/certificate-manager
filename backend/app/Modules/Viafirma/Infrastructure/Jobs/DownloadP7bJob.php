@@ -86,6 +86,9 @@ final class DownloadP7bJob implements ShouldQueue, ShouldBeUnique
         try {
             // API v3.4.53: downloadCertificateServlet?req={publicId}
             $p7bBinary = $client->downloadP7b($entity->public_id);
+            
+            // Obtener el código de revocación cuando el trámite finaliza su ciclo de vida remoto
+            $revocationCode = $client->getRevocationCode($entity->cod_request);
         } catch (TransientHttpException $e) {
             $logger->warning('viafirma.download.transient_error', [
                 'id'      => $entity->id,
@@ -110,10 +113,14 @@ final class DownloadP7bJob implements ShouldQueue, ShouldBeUnique
 
         Storage::disk($disk)->put($filename, $p7bBinary);
 
-        $entity->p7b_storage_path = $filename;
-        $entity->internal_state   = InternalState::DOWNLOADED;
-        $entity->downloaded_at    = now();
-        $entity->save();
+        $state = $entity->state;
+        if ($state) {
+            $state->p7b_storage_path = $filename;
+            $state->internal_state   = InternalState::DOWNLOADED;
+            $state->downloaded_at    = now();
+            $state->revocation_request_code = $revocationCode;
+            $state->save();
+        }
 
         // Registrar en change_histories: trámite sigue en PROCESSING (descarga lista)
         ChangeHistory::create([

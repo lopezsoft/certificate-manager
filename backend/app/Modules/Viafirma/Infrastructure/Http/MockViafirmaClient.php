@@ -119,4 +119,9 @@ class MockViafirmaClient implements ViafirmaClient
     {
         return 'https://sandbox.viafirma.com/accreditation/success?req=' . $codRequest;
     }
+
+    public function getRevocationCode(string $codRequest): string
+    {
+        return 'MOCK-REV-CODE-' . strtoupper(substr(md5($codRequest), 0, 8));
+    }
 }

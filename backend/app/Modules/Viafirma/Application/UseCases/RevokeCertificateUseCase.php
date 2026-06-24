@@ -58,10 +58,11 @@ final class RevokeCertificateUseCase
 
         // ── 3-6) Persistencia en transacción ─────────────────────────────
         return DB::transaction(function () use ($entity, $dto, $newRevocationCode) {
-            $previousState = $entity->internal_state;
+            $state = $entity->state;
+            $previousState = $state->internal_state;
 
-            // Actualizar entidad Viafirma
-            $entity->update([
+            // Actualizar entidad de estado Viafirma
+            $state->update([
                 'internal_state'           => InternalState::REVOKED,
                 'revocation_request_code'  => $newRevocationCode,
                 'revoked_at'               => now(),

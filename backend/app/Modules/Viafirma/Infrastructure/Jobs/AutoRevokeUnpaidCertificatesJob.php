@@ -63,15 +63,17 @@ final class AutoRevokeUnpaidCertificatesJob implements ShouldQueue
                 continue;
             }
 
-            if (empty($viafirmaEntity->cod_request)) {
-                Log::warning('viafirma.auto_revoke.missing_cod_request', ['cr_id' => $cr->id]);
+            $revocationCode = $viafirmaEntity->state?->revocation_request_code;
+
+            if (empty($revocationCode)) {
+                Log::warning('viafirma.auto_revoke.missing_revocation_code', ['cr_id' => $cr->id]);
                 continue;
             }
 
             try {
                 $dto = new RevokeInputDto(
                     viafirmaCertificateRequestId: $viafirmaEntity->id,
-                    revokingCode:                 $viafirmaEntity->cod_request,
+                    revokingCode:                 $revocationCode,
                     revocationReason:             RevocationReason::CESSATION_OF_OPERATION,
                     revokedByUserId:              null
                 );
