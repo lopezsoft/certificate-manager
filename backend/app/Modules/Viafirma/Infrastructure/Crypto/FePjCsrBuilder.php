@@ -39,9 +39,8 @@ final class FePjCsrBuilder extends AbstractOpenSslCsrBuilder
         $this->assertNotBlank($input->givenName, 'GN');
         $this->assertNotBlank($input->surname, 'SN');
 
-        if (strlen($input->country) !== 2) {
-            throw new CsrBuildException("El country code 'C' debe ser ISO 3166-1 alpha-2 (2 letras).");
-        }
+        // Validación de formato country delegada al AbstractOpenSslCsrBuilder::assertValidCountryAlpha2()
+        // que se ejecuta en build() antes de llegar aquí.
     }
 
     protected function dn(CsrInputDto $input): array

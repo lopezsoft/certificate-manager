@@ -43,6 +43,10 @@ abstract class AbstractOpenSslCsrBuilder implements CsrBuilderStrategy
 
     public function build(CsrInputDto $input, string $privateKeyPem): CsrResult
     {
+        // Validación de país centralizada — se ejecuta ANTES del validate() del perfil
+        // para que AMBOS builders (FE-PJ y FE-PN) la reciban sin duplicar código.
+        $this->assertValidCountryAlpha2($input->country);
+
         $this->validate($input);
 
         $dn = $this->dn($input);
@@ -125,6 +129,41 @@ abstract class AbstractOpenSslCsrBuilder implements CsrBuilderStrategy
         if ($value === null || trim($value) === '') {
             throw new CsrBuildException("El campo CSR '{$field}' es obligatorio para este perfil.");
         }
+    }
+
+    /**
+     * Valida que el código de país sea ISO 3166-1 alpha-2 (exactamente 2 letras).
+     *
+     * Si se recibe un alpha-3 conocido (ej. 'COL', 'USA') lanza excepción con
+     * sugerencia del alpha-2 correcto, facilitando la corrección en el origen.
+     * Centralizado aquí para que FE-PJ y FE-PN lo hereden sin duplicar.
+     *
+     * @throws CsrBuildException
+     */
+    protected function assertValidCountryAlpha2(string $country): void
+    {
+        $code = strtoupper(trim($country));
+
+        if (strlen($code) === 2) {
+            return; // Formato correcto
+        }
+
+        // Mapa de alpha-3 más comunes → alpha-2, para dar sugerencia en el error
+        $alpha3Map = [
+            'COL' => 'CO', 'USA' => 'US', 'MEX' => 'MX', 'ESP' => 'ES',
+            'ARG' => 'AR', 'CHL' => 'CL', 'PER' => 'PE', 'ECU' => 'EC',
+            'VEN' => 'VE', 'BOL' => 'BO', 'PRY' => 'PY', 'URY' => 'UY',
+            'BRA' => 'BR', 'PAN' => 'PA', 'CRI' => 'CR', 'GTM' => 'GT',
+        ];
+
+        $suggestion = isset($alpha3Map[$code])
+            ? " ¿Quiso decir '{$alpha3Map[$code]}'? (ISO 3166-1 alpha-2)"
+            : '';
+
+        throw new CsrBuildException(
+            "El campo 'C' (país) debe ser ISO 3166-1 alpha-2 (2 letras); "
+            . "recibido: '{$country}'.{$suggestion}"
+        );
     }
 }
 

@@ -42,23 +42,8 @@ final class FePnCsrBuilder extends AbstractOpenSslCsrBuilder
         $this->assertNotBlank($input->givenName,    'GN');
         $this->assertNotBlank($input->surname,      'SN');
 
-        // ── Validación de formato ────────────────────────────────────────────
-        // AJUSTE 1: El country code DEBE ser ISO 3166-1 alpha-2 (2 letras).
-        // No se silencia ni se sobreescribe el valor — el dato de origen es responsable.
-        if (strlen(trim($input->country)) !== 2) {
-            throw new CsrBuildException(
-                "El campo 'C' debe ser un código ISO 3166-1 alpha-2 de exactamente 2 letras; recibido: '{$input->country}'."
-            );
-        }
-
-        // AJUSTE 2: O (organización) es ignorado silenciosamente si viene informado.
-        // FE-PN no lleva O en el DN; no se lanza excepción para no bloquear flujos
-        // que reutilizan el mismo DTO en ambos perfiles.
-        // (No hay acción: simplemente no se incluye en dn())
-
-        // AJUSTE 3: OU (unidad organizativa) — mismo criterio que O.
-        // Ignorado silenciosamente; el dn() lo omite por diseño.
-        // (No hay acción: simplemente no se incluye en dn())
+        // Validación de formato country delegada al AbstractOpenSslCsrBuilder::assertValidCountryAlpha2()
+        // que se ejecuta en build() antes de llegar aquí.
     }
 
 
