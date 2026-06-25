@@ -6,7 +6,7 @@ namespace App\Http\Controllers;
  * @OA\Info(
  *     version="3.0.0",
  *     title="Certificate Manager API",
- *     description="API REST unificada (v1) para la gestión completa de solicitudes de certificados digitales: creación, archivos adjuntos, emisión agnóstica de proveedor (correo legacy / Viafirma RA PKCS#10 Zero-Touch), pagos WOMPI, cuotas POSTPAID, analíticas IA, notificaciones de vencimiento y webhooks. Requiere autenticación OAuth 2.0 con Laravel Passport.",
+ *     description="API REST unificada (v1) para la gestión completa de solicitudes de certificados digitales.\n\n**Proveedores de emisión soportados:**\n- `mail` — Flujo legacy: la solicitud se envía a la Autoridad Certificadora por correo electrónico.\n- `viafirma` — Flujo Zero-Touch PKCS#10: el sistema genera la CSR localmente, la envía a Viafirma RA y hace polling automático hasta ensamblar el P12.\n\n**Modo Sandbox (Viafirma):** Al activar `VIAFIRMA_SANDBOX_MODE=true` en el servidor, se sustituye el cliente HTTP real por `MockViafirmaClient`, que simula el ciclo completo de emisión (getProfiles → submitCsr → 3 polls → downloadP7b → revoke) sin interactuar con la infraestructura externa. Requiere `CACHE_DRIVER=file` o `redis` para que el estado persista entre requests.\n\n**Autenticación:** OAuth 2.0 Bearer Token (Laravel Passport). Obtenga su token con `POST /api/v1/auth/login`. Para integraciones externas puede usar Personal Access Tokens (PAT) desde el endpoint `/api/v1/tokens`.",
  *     @OA\Contact(
  *         email="soporte@matias.com.co",
  *         name="Soporte Matias"
@@ -23,28 +23,29 @@ namespace App\Http\Controllers;
  *     type="http",
  *     scheme="bearer",
  *     bearerFormat="JWT",
- *     description="Token de acceso OAuth 2.0 obtenido desde /authentication/login"
+ *     description="Token de acceso OAuth 2.0 obtenido desde POST /api/v1/auth/login. Para integraciones machine-to-machine use Personal Access Tokens (PAT) desde /api/v1/tokens."
  * )
  *
- * @OA\Tag(name="Autenticación", description="Endpoints de login, registro, verificación de email y recuperación de contraseña")
- * @OA\Tag(name="Solicitudes de Certificado", description="Gestión completa de solicitudes de certificados digitales (datos, listado, actualización, borrado)")
- * @OA\Tag(name="Emisión de Certificados", description="Emisión agnóstica del proveedor (correo legacy / Viafirma RA PKCS#10 Zero-Touch / futuros). Cada solicitud de certificado puede dispararse, consultarse y descargarse desde aquí.")
- * @OA\Tag(name="Archivos", description="Carga y eliminación de archivos adjuntos")
- * @OA\Tag(name="Empresa", description="Configuración y perfil de la empresa")
- * @OA\Tag(name="Perfil", description="Gestión del perfil de usuario")
- * @OA\Tag(name="Consumo", description="Estadísticas y reportes de consumo")
- * @OA\Tag(name="CRUD Genérico", description="Operaciones CRUD dinámicas sobre tablas configuradas del sistema")
- * @OA\Tag(name="Tokens", description="Gestión de Personal Access Tokens (PAT) para integraciones externas")
- * @OA\Tag(name="Webhooks", description="Gestión de endpoints externos para notificaciones en tiempo real")
- * @OA\Tag(name="Notificaciones", description="Alertas de vencimiento de certificados: listado, marcado de lectura y disparo manual")
- * @OA\Tag(name="Datos Maestros", description="Datos de referencia públicos: países, departamentos, ciudades, tipos de documento y organización")
- * @OA\Tag(name="Configuración", description="Configuración de encabezados de reportes")
- * @OA\Tag(name="Órdenes", description="Compra de certificados PREPAID: crear orden y ejecutar pago WOMPI")
- * @OA\Tag(name="Cupos Admin", description="Gestión de cupos POSTPAID — solo administradores LOPEZSOFT")
- * @OA\Tag(name="Precios", description="Consulta pública de tarifas por volumen (sin autenticación)")
- * @OA\Tag(name="Pagos Externos", description="Webhooks entrantes de WOMPI (sin autenticación, firmados con HMAC-SHA256)")
- * @OA\Tag(name="Analíticas IA", description="Pipeline OCR + IA: resultados de análisis, estadísticas y estado de proveedores")
- * @OA\Tag(name="Sistema", description="Health check de servicios externos: WOMPI, etc.")
+ * @OA\Tag(name="Autenticación", description="Login, registro, verificación de email y recuperación de contraseña. Todos los endpoints que no son de solo lectura requieren el Bearer Token obtenido aquí.")
+ * @OA\Tag(name="Datos Maestros", description="Datos de referencia públicos (sin autenticación): países, departamentos, ciudades, tipos de documento e identidad y tipos de organización DIAN.")
+ * @OA\Tag(name="Solicitudes de Certificado", description="Gestión CRUD de solicitudes de certificados digitales: creación, listado, actualización de estado, búsqueda por DNI y eliminación lógica.")
+ * @OA\Tag(name="Archivos", description="Carga (multipart/form-data) y eliminación de archivos adjuntos a una solicitud de certificado. Soporta PDF y ZIP.")
+ * @OA\Tag(name="Emisión de Certificados", description="Emisión agnóstica del proveedor (mail / viafirma / futuros). Cada solicitud puede dispararse (`POST /issue`), consultarse (`GET /issuance`) y descargarse (`GET /issuance/download`). El proveedor activo se resuelve por cascada de configuración.")
+ * @OA\Tag(name="Viafirma", description="Operaciones específicas del proveedor Viafirma RA: revocación de certificados emitidos y obtención del link KYC para el proceso de acreditación biométrica. Requiere que el trámite exista en `viafirma_certificate_requests`.")
+ * @OA\Tag(name="Empresa", description="Configuración del perfil de la empresa: datos generales, proveedor de emisión por defecto y configuración de reportes.")
+ * @OA\Tag(name="Perfil", description="Gestión del perfil del usuario autenticado: datos personales y tipos de usuario.")
+ * @OA\Tag(name="Consumo", description="Estadísticas y reportes de consumo de certificados agrupados por año y mes.")
+ * @OA\Tag(name="CRUD Genérico", description="Operaciones CRUD dinámicas sobre tablas de catálogo configuradas en el sistema.")
+ * @OA\Tag(name="Tokens", description="Gestión de Personal Access Tokens (PAT) para integraciones externas (ERP, scripts automatizados). Los PAT no expiran por defecto salvo que se especifique.")
+ * @OA\Tag(name="Webhooks", description="Gestión de endpoints externos para notificaciones push en tiempo real. Los eventos disponibles incluyen: certificate_request.created, status_changed, ai_processed, file_uploaded, deleted.")
+ * @OA\Tag(name="Notificaciones", description="Alertas de vencimiento de certificados: listado, marcado de lectura individual/masivo y disparo manual de notificaciones (admin).")
+ * @OA\Tag(name="Configuración", description="Configuración de encabezados de reportes PDF/Excel.")
+ * @OA\Tag(name="Órdenes", description="Compra de certificados PREPAID: crear orden, ejecutar pago WOMPI, consultar estado y reintentar pagos fallidos.")
+ * @OA\Tag(name="Cupos Admin", description="Gestión de cupos POSTPAID — exclusivo para administradores LOPEZSOFT. Permite asignar cupos de certificados a empresas con facturación diferida.")
+ * @OA\Tag(name="Precios", description="Consulta pública (sin autenticación) de tarifas por volumen en COP (1 año / 2 años), incluyendo IVA 19%.")
+ * @OA\Tag(name="Pagos Externos", description="Webhooks entrantes de WOMPI (sin autenticación). La autenticidad se verifica mediante firma HMAC-SHA256 con el `events_secret` configurado.")
+ * @OA\Tag(name="Analíticas IA", description="Pipeline OCR + IA: resultados de análisis de documentos adjuntos (RUT, cédula, cámara de comercio), estadísticas agregadas y estado de proveedores activos.")
+ * @OA\Tag(name="Sistema", description="Health check de servicios externos: verifica la conectividad con WOMPI y otros servicios críticos.")
  *
  * ─── Schemas reutilizables ────────────────────────────────────────────────────
  *
@@ -430,6 +431,48 @@ namespace App\Http\Controllers;
  *     ),
  *     @OA\Property(property="comments", type="string", example="Solicitud de certificado enviada al proveedor para emisión automática."),
  *     @OA\Property(property="created_at", type="string", format="date-time", readOnly=true)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="RevocationRequest",
+ *     description="Payload para revocar un certificado Viafirma emitido.",
+ *     required={"revoking_code","revocation_reason"},
+ *     @OA\Property(property="revoking_code", type="string", example="MOCK-REV-CODE-A1B2C3D4", description="Código de revocación emitido por Viafirma RA. Obtenible con GET /certificate-request/{id}/kyc-link una vez el certificado está activo."),
+ *     @OA\Property(
+ *         property="revocation_reason",
+ *         type="integer",
+ *         enum={0,1,2,3,4,5,9,10},
+ *         example=0,
+ *         description="Motivo de revocación según RFC 5280: 0=unspecified, 1=keyCompromise, 2=cACompromise, 3=affiliationChanged, 4=superseded, 5=cessationOfOperation, 9=privilegeWithdrawn, 10=aACompromise."
+ *     )
+ * )
+ *
+ * @OA\Schema(
+ *     schema="QuotaStatus",
+ *     description="Estado actual del cupo de certificados del usuario autenticado.",
+ *     @OA\Property(property="billing_type", type="string", enum={"PREPAID","POSTPAID","NONE"}, example="POSTPAID", description="Tipo de facturación activo para la empresa."),
+ *     @OA\Property(property="has_quota", type="boolean", example=true, description="True si la empresa tiene cupo disponible para emitir certificados."),
+ *     @OA\Property(property="prepaid", type="object", nullable=true, description="Detalle de cupo PREPAID si aplica.",
+ *         @OA\Property(property="available_certificates", type="integer", example=3, description="Certificados comprados y disponibles para usar."),
+ *         @OA\Property(property="vigencia_1", type="integer", example=2, description="Certificados de 1 año disponibles."),
+ *         @OA\Property(property="vigencia_2", type="integer", example=1, description="Certificados de 2 años disponibles.")
+ *     ),
+ *     @OA\Property(property="postpaid", type="object", nullable=true, description="Detalle de cupo POSTPAID si aplica.",
+ *         @OA\Property(property="allocated_quantity", type="integer", example=50),
+ *         @OA\Property(property="used_quantity", type="integer", example=12),
+ *         @OA\Property(property="remaining", type="integer", example=38),
+ *         @OA\Property(property="period_start", type="string", format="date", example="2026-06-01"),
+ *         @OA\Property(property="period_end", type="string", format="date", example="2026-06-30"),
+ *         @OA\Property(property="status", type="string", enum={"ACTIVE","EXHAUSTED","EXPIRED"}, example="ACTIVE")
+ *     )
+ * )
+ *
+ * @OA\Schema(
+ *     schema="SandboxInfo",
+ *     description="Información de modo Sandbox para desarrollo y pruebas.",
+ *     @OA\Property(property="sandbox_active", type="boolean", example=true, description="True cuando VIAFIRMA_SANDBOX_MODE=true. Indica que el cliente Viafirma es un Mock y no genera certificados reales."),
+ *     @OA\Property(property="mock_flow", type="string", example="getProfiles → submitCsr → RUES_CHECK (poll 1) → IN_PROCESS (poll 2) → GENERATED_NOT_DOWNLOADED (poll 3+) → downloadP7b → assemble P12", description="Flujo simulado por MockViafirmaClient."),
+ *     @OA\Property(property="cache_warning", type="string", example="Requiere CACHE_DRIVER=file o redis para que el estado persista entre requests HTTP.", description="El driver 'array' hace que getStatus() siempre devuelva GENERATED inmediatamente.")
  * )
  */
 class SwaggerDefinitions

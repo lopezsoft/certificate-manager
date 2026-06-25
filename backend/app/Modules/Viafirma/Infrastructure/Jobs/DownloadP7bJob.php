@@ -59,7 +59,7 @@ final class DownloadP7bJob implements ShouldQueue, ShouldBeUnique
         ViafirmaClient $client,
         SafePemLogger $logger,
     ): void {
-        $entity = ViafirmaCertificateRequest::find($this->requestId);
+        $entity = ViafirmaCertificateRequest::with('state')->find($this->requestId);
 
         if ($entity === null) {
             $logger->warning('viafirma.download.entity_not_found', ['id' => $this->requestId]);

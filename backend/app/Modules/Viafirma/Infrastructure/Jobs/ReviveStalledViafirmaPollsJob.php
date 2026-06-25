@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Viafirma\Infrastructure\Jobs;
 
+use App\Enums\CertificateRequestStatusEnum;
+use App\Models\ChangeHistory;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequestState;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -70,6 +72,15 @@ final class ReviveStalledViafirmaPollsJob implements ShouldQueue
                         ->delay(now()->addSeconds($delay));
 
                     $stateRecord->update(['next_poll_at' => now()->addSeconds($delay)]);
+
+                    // ── Registrar en change_histories para trazabilidad ────────────────────────
+                    ChangeHistory::create([
+                        'certificate_request_id' => $stateRecord->viafirmaCertificateRequest->certificate_request_id,
+                        'status'                 => CertificateRequestStatusEnum::PROCESSING->value,
+                        'comments'               => 'Sistema: poll de estado reiniciado automáticamente por watchdog.',
+                        'user_of_change'         => 'SYSTEM',
+                        'user_id'                => null,
+                    ]);
 
                     $logger->info('viafirma.watchdog.revived', [
                         'viafirma_id' => $stateRecord->viafirma_certificate_request_id,

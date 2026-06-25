@@ -157,15 +157,44 @@ final class RedownloadCertificateUseCase
             Storage::disk($disk)->delete($state->p12_storage_path);
         }
 
-        // Crear archivo ZIP con el P12
-        $zip = new \ZipArchive();
-        $zipPath = Storage::path($zipFilename);
-        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
-            $zip->addFromString($p12Filename, $p12Binary);
-            $zip->close();
-        }
-        
-        unset($p12Binary);
+        // ── Guardar ZIP en local (como estaba originalmente) ────────────────────────────
+         $zip = new \ZipArchive();
+         $zipPath = Storage::path($zipFilename);
+
+         // Crear directorio si no existe
+         $zipDir = dirname($zipPath);
+         if (!is_dir($zipDir)) {
+             mkdir($zipDir, 0755, true);
+         }
+
+         $openResult = $zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+         if ($openResult !== true) {
+             throw new \RuntimeException("No se pudo crear el ZIP: error {$openResult} en {$zipPath}");
+         }
+
+         $addResult = $zip->addFromString($p12Filename, $p12Binary);
+         if (!$addResult) {
+             $zip->close();
+             throw new \RuntimeException("No se pudo agregar P12 al ZIP");
+         }
+
+         $closeResult = $zip->close();
+         if (!$closeResult) {
+             throw new \RuntimeException("No se pudo cerrar el ZIP correctamente");
+         }
+
+         // Verificar que el ZIP se creó
+         if (!file_exists($zipPath)) {
+             throw new \RuntimeException("El ZIP no existe después de crearlo: {$zipPath}");
+         }
+
+         unset($p12Binary);
+
+         // ── Si el disco configurado NO es local, subir a S3 y eliminar el local ────────
+         if ($disk !== 'local') {
+             Storage::disk($disk)->put($zipFilename, file_get_contents($zipPath));
+             @unlink($zipPath);
+         }
 
         $this->logger->info('viafirma.redownload.p12_saved', [
             'viafirma_id' => $entity->id,
@@ -237,7 +266,7 @@ final class RedownloadCertificateUseCase
             ChangeHistory::create([
                 'certificate_request_id' => $cr->id,
                 'user_id'                => $adminUserId,
-                'user_of_change'         => $adminUserId ? 'Admin (Re-descarga Viafirma)' : 'SYSTEM (Auto Re-descarga)',
+                'user_of_change'         => $adminUserId ?? 'SYSTEM',
                 'status'                 => CertificateRequestStatusEnum::PROCESSED->value,
                 'comments'               => 'Certificado P12 regenerado. ' .
                                             "Estado remoto Viafirma: {$statusResult->status->value}.",
@@ -264,6 +293,7 @@ final class RedownloadCertificateUseCase
                 'file_name'              => basename($zipFilename),
             ],
             [
+                'file_path'              => $zipFilename,
                 'file_name'              => basename($zipFilename),
                 'extension_file'         => 'zip',
                 'mime_type'              => 'application/zip',

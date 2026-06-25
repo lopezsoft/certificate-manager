@@ -53,7 +53,7 @@ final class PollingScheduler
      */
     public function hasExceededMaxAttempts(ViafirmaCertificateRequest $entity): bool
     {
-        return $entity->poll_attempts >= $this->maxAttempts;
+        return ($entity->state?->poll_attempts ?? 0) >= $this->maxAttempts;
     }
 
     /**
@@ -61,9 +61,9 @@ final class PollingScheduler
      */
     public function hasExceededSla(ViafirmaCertificateRequest $entity): bool
     {
-        if ($entity->submitted_at === null) {
+        if ($entity->state?->submitted_at === null) {
             return false;
         }
-        return $entity->submitted_at->addHours($this->expirationHours)->isPast();
+        return $entity->state->submitted_at->addHours($this->expirationHours)->isPast();
     }
 }

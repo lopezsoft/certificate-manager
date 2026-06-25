@@ -38,28 +38,28 @@ class ViafirmaCertificateResource extends JsonResource
 
             // Estado
             'internal_state'         => $this->internal_state?->value,
-            'remote_status'          => $this->remote_status,
+            'remote_status'          => $this->state?->remote_status,
             'is_terminal'            => $this->isTerminal(),
             'is_failed'              => $this->isFailed(),
             'has_expired'            => $this->hasExpired(),
 
             // Auditoría criptográfica (solo fingerprint, no material)
-            'csr_fingerprint'        => $this->csr_fingerprint,
+            'csr_fingerprint'        => $this->state?->csr_fingerprint,
 
             // Polling
-            'poll_attempts'          => $this->poll_attempts,
-            'next_poll_at'           => $this->next_poll_at?->toIso8601String(),
-            'last_polled_at'         => $this->last_polled_at?->toIso8601String(),
+            'poll_attempts'          => $this->state?->poll_attempts,
+            'next_poll_at'           => $this->state?->next_poll_at?->toIso8601String(),
+            'last_polled_at'         => $this->state?->last_polled_at?->toIso8601String(),
 
             // Timestamps del ciclo de vida
-            'submitted_at'           => $this->submitted_at?->toIso8601String(),
-            'downloaded_at'          => $this->downloaded_at?->toIso8601String(),
-            'assembled_at'           => $this->assembled_at?->toIso8601String(),
-            'expires_at'             => $this->expires_at?->toIso8601String(),
+            'submitted_at'           => $this->state?->submitted_at?->toIso8601String(),
+            'downloaded_at'          => $this->state?->downloaded_at?->toIso8601String(),
+            'assembled_at'           => $this->state?->assembled_at?->toIso8601String(),
+            'expires_at'             => $this->state?->expires_at?->toIso8601String(),
 
             // Errores (si aplica)
-            'last_error_code'        => $this->last_error_code,
-            'last_error_message'     => $this->last_error_message,
+            'last_error_code'        => $this->state?->last_error_code,
+            'last_error_message'     => $this->state?->last_error_message,
 
             // Relaciones cargadas (condicional)
             'certificate_request'    => $this->whenLoaded('certificateRequest'),

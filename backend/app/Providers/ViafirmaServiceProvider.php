@@ -156,12 +156,6 @@ final class ViafirmaServiceProvider extends ServiceProvider
             }
         );
 
-        // ---- Logger base para el decorator ---------------------------------------
-        // Singleton global para SafePemLogger
-        $this->app->singleton(SafePemLogger::class, function ($app) {
-            return new SafePemLogger($app->make('log'));
-        });
-
         // ---- Sprint 3: Polling + FSM + Resiliencia ----------------------------
         $this->app->singleton(\App\Modules\Viafirma\Application\Services\PollingScheduler::class);
         $this->app->singleton(\App\Modules\Viafirma\Infrastructure\CircuitBreaker\ViafirmaCircuitBreaker::class);

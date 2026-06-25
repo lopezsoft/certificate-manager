@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Certificate Manager API",
-        "description": "API REST unificada (v1) para la gestión completa de solicitudes de certificados digitales: creación, archivos adjuntos, emisión agnóstica de proveedor (correo legacy / Viafirma RA PKCS#10 Zero-Touch), pagos WOMPI, cuotas POSTPAID, analíticas IA, notificaciones de vencimiento y webhooks. Requiere autenticación OAuth 2.0 con Laravel Passport.",
+        "description": "API REST unificada (v1) para la gestión completa de solicitudes de certificados digitales.\\n\\n**Proveedores de emisión soportados:**\\n- `mail` — Flujo legacy: la solicitud se envía a la Autoridad Certificadora por correo electrónico.\\n- `viafirma` — Flujo Zero-Touch PKCS#10: el sistema genera la CSR localmente, la envía a Viafirma RA y hace polling automático hasta ensamblar el P12.\\n\\n**Modo Sandbox (Viafirma):** Al activar `VIAFIRMA_SANDBOX_MODE=true` en el servidor, se sustituye el cliente HTTP real por `MockViafirmaClient`, que simula el ciclo completo de emisión (getProfiles → submitCsr → 3 polls → downloadP7b → revoke) sin interactuar con la infraestructura externa. Requiere `CACHE_DRIVER=file` o `redis` para que el estado persista entre requests.\\n\\n**Autenticación:** OAuth 2.0 Bearer Token (Laravel Passport). Obtenga su token con `POST /api/v1/auth/login`. Para integraciones externas puede usar Personal Access Tokens (PAT) desde el endpoint `/api/v1/tokens`.",
         "contact": {
             "name": "Soporte Matias",
             "email": "soporte@matias.com.co"
@@ -7108,12 +7108,144 @@
                     }
                 },
                 "type": "object"
+            },
+            "RevocationRequest": {
+                "description": "Payload para revocar un certificado Viafirma emitido.",
+                "required": [
+                    "revoking_code",
+                    "revocation_reason"
+                ],
+                "properties": {
+                    "revoking_code": {
+                        "description": "Código de revocación emitido por Viafirma RA. Obtenible con GET /certificate-request/{id}/kyc-link una vez el certificado está activo.",
+                        "type": "string",
+                        "example": "MOCK-REV-CODE-A1B2C3D4"
+                    },
+                    "revocation_reason": {
+                        "description": "Motivo de revocación según RFC 5280: 0=unspecified, 1=keyCompromise, 2=cACompromise, 3=affiliationChanged, 4=superseded, 5=cessationOfOperation, 9=privilegeWithdrawn, 10=aACompromise.",
+                        "type": "integer",
+                        "enum": [
+                            0,
+                            1,
+                            2,
+                            3,
+                            4,
+                            5,
+                            9,
+                            10
+                        ],
+                        "example": 0
+                    }
+                },
+                "type": "object"
+            },
+            "QuotaStatus": {
+                "description": "Estado actual del cupo de certificados del usuario autenticado.",
+                "properties": {
+                    "billing_type": {
+                        "description": "Tipo de facturación activo para la empresa.",
+                        "type": "string",
+                        "enum": [
+                            "PREPAID",
+                            "POSTPAID",
+                            "NONE"
+                        ],
+                        "example": "POSTPAID"
+                    },
+                    "has_quota": {
+                        "description": "True si la empresa tiene cupo disponible para emitir certificados.",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "prepaid": {
+                        "description": "Detalle de cupo PREPAID si aplica.",
+                        "properties": {
+                            "available_certificates": {
+                                "description": "Certificados comprados y disponibles para usar.",
+                                "type": "integer",
+                                "example": 3
+                            },
+                            "vigencia_1": {
+                                "description": "Certificados de 1 año disponibles.",
+                                "type": "integer",
+                                "example": 2
+                            },
+                            "vigencia_2": {
+                                "description": "Certificados de 2 años disponibles.",
+                                "type": "integer",
+                                "example": 1
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "postpaid": {
+                        "description": "Detalle de cupo POSTPAID si aplica.",
+                        "properties": {
+                            "allocated_quantity": {
+                                "type": "integer",
+                                "example": 50
+                            },
+                            "used_quantity": {
+                                "type": "integer",
+                                "example": 12
+                            },
+                            "remaining": {
+                                "type": "integer",
+                                "example": 38
+                            },
+                            "period_start": {
+                                "type": "string",
+                                "format": "date",
+                                "example": "2026-06-01"
+                            },
+                            "period_end": {
+                                "type": "string",
+                                "format": "date",
+                                "example": "2026-06-30"
+                            },
+                            "status": {
+                                "type": "string",
+                                "enum": [
+                                    "ACTIVE",
+                                    "EXHAUSTED",
+                                    "EXPIRED"
+                                ],
+                                "example": "ACTIVE"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SandboxInfo": {
+                "description": "Información de modo Sandbox para desarrollo y pruebas.",
+                "properties": {
+                    "sandbox_active": {
+                        "description": "True cuando VIAFIRMA_SANDBOX_MODE=true. Indica que el cliente Viafirma es un Mock y no genera certificados reales.",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "mock_flow": {
+                        "description": "Flujo simulado por MockViafirmaClient.",
+                        "type": "string",
+                        "example": "getProfiles → submitCsr → RUES_CHECK (poll 1) → IN_PROCESS (poll 2) → GENERATED_NOT_DOWNLOADED (poll 3+) → downloadP7b → assemble P12"
+                    },
+                    "cache_warning": {
+                        "description": "El driver 'array' hace que getStatus() siempre devuelva GENERATED inmediatamente.",
+                        "type": "string",
+                        "example": "Requiere CACHE_DRIVER=file o redis para que el estado persista entre requests HTTP."
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
             "bearerAuth": {
                 "type": "http",
-                "description": "Token de acceso OAuth 2.0 obtenido desde /authentication/login",
+                "description": "Token de acceso OAuth 2.0 obtenido desde POST /api/v1/auth/login. Para integraciones machine-to-machine use Personal Access Tokens (PAT) desde /api/v1/tokens.",
                 "bearerFormat": "JWT",
                 "scheme": "bearer"
             }
@@ -7122,75 +7254,79 @@
     "tags": [
         {
             "name": "Autenticación",
-            "description": "Endpoints de login, registro, verificación de email y recuperación de contraseña"
-        },
-        {
-            "name": "Solicitudes de Certificado",
-            "description": "Gestión completa de solicitudes de certificados digitales (datos, listado, actualización, borrado)"
-        },
-        {
-            "name": "Emisión de Certificados",
-            "description": "Emisión agnóstica del proveedor (correo legacy / Viafirma RA PKCS#10 Zero-Touch / futuros). Cada solicitud de certificado puede dispararse, consultarse y descargarse desde aquí."
-        },
-        {
-            "name": "Archivos",
-            "description": "Carga y eliminación de archivos adjuntos"
-        },
-        {
-            "name": "Perfil",
-            "description": "Gestión del perfil de usuario"
-        },
-        {
-            "name": "Consumo",
-            "description": "Estadísticas y reportes de consumo"
-        },
-        {
-            "name": "CRUD Genérico",
-            "description": "Operaciones CRUD dinámicas sobre tablas configuradas del sistema"
-        },
-        {
-            "name": "Tokens",
-            "description": "Gestión de Personal Access Tokens (PAT) para integraciones externas"
-        },
-        {
-            "name": "Webhooks",
-            "description": "Gestión de endpoints externos para notificaciones en tiempo real"
-        },
-        {
-            "name": "Notificaciones",
-            "description": "Alertas de vencimiento de certificados: listado, marcado de lectura y disparo manual"
+            "description": "Login, registro, verificación de email y recuperación de contraseña. Todos los endpoints que no son de solo lectura requieren el Bearer Token obtenido aquí."
         },
         {
             "name": "Datos Maestros",
-            "description": "Datos de referencia públicos: países, departamentos, ciudades, tipos de documento y organización"
+            "description": "Datos de referencia públicos (sin autenticación): países, departamentos, ciudades, tipos de documento e identidad y tipos de organización DIAN."
+        },
+        {
+            "name": "Solicitudes de Certificado",
+            "description": "Gestión CRUD de solicitudes de certificados digitales: creación, listado, actualización de estado, búsqueda por DNI y eliminación lógica."
+        },
+        {
+            "name": "Archivos",
+            "description": "Carga (multipart/form-data) y eliminación de archivos adjuntos a una solicitud de certificado. Soporta PDF y ZIP."
+        },
+        {
+            "name": "Emisión de Certificados",
+            "description": "Emisión agnóstica del proveedor (mail / viafirma / futuros). Cada solicitud puede dispararse (`POST /issue`), consultarse (`GET /issuance`) y descargarse (`GET /issuance/download`). El proveedor activo se resuelve por cascada de configuración."
+        },
+        {
+            "name": "Viafirma",
+            "description": "Operaciones específicas del proveedor Viafirma RA: revocación de certificados emitidos y obtención del link KYC para el proceso de acreditación biométrica. Requiere que el trámite exista en `viafirma_certificate_requests`."
+        },
+        {
+            "name": "Perfil",
+            "description": "Gestión del perfil del usuario autenticado: datos personales y tipos de usuario."
+        },
+        {
+            "name": "Consumo",
+            "description": "Estadísticas y reportes de consumo de certificados agrupados por año y mes."
+        },
+        {
+            "name": "CRUD Genérico",
+            "description": "Operaciones CRUD dinámicas sobre tablas de catálogo configuradas en el sistema."
+        },
+        {
+            "name": "Tokens",
+            "description": "Gestión de Personal Access Tokens (PAT) para integraciones externas (ERP, scripts automatizados). Los PAT no expiran por defecto salvo que se especifique."
+        },
+        {
+            "name": "Webhooks",
+            "description": "Gestión de endpoints externos para notificaciones push en tiempo real. Los eventos disponibles incluyen: certificate_request.created, status_changed, ai_processed, file_uploaded, deleted."
+        },
+        {
+            "name": "Notificaciones",
+            "description": "Alertas de vencimiento de certificados: listado, marcado de lectura individual/masivo y disparo manual de notificaciones (admin)."
         },
         {
             "name": "Configuración",
-            "description": "Configuración de encabezados de reportes"
+            "description": "Configuración de encabezados de reportes PDF/Excel."
         },
         {
             "name": "Órdenes",
-            "description": "Compra de certificados PREPAID: crear orden y ejecutar pago WOMPI"
+            "description": "Compra de certificados PREPAID: crear orden, ejecutar pago WOMPI, consultar estado y reintentar pagos fallidos."
         },
         {
             "name": "Cupos Admin",
-            "description": "Gestión de cupos POSTPAID — solo administradores LOPEZSOFT"
+            "description": "Gestión de cupos POSTPAID — exclusivo para administradores LOPEZSOFT. Permite asignar cupos de certificados a empresas con facturación diferida."
         },
         {
             "name": "Precios",
-            "description": "Consulta pública de tarifas por volumen (sin autenticación)"
+            "description": "Consulta pública (sin autenticación) de tarifas por volumen en COP (1 año / 2 años), incluyendo IVA 19%."
         },
         {
             "name": "Pagos Externos",
-            "description": "Webhooks entrantes de WOMPI (sin autenticación, firmados con HMAC-SHA256)"
+            "description": "Webhooks entrantes de WOMPI (sin autenticación). La autenticidad se verifica mediante firma HMAC-SHA256 con el `events_secret` configurado."
         },
         {
             "name": "Analíticas IA",
-            "description": "Pipeline OCR + IA: resultados de análisis, estadísticas y estado de proveedores"
+            "description": "Pipeline OCR + IA: resultados de análisis de documentos adjuntos (RUT, cédula, cámara de comercio), estadísticas agregadas y estado de proveedores activos."
         },
         {
             "name": "Sistema",
-            "description": "Health check de servicios externos: WOMPI, etc."
+            "description": "Health check de servicios externos: verifica la conectividad con WOMPI y otros servicios críticos."
         },
         {
             "name": "Sincronización",
@@ -7199,10 +7335,6 @@
         {
             "name": "Cupos",
             "description": "Cupos"
-        },
-        {
-            "name": "Viafirma",
-            "description": "Viafirma"
         }
     ]
 }

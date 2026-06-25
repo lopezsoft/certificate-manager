@@ -18,6 +18,15 @@ use Illuminate\Support\Facades\Cache;
  * Simula las respuestas del API de Viafirma para poder probar todo el
  * ciclo de vida (emisión, polling, descarga y revocación) sin generar
  * certificados reales ni interactuar con la infraestructura externa.
+ *
+ * ⚠️  REQUISITO DE CACHÉ: Este cliente usa `Cache::put` para persistir el
+ * estado simulado entre requests HTTP. Asegúrese de usar un driver de caché
+ * con persistencia real (file, redis, database) en el entorno de sandbox.
+ * Si el driver es 'array', el estado se pierde en cada request y `getStatus()`
+ * siempre devolverá GENERATED_NOT_DOWNLOADED (como si ya estuviera listo),
+ * lo que es correcto funcionalmente pero no simula la demora realista de 3 polls.
+ *
+ * Activación: VIAFIRMA_SANDBOX_MODE=true en el .env
  */
 class MockViafirmaClient implements ViafirmaClient
 {
@@ -47,6 +56,16 @@ class MockViafirmaClient implements ViafirmaClient
     {
         $codRequest = 'MOCK-REQ-' . strtoupper(uniqid());
         $publicId   = 'MOCK-PUB-' . strtoupper(uniqid());
+
+        // Advertencia si el driver de caché no persiste entre requests HTTP.
+        if (config('cache.default') === 'array') {
+            \Illuminate\Support\Facades\Log::warning(
+                'MockViafirmaClient: El driver de caché es "array". ' .
+                'El estado del sandbox no persiste entre requests HTTP. ' .
+                'Usa CACHE_DRIVER=file o redis para simular polling multi-request.',
+                ['cod_request' => $codRequest]
+            );
+        }
 
         // Inicializamos el estado simulado en Cache.
         // Empezará en RUES_CHECK (progressing) y avanzará en polls.

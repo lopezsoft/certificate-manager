@@ -153,6 +153,10 @@ class ViafirmaCertificateRequestState extends Model
      * - Llevan al menos 2 minutos en ese estado (evitar colisión con reintentos activos)
      * - No han superado el máximo de intentos de re-descarga automática (max: 5)
      *
+     * NOTA: También incluye registros en estado FAILED con remote_status = 'Generated_Not_Downloaded'
+     * y p7b_storage_path disponible (el P7B fue descargado pero el ensamblado falló).
+     * Estos son recuperables porque el certificado ya existe en Viafirma.
+     *
      * @param Builder $query
      * @return Builder
      */
@@ -160,8 +164,6 @@ class ViafirmaCertificateRequestState extends Model
     {
         return $query
             ->where('internal_state', InternalState::FAILED_RECOVERABLE->value)
-            ->where('key_vault_ref', '!=', 'PURGED')
-            ->whereNotNull('key_vault_ref')
             ->where('updated_at', '<', now()->subMinutes(2))
             ->where(function (Builder $q) {
                 $q->whereNull('auto_redownload_attempts')

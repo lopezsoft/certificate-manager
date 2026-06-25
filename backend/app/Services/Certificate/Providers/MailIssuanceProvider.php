@@ -105,15 +105,41 @@ final class MailIssuanceProvider implements CertificateIssuanceProvider
             );
         }
 
+        $normalizedStatus = $this->mapRequestStatusToIssuanceStatus(
+            (string) ($cr->request_status ?? '')
+        );
+
+        $statusMessages = [
+            IssuanceResult::STATUS_READY      => 'Certificado emitido (flujo correo).',
+            IssuanceResult::STATUS_FAILED     => 'La solicitud fue rechazada.',
+            IssuanceResult::STATUS_PROCESSING => 'Solicitud en proceso (flujo correo). Estado: ' . ($cr->request_status ?? 'DRAFT'),
+        ];
+
         return new IssuanceResult(
             providerName: self::NAME,
-            status:       IssuanceResult::STATUS_PROCESSING,
-            message:      'El proveedor de correo no expone polling. Estado tomado del CertificateRequest.',
+            status:       $normalizedStatus,
+            message:      $statusMessages[$normalizedStatus] ?? 'Estado actual de la solicitud por correo.',
             resourceId:   $cr->id,
             data:         [
                 'request_status' => $cr->request_status ?? null,
             ],
         );
+    }
+
+    /**
+     * Mapea request_status (CertificateRequest) a estados normalizados de IssuanceResult.
+     *
+     * PROCESSED  → ready     (certificado emitido satisfactoriamente)
+     * REJECTED   → failed    (solicitud rechazada)
+     * resto      → processing (en tránsito: DRAFT / SENT / PENDING / ACCEPTED / PROCESSING)
+     */
+    private function mapRequestStatusToIssuanceStatus(string $requestStatus): string
+    {
+        return match ($requestStatus) {
+            'PROCESSED'  => IssuanceResult::STATUS_READY,
+            'REJECTED'   => IssuanceResult::STATUS_FAILED,
+            default      => IssuanceResult::STATUS_PROCESSING,
+        };
     }
 }
 

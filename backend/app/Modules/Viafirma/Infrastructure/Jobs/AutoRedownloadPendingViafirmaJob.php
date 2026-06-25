@@ -93,14 +93,11 @@ final class AutoRedownloadPendingViafirmaJob implements ShouldQueue
                         continue;
                     }
 
-                    // Despachar con delay aleatorio (5-30s) para evitar thundering herd
-                    dispatch(static function () use ($useCase, $crId): void {
-                        // adminUserId = null → invocación desde sistema (no hay usuario admin)
-                        $useCase->handle(
-                            certificateRequestId: $crId,
-                            adminUserId:          null,
-                        );
-                    })->delay(now()->addSeconds(random_int(5, 30)));
+                    // Despachar RetryAssembleP12Job con delay aleatorio (5-30s) para evitar thundering herd
+                    // Usar un Job dedicado en lugar de closure para registrar errores en failed_jobs
+                    RetryAssembleP12Job::dispatch($crId)
+                        ->onQueue('redownload')
+                        ->delay(now()->addSeconds(random_int(5, 30)));
 
                     $dispatched++;
 

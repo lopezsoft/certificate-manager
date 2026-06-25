@@ -25,10 +25,10 @@ final class GetKycLinkUseCase
 
     public function handle(int $viafirmaCertificateRequestId): string
     {
-        $entity = ViafirmaCertificateRequest::findOrFail($viafirmaCertificateRequestId);
+        $entity = ViafirmaCertificateRequest::with('state')->findOrFail($viafirmaCertificateRequestId);
 
         // Validar que la solicitud esté en estado remoto 'accreditation'
-        $remoteStatus = RemoteStatus::tryFrom((string) $entity->remote_status);
+        $remoteStatus = RemoteStatus::tryFrom((string) $entity->state?->remote_status);
 
         if ($remoteStatus !== RemoteStatus::ACCREDITATION) {
             $currentStatus = $entity->remote_status ?? 'null';

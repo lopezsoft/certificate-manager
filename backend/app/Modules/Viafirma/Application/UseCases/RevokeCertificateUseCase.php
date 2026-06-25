@@ -80,7 +80,7 @@ final class RevokeCertificateUseCase
                     'revocation_reason'       => $dto->revocationReason->value,
                     'revocation_reason_label' => $dto->revocationReason->label(),
                 ],
-                'attempt_number' => $entity->poll_attempts,
+                'attempt_number' => $state->poll_attempts,
                 'occurred_at'    => now(),
             ]);
 

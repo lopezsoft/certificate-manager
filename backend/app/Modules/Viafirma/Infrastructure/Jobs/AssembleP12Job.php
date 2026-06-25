@@ -128,17 +128,47 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
             }
 
             // Crear ZIP con el P12
-            $p12Filename = "{$entity->certificate_request_id}_{$entity->cod_request}.p12";
-            $zipFilename = $basePath . '/' . "{$entity->certificate_request_id}_{$entity->cod_request}.zip";
+             $p12Filename = "{$entity->certificate_request_id}_{$entity->cod_request}.p12";
+             $zipFilename = $basePath . '/' . "{$entity->certificate_request_id}_{$entity->cod_request}.zip";
 
-            $zip = new \ZipArchive();
-            $zipPath = Storage::path($zipFilename);
-            if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
-                $zip->addFromString($p12Filename, $p12Binary);
-                $zip->close();
-            }
+             // ── Guardar ZIP en local (como estaba originalmente) ────────────────────────────
+             $zip = new \ZipArchive();
+             $zipPath = Storage::path($zipFilename);
 
-            unset($p12Binary);
+             // Crear directorio si no existe
+             $zipDir = dirname($zipPath);
+             if (!is_dir($zipDir)) {
+                 mkdir($zipDir, 0755, true);
+             }
+
+             $openResult = $zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+             if ($openResult !== true) {
+                 throw new \RuntimeException("No se pudo crear el ZIP: error {$openResult} en {$zipPath}");
+             }
+
+             $addResult = $zip->addFromString($p12Filename, $p12Binary);
+             if (!$addResult) {
+                 $zip->close();
+                 throw new \RuntimeException("No se pudo agregar P12 al ZIP");
+             }
+
+             $closeResult = $zip->close();
+             if (!$closeResult) {
+                 throw new \RuntimeException("No se pudo cerrar el ZIP correctamente");
+             }
+
+             // Verificar que el ZIP se creó
+             if (!file_exists($zipPath)) {
+                 throw new \RuntimeException("El ZIP no existe después de crearlo: {$zipPath}");
+             }
+
+             unset($p12Binary);
+
+             // ── Si el disco configurado NO es local, subir a S3 y eliminar el local ────────
+             if ($disk !== 'local') {
+                 Storage::disk($disk)->put($zipFilename, file_get_contents($zipPath));
+                 @unlink($zipPath);
+             }
 
             // 6. Guardar PIN cifrado en KeyVault
             $pinRef = $vault->store($exportPin, [
@@ -188,35 +218,49 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
 
             // ── Registrar ZIP en file_managers ────────────────────────────────────────────
             $zipSize = Storage::disk($disk)->size($zipFilename);
+            $zipLastModified = date('Y-m-d H:i:s', Storage::disk($disk)->lastModified($zipFilename));
             FileManager::updateOrCreate(
                 [
                     'certificate_request_id' => $entity->certificate_request_id,
-                    'file_path' => $zipFilename,
+                    'file_name' => basename($zipFilename),
                 ],
                 [
-                    'file_name' => basename($zipFilename),
+                    'file_path' => $zipFilename,
                     'extension_file' => 'zip',
                     'mime_type' => 'application/zip',
                     'document_type' => 'CERTIFICATE',
                     'file_size' => $zipSize,
+                    'last_modified' => $zipLastModified,
                     'status' => 'COMPLETED',
                 ]
             );
 
             // ── Registrar referencia de llave privada en file_managers ────────────────────
             if ($state->key_vault_ref && $state->key_vault_ref !== 'PURGED') {
+                // Obtener tamaño real de la llave privada desde el vault en S3
+                $vaultPath = (string) config('viafirma.crypto.vault_path', 'viafirma/vault');
+                $keyPath = rtrim($vaultPath, '/') . '/' . $state->key_vault_ref . '.bin';
+                
+                $keySize = 0;
+                try {
+                    $keySize = Storage::disk($disk)->size($keyPath);
+                } catch (\Throwable) {
+                    // Si no se puede obtener, dejar en 0
+                }
+
                 FileManager::updateOrCreate(
                     [
                         'certificate_request_id' => $entity->certificate_request_id,
-                        'file_path' => 'vault://' . $state->key_vault_ref,
+                        'file_name' => 'private_key_reference',
                     ],
                     [
-                        'file_name' => 'private_key_reference',
+                        'file_path' => 'vault://' . $state->key_vault_ref,
                         'extension_file' => 'key',
                         'mime_type' => 'application/x-pkcs12-key',
                         'document_type' => 'PRIVATE_KEY',
-                        'file_size' => 0,
-                        'status' => 'ACTIVE',
+                        'file_size' => $keySize,
+                        'last_modified' => date('Y-m-d H:i:s'),
+                        'status' => 'COMPLETED',   
                     ]
                 );
             }
@@ -252,17 +296,12 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
                 'error' => $e->getMessage(),
             ]);
 
-            $state->internal_state     = InternalState::FAILED;
+            // ── Marcar como FAILED_RECOVERABLE para que AutoRedownloadPendingViafirmaJob lo reintente ────
+            // IMPORTANTE: NO purgar key_vault_ref — la llave privada debe persistir para reintentos.
+            // Solo se purga cuando el trámite llega a estado terminal exitoso o por PurgeExpiredKeysJob.
+            $state->internal_state     = InternalState::FAILED_RECOVERABLE;
             $state->last_error_code    = 'ASSEMBLE_FAILED';
             $state->last_error_message = substr($e->getMessage(), 0, 500);
-
-            // Marcar referencias del vault como PURGED para evitar referencias huérfanas.
-            if ($state->key_vault_ref && $state->key_vault_ref !== 'PURGED') {
-                $state->key_vault_ref = 'PURGED';
-            }
-            if ($state->p12_password_ref && $state->p12_password_ref !== 'PURGED') {
-                $state->p12_password_ref = 'PURGED';
-            }
 
             $state->save();
 
