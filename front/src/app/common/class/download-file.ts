@@ -9,6 +9,11 @@ export  class DownloadFile {
     // Convertir base64 a Blob
     this.downloadFile(base64String, fileName, 'application/pdf');
   }
+
+  public static Zip(base64String: string, fileName: string = 'archivo.zip') {
+    // Convertir base64 a Blob
+    this.downloadFile(base64String, fileName, 'application/zip');
+  }
   
   public static base64ToBlob(base64: string, contentType: string) {
     const byteCharacters = atob(base64);

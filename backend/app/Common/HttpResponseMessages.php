@@ -84,6 +84,25 @@ class HttpResponseMessages
     {
         return self::buildResponse($data, HttpStatusCode::NOT_FOUND);
     }
+    /**
+     * Respuesta 409 Conflict.
+     *
+     * @param array<string, mixed> $data
+     */
+    public static function getResponse409(array $data = []): JsonResponse
+    {
+        return self::buildResponse($data, HttpStatusCode::CONFLICT);
+    }
+
+    /**
+     * Respuesta 410 Gone.
+     *
+     * @param array<string, mixed> $data
+     */
+    public static function getResponse410(array $data = []): JsonResponse
+    {
+        return self::buildResponse($data, HttpStatusCode::GONE);
+    }
 
     /**
      * Respuesta 422 Unprocessable Entity.
@@ -105,15 +124,6 @@ class HttpResponseMessages
         return self::buildResponse($data, HttpStatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    /**
-     * Respuesta 409 Conflict.
-     *
-     * @param array<string, mixed> $data
-     */
-    public static function getResponse409(array $data = []): JsonResponse
-    {
-        return self::buildResponse($data, HttpStatusCode::CONFLICT);
-    }
 
     /**
      * Respuesta 502 Bad Gateway.

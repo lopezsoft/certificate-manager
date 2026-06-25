@@ -154,4 +154,13 @@ class CertificateRequest extends CoreModel
     {
         return $this->hasOne(DocumentAnalysisResult::class, 'certificate_request_id')->latest();
     }
+
+    /**
+     * Validación centralizada: solo se puede descargar si el certificado está en estado PROCESSED.
+     * Esta es la fuente de verdad para determinar si un certificado está listo para descarga.
+     */
+    public function canDownloadCertificate(): bool
+    {
+        return $this->request_status === \App\Enums\CertificateRequestStatusEnum::PROCESSED->value;
+    }
 }

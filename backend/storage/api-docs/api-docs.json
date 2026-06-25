@@ -2218,21 +2218,24 @@
                 ]
             }
         },
-        "/certificate-request/{id}/issuance/download": {
+        "/certificate-request/{uuid}/issuance/download": {
             "get": {
                 "tags": [
                     "Emisión de Certificados"
                 ],
                 "summary": "Metadata de descarga del P12 (sólo Viafirma)",
-                "description": "Retorna el PIN temporal y una URL firmada (24h) para descargar el .p12 ensamblado. Disponible cuando el estado interno es ASSEMBLED o COMPLETED.",
+                "description": "Retorna el PIN temporal y una URL firmada (24h) para descargar el .p12 ensamblado. Disponible cuando el estado interno es ASSEMBLED o COMPLETED. El parámetro es el UUID público de la solicitud (`certificate_requests.uuid`), no su ID numérico.",
                 "operationId": "certificateRequestIssuanceDownload",
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "uuid",
                         "in": "path",
+                        "description": "UUID de la solicitud de certificado (certificate_requests.uuid)",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "550e8400-e29b-41d4-a716-446655440000"
                         }
                     }
                 ],
@@ -2248,7 +2251,7 @@
                         }
                     },
                     "404": {
-                        "description": "Trámite no encontrado",
+                        "description": "Solicitud o trámite no encontrado",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2288,86 +2291,58 @@
                 ]
             }
         },
-        "/certificate-request/{id}/issuance/download/file": {
-            "get": {
-                "tags": [
-                    "Emisión de Certificados"
-                ],
-                "summary": "Descarga binaria del P12 (streaming)",
-                "description": "Streaming directo del archivo .p12 con Content-Disposition: attachment. Sólo proveedor Viafirma en estado ASSEMBLED/COMPLETED.",
-                "operationId": "certificateRequestIssuanceDownloadFile",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Binario P12",
-                        "content": {
-                            "application/x-pkcs12": {}
-                        }
-                    },
-                    "404": {
-                        "description": "Trámite no encontrado",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ApiErrorResponse"
-                                }
-                            }
-                        }
-                    },
-                    "409": {
-                        "description": "El estado actual no permite descarga / proveedor no soporta descarga",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ApiErrorResponse"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "No autenticado"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/certificate-request/{id}/issuance/download/base64": {
+        "/certificate-request/{uuid}/issuance/download/base64": {
             "get": {
                 "tags": [
                     "Emisión de Certificados"
                 ],
                 "summary": "Descarga del P12 en Base64",
-                "description": "Devuelve el .p12 codificado en Base64 + PIN, para uso desatendido. Sólo proveedor Viafirma en estado ASSEMBLED/COMPLETED.",
+                "description": "Devuelve el .p12 codificado en Base64 + PIN, para integración desatendida (ERP, scripts). Sólo proveedor Viafirma en estado ASSEMBLED/COMPLETED. El parámetro es el UUID público de la solicitud (`certificate_requests.uuid`), no su ID numérico.",
                 "operationId": "certificateRequestIssuanceDownloadBase64",
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "uuid",
                         "in": "path",
+                        "description": "UUID de la solicitud de certificado (certificate_requests.uuid)",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "550e8400-e29b-41d4-a716-446655440000"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "P12 en Base64 + PIN"
+                        "description": "P12 en Base64 + PIN",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "p12_pin": {
+                                            "type": "string",
+                                            "example": "X3kP9aQ1mZv7nR2s"
+                                        },
+                                        "p12_filename": {
+                                            "type": "string",
+                                            "example": "D4AZEQQG6.p12"
+                                        },
+                                        "p12_base64": {
+                                            "description": "Contenido del .p12 codificado en Base64",
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Trámite no encontrado",
+                        "description": "Solicitud o trámite no encontrado",
                         "content": {
                             "application/json": {
                                 "schema": {

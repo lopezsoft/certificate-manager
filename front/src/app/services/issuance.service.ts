@@ -6,11 +6,10 @@ import {
   IssuanceRequest,
   IssuanceStatus,
   IssuanceDownloadMeta,
-  ViafirmaStatus,
   RedownloadResult,
+  Base64DownloadResponse,
 } from '../interfaces/issuance.interface';
 import { DebugService } from '../utils/debug.service';
-import { environment } from '../../environments/environment';
 
 /**
  * IssuanceService — Emisión, estado y descarga de certificados.
@@ -19,7 +18,9 @@ import { environment } from '../../environments/environment';
  *   POST /certificate-request/{id}/issue               → Disparar emisión
  *   GET  /certificate-request/{id}/issuance             → Estado del trámite
  *   GET  /certificate-request/{id}/issuance/download    → Metadata de descarga (PIN + URL)
- *   GET  /certificate-request/{id}/issuance/download/file → Streaming binario P12
+ *   GET  /certificate-request/{id}/issuance/download/base64 → Descarga directa del P12 (base64)
+ *   POST /certificate-request/{id}/issuance/redownload  → Re-descarga de certificado (admin)
+ *   POST /certificate-request/{id}/revoke               → Revocación de certificado (admin)
  */
 @Injectable({
   providedIn: 'root'
@@ -29,7 +30,7 @@ export class IssuanceService {
   constructor(
     private http: HttpResponsesService,
     private debug: DebugService,
-  ) {}
+  ) { }
 
   /**
    * Dispara la emisión de un certificado.
@@ -66,24 +67,28 @@ export class IssuanceService {
    * Obtiene la metadata de descarga (PIN temporal + URL firmada).
    * Solo aplica para certificados emitidos por Viafirma.
    */
-  getDownloadMeta(requestId: number): Observable<IssuanceDownloadMeta> {
-    return this.http.get(`/certificate-request/${requestId}/issuance/download`).pipe(
+  getDownloadFileUrl(requestUuid: string): Observable<IssuanceDownloadMeta> {
+    return this.http.get(`/certificate-request/${requestUuid}/issuance/download`).pipe(
       map((res: any) => {
-        const meta = res.dataRecords as IssuanceDownloadMeta;
-        this.debug.log('IssuanceService', `Metadata descarga solicitud #${requestId}`, meta);
+        const meta = res.dataRecords.data as IssuanceDownloadMeta;
+        this.debug.log('IssuanceService', `Metadata descarga solicitud #${requestUuid}`, meta);
         return meta;
       }),
     );
   }
 
   /**
-   * Retorna la URL completa para descarga directa del archivo P12.
-   * El componente puede usarla con window.open() o como href.
+   * Obtiene el archivo P12 binario para descarga directa, en base64 o streaming.
+   * El backend responde con un streaming binario, no JSON.
    */
-  getDownloadFileUrl(requestId: number): string {
-    return `${environment.APIURL}/certificate-request/${requestId}/issuance/download/file`;
-  }
 
+  getDownloadBase64(requestUuid: string): Observable<Base64DownloadResponse> {
+    return this.http.get(`/certificate-request/${requestUuid}/issuance/download/base64`).pipe(
+      map((res: any) => {
+        return res.dataRecords.data as Base64DownloadResponse;
+      }),
+    );
+  }
 
   /**
    * Re-descarga el certificado P7B desde Viafirma y regenera el P12 con un nuevo PIN.

@@ -22,6 +22,7 @@ import { Subject, interval, Subscription } from "rxjs";
 import { takeUntil, switchMap } from "rxjs/operators";
 import { ViafirmaInternalStateEnum, ViafirmaInternalStateDescription } from "../../common/enums/ViafirmaInternalState";
 import { IssuanceProviderService } from 'app/services/issuance-provider.service';
+import { DownloadFile } from 'app/common/class/download-file';
 
 @Component({
 	selector: 'app-document-view',
@@ -425,27 +426,20 @@ export class DocumentViewComponent implements OnDestroy {
 	 * Obtiene la metadata de descarga del P12.
 	 */
 	protected onGetDownloadMeta(): void {
-		const requestId = this.currentShipping.id;
+		const requestId = this.currentShipping.uuid;
 		this.issuanceLoading = true;
-		this.issuanceService.getDownloadMeta(requestId).subscribe({
+		this.mask.showBlockUI('Procesando descarga de certificado...');
+		this.issuanceService.getDownloadFileUrl(requestId).subscribe({
 			next: (meta) => {
-				this.issuanceDownloadMeta = meta;
+				this.mask.hideBlockUI();
+				window.open(meta.download_url, '_blank');
 				this.issuanceLoading = false;
 			},
-			error: (err) => {
+			error: () => {
+				this.mask.hideBlockUI();
 				this.issuanceLoading = false;
-				this.debug.error('DocumentViewComponent', 'Error al obtener metadata de descarga', err);
 			}
 		});
-	}
-
-	/**
-	 * Descarga el archivo P12 directamente (streaming binario).
-	 */
-	protected onDownloadP12(): void {
-		const requestId = this.currentShipping.id;
-		const url = this.issuanceService.getDownloadFileUrl(requestId);
-		window.open(url, '_blank');
 	}
 
 	// ─── Re-descarga Viafirma (Admin) ────────────────────────────────────────
@@ -462,7 +456,8 @@ export class DocumentViewComponent implements OnDestroy {
 			ViafirmaInternalStateEnum.FAILED_RECOVERABLE,
 			ViafirmaInternalStateEnum.DOWNLOADED
 		];
-		return visibleStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum);
+		return visibleStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum)
+			&& this.currentShipping.request_status === DocumentStatusEnum.PROCESSED;
 	}
 
 	/**
@@ -476,22 +471,9 @@ export class DocumentViewComponent implements OnDestroy {
 			ViafirmaInternalStateEnum.DOWNLOADED,
 			ViafirmaInternalStateEnum.FAILED_RECOVERABLE
 		];
-		return allowedStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum);
+		return allowedStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum)
+			&& this.currentShipping.request_status === DocumentStatusEnum.PROCESSED;
 	}
-
-	/**
-	 * Determina si el botón para descargar el P12 está visible.
-	 * Visible solo cuando el estado es READY_TO_DOWNLOAD o DOWNLOADED.
-	 */
-	protected get canShowDownloadP12(): boolean {
-		const downloadReadyStates = [
-			ViafirmaInternalStateEnum.READY_TO_DOWNLOAD,
-			ViafirmaInternalStateEnum.DOWNLOADED,
-			ViafirmaInternalStateEnum.COMPLETED
-		];
-		return downloadReadyStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum);
-	}
-
 	/**
 	 * Determina si el polling está activo (estado no terminal).
 	 */

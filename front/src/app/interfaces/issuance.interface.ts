@@ -29,6 +29,12 @@ export interface IssuanceDownloadMeta {
   expires_at: string;
 }
 
+export interface Base64DownloadResponse {
+  p12_pin: string;
+  p12_filename: string;
+  p12_base64: string;
+}
+
 /** Estado detallado del trámite Viafirma */
 export interface ViafirmaStatus {
   internal_state: ViafirmaInternalStateEnum;

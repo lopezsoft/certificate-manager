@@ -137,24 +137,32 @@ class CertificateIssuanceController extends Controller
      * que generen archivo descargable (hoy: viafirma).
      *
      * @OA\Get(
-     *     path="/certificate-request/{id}/issuance/download",
+     *     path="/certificate-request/{uuid}/issuance/download",
      *     operationId="certificateRequestIssuanceDownload",
      *     tags={"Emisión de Certificados"},
      *     summary="Metadata de descarga del P12 (sólo Viafirma)",
-     *     description="Retorna el PIN temporal y una URL firmada (24h) para descargar el .p12 ensamblado. Disponible cuando el estado interno es ASSEMBLED o COMPLETED.",
+     *     description="Retorna el PIN temporal y una URL firmada (24h) para descargar el .p12 ensamblado. Disponible cuando el estado interno es ASSEMBLED o COMPLETED. El parámetro es el UUID público de la solicitud (`certificate_requests.uuid`), no su ID numérico.",
      *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="uuid", in="path", required=true, description="UUID de la solicitud de certificado (certificate_requests.uuid)", @OA\Schema(type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000")),
      *     @OA\Response(response=200, description="Metadata + PIN", @OA\JsonContent(ref="#/components/schemas/IssuanceDownloadMetadata")),
-     *     @OA\Response(response=404, description="Trámite no encontrado", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
+     *     @OA\Response(response=404, description="Solicitud o trámite no encontrado", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
      *     @OA\Response(response=409, description="El estado actual no permite descarga / proveedor no soporta descarga", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
      *     @OA\Response(response=410, description="El PIN del certificado fue purgado", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
      *     @OA\Response(response=401, description="No autenticado")
      * )
      */
-    public function download(Request $request, int $id, ViafirmaDownloadService $viafirmaDownload): JsonResponse
+    public function download(Request $request, string $uuid, ViafirmaDownloadService $viafirmaDownload): JsonResponse
     {
         try {
-            $provider = $this->orchestrator->providerFor($id, $this->callerIsAdmin($request));
+            // Buscar por UUID para obtener el ID numérico
+            $certificateRequest = \App\Models\CertificateRequest::where('uuid', $uuid)->first();
+            if ($certificateRequest === null) {
+                return HttpResponseMessages::getResponse404([
+                    'message' => 'Solicitud de certificado no encontrada.',
+                ]);
+            }
+
+            $provider = $this->orchestrator->providerFor($certificateRequest->id, $this->callerIsAdmin($request));
 
             if ($provider->name() !== ViafirmaIssuanceProvider::NAME) {
                 return HttpResponseMessages::getResponse409([
@@ -162,45 +170,7 @@ class CertificateIssuanceController extends Controller
                 ]);
             }
 
-            return $viafirmaDownload->metadataFor($id, $request->user()?->id);
-        } catch (Exception $e) {
-            return MessageExceptionResponse::response($e);
-        }
-    }
-
-    /**
-     * Streaming binario del archivo P12 (viafirma).
-     *
-     * @OA\Get(
-     *     path="/certificate-request/{id}/issuance/download/file",
-     *     operationId="certificateRequestIssuanceDownloadFile",
-     *     tags={"Emisión de Certificados"},
-     *     summary="Descarga binaria del P12 (streaming)",
-     *     description="Streaming directo del archivo .p12 con Content-Disposition: attachment. Sólo proveedor Viafirma en estado ASSEMBLED/COMPLETED.",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Binario P12",
-     *         @OA\MediaType(mediaType="application/x-pkcs12")
-     *     ),
-     *     @OA\Response(response=404, description="Trámite no encontrado", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
-     *     @OA\Response(response=409, description="El estado actual no permite descarga / proveedor no soporta descarga", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
-     *     @OA\Response(response=401, description="No autenticado")
-     * )
-     */
-    public function downloadFile(Request $request, int $id, ViafirmaDownloadService $viafirmaDownload): StreamedResponse|JsonResponse
-    {
-        try {
-            $provider = $this->orchestrator->providerFor($id, $this->callerIsAdmin($request));
-
-            if ($provider->name() !== ViafirmaIssuanceProvider::NAME) {
-                return HttpResponseMessages::getResponse409([
-                    'message' => "El proveedor '{$provider->name()}' no soporta descarga binaria.",
-                ]);
-            }
-
-            return $viafirmaDownload->streamFor($id, $request->user()?->id);
+            return $viafirmaDownload->metadataFor($uuid, $request->user()?->id);
         } catch (Exception $e) {
             return MessageExceptionResponse::response($e);
         }
@@ -210,24 +180,37 @@ class CertificateIssuanceController extends Controller
      * Descarga del P12 codificado en Base64 (uso desatendido por el cliente).
      *
      * @OA\Get(
-     *     path="/certificate-request/{id}/issuance/download/base64",
+     *     path="/certificate-request/{uuid}/issuance/download/base64",
      *     operationId="certificateRequestIssuanceDownloadBase64",
      *     tags={"Emisión de Certificados"},
      *     summary="Descarga del P12 en Base64",
-     *     description="Devuelve el .p12 codificado en Base64 + PIN, para uso desatendido. Sólo proveedor Viafirma en estado ASSEMBLED/COMPLETED.",
+     *     description="Devuelve el .p12 codificado en Base64 + PIN, para integración desatendida (ERP, scripts). Sólo proveedor Viafirma en estado ASSEMBLED/COMPLETED. El parámetro es el UUID público de la solicitud (`certificate_requests.uuid`), no su ID numérico.",
      *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="P12 en Base64 + PIN"),
-     *     @OA\Response(response=404, description="Trámite no encontrado", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
+     *     @OA\Parameter(name="uuid", in="path", required=true, description="UUID de la solicitud de certificado (certificate_requests.uuid)", @OA\Schema(type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000")),
+     *     @OA\Response(response=200, description="P12 en Base64 + PIN", @OA\JsonContent(
+     *         @OA\Property(property="success", type="boolean", example=true),
+     *         @OA\Property(property="p12_pin", type="string", example="X3kP9aQ1mZv7nR2s"),
+     *         @OA\Property(property="p12_filename", type="string", example="D4AZEQQG6.p12"),
+     *         @OA\Property(property="p12_base64", type="string", description="Contenido del .p12 codificado en Base64")
+     *     )),
+     *     @OA\Response(response=404, description="Solicitud o trámite no encontrado", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
      *     @OA\Response(response=409, description="El estado actual no permite descarga / proveedor no soporta descarga", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
      *     @OA\Response(response=410, description="El PIN del certificado fue purgado", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
      *     @OA\Response(response=401, description="No autenticado")
      * )
      */
-    public function downloadBase64(Request $request, int $id, ViafirmaDownloadService $viafirmaDownload): JsonResponse
+    public function downloadBase64(Request $request, string $uuid, ViafirmaDownloadService $viafirmaDownload): JsonResponse
     {
         try {
-            $provider = $this->orchestrator->providerFor($id, $this->callerIsAdmin($request));
+            // Buscar por UUID para obtener el ID numérico
+            $certificateRequest = \App\Models\CertificateRequest::where('uuid', $uuid)->first();
+            if ($certificateRequest === null) {
+                return HttpResponseMessages::getResponse404([
+                    'message' => 'Solicitud de certificado no encontrada.',
+                ]);
+            }
+
+            $provider = $this->orchestrator->providerFor($certificateRequest->id, $this->callerIsAdmin($request));
 
             if ($provider->name() !== ViafirmaIssuanceProvider::NAME) {
                 return HttpResponseMessages::getResponse409([
@@ -235,7 +218,7 @@ class CertificateIssuanceController extends Controller
                 ]);
             }
 
-            return $viafirmaDownload->base64For($id, $request->user()?->id);
+            return $viafirmaDownload->base64For($uuid, $request->user()?->id);
         } catch (Exception $e) {
             return MessageExceptionResponse::response($e);
         }

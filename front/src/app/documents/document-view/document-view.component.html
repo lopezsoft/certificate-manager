@@ -173,7 +173,7 @@
                       </div>
                       <div class="actions-content">
                         <button class="btn custom-button fas-fa-save"
-                          (click)="onDownload(file)">
+                          (click)="onGetDownloadMeta()">
                           <i class="fas fa-download fas-fa-18 fas-fa-save"></i>
                         </button>
                       </div>
@@ -323,7 +323,7 @@
         </div>
       </div>
     </div>
-    @if (currentShipping.files.length > 0) {
+    @if (currentShipping.files.length > 0 && !issuanceProvider.isViafirma()) {
     <div class="content-div">
       <hr>
     </div>
@@ -492,15 +492,6 @@
               [disabled]="issuanceLoading">
               <i class="fas fa-sync-alt me-1"></i> Actualizar estado
             </button>
-            @if(canShowDownloadP12) {
-            <button class="btn btn-outline-success btn-sm"
-              (click)="onGetDownloadMeta()" [disabled]="issuanceLoading">
-              <i class="fas fa-key me-1"></i> Obtener PIN de descarga
-            </button>
-            <button class="btn btn-success btn-sm" (click)="onDownloadP12()">
-              <i class="fas fa-download me-1"></i> Descargar P12
-            </button>
-            }
             <!-- Botón Re-descargar: Solo Admin y cuando internal_state lo permite -->
             @if (isAdmin && canShowRedownload) {
             <button class="btn btn-warning btn-sm" (click)="onRedownload()"
@@ -523,32 +514,6 @@
               <i class="fas fa-ban me-1"></i> Revocar Certificado
             </button>
             }
-          </div>
-        </div>
-        }
-        <!-- Metadata de descarga -->
-        @if (issuanceDownloadMeta) {
-        <div class="mt-3">
-          <div class="card bg-light">
-            <div class="card-body py-2">
-              <div class="row">
-                <div class="col-md-4">
-                  <strong>PIN temporal:</strong>
-                  <code class="fs-5 ms-2">{{ issuanceDownloadMeta.pin }}</code>
-                </div>
-                <div class="col-md-4">
-                  <strong>Expira:</strong>
-                  <span class="ms-2">{{ issuanceDownloadMeta.expires_at
-                    }}</span>
-                </div>
-                <div class="col-md-4 text-end">
-                  <button class="btn btn-success btn-sm"
-                    (click)="onDownloadP12()">
-                    <i class="fas fa-download me-1"></i> Descargar archivo .p12
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
         }
@@ -604,8 +569,8 @@
     </div>
     <div class="d-flex justify-content-between align-items-center mt-4">
       <button class="btn border custom-button fas-fa-save"
-        (click)="onDownloadP12()">
-        <i class="fas fa-download me-1"></i> Descargar P12
+        (click)="onGetDownloadMeta()">
+        <i class="fas fa-download me-1"></i> Descargar certificado
       </button>
       <button class="btn custom-button border fas-fa-close"
         (click)="closePinModal()" [disabled]="pinCopied"

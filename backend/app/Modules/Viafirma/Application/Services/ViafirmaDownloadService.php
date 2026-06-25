@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace App\Modules\Viafirma\Application\Services;
 
+use App\Common\HttpResponseMessages;
 use App\Modules\Viafirma\Domain\Contracts\KeyVault;
 use App\Modules\Viafirma\Domain\Contracts\ViafirmaCertificateRequestRepositoryContract;
-use App\Modules\Viafirma\Domain\Enums\InternalState;
 use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
-use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
- * Servicio que encapsula la lógica de descarga del P12 ensamblado.
+ * Servicio que encapsula la lógica de descarga del P12 ensamblado comprimido.
  *
  * Extraído del antiguo `ViafirmaCertificateController` para que la nueva
  * capa HTTP unificada (`CertificateIssuanceController`) pueda invocarla
@@ -31,40 +30,49 @@ final class ViafirmaDownloadService
 
     /**
      * Devuelve metadata + URL temporal firmada (24h) + PIN del P12.
+     *
+     * @param string $uuid  UUID de la solicitud (`certificate_requests.uuid`)
      */
-    public function metadataFor(int $certificateRequestId, ?int $userId = null): JsonResponse
+    public function metadataFor(string $uuid, ?int $userId = null): JsonResponse
     {
-        $entity = $this->repository->findByCertificateRequestId($certificateRequestId);
+        $certificateRequest = \App\Models\CertificateRequest::where('uuid', $uuid)->first();
 
-        if ($entity === null) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No existe un trámite Viafirma para esta solicitud.',
-            ], 404);
+        if ($certificateRequest === null) {
+            return HttpResponseMessages::getResponse404([
+                'message' => 'Solicitud de certificado no encontrada.',
+            ]);
         }
 
-        if (!$this->canDownload($entity)) {
-            return response()->json([
-                'success' => false,
-                'message' => "El certificado no está disponible para descarga en estado {$entity->internal_state?->value}.",
-            ], 409);
+        $entityParent = $this->repository->findByCertificateRequestId($certificateRequest->id);
+
+        if ($entityParent === null) {
+            return HttpResponseMessages::getResponse404([
+                'message' => 'No existe un trámite Viafirma para esta solicitud.',
+            ]);
+        }
+
+        $entity = $entityParent->state;
+
+        // Validación centralizada: solo se puede descargar si el certificado está en estado PROCESSED
+        if (!$certificateRequest->canDownloadCertificate()) {
+            return HttpResponseMessages::getResponse409([
+                'message' => "El certificado no está disponible para descarga. Estado actual: {$certificateRequest->request_status}.",
+            ]);
         }
 
         if (empty($entity->p12_storage_path)) {
-            return response()->json([
-                'success' => false,
+            return HttpResponseMessages::getResponse409([
                 'message' => 'El archivo P12 no se ha generado aún.',
-            ], 409);
+            ]);
         }
 
         if (empty($entity->p12_password_ref) || $entity->p12_password_ref === 'PURGED') {
-            return response()->json([
-                'success' => false,
+            return HttpResponseMessages::getResponse410([
                 'message' => 'El PIN del certificado ha sido purgado. Contacte soporte.',
-            ], 410);
+            ]);
         }
 
-        $pin = $this->vault->retrieve($entity->p12_password_ref);
+        $pin  = $this->vault->retrieve($entity->p12_password_ref);
         $disk = $this->pathResolver->disk();
 
         $temporaryUrl = null;
@@ -78,131 +86,99 @@ final class ViafirmaDownloadService
         }
 
         $this->logger->info('viafirma.download.served', [
-            'cr_id'  => $certificateRequestId,
+            'uuid'   => $uuid,
+            'cr_id'  => $certificateRequest->id,
             'vf_id'  => $entity->id,
             'user'   => $userId,
         ]);
 
-        return response()->json([
-            'success'      => true,
-            'p12_pin'      => $pin,
-            'p12_filename' => basename($entity->p12_storage_path),
-            'download_url' => $temporaryUrl,
-            'expires_at'   => now()->addHours(24)->toISOString(),
+        return HttpResponseMessages::getResponse([
+            'dataRecords' => [
+                'data' => [
+                    'p12_pin'      => $pin,
+                    'p12_filename' => basename($entity->p12_storage_path),
+                    'download_url' => $temporaryUrl,
+                    'expires_at'   => now()->addHours(24)->toISOString(),
+                ],
+            ]
         ]);
     }
 
-    /**
-     * Streaming binario del P12.
-     */
-    public function streamFor(int $certificateRequestId, ?int $userId = null): StreamedResponse|JsonResponse
-    {
-        $entity = $this->repository->findByCertificateRequestId($certificateRequestId);
-
-        if ($entity === null) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No existe un trámite Viafirma para esta solicitud.',
-            ], 404);
-        }
-
-        if (!$this->canDownload($entity)) {
-            return response()->json([
-                'success' => false,
-                'message' => "Estado {$entity->internal_state?->value} no permite descarga.",
-            ], 409);
-        }
-
-        if (empty($entity->p12_storage_path)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Archivo P12 no disponible.',
-            ], 409);
-        }
-
-        $disk     = $this->pathResolver->disk();
-        $filename = basename($entity->p12_storage_path);
-
-        $this->logger->info('viafirma.download.file_streamed', [
-            'cr_id' => $certificateRequestId,
-            'vf_id' => $entity->id,
-            'user'  => $userId,
-        ]);
-
-        return Storage::disk($disk)->download($entity->p12_storage_path, $filename, [
-            'Content-Type'        => 'application/x-pkcs12',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-        ]);
-    }
 
     /**
      * Devuelve el P12 codificado en Base64 + PIN, para uso desatendido por el cliente.
      * Funciona igual con cualquier disco (S3 o local).
+     *
+     * @param string $uuid  UUID de la solicitud (`certificate_requests.uuid`)
      */
-    public function base64For(int $certificateRequestId, ?int $userId = null): JsonResponse
+    public function base64For(string $uuid, ?int $userId = null): JsonResponse
     {
-        $entity = $this->repository->findByCertificateRequestId($certificateRequestId);
+        $certificateRequest = \App\Models\CertificateRequest::where('uuid', $uuid)->first();
 
-        if ($entity === null) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No existe un trámite Viafirma para esta solicitud.',
-            ], 404);
+        if ($certificateRequest === null) {
+            return HttpResponseMessages::getResponse404([
+                'message' => 'Solicitud de certificado no encontrada.',
+            ]);
         }
 
-        if (!$this->canDownload($entity)) {
-            return response()->json([
-                'success' => false,
-                'message' => "Estado {$entity->internal_state?->value} no permite descarga.",
-            ], 409);
+        $entityParent = $this->repository->findByCertificateRequestId($certificateRequest->id);
+
+
+        if ($entityParent === null) {
+            return HttpResponseMessages::getResponse404([
+                'message' => 'No existe un trámite Viafirma para esta solicitud.',
+            ]);
+        }
+
+        $entity = $entityParent->state;
+
+        // Validación centralizada: solo se puede descargar si el certificado está en estado PROCESSED
+        if (!$certificateRequest->canDownloadCertificate()) {
+            return HttpResponseMessages::getResponse409([
+                'message' => "El certificado no está disponible para descarga. Estado actual: {$certificateRequest->request_status}.",
+            ]);
         }
 
         if (empty($entity->p12_storage_path)) {
-            return response()->json([
-                'success' => false,
+            return HttpResponseMessages::getResponse409([
                 'message' => 'Archivo P12 no disponible.',
-            ], 409);
+            ]);
         }
 
         if (empty($entity->p12_password_ref) || $entity->p12_password_ref === 'PURGED') {
-            return response()->json([
-                'success' => false,
+            return HttpResponseMessages::getResponse410([
                 'message' => 'El PIN del certificado ha sido purgado. Contacte soporte.',
-            ], 410);
+            ]);
         }
 
         $disk   = $this->pathResolver->disk();
         $binary = Storage::disk($disk)->get($entity->p12_storage_path);
 
         if ($binary === null || $binary === '') {
-            return response()->json([
-                'success' => false,
+            return HttpResponseMessages::getResponse410([
                 'message' => 'No se pudo leer el archivo P12 del almacenamiento.',
-            ], 410);
+            ]);
+
         }
 
         $pin = $this->vault->retrieve($entity->p12_password_ref);
 
         $this->logger->info('viafirma.download.base64_served', [
-            'cr_id' => $certificateRequestId,
+            'uuid'  => $uuid,
+            'cr_id' => $certificateRequest->id,
             'vf_id' => $entity->id,
             'user'  => $userId,
         ]);
 
-        return response()->json([
-            'success'      => true,
-            'p12_pin'      => $pin,
-            'p12_filename' => basename($entity->p12_storage_path),
-            'p12_base64'   => base64_encode($binary),
+        return HttpResponseMessages::getResponse([
+            'dataRecords' => [
+                'data' => [
+                    'p12_pin'      => $pin,
+                    'p12_filename' => basename($entity->p12_storage_path),
+                    'p12_base64'   => base64_encode($binary),
+                ],
+            ]
         ]);
-    }
-
-    private function canDownload(ViafirmaCertificateRequest $entity): bool
-    {
-        return in_array($entity->internal_state, [
-            InternalState::ASSEMBLED,
-            InternalState::COMPLETED,
-        ], true);
     }
 }
 
