@@ -457,7 +457,7 @@ export class DocumentViewComponent implements OnDestroy {
 			ViafirmaInternalStateEnum.DOWNLOADED
 		];
 		return visibleStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum)
-			&& this.currentShipping.request_status === DocumentStatusEnum.PROCESSED;
+			&& !(this.currentShipping.request_status === DocumentStatusEnum.PROCESSED);
 	}
 
 	/**
@@ -472,7 +472,7 @@ export class DocumentViewComponent implements OnDestroy {
 			ViafirmaInternalStateEnum.FAILED_RECOVERABLE
 		];
 		return allowedStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum)
-			&& this.currentShipping.request_status === DocumentStatusEnum.PROCESSED;
+			&& !(this.currentShipping.request_status === DocumentStatusEnum.PROCESSED);
 	}
 	/**
 	 * Determina si el polling está activo (estado no terminal).
@@ -625,8 +625,8 @@ export class DocumentViewComponent implements OnDestroy {
 	}
 
 	protected onRevokeSubmit(): void {
-		if (!this.revocationCode || this.revocationCode.trim() === '') {
-			this.msg.errorMessage('Atención', 'El código de revocación es obligatorio');
+		if (!this.viafirmaStatus.revocation_code || this.viafirmaStatus.revocation_code.trim() === '') {
+			this.msg.errorMessage('Error', 'No se puede revocar el certificado: no se encontró un código de revocación válido.');
 			return;
 		}
 
@@ -635,10 +635,11 @@ export class DocumentViewComponent implements OnDestroy {
 			'<span class="text-danger"><i class="fas fa-exclamation-triangle"></i> Esta acción es irreversible.</span><br>El certificado dejará de ser válido inmediatamente.'
 		).then((result) => {
 			if (!result.isConfirmed) return;
-
+			this.revocationCode = this.viafirmaStatus.revocation_code;
+			this.revocationReason = this.revocationReasons.find(r => r.id === 5).id; // Default to "Sin especificar" if not set
 			this.revokeLoading = true;
 			this.mask.showBlockUI('Revocando certificado...');
-			this.issuanceService.revokeCertificate(this.currentShipping.id, this.revocationCode, this.revocationReason).subscribe({
+			this.issuanceService.revokeCertificate(this.currentShipping.uuid, this.revocationCode, this.revocationReason).subscribe({
 				next: () => {
 					this.mask.hideBlockUI();
 					this.revokeLoading = false;
@@ -648,16 +649,9 @@ export class DocumentViewComponent implements OnDestroy {
 					this.currentShipping.request_status = this.DocumentStatusEnum.REJECTED;
 					this.getChangeHistory(); // Refrescar historial
 				},
-				error: (err) => {
+				error: () => {
 					this.mask.hideBlockUI();
 					this.revokeLoading = false;
-					const status = err?.status;
-					if (status === 400 || status === 422) {
-						this.msg.errorMessage('Error', 'El código de revocación no es válido.');
-					} else {
-						this.msg.errorMessage('Error', 'Ha ocurrido un error al intentar revocar el certificado.');
-					}
-					this.debug.error('DocumentViewComponent', 'Error al revocar certificado', err);
 				}
 			});
 		});

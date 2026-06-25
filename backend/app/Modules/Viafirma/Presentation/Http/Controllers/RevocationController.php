@@ -18,9 +18,9 @@ use Illuminate\Routing\Controller;
 /**
  * Controller REST para la revocación de certificados Viafirma.
  *
- * POST /api/v1/certificate-request/{id}/revoke
+ * POST /api/v1/certificate-request/{uuid}/revoke
  *
- * El {id} es el ID de la solicitud legacy (certificate_requests.id).
+ * El {uuid} es el UUID público de la solicitud (certificate_requests.uuid).
  * Se resuelve el trámite Viafirma asociado antes de revocar.
  */
 class RevocationController extends Controller
@@ -31,12 +31,12 @@ class RevocationController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/certificate-request/{id}/revoke",
+     *     path="/certificate-request/{uuid}/revoke",
      *     tags={"Viafirma"},
      *     summary="Revocar un certificado Viafirma ya emitido",
      *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"),
-     *         description="ID de la solicitud de certificado (certificate_requests.id)"),
+     *     @OA\Parameter(name="uuid", in="path", required=true, @OA\Schema(type="string", format="uuid"),
+     *         description="UUID de la solicitud de certificado (certificate_requests.uuid)"),
      *     @OA\RequestBody(required=true, @OA\JsonContent(
      *         @OA\Property(property="revoking_code", type="string", description="Código de revocación recibido por el usuario"),
      *         @OA\Property(property="revocation_reason", type="integer", description="Motivo: 0,1,2,3,4,5,9,10"),
@@ -47,11 +47,14 @@ class RevocationController extends Controller
      *     @OA\Response(response=401, description="No autenticado")
      * )
      */
-    public function revoke(RevokeCertificateFormRequest $request, int $id): JsonResponse
+    public function revoke(RevokeCertificateFormRequest $request, string $uuid): JsonResponse
     {
         try {
-            // Resolver el trámite Viafirma asociado a la solicitud legacy
-            $viafirmaRequest = ViafirmaCertificateRequest::where('certificate_request_id', $id)
+            // Buscar la solicitud por UUID
+            $certificateRequest = \App\Models\CertificateRequest::where('uuid', $uuid)->firstOrFail();
+
+            // Resolver el trámite Viafirma asociado a la solicitud
+            $viafirmaRequest = ViafirmaCertificateRequest::where('certificate_request_id', $certificateRequest->id)
                 ->firstOrFail();
 
             $dto = new RevokeInputDto(

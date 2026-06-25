@@ -168,6 +168,8 @@ final class ViafirmaIssuanceProvider implements CertificateIssuanceProvider
                 'identity_type'  => $entity->identity_type,
                 'internal_state' => $entity->state?->internal_state?->value,
                 'remote_status'  => $entity->state?->remote_status,
+                'revocation_code'=> $entity->state?->revocation_request_code,
+                'revoked_at'     => $entity->state?->revoked_at,
                 'submitted_at'   => optional($entity->state?->submitted_at)?->toISOString(),
                 'expires_at'     => optional($entity->state?->expires_at)?->toISOString(),
                 'history_count'  => $entity->statusHistory?->count() ?? 0,

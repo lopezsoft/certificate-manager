@@ -44,6 +44,8 @@ export interface ViafirmaStatus {
   submitted_at: string | null;
   assembled_at: string | null;
   expires_at: string | null;
+  revocation_code: string | null;
+  revoked_at: string | null;
   poll_attempts: number;
   last_error_code: string | null;
   last_error_message: string | null;

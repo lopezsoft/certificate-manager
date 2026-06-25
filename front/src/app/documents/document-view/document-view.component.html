@@ -70,6 +70,31 @@
     <div class="content-div">
       <hr>
     </div>
+    } @else if ((currentShipping.request_status ===
+    DocumentStatusEnum.PROCESSED) && issuanceProvider.isViafirma() &&
+    (viafirmaStatus.revocation_code))
+    {
+    <div class="card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-sm-12 col-md-12">
+            <div class="d-flex justify-content-start w-100">
+              <div class="justify-content">
+                <button class="btn custom-button border me-50 text-danger"
+                  (click)="openRevokeModal()"
+                  appCustomTooltip="Revocar certificado">
+                  <i class="fas fa-ban fa-cursor"></i>
+                  Revocar Certificado
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="content-div">
+      <hr>
+    </div>
     }
     <div class="card">
       <div class="card-body">
@@ -504,14 +529,6 @@
               }
               {{ isRedownloading ? 'Re-descargando...' :
               'Re-descargar Certificado' }}
-            </button>
-            }
-            <!-- Botón Revocar -->
-            @if (viafirmaStatus?.internal_state ===
-            ViafirmaInternalStateEnum.COMPLETED) {
-            <button class="btn btn-danger btn-sm" (click)="openRevokeModal()"
-              appCustomTooltip="Revocar certificado emitido">
-              <i class="fas fa-ban me-1"></i> Revocar Certificado
             </button>
             }
           </div>

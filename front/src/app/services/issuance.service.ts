@@ -110,13 +110,13 @@ export class IssuanceService {
   /**
    * Revoca un certificado emitido en Viafirma.
    */
-  revokeCertificate(requestId: number, revocation_code: string, revocation_reason: number): Observable<any> {
-    return this.http.post(`/certificate-request/${requestId}/revoke`, {
+  revokeCertificate(requestUuid: string, revocation_code: string, revocation_reason: number): Observable<any> {
+    return this.http.post(`/certificate-request/${requestUuid}/revoke`, {
       revocation_code,
       revocation_reason
     }).pipe(
       map((res: any) => {
-        this.debug.log('IssuanceService', `Revocación exitosa solicitud #${requestId}`, res);
+        this.debug.log('IssuanceService', `Revocación exitosa solicitud #${requestUuid}`, res);
         return res;
       }),
     );

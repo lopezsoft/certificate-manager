@@ -89,7 +89,7 @@ Route::group(['prefix' => 'v1'], function () {
             });
 
             // ── Viafirma: Revocación y KYC ────────────────────────────
-            Route::post('/{id}/revoke', [
+            Route::post('/{uuid}/revoke', [
                 \App\Modules\Viafirma\Presentation\Http\Controllers\RevocationController::class, 'revoke',
             ])->name('v1.certificate-request.revoke');
 
