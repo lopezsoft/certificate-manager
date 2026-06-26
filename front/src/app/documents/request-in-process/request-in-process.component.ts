@@ -100,7 +100,9 @@ export class RequestInProcessComponent extends BaseComponent  implements OnInit,
         this.mask.hideBlockUI();
         this.searchItems.searchField.nativeElement.focus();
         if (this.shipping.requestDataAll.length === 1) {
-          this.onClickItem(this.shipping.requestDataAll[0]);
+          setTimeout(() => {
+            this.onClickItem(this.shipping.requestDataAll[0]);
+          });
         }
         this.setPagination();
       },

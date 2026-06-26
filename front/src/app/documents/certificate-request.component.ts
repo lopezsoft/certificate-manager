@@ -99,7 +99,9 @@ export class CertificateRequestComponent extends BaseComponent  implements OnIni
         this.mask.hideBlockUI();
         this.searchItems.searchField.nativeElement.focus();
         if (this.shipping.shippingData.length === 1) {
-          this.onClickItem(this.shipping.shippingData[0]);
+          setTimeout(() => {
+            this.onClickItem(this.shipping.shippingData[0]);
+          });
         }
         this.setPagination();
       },
