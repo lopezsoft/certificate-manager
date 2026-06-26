@@ -28,7 +28,9 @@ $colors: (
         VALIDATING: #F39C12,
         FINISHED: #085d2c,
         ERROR: #E74C3C,
-        SENDING: #F39C12
+        SENDING: #F39C12,
+        REVOKED: #E74C3C,
+        EXPIRED: #E74C3C
 );
 
 // Creación de clases para cada estado

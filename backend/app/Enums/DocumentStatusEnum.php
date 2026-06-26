@@ -29,6 +29,8 @@ enum DocumentStatusEnum: string {
     case PROCESSING = 'PROCESSING';  // Procesando
     case PROCESSED = 'PROCESSED';  // Procesado
     case ACCOUNTED = 'ACCOUNTED';  // Contabilizado
+    case REVOKED = 'REVOKED';  // Revocado
+    case EXPIRED = 'EXPIRED';  // Expirado
     case UNKNOWN = 'UNKNOWN';  // Desconocido
     public static function getDraft(): string {
         return self::DRAFT->value;
@@ -108,6 +110,14 @@ enum DocumentStatusEnum: string {
         return self::ACCOUNTED->value;
     }
 
+    public static function getRevoked(): string {
+        return self::REVOKED->value;
+    }
+
+    public static function getExpired(): string {
+        return self::EXPIRED->value;
+    }
+
     public static function getUnknown(): string {
         return self::UNKNOWN->value;
     }
@@ -137,6 +147,8 @@ enum DocumentStatusEnum: string {
             self::ACCOUNTED->value      => 'Contabilizado',
             self::PROCESSED->value      => 'Procesado',
             self::PROCESSING->value     => 'Procesando',
+            self::REVOKED->value        => 'Revocado',
+            self::EXPIRED->value        => 'Expirado',
             default => 'Desconocido',
         };
     }

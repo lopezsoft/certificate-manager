@@ -614,16 +614,6 @@ export class DocumentViewComponent implements OnDestroy {
 
 	// ─── Revocación (Frontend UI) ──────────────────────────────────────────────
 
-	protected openRevokeModal(): void {
-		this.revocationCode = '';
-		this.revocationReason = 0;
-		this.showRevokeModal = true;
-	}
-
-	protected closeRevokeModal(): void {
-		this.showRevokeModal = false;
-	}
-
 	protected onRevokeSubmit(): void {
 		if (!this.viafirmaStatus.revocation_code || this.viafirmaStatus.revocation_code.trim() === '') {
 			this.msg.errorMessage('Error', 'No se puede revocar el certificado: no se encontró un código de revocación válido.');
@@ -639,14 +629,18 @@ export class DocumentViewComponent implements OnDestroy {
 			this.revocationReason = this.revocationReasons.find(r => r.id === 5).id; // Default to "Sin especificar" if not set
 			this.revokeLoading = true;
 			this.mask.showBlockUI('Revocando certificado...');
-			this.issuanceService.revokeCertificate(this.currentShipping.uuid, this.revocationCode, this.revocationReason).subscribe({
+			const revocationData = {
+				revoking_code: this.revocationCode,
+				revocation_reason: this.revocationReason
+			};
+			this.issuanceService.revokeCertificate(this.currentShipping.uuid, revocationData).subscribe({
 				next: () => {
 					this.mask.hideBlockUI();
 					this.revokeLoading = false;
 					this.showRevokeModal = false;
 					this.msg.toastMessage('Éxito', 'Certificado revocado exitosamente');
 					// Update visual status
-					this.currentShipping.request_status = this.DocumentStatusEnum.REJECTED;
+					this.currentShipping.request_status = this.DocumentStatusEnum.REVOKED;
 					this.getChangeHistory(); // Refrescar historial
 				},
 				error: () => {

@@ -11,6 +11,8 @@ export enum DocumentStatusEnum {
 	PARTIALLY_PAID = 'PARTIALLY_PAID',
 	CANCELLED = 'CANCELLED',
 	REJECTED = 'REJECTED',
+	REVOKED = 'REVOKED',
+	EXPIRED = 'EXPIRED',
 	DISPUTED = 'DISPUTED',
 	REFUNDED = 'REFUNDED',
 	ON_HOLD = 'ON_HOLD',
@@ -42,6 +44,10 @@ export const DocumentStatusEnumArray = [
 	DocumentStatusEnum.SENT,
 	DocumentStatusEnum.CANCELLED,
 	DocumentStatusEnum.REJECTED,
+	DocumentStatusEnum.REVOKED,
+	DocumentStatusEnum.EXPIRED,
+	DocumentStatusEnum.DISPUTED,
+	DocumentStatusEnum.REFUNDED,
 	DocumentStatusEnum.ON_HOLD,
 	DocumentStatusEnum.DELETED,
 	DocumentStatusEnum.PENDING,
@@ -86,7 +92,9 @@ export const DocumentStatusDescription = {
 	ACCEPTED: 'Aceptada',
 	PROCESSING: 'En proceso',
 	ACCOUNTED: 'Contabilizado',
-	PROCESSED: 'ProcesadA',
+	PROCESSED: 'Procesada',
+	REVOKED: 'Revocado',
+	EXPIRED: 'Vencido',
 	UNKNOWN: 'Desconocido',
 };
 
@@ -111,6 +119,8 @@ export const DocumentStatusComments = {
 	PROCESSING: 'La solicitud está siendo procesada.',
 	ACCOUNTED: 'La solicitud ha sido contabilizado en el sistema.',
 	PROCESSED: 'La solicitud ha sido procesada con éxito.',
+	REVOKED: 'La solicitud ha sido revocada.',
+	EXPIRED: 'La solicitud ha vencido.',
 	UNKNOWN: 'Estado desconocido del documento.'
 }
 

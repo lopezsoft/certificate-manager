@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Viafirma\Application\UseCases;
 
+use App\Enums\DocumentStatusEnum;
 use App\Models\ChangeHistory;
 use App\Modules\Viafirma\Application\DTOs\RevokeInputDto;
 use App\Modules\Viafirma\Domain\Contracts\ViafirmaClient;
@@ -18,7 +19,7 @@ use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
  * RevokeCertificateUseCase — orquesta la revocación de un certificado Viafirma ya emitido.
  *
  * Flujo:
- *   1) Valida que el trámite esté en estado COMPLETED (único estado revocable).
+ *   1) Valida que el trámite esté en estado PROCESSED (único estado revocable).
  *   2) Llama a Viafirma API: POST /request/revoke/code/{revokingCode}
  *   3) Persiste el revocation_request_code devuelto + marca revoked_at.
  *   4) Transiciona internal_state → REVOKED.
@@ -37,11 +38,19 @@ final class RevokeCertificateUseCase
         // ── 1) Cargar y validar estado ────────────────────────────────────
         $entity = ViafirmaCertificateRequest::with('certificateRequest')
             ->findOrFail($dto->viafirmaCertificateRequestId);
+        
+        $certificateRequest = $entity->certificateRequest;
 
-        if ($entity->internal_state !== InternalState::COMPLETED) {
+        if (!$certificateRequest) {
             throw new ViafirmaException(
-                "Solo se pueden revocar certificados en estado COMPLETED. " .
-                "Estado actual: {$entity->internal_state->value} (id={$entity->id})."
+                "No se encontró la solicitud de certificado asociada (certificate_requests.id={$entity->certificate_request_id})."
+            );
+        }
+
+        if ($certificateRequest->request_status !== DocumentStatusEnum::PROCESSED->value) {
+            throw new ViafirmaException(
+                "No se puede revocar un certificado que no esté en estado PROCESSED. " .
+                "Estado actual: {$certificateRequest->request_status} (id={$entity->id})."
             );
         }
 
@@ -86,20 +95,18 @@ final class RevokeCertificateUseCase
 
             // Sincronizar CertificateRequest principal → REVOKED (estado unificado vía mapper).
             $cr = $entity->certificateRequest;
-            if ($cr) {
-                $revokedStatus = InternalState::REVOKED->toRequestStatus()->value;
-                $cr->update(['request_status' => $revokedStatus]);
+            $revokedStatus = DocumentStatusEnum::getRevoked();
+            $cr->update(['request_status' => $revokedStatus]);
 
-                // Registrar en change_histories del módulo legacy
-                ChangeHistory::create([
-                    'certificate_request_id' => $cr->id,
-                    'user_id'                => $dto->revokedByUserId,
-                    'user_of_change'         => $dto->revokedByUserId ? 'Admin (Revocación Manual)' : 'SYSTEM (Auto Revocación)',
-                    'status'                 => $revokedStatus,
-                    'comments'               => "Certificado revocado. Motivo: {$dto->revocationReason->label()}. " .
-                                                "Código de revocación Viafirma: {$newRevocationCode}.",
-                ]);
-            }
+            // Registrar en change_histories del módulo legacy
+            ChangeHistory::create([
+                'certificate_request_id' => $cr->id,
+                'user_id'                => $dto->revokedByUserId,
+                'user_of_change'         => $dto->revokedByUserId ?? 'SYSTEM',
+                'status'                 => $revokedStatus,
+                'comments'               => "Certificado revocado. Motivo: {$dto->revocationReason->label()}. " .
+                                            "Código de revocación Viafirma: {$newRevocationCode}.",
+            ]);
 
             $this->logger->info('viafirma.revoke.completed', [
                 'viafirma_cr_id'          => $entity->id,
