@@ -14,6 +14,13 @@ import {convertBytesToMB} from "../../common/utils/conversion.helper";
 import {LoadMaskService} from "../../services/load-mask.service";
 import {jqxEditorComponent} from 'jqwidgets-ng/jqxeditor';
 import {DocumentViewerService} from "../../services/document-viewer.service";
+import { IssuanceService } from "../../services/issuance.service";
+import { IssuanceStatus, IssuanceDownloadMeta, ViafirmaStatus, RedownloadResult } from "../../interfaces/issuance.interface";
+import { DebugService } from "../../utils/debug.service";
+import TokenService from "../../utils/token.service";
+import { Subject, interval, Subscription } from "rxjs";
+import { takeUntil, switchMap } from "rxjs/operators";
+import { ViafirmaInternalStateEnum, ViafirmaInternalStateDescription } from "../../common/enums/ViafirmaInternalState";
 
 @Component({
     selector: 'app-request-in-process-view',
@@ -41,10 +48,55 @@ export class RequestInProcessViewComponent {
 	protected comments: string = null;
 	protected readonly documentStatusDescription = DocumentStatusDescription;
 	protected readonly DocumentStatusEnum = DocumentStatusEnum;
+	protected readonly ViafirmaInternalStateEnum = ViafirmaInternalStateEnum;
+	protected readonly viafirmaInternalStateDescription = ViafirmaInternalStateDescription;
 	protected canRejectRequest: boolean = false;
 	protected canAddFile: boolean;
 	protected files = [];
 	protected formData: FormData;
+
+	/** Emisión de certificados */
+	protected issuanceStatus: IssuanceStatus | null = null;
+	protected issuanceDownloadMeta: IssuanceDownloadMeta | null = null;
+	protected issuanceLoading = false;
+	protected issuanceEmail: string = '';
+	protected issuanceComments: string = '';
+	protected showIssuanceForm = false;
+
+	/** Re-descarga Viafirma (solo Admin) */
+	protected viafirmaStatus: ViafirmaStatus | null = null;
+	protected isRedownloading = false;
+	protected redownloadResult: RedownloadResult | null = null;
+	protected showRedownloadPinModal = false;
+	protected pinCopied = false;
+
+	/** Revocación */
+	protected showRevokeModal = false;
+	protected revokeLoading = false;
+	protected revocationCode = '';
+	protected revocationReason = 0;
+	protected readonly revocationReasons = [
+		{ id: 0, label: 'Sin especificar' },
+		{ id: 1, label: 'Clave comprometida' },
+		{ id: 2, label: 'Autoridad de certificación comprometida' },
+		{ id: 3, label: 'Ha cambiado la afiliación' },
+		{ id: 4, label: 'Sustitución' },
+		{ id: 5, label: 'Cese de operaciones' },
+		{ id: 9, label: 'Permisos retirados' },
+		{ id: 10, label: 'AA comprometida' },
+	];
+
+	/** Polling Viafirma */
+	private readonly viafirmaTerminalStates = [
+		ViafirmaInternalStateEnum.ASSEMBLED,
+		ViafirmaInternalStateEnum.COMPLETED,
+		ViafirmaInternalStateEnum.FAILED,
+		ViafirmaInternalStateEnum.FAILED_RECOVERABLE,
+		ViafirmaInternalStateEnum.EXPIRED
+	];
+	private viafirmaPolling$: Subscription | null = null;
+	private destroy$ = new Subject<void>();
+	protected readonly isAdmin: boolean;
 	constructor(
 		public shipping: ShippingService,
 		public format: FormatsService,
@@ -52,11 +104,24 @@ export class RequestInProcessViewComponent {
 		protected documentViewerService: DocumentViewerService,
 		private  msg: MessagesService,
 		private mask: LoadMaskService,
+		private issuanceService: IssuanceService,
+		private debug: DebugService,
+		private tokenService: TokenService,
 	) {
+		this.isAdmin = this.tokenService.isAdmin();
 	}
 
 	initData() {
-		// console.log('initData');
+		this.viafirmaStatus = null;
+		this.redownloadResult = null;
+		this.showRedownloadPinModal = false;
+		this.issuanceStatus = null;
+		this.issuanceDownloadMeta = null;
+		this.stopViafirmaPolling();
+		const curr = this.currentShipping;
+		if (curr && (curr.request_status === this.DocumentStatusEnum.PROCESSING || curr.request_status === this.DocumentStatusEnum.PROCESSED)) {
+			this.onCheckIssuanceStatus();
+		}
 	}
 
 	public get currentShipping(): CertificateRequest {
@@ -234,5 +299,202 @@ export class RequestInProcessViewComponent {
 		return this.currentShipping.files.filter((file) => {
 			return file.document_type === FileDocumentTypeEnum.CERTIFICATE;
 		});
+	}
+
+	// ─── Emisión y Polling ───────────────────────────────────────────────────
+
+	protected onCheckIssuanceStatus(): void {
+		const requestId = this.currentShipping?.id;
+		if (!requestId) return;
+		this.issuanceLoading = true;
+		this.issuanceService.getIssuanceStatus(requestId).subscribe({
+			next: (status) => {
+				this.issuanceStatus = status;
+				this.issuanceLoading = false;
+				if (status.provider === 'viafirma' && status.data) {
+					this.viafirmaStatus = status.data;
+					if (!this.viafirmaTerminalStates.includes(this.viafirmaStatus.internal_state)) {
+						this.startViafirmaPolling();
+					} else {
+						this.stopViafirmaPolling();
+					}
+				}
+			},
+			error: (err) => {
+				this.issuanceLoading = false;
+				this.debug.error('RequestInProcessView', 'Error al consultar estado de emisión', err);
+			}
+		});
+	}
+
+	private startViafirmaPolling(): void {
+		if (this.viafirmaPolling$) return;
+		this.viafirmaPolling$ = interval(30000).pipe(
+			takeUntil(this.destroy$),
+			switchMap(() => this.issuanceService.getIssuanceStatus(this.currentShipping.id))
+		).subscribe({
+			next: (status) => {
+				this.issuanceStatus = status;
+				if (status.provider === 'viafirma' && status.data) {
+					this.viafirmaStatus = status.data;
+					if (this.viafirmaTerminalStates.includes(this.viafirmaStatus.internal_state)) {
+						this.stopViafirmaPolling();
+					}
+				}
+			},
+			error: (err) => {
+				this.debug.error('RequestInProcessView', 'Error en polling Viafirma', err);
+				this.stopViafirmaPolling();
+			}
+		});
+	}
+
+	private stopViafirmaPolling(): void {
+		this.viafirmaPolling$?.unsubscribe();
+		this.viafirmaPolling$ = null;
+	}
+
+	protected onDownloadP12(): void {
+		const requestId = this.currentShipping.uuid;
+		this.mask.showBlockUI('Preparando descarga...');
+		this.issuanceService.getDownloadFileUrl(requestId).subscribe({
+			next: (meta) => {
+				this.mask.hideBlockUI();
+				window.open(meta.download_url, '_blank');
+			},
+			error: () => this.mask.hideBlockUI()
+		});
+	}
+
+	// ─── Re-descarga Viafirma ────────────────────────────────────────────────
+
+	protected get canShowRedownload(): boolean {
+		const visibleStates = [
+			ViafirmaInternalStateEnum.ASSEMBLED,
+			ViafirmaInternalStateEnum.COMPLETED,
+			ViafirmaInternalStateEnum.FAILED,
+			ViafirmaInternalStateEnum.FAILED_RECOVERABLE,
+			ViafirmaInternalStateEnum.DOWNLOADED
+		];
+		return visibleStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum);
+	}
+
+	protected get canRedownload(): boolean {
+		const allowedStates = [
+			ViafirmaInternalStateEnum.ASSEMBLED,
+			ViafirmaInternalStateEnum.COMPLETED,
+			ViafirmaInternalStateEnum.DOWNLOADED,
+			ViafirmaInternalStateEnum.FAILED_RECOVERABLE
+		];
+		return allowedStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum);
+	}
+
+	protected onRedownload(): void {
+		this.msg.confirm(
+			'Re-descargar Certificado',
+			'<strong>Esta acción:</strong><ul style="text-align:left;margin:8px 0"><li>Consultará el estado actual en Viafirma</li><li>Descargará nuevamente el archivo del certificado</li><li>Generará un <strong>NUEVO PIN</strong> de acceso</li></ul><span class="text-warning"><i class="fas fa-exclamation-triangle"></i> El PIN anterior quedará inválido.</span>',
+		).then((result) => {
+			if (!result.isConfirmed) return;
+			this.isRedownloading = true;
+			this.mask.showBlockUI('Re-descargando certificado...');
+			this.issuanceService.redownloadCertificate(this.currentShipping.id).subscribe({
+				next: (redownload) => {
+					this.mask.hideBlockUI();
+					this.isRedownloading = false;
+					this.redownloadResult = redownload;
+					this.showRedownloadPinModal = true;
+					this.pinCopied = false;
+					this.onCheckIssuanceStatus();
+				},
+				error: (err) => {
+					this.mask.hideBlockUI();
+					this.isRedownloading = false;
+					this.msg.errorMessage('Error', 'No se pudo re-descargar el certificado.');
+				}
+			});
+		});
+	}
+
+	protected copyPin(): void {
+		if (!this.redownloadResult?.pin) return;
+		if (navigator?.clipboard?.writeText) {
+			navigator.clipboard.writeText(this.redownloadResult.pin).then(() => {
+				this.pinCopied = true;
+				this.msg.toastMessage('Éxito', 'PIN copiado');
+				setTimeout(() => this.pinCopied = false, 3000);
+			}).catch(() => this.copyPinFallback());
+		} else {
+			this.copyPinFallback();
+		}
+	}
+
+	private copyPinFallback(): void {
+		try {
+			const textarea = document.createElement('textarea');
+			textarea.value = this.redownloadResult.pin;
+			textarea.style.position = 'fixed';
+			textarea.style.opacity = '0';
+			document.body.appendChild(textarea);
+			textarea.select();
+			const success = document.execCommand('copy');
+			document.body.removeChild(textarea);
+			if (success) {
+				this.pinCopied = true;
+				this.msg.toastMessage('Éxito', 'PIN copiado');
+				setTimeout(() => this.pinCopied = false, 3000);
+			}
+		} catch (err) {}
+	}
+
+	protected closePinModal(): void {
+		this.showRedownloadPinModal = false;
+		this.redownloadResult = null;
+	}
+
+	// ─── Revocación ──────────────────────────────────────────────────────────
+
+	protected closeRevokeModal(): void {
+		this.showRevokeModal = false;
+		this.revocationCode = '';
+	}
+
+	protected openRevokeModal(): void {
+		this.showRevokeModal = true;
+		this.revocationCode = '';
+		this.revocationReason = this.revocationReasons.find(r => r.id === 5).id;
+	}
+
+	protected onRevokeSubmit(): void {
+		this.msg.confirm(
+			'¿Revocar Certificado?',
+			'<span class="text-danger"><i class="fas fa-exclamation-triangle"></i> Esta acción es irreversible.</span><br>El certificado dejará de ser válido inmediatamente.'
+		).then((result) => {
+			if (!result.isConfirmed) return;
+			this.revokeLoading = true;
+			this.mask.showBlockUI('Revocando certificado...');
+			const revocationData = {
+				revoking_code: this.revocationCode,
+				revocation_reason: this.revocationReason
+			};
+			this.issuanceService.revokeCertificate(this.currentShipping.uuid, revocationData).subscribe({
+				next: () => {
+					this.mask.hideBlockUI();
+					this.revokeLoading = false;
+					this.showRevokeModal = false;
+					this.msg.toastMessage('Éxito', 'Certificado revocado exitosamente');
+					this.currentShipping.request_status = this.DocumentStatusEnum.REVOKED;
+				},
+				error: () => {
+					this.mask.hideBlockUI();
+					this.revokeLoading = false;
+				}
+			});
+		});
+	}
+
+	ngOnDestroy(): void {
+		this.destroy$.next();
+		this.destroy$.complete();
+		this.stopViafirmaPolling();
 	}
 }
