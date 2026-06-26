@@ -52,6 +52,8 @@ class CertificateRequestService
             legalRepEmail:         $request->input('legal_rep_email'),
             companyName:           $request->company_name,
             dni:                   $request->dni,
+            mobile:                $request->input('mobile'),
+            phone:                 $request->input('phone'),
             life:                  (int) ($request->input('life') ?? 2),
             info:                  $request->input('info'),
             files:                 array_values($request->files->all()),
@@ -59,7 +61,7 @@ class CertificateRequestService
         ));
     }
 
-    public function updateCertificateRequest(Request $request, $id): JsonResponse
+    public function updateCertificateRequest(Request $request, mixed $id): JsonResponse
     {
         $company = CompanyQueries::getCompany();
 
@@ -71,18 +73,20 @@ class CertificateRequestService
             typeOrganizationId:  (int) $request->type_organization_id,
             documentNumber:      $request->document_number,
             address:             $request->address,
+            legalRepFirstName:   $request->input('legal_rep_first_name'),
+            legalRepLastName:    $request->input('legal_rep_last_name'),
+            legalRepEmail:       $request->input('legal_rep_email'),
             legalRepresentative: $request->legal_representative,
             companyName:         $request->company_name,
             dni:                 $request->dni,
             life:                (int) ($request->input('life') ?? 1),
             info:                $request->input('info'),
-            postalCode:          $request->input('postal_code'),
             phone:               $request->input('phone'),
             mobile:              $request->input('mobile'),
         ));
     }
 
-    public function updateCertificateRequestStatus(Request $request, $id): JsonResponse
+    public function updateCertificateRequestStatus(Request $request, mixed $id): JsonResponse
     {
         $company = CompanyQueries::getCompany();
 
@@ -96,7 +100,7 @@ class CertificateRequestService
         ));
     }
 
-    public function deleteCertificateRequest($id): JsonResponse
+    public function deleteCertificateRequest(mixed $id): JsonResponse
     {
         $company = CompanyQueries::getCompany();
 
@@ -208,7 +212,6 @@ class CertificateRequestService
                         'legal_rep_first_name'  => $certificate->legal_rep_first_name,
                         'legal_rep_last_name'   => $certificate->legal_rep_last_name,
                         'life'                  => $certificate->life,
-                        'postal_code'           => $certificate->postal_code ?? null,
                     ]
                 ],
             ]);

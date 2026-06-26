@@ -18,7 +18,6 @@ use App\Services\Certificate\Providers\ViafirmaIssuanceProvider;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Controlador HTTP unificado para la emisión y consulta de certificados

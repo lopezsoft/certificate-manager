@@ -24,3 +24,14 @@ JOIN companies AS b ON b.id = a.company_id
 GROUP BY a.company_id, YEAR(a.updated_at), MONTH(a.updated_at), a.request_status, a.life
 ORDER BY b.company_name, YEAR(a.updated_at), MONTH(a.updated_at);
 
+
+
+---- 
+
+SELECT UPPER(a.company_name) AS company_name, a.dni, a.legal_representative, a.document_number, a.life, 
+a.updated_at fecha_solicitud, a.expiration_date, a.request_status
+FROM certificate_requests AS a
+JOIN companies AS b ON b.id = a.company_id
+WHERE a.created_at BETWEEN '2026-06-01' AND '2026-06-26'
+AND a.request_status IN ('PROCESSED', 'PROCESSING')
+ORDER BY a.created_at;

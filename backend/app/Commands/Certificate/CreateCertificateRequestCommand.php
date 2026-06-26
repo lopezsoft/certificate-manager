@@ -28,6 +28,8 @@ final class CreateCertificateRequestCommand implements CertificateCommandInterfa
         public readonly string  $dni,
         public readonly int     $life,
         public readonly ?string $info,
+        public readonly ?string $mobile,
+        public readonly ?string $phone,
         public readonly array   $files,
         public readonly int     $userId,
     ) {}

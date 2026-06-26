@@ -96,6 +96,8 @@ class CreateCertificateRequestHandler
                 'dv'                       => $dv,
                 'info'                     => strip_tags($command->info ?? ''),
                 'life'                     => $command->life,
+                'mobile'                   => $command->mobile ? strip_tags($command->mobile) : null,
+                'phone'                    => $command->phone ? strip_tags($command->phone) : null,
                 'base_path'                => $folderName,
                 'request_status'           => $initialStatus,
             ]);
