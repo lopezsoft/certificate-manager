@@ -111,10 +111,14 @@ final class RedownloadCertificateUseCase
 
         Storage::disk($disk)->put($p7bPath, $p7bBinary);
 
+        // ── 5.bis Obtener código de revocación desde Viafirma ──────────────────
+        $revocationCode = $this->client->getRevocationCode($entity->cod_request);
+
         $this->logger->info('viafirma.redownload.p7b_saved', [
             'viafirma_id' => $entity->id,
             'path'        => $p7bPath,
             'size'        => strlen($p7bBinary),
+            'revocation_code' => $revocationCode,
         ]);
 
         // ── 6. Generar nuevo PIN CSPRNG ──────────────────────────────────────
@@ -201,6 +205,37 @@ final class RedownloadCertificateUseCase
             'path'        => $zipFilename,
         ]);
 
+        // ── 9.bis Guardar P7B redescargado en file_managers ──────────────────
+        try {
+            $p7bSize = Storage::disk($disk)->size($p7bPath);
+            $p7bLastModified = date('Y-m-d H:i:s', Storage::disk($disk)->lastModified($p7bPath));
+        } catch (\Throwable $e) {
+            $this->logger->warning('viafirma.redownload.p7b_metadata_error', [
+                'viafirma_id' => $entity->id,
+                'p7b_path'    => $p7bPath,
+                'error'       => $e->getMessage(),
+            ]);
+            $p7bSize = 0;
+            $p7bLastModified = date('Y-m-d H:i:s');
+        }
+
+        FileManager::updateOrCreate(
+            [
+                'certificate_request_id' => $certificateRequestId,
+                'file_name'              => basename($p7bPath),
+            ],
+            [
+                'file_path'      => $p7bPath,
+                'file_name'      => basename($p7bPath),
+                'extension_file' => 'p7b',
+                'mime_type'      => 'application/pkcs7-mime',
+                'file_size'      => $p7bSize,
+                'last_modified'  => $p7bLastModified,
+                'status'         => 'COMPLETED',
+                'document_type'  => 'P7B',
+            ]
+        );
+
         // ── 10. Destruir PIN anterior del vault ──────────────────────────────
         $oldPinRef = $state->p12_password_ref;
         if (!empty($oldPinRef) && $oldPinRef !== 'PURGED') {
@@ -224,15 +259,17 @@ final class RedownloadCertificateUseCase
         // ── 12. Actualizar estado ─────────────────────────────────────────────
         $previousState = $state->internal_state;
 
-        $state->p7b_storage_path   = $p7bPath;
-        $state->p12_storage_path   = $zipFilename;
-        $state->p12_password_ref   = $newPinRef;
-        $state->internal_state     = InternalState::ASSEMBLED;
-        $state->remote_status      = $statusResult->status->value;
-        $state->downloaded_at      = now();
-        $state->assembled_at       = now();
-        $state->last_error_code    = null;
-        $state->last_error_message = null;
+        $state->p7b_storage_path      = $p7bPath;
+        $state->p12_storage_path      = $zipFilename;
+        $state->p12_password_ref      = $newPinRef;
+        $state->revocation_request_code = $revocationCode;  // ✅ Guardar código de revocación
+        $state->internal_state        = InternalState::COMPLETED;  // ✅ Transicionar a COMPLETED
+        $state->remote_status         = $statusResult->status->value;
+        $state->last_status_response  = $statusResult->raw ?: null;  // ✅ Actualizar respuesta remota
+        $state->downloaded_at         = now();
+        $state->assembled_at          = now();
+        $state->last_error_code       = null;
+        $state->last_error_message    = null;
         $state->save();
 
         // ── 13. Registrar en viafirma_status_history ──────────────────────────
@@ -311,13 +348,13 @@ final class RedownloadCertificateUseCase
         ]);
 
         // ── 16. Retornar resultado ────────────────────────────────────────────
-        $downloadUrl = route('v1.certificate-request.issuance.download.file', ['id' => $certificateRequestId]);
+        $downloadUrl = route('v1.certificate-request.issuance.download', ['uuid' => $cr?->uuid]);
 
         return new RedownloadResultDto(
             pin:           $newPin,
             downloadUrl:   $downloadUrl,
             viafirmaId:    $entity->id,
-            internalState: InternalState::ASSEMBLED->value,
+            internalState: InternalState::COMPLETED->value,
             remoteStatus:  $statusResult->status->value,
             expiresAt:     $cr?->expiration_date_formatted,
         );

@@ -175,7 +175,6 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
                 'type'       => 'p12_pin',
                 'request_id' => $entity->id,
             ]);
-            unset($exportPin);
 
             // 7. Transicionar a ASSEMBLED
             $previousState = $state->internal_state;
@@ -279,6 +278,7 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
                 $certificateRequest->issued_at       = $validity['validFrom'];
                 $certificateRequest->cert_valid_to   = $validity['validTo'];
                 $certificateRequest->expiration_date = $validity['validFrom']->addYears($life);
+                $certificateRequest->pin             = $exportPin;  // ✅ Guardar PIN en certificate_requests
                 $certificateRequest->save();
             }
 

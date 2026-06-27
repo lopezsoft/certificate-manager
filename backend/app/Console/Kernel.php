@@ -219,13 +219,38 @@ class Kernel extends ConsoleKernel
             ->appendOutputTo(storage_path('logs/scheduled-viafirma-auto-revoke.log'));
 
         // Job 11: Marcar expiración técnica/comercial (Fase 3)
-        $schedule->job(new \App\Modules\Viafirma\Infrastructure\Jobs\MarkExpiredCertificatesJob())
-            ->dailyAt('04:00')
+         $schedule->job(new \App\Modules\Viafirma\Infrastructure\Jobs\MarkExpiredCertificatesJob())
+             ->dailyAt('04:00')
+             ->timezone('America/Bogota')
+             ->name('viafirma:mark-expired')
+             ->withoutOverlapping(10)
+             ->onOneServer()
+             ->appendOutputTo(storage_path('logs/scheduled-viafirma-mark-expired.log'));
+
+        // ====================================================================
+        // VIAFIRMA CORRECCIÓN DE DATOS INCOMPLETOS
+        // ====================================================================
+
+        /**
+         * Job 12: Corregir certificados PROCESSED con datos incompletos
+         *
+         * Frecuencia: Cada 3 minutos
+         * Función: Detecta certificados en estado PROCESSED que tienen:
+         *          - certificate_requests.pin = NULL
+         *          - O viafirma_certificate_request_states.revocation_request_code = NULL
+         *          Y los re-descarga para completar los datos faltantes.
+         *          Esto corrige registros históricos que no fueron completados
+         *          correctamente en el flujo normal.
+         *          Se ejecuta frecuentemente porque el sistema se basa en entregas en minutos.
+         * Queue: viafirma-redownload
+         */
+        $schedule->job(new \App\Modules\Viafirma\Infrastructure\Jobs\FixIncompleteViafirmaCertificatesJob())
+            ->everyThreeMinutes()
             ->timezone('America/Bogota')
-            ->name('viafirma:mark-expired')
-            ->withoutOverlapping(10)
+            ->name('viafirma:fix-incomplete-certificates')
+            ->withoutOverlapping(2)
             ->onOneServer()
-            ->appendOutputTo(storage_path('logs/scheduled-viafirma-mark-expired.log'));
+            ->appendOutputTo(storage_path('logs/scheduled-viafirma-fix-incomplete.log'));
     }
 
     /**
