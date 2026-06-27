@@ -316,6 +316,7 @@ export class RequestInProcessViewComponent {
 				this.issuanceLoading = false;
 				if (status.provider === 'viafirma' && status.data) {
 					this.viafirmaStatus = status.data;
+					this.revocationCode = status.data.revocation_code || '';
 					if (!this.viafirmaTerminalStates.includes(this.viafirmaStatus.internal_state)) {
 						this.startViafirmaPolling();
 					} else {
@@ -458,12 +459,10 @@ export class RequestInProcessViewComponent {
 
 	protected closeRevokeModal(): void {
 		this.showRevokeModal = false;
-		this.revocationCode = '';
 	}
 
 	protected openRevokeModal(): void {
 		this.showRevokeModal = true;
-		this.revocationCode = '';
 		this.revocationReason = this.revocationReasons.find(r => r.id === 5).id;
 	}
 
