@@ -17,64 +17,62 @@
               <div class="col-sm-12 col-md-12">
                 <div class="d-flex justify-content-start w-100">
                   <div class="justify-content">
-                    @if (isAdmin) {
-                      @if (currentShipping.request_status === DocumentStatusEnum.SENT) {
-                        <button
-                          class="btn custom-button border me-25 fas-fa-save"
-                          (click)="updateStatus(DocumentStatusEnum.ACCEPTED)"
-                          appCustomTooltip="Aceptar solicitud">
-                          <i class="fas fa-paper-plane fa-cursor fas-fa-save"></i>
-                          Aceptar solicitud
-                        </button>
-                      }
-                      @if (canSendEmail()) {
-                        <button
-                          class="btn custom-button border me-25 fas-fa-mail-send"
-                          (click)="sendEmail(DocumentStatusEnum.PROCESSING)"
-                          appCustomTooltip="Enviar correo de solicitud" >
-                          <i class="fas fa-paper-plane fa-cursor fas-fa-mail-send"></i>
-                          Procesar solicitud
-                        </button>
-                      }
-                      @if (currentShipping.request_status === DocumentStatusEnum.PROCESSING) {
-                        <button
-                          class="btn custom-button border me-25 fas-fa-mail-send"
-                          (click)="sendEmail(DocumentStatusEnum.PROCESSING)"
-                          appCustomTooltip="Reenviar correo de solicitud" >
-                          <i class="fas fa-paper-plane fa-cursor fas-fa-mail-send"></i>
-                          Reenviar solicitud
-                        </button>
-                      }
-                      <!-- Reject button -->
-                      @if (canReject()) {
-                        <button
-                          [disabled]="canRejectRequest"
-                          class="btn custom-button border me-25 fas-fa-warning"
-                          (click)="rejectRequest()"
-                          appCustomTooltip="Rechazar solicitud" >
-                          <i class="fas fa-paper-plane fa-cursor fas-fa-warning"></i>
-                          Rechazar solicitud
-                        </button>
-                      }
-                      <!-- Finalize button -->
-                      @if (currentShipping.request_status === DocumentStatusEnum.PROCESSING) {
-                        <button
-                          class="btn custom-button border me-25 fas-fa-save"
-                          (click)="updateStatus(DocumentStatusEnum.PROCESSED)"
-                          appCustomTooltip="Finalizar solicitud">
-                          <i class="fas fa-paper-plane fa-cursor fas-fa-save"></i>
-                          Finalizar solicitud
-                        </button>
-                      }
-                      @if (currentShipping.request_status === DocumentStatusEnum.PROCESSED && existFileZip()) {
-                        <button
-                          class="btn custom-button border me-25 fas-fa-mail-send"
-                          (click)="updateStatus(DocumentStatusEnum.PROCESSED)"
-                          appCustomTooltip="Reenviar notificación de correo al cliente">
-                          <i class="fas fa-paper-plane fa-cursor fas-fa-mail-send"></i>
-                          Reenviar notificación
-                        </button>
-                      }
+                    @if (currentShipping.request_status === DocumentStatusEnum.SENT) {
+                      <button
+                        class="btn custom-button border me-25 fas-fa-save"
+                        (click)="updateStatus(DocumentStatusEnum.ACCEPTED)"
+                        appCustomTooltip="Aceptar solicitud">
+                        <i class="fas fa-paper-plane fa-cursor fas-fa-save"></i>
+                        Aceptar solicitud
+                      </button>
+                    }
+                    @if (canSendEmail()) {
+                      <button
+                        class="btn custom-button border me-25 fas-fa-mail-send"
+                        (click)="sendEmail(DocumentStatusEnum.PROCESSING)"
+                        appCustomTooltip="Enviar correo de solicitud" >
+                        <i class="fas fa-paper-plane fa-cursor fas-fa-mail-send"></i>
+                        Procesar solicitud
+                      </button>
+                    }
+                    @if (currentShipping.request_status === DocumentStatusEnum.PROCESSING) {
+                      <button
+                        class="btn custom-button border me-25 fas-fa-mail-send"
+                        (click)="sendEmail(DocumentStatusEnum.PROCESSING)"
+                        appCustomTooltip="Reenviar correo de solicitud" >
+                        <i class="fas fa-paper-plane fa-cursor fas-fa-mail-send"></i>
+                        Reenviar solicitud
+                      </button>
+                    }
+                    <!-- Reject button -->
+                    @if (canReject()) {
+                      <button
+                        [disabled]="canRejectRequest"
+                        class="btn custom-button border me-25 fas-fa-warning"
+                        (click)="rejectRequest()"
+                        appCustomTooltip="Rechazar solicitud" >
+                        <i class="fas fa-paper-plane fa-cursor fas-fa-warning"></i>
+                        Rechazar solicitud
+                      </button>
+                    }
+                    <!-- Finalize button -->
+                    @if (currentShipping.request_status === DocumentStatusEnum.PROCESSING) {
+                      <button
+                        class="btn custom-button border me-25 fas-fa-save"
+                        (click)="updateStatus(DocumentStatusEnum.PROCESSED)"
+                        appCustomTooltip="Finalizar solicitud">
+                        <i class="fas fa-paper-plane fa-cursor fas-fa-save"></i>
+                        Finalizar solicitud
+                      </button>
+                    }
+                    @if (currentShipping.request_status === DocumentStatusEnum.PROCESSED && existFileZip()) {
+                      <button
+                        class="btn custom-button border me-25 fas-fa-mail-send"
+                        (click)="updateStatus(DocumentStatusEnum.PROCESSED)"
+                        appCustomTooltip="Reenviar notificación de correo al cliente">
+                        <i class="fas fa-paper-plane fa-cursor fas-fa-mail-send"></i>
+                        Reenviar notificación
+                      </button>
                     }
                   </div>
                 </div>
@@ -82,7 +80,7 @@
             </div>
           </div>
         </div>
-        @if (isAdmin && canRejectRequest) {
+        @if (canRejectRequest) {
           <div class="content-div">
             <hr>
             </div>
@@ -426,15 +424,13 @@
                                       <span class="card-title">Lista de archivos adjuntos</span>
                                       @if (currentShipping.request_status === DocumentStatusEnum.PROCESSED && !existFileZip()) {
                                         <div class="card-header-actions">
-                                          @if (isAdmin) {
-                                            <button
-                                              class="btn custom-button fas-fa-plus fas-fa-save"
-                                              (click)="onAddFile()"
-                                              appCustomTooltip="Agregar archivo zip">
-                                              <i class="fas fa-plus fas-fa-16 fas-fa-save"></i>
-                                              Agregar archivo zip
-                                            </button>
-                                          }
+                                          <button
+                                            class="btn custom-button fas-fa-plus fas-fa-save"
+                                            (click)="onAddFile()"
+                                            appCustomTooltip="Agregar archivo zip">
+                                            <i class="fas fa-plus fas-fa-16 fas-fa-save"></i>
+                                            Agregar archivo zip
+                                          </button>
                                         </div>
                                       }
                                     </div>
@@ -493,73 +489,71 @@
                                   <div class="content-div">
                                     <hr>
                                     </div>
-                                    @if (isAdmin) {
-                                      <div class="card">
-                                        <div class="card-header">
-                                          <span class="card-title">Emisión del Certificado</span>
-                                          <div class="card-header-actions">
-                                            <button class="btn custom-button fas-fa-sync"
-                                                    (click)="onCheckIssuanceStatus()"
-                                                    appCustomTooltip="Actualizar estado">
-                                              <i class="fas fa-sync fas-fa-16" [class.fa-spin]="issuanceLoading"></i>
-                                              Actualizar estado
+                                    <div class="card">
+                                      <div class="card-header">
+                                        <span class="card-title">Emisión del Certificado</span>
+                                        <div class="card-header-actions">
+                                          <button class="btn custom-button fas-fa-sync"
+                                                  (click)="onCheckIssuanceStatus()"
+                                                  appCustomTooltip="Actualizar estado">
+                                            <i class="fas fa-sync fas-fa-16" [class.fa-spin]="issuanceLoading"></i>
+                                            Actualizar estado
+                                          </button>
+
+                                          @if (isAdmin && canShowRedownload) {
+                                            <button class="btn custom-button fas-fa-download border border-primary ms-25"
+                                                    (click)="onRedownload()"
+                                                    [disabled]="!canRedownload || isRedownloading"
+                                                    appCustomTooltip="Genera un nuevo PIN para descargar el certificado">
+                                              <i class="fas" [ngClass]="isRedownloading ? 'fa-spinner fa-spin' : 'fa-download'"></i>
+                                              Re-descargar Certificado
                                             </button>
+                                          }
 
-                                            @if (isAdmin && canShowRedownload) {
-                                              <button class="btn custom-button fas-fa-download border border-primary ms-25"
-                                                      (click)="onRedownload()"
-                                                      [disabled]="!canRedownload || isRedownloading"
-                                                      appCustomTooltip="Genera un nuevo PIN para descargar el certificado">
-                                                <i class="fas" [ngClass]="isRedownloading ? 'fa-spinner fa-spin' : 'fa-download'"></i>
-                                                Re-descargar Certificado
-                                              </button>
-                                            }
-
-                                            @if (isAdmin && viafirmaStatus?.revocation_code && currentShipping.request_status !== DocumentStatusEnum.REVOKED) {
-                                              <button class="btn custom-button border border-danger ms-25"
-                                                      (click)="openRevokeModal()"
-                                                      appCustomTooltip="Revocar este certificado definitivamente">
-                                                <i class="fas fa-ban text-danger"></i>
-                                                Revocar Certificado
-                                              </button>
-                                            }
-                                          </div>
+                                          @if (isAdmin && viafirmaStatus?.revocation_code && currentShipping.request_status !== DocumentStatusEnum.REVOKED) {
+                                            <button class="btn custom-button border border-danger ms-25"
+                                                    (click)="openRevokeModal()"
+                                                    appCustomTooltip="Revocar este certificado definitivamente">
+                                              <i class="fas fa-ban text-danger"></i>
+                                              Revocar Certificado
+                                            </button>
+                                          }
                                         </div>
-                                        <div class="card-body">
-                                          <div class="row">
-                                            <div class="col-sm-4">
-                                              <div class="form-group">
-                                                <label>Estado Emisión</label>
-                                                <div class="card-text d-grid">
-                                                  <span class="w-100 font-weight-bold">
-                                                    {{ (issuanceStatus?.status | uppercase) || 'NO INICIADO' }}
-                                                  </span>
-                                                </div>
+                                      </div>
+                                      <div class="card-body">
+                                        <div class="row">
+                                          <div class="col-sm-4">
+                                            <div class="form-group">
+                                              <label>Estado Emisión</label>
+                                              <div class="card-text d-grid">
+                                                <span class="w-100 font-weight-bold">
+                                                  {{ (issuanceStatus?.status | uppercase) || 'NO INICIADO' }}
+                                                </span>
                                               </div>
                                             </div>
-                                            <div class="col-sm-8">
-                                              <div class="form-group">
-                                                <label>Proveedor</label>
-                                                <div class="card-text d-grid">
-                                                  <span class="w-100 font-weight-bold">
-                                                    {{ (issuanceStatus?.provider | uppercase) || 'N/A' }}
-                                                    @if (viafirmaStatus) {
-                                                      <span class="badge bg-light-primary ms-1">
-                                                        <i class="fas fa-fingerprint me-50"></i>
-                                                        ESTADO VIAFIRMA: {{ viafirmaInternalStateDescription[viafirmaStatus.internal_state] | uppercase }}
-                                                      </span>
-                                                    }
-                                                  </span>
-                                                </div>
+                                          </div>
+                                          <div class="col-sm-8">
+                                            <div class="form-group">
+                                              <label>Proveedor</label>
+                                              <div class="card-text d-grid">
+                                                <span class="w-100 font-weight-bold">
+                                                  {{ (issuanceStatus?.provider | uppercase) || 'N/A' }}
+                                                  @if (viafirmaStatus) {
+                                                    <span class="badge bg-light-primary ms-1">
+                                                      <i class="fas fa-fingerprint me-50"></i>
+                                                      ESTADO VIAFIRMA: {{ viafirmaInternalStateDescription[viafirmaStatus.internal_state] | uppercase }}
+                                                    </span>
+                                                  }
+                                                </span>
                                               </div>
                                             </div>
                                           </div>
                                         </div>
                                       </div>
-                                    <div class="content-div">
-                                      <hr>
-                                      </div>
-                                    }
+                                    </div>
+                                  <div class="content-div">
+                                    <hr>
+                                    </div>
                                     <div class="card">
                                       <div class="card-header">
                                         <span class="card-title">Historial de la Solicitud</span>
