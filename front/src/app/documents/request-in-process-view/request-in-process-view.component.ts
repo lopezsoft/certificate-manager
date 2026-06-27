@@ -1,19 +1,19 @@
-import {Component, ElementRef, ViewChild} from '@angular/core';
-import {animate, style, transition, trigger} from "@angular/animations";
-import {CertificateRequest, FileManager} from "../../interfaces/file-manager.interface";
-import {ShippingService} from "../../services/shipping.service";
-import {FormatsService} from "../../services/formats.service";
-import {HttpResponsesService, MessagesService} from "../../utils";
+import { Component, ElementRef, inject, ViewChild } from '@angular/core';
+import { animate, style, transition, trigger } from "@angular/animations";
+import { CertificateRequest, FileManager } from "../../interfaces/file-manager.interface";
+import { ShippingService } from "../../services/shipping.service";
+import { FormatsService } from "../../services/formats.service";
+import { HttpResponsesService, MessagesService } from "../../utils";
 import {
 	DocumentStatusComments,
 	DocumentStatusDescription,
 	DocumentStatusEnum,
 	FileDocumentTypeEnum
 } from "../../common/enums/DocumentStatus";
-import {convertBytesToMB} from "../../common/utils/conversion.helper";
-import {LoadMaskService} from "../../services/load-mask.service";
-import {jqxEditorComponent} from 'jqwidgets-ng/jqxeditor';
-import {DocumentViewerService} from "../../services/document-viewer.service";
+import { convertBytesToMB } from "../../common/utils/conversion.helper";
+import { LoadMaskService } from "../../services/load-mask.service";
+import { jqxEditorComponent } from 'jqwidgets-ng/jqxeditor';
+import { DocumentViewerService } from "../../services/document-viewer.service";
 import { IssuanceService } from "../../services/issuance.service";
 import { IssuanceStatus, IssuanceDownloadMeta, ViafirmaStatus, RedownloadResult } from "../../interfaces/issuance.interface";
 import { DebugService } from "../../utils/debug.service";
@@ -21,27 +21,28 @@ import TokenService from "../../utils/token.service";
 import { Subject, interval, Subscription } from "rxjs";
 import { takeUntil, switchMap } from "rxjs/operators";
 import { ViafirmaInternalStateEnum, ViafirmaInternalStateDescription } from "../../common/enums/ViafirmaInternalState";
+import { IssuanceProviderService } from 'app/services/issuance-provider.service';
 
 @Component({
-    selector: 'app-request-in-process-view',
-    templateUrl: './request-in-process-view.component.html',
-    styleUrl: './request-in-process-view.component.scss',
-    animations: [
-        trigger('fadeInOut', [
-            transition(':enter', [
-                style({ opacity: 0 }),
-                animate('300ms', style({ opacity: 1 })),
-            ]),
-            transition(':leave', [
-                animate('300ms', style({ opacity: 0 })),
-            ])
-        ])
-    ],
-    standalone: false
+	selector: 'app-request-in-process-view',
+	templateUrl: './request-in-process-view.component.html',
+	styleUrl: './request-in-process-view.component.scss',
+	animations: [
+		trigger('fadeInOut', [
+			transition(':enter', [
+				style({ opacity: 0 }),
+				animate('300ms', style({ opacity: 1 })),
+			]),
+			transition(':leave', [
+				animate('300ms', style({ opacity: 0 })),
+			])
+		])
+	],
+	standalone: false
 })
 export class RequestInProcessViewComponent {
 	@ViewChild('myEditor') myEditor: jqxEditorComponent;
-	@ViewChild('fileUploadZip', { static: false}) fileUploadZip: ElementRef;
+	@ViewChild('fileUploadZip', { static: false }) fileUploadZip: ElementRef;
 	pin: string;
 	protected selectedFile: FileManager;
 	protected readonly convertBytesToMB = convertBytesToMB;
@@ -97,12 +98,14 @@ export class RequestInProcessViewComponent {
 	private viafirmaPolling$: Subscription | null = null;
 	private destroy$ = new Subject<void>();
 	protected readonly isAdmin: boolean;
+
+	protected issuanceProvider: IssuanceProviderService = inject(IssuanceProviderService);
 	constructor(
 		public shipping: ShippingService,
 		public format: FormatsService,
 		protected http: HttpResponsesService,
 		protected documentViewerService: DocumentViewerService,
-		private  msg: MessagesService,
+		private msg: MessagesService,
 		private mask: LoadMaskService,
 		private issuanceService: IssuanceService,
 		private debug: DebugService,
@@ -238,7 +241,7 @@ export class RequestInProcessViewComponent {
 		if (file.size > 100000) { // 100kb
 			this.fileUploadZip.nativeElement.value = '';
 			const size = (file.size / 1024).toFixed(2); // Convert to KB
-			this.msg.errorMessage('',`El archivo no debe ser mayor a 100kb. Tamaño del archivo ${size}kb.`);
+			this.msg.errorMessage('', `El archivo no debe ser mayor a 100kb. Tamaño del archivo ${size}kb.`);
 		} else if (file.size === 0) {
 			this.fileUploadZip.nativeElement.value = '';
 			this.msg.errorMessage('', 'El archivo no puede estar vacío');
@@ -247,7 +250,7 @@ export class RequestInProcessViewComponent {
 			this.msg.errorMessage('', 'El archivo debe ser un ZIP');
 		} else {
 			this.files = [];
-			this.files.push({ data: file, inProgress: false, progress: 0});
+			this.files.push({ data: file, inProgress: false, progress: 0 });
 		}
 	}
 
@@ -443,7 +446,7 @@ export class RequestInProcessViewComponent {
 				this.msg.toastMessage('Éxito', 'PIN copiado');
 				setTimeout(() => this.pinCopied = false, 3000);
 			}
-		} catch (err) {}
+		} catch (err) { }
 	}
 
 	protected closePinModal(): void {
@@ -465,30 +468,24 @@ export class RequestInProcessViewComponent {
 	}
 
 	protected onRevokeSubmit(): void {
-		this.msg.confirm(
-			'¿Revocar Certificado?',
-			'<span class="text-danger"><i class="fas fa-exclamation-triangle"></i> Esta acción es irreversible.</span><br>El certificado dejará de ser válido inmediatamente.'
-		).then((result) => {
-			if (!result.isConfirmed) return;
-			this.revokeLoading = true;
-			this.mask.showBlockUI('Revocando certificado...');
-			const revocationData = {
-				revoking_code: this.revocationCode,
-				revocation_reason: this.revocationReason
-			};
-			this.issuanceService.revokeCertificate(this.currentShipping.uuid, revocationData).subscribe({
-				next: () => {
-					this.mask.hideBlockUI();
-					this.revokeLoading = false;
-					this.showRevokeModal = false;
-					this.msg.toastMessage('Éxito', 'Certificado revocado exitosamente');
-					this.currentShipping.request_status = this.DocumentStatusEnum.REVOKED;
-				},
-				error: () => {
-					this.mask.hideBlockUI();
-					this.revokeLoading = false;
-				}
-			});
+		this.revokeLoading = true;
+		this.mask.showBlockUI('Revocando certificado...');
+		const revocationData = {
+			revoking_code: this.revocationCode,
+			revocation_reason: this.revocationReason
+		};
+		this.issuanceService.revokeCertificate(this.currentShipping.uuid, revocationData).subscribe({
+			next: () => {
+				this.mask.hideBlockUI();
+				this.revokeLoading = false;
+				this.showRevokeModal = false;
+				this.msg.toastMessage('Éxito', 'Certificado revocado exitosamente');
+				this.currentShipping.request_status = this.DocumentStatusEnum.REVOKED;
+			},
+			error: () => {
+				this.mask.hideBlockUI();
+				this.revokeLoading = false;
+			}
 		});
 	}
 

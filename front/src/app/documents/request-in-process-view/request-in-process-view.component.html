@@ -1,571 +1,665 @@
 @if (!currentShipping) {
-  <div class="layout-content-empty">
-    <span class="card-text">
-      SELECCIONE UN DOCUMENTO PARA VER SU INFORMACIÓN
-    </span>
-    <img
-      class="img-fluid"
-      src="/assets/img/search-document.svg" alt="Búsqueda documento">
-    </div>
-  }
-  @if (currentShipping) {
-    <div class="row" [@fadeInOut]>
-      <div class="layout-wrapper custom-form">
-        <div class="card">
-          <div class="card-body">
-            <div class="row">
-              <div class="col-sm-12 col-md-12">
-                <div class="d-flex justify-content-start w-100">
-                  <div class="justify-content">
-                    @if (currentShipping.request_status === DocumentStatusEnum.SENT) {
-                      <button
-                        class="btn custom-button border me-25 fas-fa-save"
-                        (click)="updateStatus(DocumentStatusEnum.ACCEPTED)"
-                        appCustomTooltip="Aceptar solicitud">
-                        <i class="fas fa-paper-plane fa-cursor fas-fa-save"></i>
-                        Aceptar solicitud
-                      </button>
-                    }
-                    @if (canSendEmail()) {
-                      <button
-                        class="btn custom-button border me-25 fas-fa-mail-send"
-                        (click)="sendEmail(DocumentStatusEnum.PROCESSING)"
-                        appCustomTooltip="Enviar correo de solicitud" >
-                        <i class="fas fa-paper-plane fa-cursor fas-fa-mail-send"></i>
-                        Procesar solicitud
-                      </button>
-                    }
-                    @if (currentShipping.request_status === DocumentStatusEnum.PROCESSING) {
-                      <button
-                        class="btn custom-button border me-25 fas-fa-mail-send"
-                        (click)="sendEmail(DocumentStatusEnum.PROCESSING)"
-                        appCustomTooltip="Reenviar correo de solicitud" >
-                        <i class="fas fa-paper-plane fa-cursor fas-fa-mail-send"></i>
-                        Reenviar solicitud
-                      </button>
-                    }
-                    <!-- Reject button -->
-                    @if (canReject()) {
-                      <button
-                        [disabled]="canRejectRequest"
-                        class="btn custom-button border me-25 fas-fa-warning"
-                        (click)="rejectRequest()"
-                        appCustomTooltip="Rechazar solicitud" >
-                        <i class="fas fa-paper-plane fa-cursor fas-fa-warning"></i>
-                        Rechazar solicitud
-                      </button>
-                    }
-                    <!-- Finalize button -->
-                    @if (currentShipping.request_status === DocumentStatusEnum.PROCESSING) {
-                      <button
-                        class="btn custom-button border me-25 fas-fa-save"
-                        (click)="updateStatus(DocumentStatusEnum.PROCESSED)"
-                        appCustomTooltip="Finalizar solicitud">
-                        <i class="fas fa-paper-plane fa-cursor fas-fa-save"></i>
-                        Finalizar solicitud
-                      </button>
-                    }
-                    @if (currentShipping.request_status === DocumentStatusEnum.PROCESSED && existFileZip()) {
-                      <button
-                        class="btn custom-button border me-25 fas-fa-mail-send"
-                        (click)="updateStatus(DocumentStatusEnum.PROCESSED)"
-                        appCustomTooltip="Reenviar notificación de correo al cliente">
-                        <i class="fas fa-paper-plane fa-cursor fas-fa-mail-send"></i>
-                        Reenviar notificación
-                      </button>
-                    }
-                  </div>
-                </div>
+<div class="layout-content-empty">
+  <span class="card-text">
+    SELECCIONE UN DOCUMENTO PARA VER SU INFORMACIÓN
+  </span>
+  <img
+    class="img-fluid"
+    src="/assets/img/search-document.svg" alt="Búsqueda documento">
+</div>
+}
+@if (currentShipping) {
+<div class="row" [@fadeInOut]>
+  <div class="layout-wrapper custom-form">
+    @if(!issuanceProvider.isViafirma()){
+    <div class="card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-sm-12 col-md-12">
+            <div class="d-flex justify-content-start w-100">
+              <div class="justify-content">
+                @if (currentShipping.request_status === DocumentStatusEnum.SENT)
+                {
+                <button
+                  class="btn custom-button border me-25 fas-fa-save"
+                  (click)="updateStatus(DocumentStatusEnum.ACCEPTED)"
+                  appCustomTooltip="Aceptar solicitud">
+                  <i class="fas fa-paper-plane fa-cursor fas-fa-save"></i>
+                  Aceptar solicitud
+                </button>
+                }
+                @if (canSendEmail()) {
+                <button
+                  class="btn custom-button border me-25 fas-fa-mail-send"
+                  (click)="sendEmail(DocumentStatusEnum.PROCESSING)"
+                  appCustomTooltip="Enviar correo de solicitud">
+                  <i class="fas fa-paper-plane fa-cursor fas-fa-mail-send"></i>
+                  Procesar solicitud
+                </button>
+                }
+                @if (currentShipping.request_status ===
+                DocumentStatusEnum.PROCESSING) {
+                <button
+                  class="btn custom-button border me-25 fas-fa-mail-send"
+                  (click)="sendEmail(DocumentStatusEnum.PROCESSING)"
+                  appCustomTooltip="Reenviar correo de solicitud">
+                  <i class="fas fa-paper-plane fa-cursor fas-fa-mail-send"></i>
+                  Reenviar solicitud
+                </button>
+                }
+                <!-- Reject button -->
+                @if (canReject()) {
+                <button
+                  [disabled]="canRejectRequest"
+                  class="btn custom-button border me-25 fas-fa-warning"
+                  (click)="rejectRequest()"
+                  appCustomTooltip="Rechazar solicitud">
+                  <i class="fas fa-paper-plane fa-cursor fas-fa-warning"></i>
+                  Rechazar solicitud
+                </button>
+                }
+                <!-- Finalize button -->
+                @if (currentShipping.request_status ===
+                DocumentStatusEnum.PROCESSING) {
+                <button
+                  class="btn custom-button border me-25 fas-fa-save"
+                  (click)="updateStatus(DocumentStatusEnum.PROCESSED)"
+                  appCustomTooltip="Finalizar solicitud">
+                  <i class="fas fa-paper-plane fa-cursor fas-fa-save"></i>
+                  Finalizar solicitud
+                </button>
+                }
+                @if (currentShipping.request_status ===
+                DocumentStatusEnum.PROCESSED && existFileZip()) {
+                <button
+                  class="btn custom-button border me-25 fas-fa-mail-send"
+                  (click)="updateStatus(DocumentStatusEnum.PROCESSED)"
+                  appCustomTooltip="Reenviar notificación de correo al cliente">
+                  <i class="fas fa-paper-plane fa-cursor fas-fa-mail-send"></i>
+                  Reenviar notificación
+                </button>
+                }
               </div>
             </div>
           </div>
         </div>
-        @if (canRejectRequest) {
-          <div class="content-div">
-            <hr>
-            </div>
-            <div class="card">
-              <div class="card-header">
-                <span class="card-title">MOTIVO DEL RECHAZO</span>
-                <div class="card-header-actions">
-                  <button
-                    class="btn custom-button fas-fa-close"
-                    (click)="canRejectRequest = false"
-                    appCustomTooltip="Cerrar">
-                    <i class="fas fa-times fas-fa-16"></i>
-                  </button>
-                </div>
+      </div>
+    </div>
+    @if (canRejectRequest) {
+    <div class="content-div">
+      <hr>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">MOTIVO DEL RECHAZO</span>
+        <div class="card-header-actions">
+          <button
+            class="btn custom-button fas-fa-close"
+            (click)="canRejectRequest = false"
+            appCustomTooltip="Cerrar">
+            <i class="fas fa-times fas-fa-16"></i>
+          </button>
+        </div>
+      </div>
+      <div class="card-body p-1">
+        <app-help-information>
+          <p>
+            Estimado usuario, por favor ingrese el motivo del rechazo de la
+            solicitud.<br>
+            <strong>Nota:</strong> Este motivo será enviado al solicitante del
+            certificado.<br>
+            <strong>Nota:</strong> El motivo del rechazo no puede ser vacío.
+          </p>
+        </app-help-information>
+        <div class="row">
+          <div class="col-md-12">
+            <jqxeditor #myEditor [theme]="'fluent'" [(ngModel)]='comments'
+              [width]="'100%'" [height]="220">
+            </jqxeditor>
+          </div>
+        </div>
+        <div class="d-flex justify-content-end mt-1">
+          <button
+            class="btn custom-button border fas-fa-close me-25"
+            (click)="canRejectRequest = false">
+            <i class="fas fa-times fas-fa-16"></i>
+            Cancelar
+          </button>
+          <button
+            class="btn custom-button border fas-fa-save"
+            (click)="onRejectRequest()"
+            [disabled]="!comments">
+            <i class="fas fa-save fas-fa-16 fas-fa-save"></i>
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+    }}@else if ((currentShipping.request_status ===
+    DocumentStatusEnum.PROCESSED) && issuanceProvider.isViafirma() &&
+    (viafirmaStatus?.revocation_code))
+    {
+    <div class="card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-sm-12 col-md-12">
+            <div class="d-flex justify-content-start w-100">
+              <div class="justify-content">
+                <button class="btn custom-button border me-50 text-danger"
+                  (click)="openRevokeModal()"
+                  appCustomTooltip="Revocar certificado">
+                  <i class="fas fa-ban fa-cursor"></i>
+                  Revocar Certificado
+                </button>
               </div>
-              <div class="card-body p-1">
-                <app-help-information>
-                  <p>
-                    Estimado usuario, por favor ingrese el motivo del rechazo de la solicitud.<br>
-                    <strong>Nota:</strong> Este motivo será enviado al solicitante del certificado.<br>
-                    <strong>Nota:</strong> El motivo del rechazo no puede ser vacío.
-                  </p>
-                </app-help-information>
-                <div class="row">
-                  <div class="col-md-12">
-                    <jqxEditor #myEditor [theme]="'fluent'" [(ngModel)]='comments' [width]="'100%'" [height]="220">
-                    </jqxEditor>
-                  </div>
-                </div>
-                <div class="d-flex justify-content-end mt-1">
-                  <button
-                    class="btn custom-button border fas-fa-close me-25"
-                    (click)="canRejectRequest = false">
-                    <i class="fas fa-times fas-fa-16"></i>
-                    Cancelar
-                  </button>
-                  <button
-                    class="btn custom-button border fas-fa-save"
-                    (click)="onRejectRequest()"
-                    [disabled]="!comments">
-                    <i class="fas fa-save fas-fa-16 fas-fa-save"></i>
-                    Guardar
-                  </button>
-                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+    <div class="content-div">
+      <hr>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-sm-12">
+            <div class="form-group">
+              <label>Solicitante</label>
+              <div class="card-text d-grid">
+                <span class="w-100">
+                  <strong> {{ currentShipping.company.company_name | uppercase
+                    }} </strong>
+                </span>
               </div>
             </div>
-          }
-          <div class="content-div">
-            <hr>
+          </div>
+          <div class="col-sm-4">
+            <div class="form-group">
+              <label>Identificación del solicitante</label>
+              <div class="card-text d-grid">
+                <span class="w-100">
+                  <strong> {{ currentShipping.company.dni }}-{{
+                    currentShipping.dv }} </strong>
+                </span>
+              </div>
             </div>
-            <div class="card">
-              <div class="card-body">
-                <div class="row">
-                  <div class="col-sm-12">
-                    <div class="form-group">
-                      <label>Solicitante</label>
-                      <div class="card-text d-grid">
-                        <span class="w-100">
-                          <strong> {{ currentShipping.company.company_name | uppercase }} </strong>
-                        </span>
+          </div>
+          <div class="col-sm-5">
+            <div class="form-group">
+              <label>Correo del solicitante</label>
+              <div class="card-text d-grid">
+                <span class="w-100">
+                  <strong> {{ currentShipping.company.email }} </strong>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-3">
+            <div class="form-group">
+              <label>Teléfono solicitante</label>
+              <div class="card-text d-grid">
+                <span class="w-100">
+                  <strong> {{ currentShipping.company.phone }} </strong>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="content-div">
+      <hr>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-sm-6">
+            <div class="form-group">
+              <label>Código de la solicitud</label>
+              <div class="card-text d-grid">
+                <span class="w-100">
+                  <strong> {{ currentShipping.uuid }} </strong>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="form-group">
+              <label>Estado de la solicitud</label>
+              <div class="card-text d-grid">
+                <span class="w-100 text-center"
+                  [class]="'document-status-'+currentShipping.request_status">
+                  {{ documentStatusDescription[currentShipping.request_status] |
+                  uppercase }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    @if (existFileZip() && currentShipping.request_status ===
+    DocumentStatusEnum.PROCESSED) {
+    <div class="card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-sm-12">
+            <app-camerfirma-info
+              [pin]="currentShipping.pin"></app-camerfirma-info>
+          </div>
+          <hr>
+          <div class="col-sm-6">
+            <div class="form-group">
+              <label>PIN del certificado</label>
+              <div class="card-text d-grid">
+                <span class="w-100">
+                  <strong> {{ currentShipping.pin }} </strong>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="form-group">
+              <label>Fecha de expiración del certificado</label>
+              <div class="card-text d-grid">
+                <span class="w-100">
+                  <strong> {{ currentShipping.expiration_date_formatted }}
+                  </strong>
+                </span>
+              </div>
+            </div>
+          </div>
+          <hr>
+          <div class="col-sm-12">
+            <div class="bg-card-container">
+              <div class="row row-cols-1 row-cols-sm-1 row-cols-md-1 g-50">
+                @for (file of getFilesZip(); track file; let i = $index) {
+                <div class="col">
+                  <div class="card card-accounting-voucher h-100"
+                    [ngClass]="{'selected': file.id === selectedFile?.id}"
+                    (dblclick)="selectFile(null)"
+                    (click)="selectFile(file)">
+                    <div class="card-body">
+                      <div class="img-container">
+                        <img
+                          src="assets/files/128/{{file.extension_file.toLowerCase()}}.png"
+                          class="img-fluid" alt="{{ file.file_name }}">
+                      </div>
+                      <div class="card-body-content">
+                        <p class="card-text item-description mb-25 w-100">
+                          {{ file.file_name }}
+                        </p>
+                        <div class="content-p">
+                          <p class="card-text" title="Tamaño">
+                            <i class="fas fa-hdd"></i>
+                            {{ convertBytesToMB(file.file_size) }}<br>
+                          </p>
+                          <p class="card-text" title="Última modificación">
+                            <i class="fas fa-calendar-day"></i> {{
+                            file.last_modified_formatted }}
+                          </p>
+                        </div>
+                      </div>
+                      <div class="actions-content">
+                        <button
+                          class="btn custom-button fas-fa-save"
+                          (click)="onDownload(file)">
+                          <i class="fas fa-download fas-fa-18 fas-fa-save"></i>
+                        </button>
                       </div>
                     </div>
                   </div>
-                  <div class="col-sm-4">
-                    <div class="form-group">
-                      <label>Identificación del solicitante</label>
-                      <div class="card-text d-grid">
-                        <span class="w-100">
-                          <strong> {{ currentShipping.company.dni }}-{{ currentShipping.dv }} </strong>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-sm-5">
-                    <div class="form-group">
-                      <label>Correo del solicitante</label>
-                      <div class="card-text d-grid">
-                        <span class="w-100">
-                          <strong> {{ currentShipping.company.email }} </strong>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-sm-3">
-                    <div class="form-group">
-                      <label>Teléfono solicitante</label>
-                      <div class="card-text d-grid">
-                        <span class="w-100">
-                          <strong> {{ currentShipping.company.phone }} </strong>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
                 </div>
+                }
               </div>
             </div>
-            <div class="content-div">
-              <hr>
-              </div>
-              <div class="card">
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+    <div class="content-div">
+      <hr>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-sm-6">
+            <div class="form-group">
+              <label>N.I.T</label>
+              <p class="card-text">
+                <strong>{{ currentShipping.dni
+                  }}-{{currentShipping.dv}}</strong>
+              </p>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="form-group">
+              <label>Tipo de contribuyente</label>
+              <p class="card-text">
+                <strong>{{currentShipping.organization.description |
+                  uppercase}}</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="content-div">
+      <hr>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="form-group">
+              <label>Nombre o razón social</label>
+              <p class="card-text">
+                <strong>{{ currentShipping.company_name }}</strong>
+              </p>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="form-group">
+              <label>Ciudad</label>
+              <p class="card-text">
+                <strong>{{currentShipping.city.name_city }}</strong>
+              </p>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="form-group">
+              <label>Dirección</label>
+              <p class="card-text">
+                <strong>{{currentShipping.address }}</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="content-div">
+      <hr>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-sm-12">
+            <div class="form-group">
+              <label><b>Nombre completo de representante legal</b></label>
+              <p class="card-text">
+                {{ currentShipping.legal_representative | uppercase }}
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Tipo de documento</label>
+              <p class="card-text">
+                <strong>{{ currentShipping.identity.document_name }}</strong>
+              </p>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="form-group">
+              <label>Número del documento</label>
+              <p class="card-text">
+                <strong>{{currentShipping.document_number }}</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="content-div">
+      <hr>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Fecha de creación</label>
+              <p class="card-text">
+                <strong>{{ currentShipping.created_at_formatted }}</strong>
+              </p>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="form-group">
+              <label>Fecha de ultimo cambio</label>
+              <p class="card-text">
+                <strong>{{currentShipping.updated_at_formatted }}</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="content-div">
+      <hr>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Observación</label>
+              <p class="card-text">
+                {{ currentShipping.info }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    @if (currentShipping.files.length > 0) {
+    <div class="content-div">
+      <hr>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Lista de archivos adjuntos</span>
+        @if (currentShipping.request_status === DocumentStatusEnum.PROCESSED &&
+        !existFileZip()) {
+        <div class="card-header-actions">
+          <button
+            class="btn custom-button fas-fa-plus fas-fa-save"
+            (click)="onAddFile()"
+            appCustomTooltip="Agregar archivo zip">
+            <i class="fas fa-plus fas-fa-16 fas-fa-save"></i>
+            Agregar archivo zip
+          </button>
+        </div>
+        }
+      </div>
+      <div class="card-body">
+        <div class="bg-card-container">
+          <div class="row row-cols-1 row-cols-sm-1 row-cols-md-1 g-50">
+            @for (file of getFiles(); track file; let i = $index) {
+            <div class="col">
+              <div class="card card-accounting-voucher h-100"
+                [ngClass]="{'selected': file.id === selectedFile?.id}"
+                (dblclick)="selectFile(null)"
+                (click)="selectFile(file)">
                 <div class="card-body">
-                  <div class="row">
-                    <div class="col-sm-6">
-                      <div class="form-group">
-                        <label>Código de la solicitud</label>
-                        <div class="card-text d-grid">
-                          <span class="w-100">
-                            <strong> {{ currentShipping.uuid }} </strong>
-                          </span>
-                        </div>
-                      </div>
+                  <div class="img-container">
+                    <img
+                      src="assets/files/128/{{file.extension_file.toLowerCase()}}.png"
+                      class="img-fluid" alt="{{ file.file_name }}">
+                  </div>
+                  <div class="card-body-content">
+                    <small class="font-small-1 text-muted">
+                      {{ file.file_name }} - <b>{{file.document_type}}</b>
+                    </small>
+                    <div class="content-p">
+                      <p class="card-text" title="Tamaño">
+                        <i class="fas fa-hdd"></i>
+                        {{ convertBytesToMB(file.file_size) }}<br>
+                      </p>
+                      <p class="card-text" title="Última modificación">
+                        <i class="fas fa-calendar-day"></i> {{
+                        file.last_modified }}
+                      </p>
                     </div>
-                    <div class="col-sm-6">
-                      <div class="form-group">
-                        <label>Estado de la solicitud</label>
-                        <div class="card-text d-grid">
-                          <span class="w-100 text-center" [class]="'document-status-'+currentShipping.request_status">
-                            {{ documentStatusDescription[currentShipping.request_status] | uppercase }}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                  </div>
+                  <div class="actions-content">
+                    <button
+                      [disabled]="!canSendEmail()"
+                      title="Eliminar archivo"
+                      class="btn custom-button fas-fa-trash fas-fa-delete"
+                      (click)="onDeleteFile(file)">
+                      <i
+                        class="fas fa-trash fas-fa-16 fas-fa-trash fas-fa-delete"></i>
+                    </button>
+                    <button
+                      class="btn custom-button fas-fa-save"
+                      (click)="onDownload(file)">
+                      <i class="fas fa-download fas-fa-18 fas-fa-save"></i>
+                    </button>
                   </div>
                 </div>
               </div>
-              @if (existFileZip() && currentShipping.request_status === DocumentStatusEnum.PROCESSED) {
-                <div class="card">
-                  <div class="card-body">
-                    <div class="row">
-                      <div class="col-sm-12">
-                        <app-camerfirma-info [pin]="currentShipping.pin"></app-camerfirma-info>
-                      </div>
-                      <hr>
-                        <div class="col-sm-6">
-                          <div class="form-group">
-                            <label>PIN del certificado</label>
-                            <div class="card-text d-grid">
-                              <span class="w-100">
-                                <strong> {{ currentShipping.pin }} </strong>
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col-sm-6">
-                          <div class="form-group">
-                            <label>Fecha de expiración del certificado</label>
-                            <div class="card-text d-grid">
-                              <span class="w-100">
-                                <strong> {{ currentShipping.expiration_date_formatted }} </strong>
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <hr>
-                          <div class="col-sm-12">
-                            <div class="bg-card-container">
-                              <div class="row row-cols-1 row-cols-sm-1 row-cols-md-1 g-50">
-                                @for (file of getFilesZip(); track file; let i = $index) {
-                                  <div class="col">
-                                    <div class="card card-accounting-voucher h-100"
-                                      [ngClass]="{'selected': file.id === selectedFile?.id}"
-                                      (dblclick)="selectFile(null)"
-                                      (click)="selectFile(file)"
-                                      >
-                                      <div class="card-body">
-                                        <div class="img-container">
-                                          <img src="assets/files/128/{{file.extension_file.toLowerCase()}}.png"
-                                            class="img-fluid" alt="{{ file.file_name }}">
-                                          </div>
-                                          <div class="card-body-content">
-                                            <p class="card-text item-description mb-25 w-100">
-                                              {{ file.file_name }}
-                                            </p>
-                                            <div class="content-p">
-                                              <p class="card-text" title="Tamaño">
-                                                <i class="fas fa-hdd"></i>
-                                                {{ convertBytesToMB(file.file_size) }}<br>
-                                              </p>
-                                              <p class="card-text" title="Última modificación">
-                                                <i class="fas fa-calendar-day"></i> {{ file.last_modified_formatted  }}
-                                              </p>
-                                            </div>
-                                          </div>
-                                          <div class="actions-content">
-                                            <button
-                                              class="btn custom-button fas-fa-save"
-                                              (click)="onDownload(file)">
-                                              <i class="fas fa-download fas-fa-18 fas-fa-save"></i>
-                                            </button>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  }
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    }
-                    <div class="content-div">
-                      <hr>
-                      </div>
-                      <div class="card">
-                        <div class="card-body">
-                          <div class="row">
-                            <div class="col-sm-6">
-                              <div class="form-group">
-                                <label>N.I.T</label>
-                                <p class="card-text">
-                                  <strong>{{ currentShipping.dni }}-{{currentShipping.dv}}</strong>
-                                </p>
-                              </div>
-                            </div>
-                            <div class="col-sm-6">
-                              <div class="form-group">
-                                <label>Tipo de contribuyente</label>
-                                <p class="card-text">
-                                  <strong>{{currentShipping.organization.description | uppercase}}</strong>
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="content-div">
-                        <hr>
-                        </div>
-                        <div class="card">
-                          <div class="card-body">
-                            <div class="row">
-                              <div class="col-md-12">
-                                <div class="form-group">
-                                  <label>Nombre o razón social</label>
-                                  <p class="card-text">
-                                    <strong>{{ currentShipping.company_name }}</strong>
-                                  </p>
-                                </div>
-                              </div>
-                              <div class="col-sm-6">
-                                <div class="form-group">
-                                  <label>Ciudad</label>
-                                  <p class="card-text">
-                                    <strong>{{currentShipping.city.name_city }}</strong>
-                                  </p>
-                                </div>
-                              </div>
-                              <div class="col-sm-6">
-                                <div class="form-group">
-                                  <label>Dirección</label>
-                                  <p class="card-text">
-                                    <strong>{{currentShipping.address }}</strong>
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="content-div">
-                          <hr>
-                          </div>
-                          <div class="card">
-                            <div class="card-body">
-                              <div class="row">
-                                <div class="col-sm-12">
-                                  <div class="form-group">
-                                    <label><b>Nombre completo de representante legal</b></label>
-                                    <p class="card-text">
-                                      {{ currentShipping.legal_representative | uppercase }}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div class="col-md-6">
-                                  <div class="form-group">
-                                    <label>Tipo de documento</label>
-                                    <p class="card-text">
-                                      <strong>{{ currentShipping.identity.document_name }}</strong>
-                                    </p>
-                                  </div>
-                                </div>
-                                <div class="col-sm-6">
-                                  <div class="form-group">
-                                    <label>Número del documento</label>
-                                    <p class="card-text">
-                                      <strong>{{currentShipping.document_number }}</strong>
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div class="content-div">
-                            <hr>
-                            </div>
-                            <div class="card">
-                              <div class="card-body">
-                                <div class="row">
-                                  <div class="col-md-6">
-                                    <div class="form-group">
-                                      <label>Fecha de creación</label>
-                                      <p class="card-text">
-                                        <strong>{{ currentShipping.created_at_formatted }}</strong>
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <div class="col-sm-6">
-                                    <div class="form-group">
-                                      <label>Fecha de ultimo cambio</label>
-                                      <p class="card-text">
-                                        <strong>{{currentShipping.updated_at_formatted }}</strong>
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            <div class="content-div">
-                              <hr>
-                              </div>
-                              <div class="card">
-                                <div class="card-body">
-                                  <div class="row">
-                                    <div class="col-md-6">
-                                      <div class="form-group">
-                                        <label>Observación</label>
-                                        <p class="card-text">
-                                          {{ currentShipping.info }}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                              @if (currentShipping.files.length > 0) {
-                                <div class="content-div">
-                                  <hr>
-                                  </div>
-                                  <div class="card">
-                                    <div class="card-header">
-                                      <span class="card-title">Lista de archivos adjuntos</span>
-                                      @if (currentShipping.request_status === DocumentStatusEnum.PROCESSED && !existFileZip()) {
-                                        <div class="card-header-actions">
-                                          <button
-                                            class="btn custom-button fas-fa-plus fas-fa-save"
-                                            (click)="onAddFile()"
-                                            appCustomTooltip="Agregar archivo zip">
-                                            <i class="fas fa-plus fas-fa-16 fas-fa-save"></i>
-                                            Agregar archivo zip
-                                          </button>
-                                        </div>
-                                      }
-                                    </div>
-                                    <div class="card-body">
-                                      <div class="bg-card-container">
-                                        <div class="row row-cols-1 row-cols-sm-1 row-cols-md-1 g-50">
-                                          @for (file of getFiles(); track file; let i = $index) {
-                                            <div class="col">
-                                              <div class="card card-accounting-voucher h-100"
-                                                [ngClass]="{'selected': file.id === selectedFile?.id}"
-                                                (dblclick)="selectFile(null)"
-                                                (click)="selectFile(file)"
-                                                >
-                                                <div class="card-body">
-                                                  <div class="img-container">
-                                                    <img src="assets/files/128/{{file.extension_file.toLowerCase()}}.png"
-                                                      class="img-fluid" alt="{{ file.file_name }}">
-                                                    </div>
-                                                    <div class="card-body-content">
-                                                      <small class="font-small-1 text-muted">
-                                                        {{ file.file_name }} - <b>{{file.document_type}}</b>
-                                                      </small>
-                                                      <div class="content-p">
-                                                        <p class="card-text" title="Tamaño">
-                                                          <i class="fas fa-hdd"></i>
-                                                          {{ convertBytesToMB(file.file_size) }}<br>
-                                                        </p>
-                                                        <p class="card-text" title="Última modificación">
-                                                          <i class="fas fa-calendar-day"></i> {{ file.last_modified  }}
-                                                        </p>
-                                                      </div>
-                                                    </div>
-                                                    <div class="actions-content">
-                                                      <button
-                                                        [disabled]="!canSendEmail()"
-                                                        title="Eliminar archivo"
-                                                        class="btn custom-button fas-fa-trash fas-fa-delete"
-                                                        (click)="onDeleteFile(file)">
-                                                        <i class="fas fa-trash fas-fa-16 fas-fa-trash fas-fa-delete"></i>
-                                                      </button>
-                                                      <button
-                                                        class="btn custom-button fas-fa-save"
-                                                        (click)="onDownload(file)">
-                                                        <i class="fas fa-download fas-fa-18 fas-fa-save"></i>
-                                                      </button>
-                                                    </div>
-                                                  </div>
-                                                </div>
-                                              </div>
-                                            }
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  }
-                                  <div class="content-div">
-                                    <hr>
-                                    </div>
-                                    <div class="card">
-                                      <div class="card-header">
-                                        <span class="card-title">Historial de la Solicitud</span>
-                                      </div>
-                                      <div class="card-body">
-                                        <app-time-line
-                                          [timelineData]="currentShipping.history"
-                                        ></app-time-line>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                                @if (canAddFile) {
-                                  <app-notification-card
-                                    (onCloseCard)="canAddFile = false"
-                                    >
-                                    <div class="card">
-                                      <div class="card-header">
-                                        <span class="card-title">AGREGAR ARCHIVO ZIP DEL CERTIFICADO</span>
-                                        <div class="card-header-actions">
-                                          <button
-                                            class="btn custom-button fas-fa-close"
-                                            (click)="canAddFile = false"
-                                            appCustomTooltip="Cerrar">
-                                            <i class="fas fa-times fas-fa-16"></i>
-                                          </button>
-                                        </div>
-                                      </div>
-                                      <div class="card-body p-1">
-                                        <app-help-information>
-                                          <p>
-                                            Estimado usuario, por favor sube el archivo ZIP del certificado que deseas adjuntar a la solicitud.<br>
-                                            <strong>Nota:</strong> El archivo debe ser un ZIP y no debe pesar más de <b>100kb</b>.
-                                            <br>
-                                              <strong>Nota:</strong> Procura no cerrar ni actualizar la página durante el proceso.
-                                            </p>
-                                          </app-help-information>
-                                          <div class="row">
-                                            <div class="col-md-12">
-                                              <div class="form-group">
-                                                <label>PIN del certificado</label>
-                                                <input type="text" class="form-control primary"
-                                                  [(ngModel)]="pin" required>
-                                                </div>
-                                              </div>
-                                              <div class="col-md-12">
-                                                <small class="text-info">
-                                                  <i class="fas fa-info-circle"></i>
-                                                  Aquí puedes subir el archivo ZIP del certificado que deseas adjuntar a la solicitud.<br>
-                                                  <i class="fas fa-info-circle"></i>
-                                                  <strong>Nota:</strong> El archivo debe ser un ZIP y no debe pesar más de <b>100kb</b>.
-                                                  <br>
-                                                  </small>
-                                                  <input type="file" id="fileUploadZip" #fileUploadZip name="fileUploadZip" class="form-control primary"
-                                                    required (change)="onUploadZip()">
-                                                    <small class="text-muted font-small-2 d-block">
-                                                      Formato permitido: <strong>ZIP</strong>. Procura no cerrar ni actualizar la página durante el proceso.
-                                                    </small>
-                                                  </div>
-                                                </div>
-                                                <div class="d-flex justify-content-end mt-1">
-                                                  <button
-                                                    class="btn custom-button border fas-fa-close me-25"
-                                                    (click)="canAddFile = false">
-                                                    <i class="fas fa-times fas-fa-16"></i>
-                                                    Cancelar
-                                                  </button>
-                                                  <button
-                                                    class="btn custom-button border fas-fa-save"
-                                                    (click)="onUploadFile()"
-                                                    [disabled]="!fileUploadZip?.files?.length">
-                                                    <i class="fas fa-save fas-fa-16 fas-fa-save"></i>
-                                                    Guardar
-                                                  </button>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </app-notification-card>
-                                        }
-                                      }
+            </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+    <div class="content-div">
+      <hr>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Historial de la Solicitud</span>
+      </div>
+      <div class="card-body">
+        <app-time-line
+          [timelineData]="currentShipping.history"></app-time-line>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: Revocación de Certificado                                  -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<app-modal-card
+  [visible]="showRevokeModal"
+  [title]="'Revocar Certificado'"
+  [showFooter]="false"
+  size="md"
+  (onClose)="closeRevokeModal()">
+  <div class="px-2 py-1">
+    <div class="alert alert-warning mb-3">
+      <i class="fas fa-exclamation-triangle me-1"></i>
+      <strong>¡Atención!</strong> Esta acción es irreversible y el certificado dejará de ser válido inmediatamente.
+    </div>
+    
+    <div class="form-group mb-2">
+      <label class="form-label font-weight-bold">Código de Revocación <span class="text-danger">*</span></label>
+      <input type="text" class="form-control" [(ngModel)]="revocationCode" placeholder="Ingrese el código para revocar">
+      <small class="text-muted">Este código es requerido por el proveedor para procesar la revocación.</small>
+    </div>
+
+    <div class="form-group mb-3">
+      <label class="form-label font-weight-bold">Motivo de Revocación <span class="text-danger">*</span></label>
+      <ng-select [(ngModel)]="revocationReason" [clearable]="false">
+        @for (reason of revocationReasons; track reason.id) {
+          <ng-option [value]="reason.id">{{ reason.label }}</ng-option>
+        }
+      </ng-select>
+    </div>
+
+    <div class="d-flex justify-content-end mt-4">
+      <button class="btn custom-button border fas-fa-close me-25" (click)="closeRevokeModal()" [disabled]="revokeLoading">
+        <i class="fas fa-times me-1"></i> Cancelar
+      </button>
+      <button class="btn custom-button border border-danger text-danger" (click)="onRevokeSubmit()" [disabled]="!revocationCode || revokeLoading">
+        @if (revokeLoading) {
+          <span class="spinner-border spinner-border-sm me-1"></span>
+        } @else {
+          <i class="fas fa-ban me-1"></i>
+        }
+        Confirmar Revocación
+      </button>
+    </div>
+  </div>
+</app-modal-card>
+
+@if (canAddFile) {
+<app-notification-card
+  (onCloseCard)="canAddFile = false">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">AGREGAR ARCHIVO ZIP DEL CERTIFICADO</span>
+      <div class="card-header-actions">
+        <button
+          class="btn custom-button fas-fa-close"
+          (click)="canAddFile = false"
+          appCustomTooltip="Cerrar">
+          <i class="fas fa-times fas-fa-16"></i>
+        </button>
+      </div>
+    </div>
+    <div class="card-body p-1">
+      <app-help-information>
+        <p>
+          Estimado usuario, por favor sube el archivo ZIP del certificado que
+          deseas adjuntar a la solicitud.<br>
+          <strong>Nota:</strong> El archivo debe ser un ZIP y no debe pesar más
+          de <b>100kb</b>.
+          <br>
+          <strong>Nota:</strong> Procura no cerrar ni actualizar la página
+          durante el proceso.
+        </p>
+      </app-help-information>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label>PIN del certificado</label>
+            <input type="text" class="form-control primary"
+              [(ngModel)]="pin" required>
+          </div>
+        </div>
+        <div class="col-md-12">
+          <small class="text-info">
+            <i class="fas fa-info-circle"></i>
+            Aquí puedes subir el archivo ZIP del certificado que deseas adjuntar
+            a la solicitud.<br>
+            <i class="fas fa-info-circle"></i>
+            <strong>Nota:</strong> El archivo debe ser un ZIP y no debe pesar
+            más de <b>100kb</b>.
+            <br>
+          </small>
+          <input type="file" id="fileUploadZip" #fileUploadZip
+            name="fileUploadZip" class="form-control primary"
+            required (change)="onUploadZip()">
+          <small class="text-muted font-small-2 d-block">
+            Formato permitido: <strong>ZIP</strong>. Procura no cerrar ni
+            actualizar la página durante el proceso.
+          </small>
+        </div>
+      </div>
+      <div class="d-flex justify-content-end mt-1">
+        <button
+          class="btn custom-button border fas-fa-close me-25"
+          (click)="canAddFile = false">
+          <i class="fas fa-times fas-fa-16"></i>
+          Cancelar
+        </button>
+        <button
+          class="btn custom-button border fas-fa-save"
+          (click)="onUploadFile()"
+          [disabled]="!fileUploadZip?.files?.length">
+          <i class="fas fa-save fas-fa-16 fas-fa-save"></i>
+          Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</app-notification-card>
+}
+}
