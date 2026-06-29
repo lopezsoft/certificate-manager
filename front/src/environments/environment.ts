@@ -6,14 +6,14 @@ export const environment = {
   hmr: false,
   production: false,
   SOCKET_URL: '',
-  APIJWT: 'cmanager-app-jwt',
+  APIJWT: 'maticerts-app-jwt',
   APPURL: 'http://cm-api.test',
   APIURL: 'http://cm-api.test/api/v1',
   WOMPI_PUBLIC_KEY: 'pub_test_q4gEVnZWpzfEROZMScHdZgH4ChcGHW2E',
   VERSION: '1.8.0',
   config: {
-    name: 'MANAGER',
-    title: 'CERTIFICATE MANAGER - Aplicación para la gestión de solicitudes de certificados de firma digital',
+    name: 'MATICERTS',
+    title: 'MATICERTS - Aplicación para la gestión de solicitudes de certificados de firma digital',
     logo: 'assets/images/logo/logo-horizontal-blue.png',
     logoHome: 'assets/images/logo/logo-circle-blue.png',
     skin: 'default', // default, dark, bordered, semi-dark, green
