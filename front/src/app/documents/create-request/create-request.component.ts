@@ -161,10 +161,6 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    const id = this._activatedRoute.snapshot.paramMap.get('id');
-    if (id) {
-      this.getData(parseInt(id));
-    }
   }
 
   ngOnInit(): void {
@@ -186,6 +182,10 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     });
     this.onCreateForm();
     this.updateDynamicValidators();
+    const id = this._activatedRoute.snapshot.paramMap.get('id');
+    if (id) {
+      this.getData(parseInt(id));
+    }
   }
 
 
