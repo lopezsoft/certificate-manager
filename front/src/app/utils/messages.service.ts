@@ -31,16 +31,16 @@ export class MessagesService {
   toastMessage(title: string, msg: string, type: number = 0) {
     switch (type) {
       case 2:
-        this.toastr.info(msg, title, { positionClass: 'toast-bottom-right' });
+        this.toastr.info(msg, title);
         break;
       case 3:
-        this.toastr.warning(msg, title, { positionClass: 'toast-bottom-right' });
+        this.toastr.warning(msg, title);
         break;
       case 4:
-        this.toastr.error(msg, title, { positionClass: 'toast-bottom-right' });
+        this.toastr.error(msg, title);
         break;
       default:
-        this.toastr.success(msg, title, { positionClass: 'toast-bottom-right' });
+        this.toastr.success(msg, title);
         break;
     }
   }
@@ -48,25 +48,25 @@ export class MessagesService {
   // Toastr messages info 
 
   toastInfo(msg: string) {
-    this.toastr.info(msg, '', { positionClass: 'toast-bottom-right' });
+    this.toastr.info(msg, '');
   }
 
   // Toastr messages warning
 
   toastWarning(msg: string) {
-    this.toastr.warning(msg, '', { positionClass: 'toast-bottom-right' });
+    this.toastr.warning(msg, '');
   }
 
   // Toastr messages error
 
   toastError(msg: string) {
-    this.toastr.error(msg, '', { positionClass: 'toast-bottom-right' });
+    this.toastr.error(msg, '');
   }
 
   // Toastr messages success
 
   toastSuccess(msg: string) {
-    this.toastr.success(msg, '', { positionClass: 'toast-bottom-right' });
+    this.toastr.success(msg, '');
   }
 
   onMessage(title: string, msg: string) {

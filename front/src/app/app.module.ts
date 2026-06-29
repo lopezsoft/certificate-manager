@@ -7,8 +7,8 @@ import { BlockUIModule } from 'ng-block-ui';
 import { ExodolibsModule } from 'exodolibs';
 import 'hammerjs';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import {TranslateLoader, TranslateModule} from '@ngx-translate/core';
-import {TranslateHttpLoader} from "@ngx-translate/http-loader";
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { TranslateHttpLoader } from "@ngx-translate/http-loader";
 import { ToastrModule } from 'ngx-toastr'; // For auth after login toast
 
 import { CoreModule } from '@core/core.module';
@@ -24,19 +24,20 @@ import { SampleModule } from 'app/main/sample/sample.module';
 import AuthGuard from './guards/auth.guard';
 import { LoginGuard } from './guards/login.guard';
 
-import {httpInterceptorProviders} from './interceptors/auth-interceptor';
-import {AppRoutingModule} from "./app-routing.module";
-import {ServiceWorkerModule} from "@angular/service-worker";
-import {environment} from "../environments/environment";
-import {NgxLoadingModule} from "ngx-loading";
-import {ErrorInterceptor} from "./interceptors/error.interceptor";
+import { httpInterceptorProviders } from './interceptors/auth-interceptor';
+import { AppRoutingModule } from "./app-routing.module";
+import { ServiceWorkerModule } from "@angular/service-worker";
+import { environment } from "../environments/environment";
+import { NgxLoadingModule } from "ngx-loading";
+import { ErrorInterceptor } from "./interceptors/error.interceptor";
 import { StoreModule } from '@ngrx/store';
-import {CommonComponentsModule} from "./common/common-components.module";
+import { CommonComponentsModule } from "./common/common-components.module";
 export function createTranslateLoader(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
-@NgModule({ declarations: [AppComponent],
+@NgModule({
+	declarations: [AppComponent],
 	bootstrap: [AppComponent], imports: [BrowserModule,
 		BrowserAnimationsModule,
 		AppRoutingModule,
@@ -59,7 +60,16 @@ export function createTranslateLoader(http: HttpClient) {
 		}),
 		//NgBootstrap
 		NgbModule,
-		ToastrModule.forRoot(),
+		ToastrModule.forRoot({
+			positionClass: 'toast-bottom-full-width',  // Ancho completo en la parte inferior
+			preventDuplicates: true,
+			progressBar: true,
+			progressAnimation: 'increasing',
+			easing: 'ease-in'
+		}),
+
+		//NgxLoading
+		NgxLoadingModule.forRoot({}),
 		// Core modules
 		CoreModule.forRoot(coreConfig),
 		CoreCommonModule,
@@ -75,14 +85,15 @@ export function createTranslateLoader(http: HttpClient) {
 			// or after 30 seconds (whichever comes first).
 			registrationStrategy: 'registerWhenStable:30000'
 		})], providers: [
-		AuthGuard,
-		LoginGuard,
-		httpInterceptorProviders,
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: ErrorInterceptor,
-			multi: true,
-		},
-		provideHttpClient(withInterceptorsFromDi()),
-	] })
-export class AppModule {}
+			AuthGuard,
+			LoginGuard,
+			httpInterceptorProviders,
+			{
+				provide: HTTP_INTERCEPTORS,
+				useClass: ErrorInterceptor,
+				multi: true,
+			},
+			provideHttpClient(withInterceptorsFromDi()),
+		]
+})
+export class AppModule { }
