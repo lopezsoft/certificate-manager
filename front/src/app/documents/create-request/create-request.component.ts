@@ -1,45 +1,45 @@
-import {AfterViewInit, Component, ElementRef, OnInit, ViewChild} from '@angular/core';
-import {Cities, IdentityDocuments, TypeOrganzation, EntityDocumentType} from "../../models/general-model";
-import {FormBuilder, FormGroup, Validators} from "@angular/forms";
-import {HttpResponsesService, MessagesService} from "../../utils";
-import {ActivatedRoute, Router} from "@angular/router";
-import {CompanyService} from "../../services/companies";
-import {CitiesService, DocumentsService} from "../../services/general";
-import {LoadMaskService} from "../../services/load-mask.service";
+import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Cities, IdentityDocuments, TypeOrganzation, EntityDocumentType } from "../../models/general-model";
+import { FormBuilder, FormGroup, Validators } from "@angular/forms";
+import { HttpResponsesService, MessagesService } from "../../utils";
+import { ActivatedRoute, Router } from "@angular/router";
+import { CompanyService } from "../../services/companies";
+import { CitiesService, DocumentsService } from "../../services/general";
+import { LoadMaskService } from "../../services/load-mask.service";
 import TokenService from "../../utils/token.service";
-import {FileUploadConfig} from "../../shared/components/file-upload/file-upload-config.interface";
-import {FileUploadData} from "../../shared/components/file-upload/file-upload.component";
-import {HttpErrorResponse} from "@angular/common/http";
-import {DebugService} from "../../utils/debug.service";
+import { FileUploadConfig } from "../../shared/components/file-upload/file-upload-config.interface";
+import { FileUploadData } from "../../shared/components/file-upload/file-upload.component";
+import { HttpErrorResponse } from "@angular/common/http";
+import { DebugService } from "../../utils/debug.service";
 
 @Component({
-    selector: 'app-create-request',
-    templateUrl: './create-request.component.html',
-    styleUrl: './create-request.component.scss',
-    standalone: false
+  selector: 'app-create-request',
+  templateUrl: './create-request.component.html',
+  styleUrl: './create-request.component.scss',
+  standalone: false
 })
 export class CreateRequestComponent implements OnInit, AfterViewInit {
 
-  @ViewChild('dniInput', { static: false}) dniInput: ElementRef;
-  @ViewChild('documentInput', { static: false}) documentInput: ElementRef;
+  @ViewChild('dniInput', { static: false }) dniInput: ElementRef;
+  @ViewChild('documentInput', { static: false }) documentInput: ElementRef;
   organizations !: TypeOrganzation[];
   entityDocumentTypes: EntityDocumentType[] = [];
   identityDocs: IdentityDocuments[] = [];
   cities: Cities[] = [];
   issuanceProvider: string | null = 'mail';
-  customForm  : FormGroup;
-  loading     : boolean = false;
+  customForm: FormGroup;
+  loading: boolean = false;
   protected title: string = 'Datos para solicitud de certificado';
   protected validities = [
-    {id: 1, name: '1 año'},
-    {id: 2, name: '2 años'},
+    { id: 1, name: '1 año' },
+    { id: 2, name: '2 años' },
   ];
   files = [];
   formData: FormData;
   canEdit: boolean = false;
   buttonText: string = 'Crear solicitud';
   private lastLookupDni: string = '';
-  
+
   // Límite total de archivos: 10MB
   private readonly MAX_TOTAL_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -49,13 +49,13 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
   get canSaveForm(): boolean {
     // Si está editando, siempre puede guardar
     if (this.canEdit) return true;
-    
+
     // Si es viafirma, los archivos no son obligatorios en este componente
     if (this.isViafirma()) return true;
-    
+
     // Determinar si es persona jurídica o natural
     const isPersonaJuridica = !this.isNaturelPerson();
-    
+
     if (isPersonaJuridica) {
       // Persona Jurídica: REQUIERE 3 archivos (Cédula, RUT y Cámara)
       return this.files.length === 3;
@@ -74,7 +74,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     const currentCount = this.files.length;
 
     if (this.isViafirma()) return 'No se requieren archivos para crear la solicitud.';
-    
+
     if (currentCount === 0) {
       if (isPersonaJuridica) {
         return 'Debe subir 3 archivos: Cédula, RUT y Cámara de Comercio';
@@ -82,17 +82,17 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
         return 'Debe subir 2 archivos: Cédula y RUT';
       }
     }
-    
+
     if (currentCount < requiredCount) {
       const missing = requiredCount - currentCount;
       return `Faltan ${missing} archivo(s). Total requerido: ${requiredCount}`;
     }
-    
+
     if (currentCount > requiredCount) {
       const extra = currentCount - requiredCount;
       return `Tiene ${extra} archivo(s) de más. Total permitido: ${requiredCount}`;
     }
-    
+
     return 'Documentos completos';
   }
 
@@ -101,16 +101,16 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
    */
   get dynamicHelpText(): string {
     const isPersonaJuridica = !this.isNaturelPerson();
-    
+
     if (isPersonaJuridica) {
       return 'Sube <strong>EXACTAMENTE 3 archivos</strong>:<br>' +
-             '1. <strong>Cédula del Representante Legal</strong> (PDF, JPG o PNG)<br>' +
-             '2. <strong>RUT Actualizado</strong> (PDF)<br>' +
-             '3. <strong>Certificado de Cámara de Comercio</strong> (PDF)';
+        '1. <strong>Cédula del Representante Legal</strong> (PDF, JPG o PNG)<br>' +
+        '2. <strong>RUT Actualizado</strong> (PDF)<br>' +
+        '3. <strong>Certificado de Cámara de Comercio</strong> (PDF)';
     } else {
       return 'Sube <strong>EXACTAMENTE 2 archivos</strong>:<br>' +
-             '1. <strong>Cédula de Ciudadanía</strong> (PDF, JPG o PNG)<br>' +
-             '2. <strong>RUT Actualizado</strong> (PDF)';
+        '1. <strong>Cédula de Ciudadanía</strong> (PDF, JPG o PNG)<br>' +
+        '2. <strong>RUT Actualizado</strong> (PDF)';
     }
   }
 
@@ -127,7 +127,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     const isPersonaJuridica = !this.isNaturelPerson();
     const maxFiles = isPersonaJuridica ? 3 : 2;
     const label = isPersonaJuridica ? 'Documentos Requeridos (3 archivos)' : 'Documentos Requeridos (2 archivos)';
-    
+
     return {
       id: 'filesUpload',
       name: 'filesUpload',
@@ -144,18 +144,18 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       dropzoneText: `Arrastra hasta ${maxFiles} archivos aquí o haz clic para seleccionar`
     };
   }
-  
+
   constructor(private fb: FormBuilder,
-              private _http: HttpResponsesService,
-              private _msg: MessagesService,
-              private _router: Router,
-              public company: CompanyService,
-              private documentSer: DocumentsService,
-              private _cities: CitiesService,
-              private _activatedRoute: ActivatedRoute,
-              private mask: LoadMaskService,
-              protected _token: TokenService,
-              private debug: DebugService,
+    private _http: HttpResponsesService,
+    private _msg: MessagesService,
+    private _router: Router,
+    public company: CompanyService,
+    private documentSer: DocumentsService,
+    private _cities: CitiesService,
+    private _activatedRoute: ActivatedRoute,
+    private mask: LoadMaskService,
+    protected _token: TokenService,
+    private debug: DebugService,
   ) {
 
   }
@@ -167,7 +167,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     this.issuanceProvider = this._token.getToken()?.company?.issuance_provider || 'mail';
 
     this.documentSer.getIdentityDocuments({}).subscribe((resp) => {
-      this.identityDocs  = resp;
+      this.identityDocs = resp;
     });
 
     this.documentSer.getEntityDocumentTypes({}).subscribe((resp) => {
@@ -175,10 +175,10 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     });
 
     this._cities.getData({}).subscribe((resp) => {
-      this.cities  = resp;
+      this.cities = resp;
     });
     this.documentSer.getTypeOrganization({}).subscribe((resp) => {
-      this.organizations  = resp;
+      this.organizations = resp;
     });
     this.onCreateForm();
     this.updateDynamicValidators();
@@ -193,31 +193,31 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     return this.customForm.controls;
   }
 
-  onCreateForm() : void {
-    const ts  = this;
+  onCreateForm(): void {
+    const ts = this;
     ts.customForm = ts.fb.group({
-      company_name          : ['',[Validators.required, Validators.minLength(5)]],
-      legal_representative  : ['', [Validators.required, Validators.minLength(10)]],
-      legal_rep_first_name  : [''],
-      legal_rep_last_name   : [''],
-      legal_rep_email       : [''],
-      dni                   : ['',[Validators.required, Validators.minLength(5), Validators.maxLength(12)]],
-      document_number       : ['',[Validators.required, Validators.minLength(5), Validators.maxLength(12)]],
-      identity_document_id  : [1, [Validators.required]],
-      type_organization_id  : [1,Validators.required],
+      company_name: ['', [Validators.required, Validators.minLength(5)]],
+      legal_representative: ['', [Validators.required, Validators.minLength(10)]],
+      legal_rep_first_name: [''],
+      legal_rep_last_name: [''],
+      legal_rep_email: [''],
+      dni: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(12)]],
+      document_number: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(12)]],
+      identity_document_id: [1, [Validators.required]],
+      type_organization_id: [1, Validators.required],
       entity_document_type_id: [0, Validators.required],
-      mobile                : [''],
-      phone                 : [''],
-      info                  : [''],
-      address               : ['',[Validators.required, Validators.minLength(10)]],
-      city_id               : [149,Validators.required],
-      dv                    : [''],
-      life                  : [1, Validators.required],
+      mobile: [''],
+      phone: [''],
+      info: [''],
+      address: ['', [Validators.required, Validators.minLength(10)]],
+      city_id: [149, Validators.required],
+      dv: [''],
+      life: [1, Validators.required],
     });
   }
 
-  isInvalid(controlName: string) : boolean {
-    const ts  = this;
+  isInvalid(controlName: string): boolean {
+    const ts = this;
     const frm = ts.customForm;
     return frm.get(controlName)?.invalid && frm.get(controlName)?.touched || false;
   }
@@ -228,7 +228,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     });
   }
 
-  getData(id: number) : void {
+  getData(id: number): void {
     this.canEdit = true;
     this.buttonText = 'Actualizar solicitud';
     this._http.get(`/certificate-request/${id}`).subscribe((data: any) => {
@@ -254,60 +254,60 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     });
   }
 
-  onSave() : void {
+  onSave(): void {
     try {
-      const ts    = this;
-      const frm   = ts.customForm;
+      const ts = this;
+      const frm = ts.customForm;
 
       if (ts.isViafirma() && ts.isNaturelPerson()) {
-         const firstName = frm.get('legal_rep_first_name')?.value || '';
-         const lastName = frm.get('legal_rep_last_name')?.value || '';
-         frm.get('company_name')?.setValue(`${firstName} ${lastName}`.trim());
+        const firstName = frm.get('legal_rep_first_name')?.value || '';
+        const lastName = frm.get('legal_rep_last_name')?.value || '';
+        frm.get('company_name')?.setValue(`${firstName} ${lastName}`.trim());
       }
       if (ts.isViafirma()) {
-         const firstName = frm.get('legal_rep_first_name')?.value || '';
-         const lastName = frm.get('legal_rep_last_name')?.value || '';
-         frm.get('legal_representative')?.setValue(`${firstName} ${lastName}`.trim());
+        const firstName = frm.get('legal_rep_first_name')?.value || '';
+        const lastName = frm.get('legal_rep_last_name')?.value || '';
+        frm.get('legal_representative')?.setValue(`${firstName} ${lastName}`.trim());
       }
 
-      if(ts.isViafirma() && !ts.isNaturelPerson() && frm.get('entity_document_type_id')?.value == 0) {
+      if (ts.isViafirma() && !ts.isNaturelPerson() && frm.get('entity_document_type_id')?.value == 0) {
         throw new Error('Por favor seleccione el tipo de documento constitutivo');
       } else {
         frm.get('entity_document_type_id')?.setValue(1);
       }
 
       ts.onValidateForm(frm);
-      if(frm.invalid) {
-         let invalidFields = [];
-         for (const name in frm.controls) {
-             if (frm.controls[name].invalid) {
-                 invalidFields.push(name);
-             }
-         }
-         throw new Error(`Por favor llene la información correctamente. Campos con error: ${invalidFields.join(', ')}`);
+      if (frm.invalid) {
+        let invalidFields = [];
+        for (const name in frm.controls) {
+          if (frm.controls[name].invalid) {
+            invalidFields.push(name);
+          }
+        }
+        throw new Error(`Por favor llene la información correctamente. Campos con error: ${invalidFields.join(', ')}`);
       }
-      
+
       // Validar cantidad de archivos requeridos según tipo de persona
       if (!ts.canEdit && !ts.isViafirma()) {
         const isPersonaJuridica = !ts.isNaturelPerson();
         const requiredFiles = isPersonaJuridica ? 3 : 2;
-        
+
         if (ts.files.length < requiredFiles) {
           const tipo = isPersonaJuridica ? 'Persona Jurídica' : 'Persona Natural';
           throw new Error(`Debe cargar exactamente ${requiredFiles} archivos para ${tipo}.`);
         }
-        
+
         if (ts.files.length > requiredFiles) {
           const tipo = isPersonaJuridica ? 'Persona Jurídica' : 'Persona Natural';
           throw new Error(`Ha excedido el límite. Solo se permiten ${requiredFiles} archivos para ${tipo}.`);
         }
       }
-      
-      let params            =  frm.getRawValue();
-      params.dni            = params.dni.replace(/[^a-zA-Z0-9]/g, '');
-      params.document_number= params.document_number.replace(/[^a-zA-Z0-9]/g, '');
-      ts.loading            = true;
-      
+
+      let params = frm.getRawValue();
+      params.dni = params.dni.replace(/[^a-zA-Z0-9]/g, '');
+      params.document_number = params.document_number.replace(/[^a-zA-Z0-9]/g, '');
+      ts.loading = true;
+
       if (!ts.canEdit && !ts.isViafirma()) {
         ts.formData = new FormData();
         // Append all files to formData
@@ -323,32 +323,32 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       }
       this.mask.showBlockUI('Procesando solicitud...');
       if (ts.canEdit) {
-        const data  = ts.customForm.getRawValue();
-        const id    = ts._activatedRoute.snapshot.paramMap.get('id');
+        const data = ts.customForm.getRawValue();
+        const id = ts._activatedRoute.snapshot.paramMap.get('id');
         this._http.put(`/certificate-request/${id}`, data)
           .subscribe({
-              next: (resp) => {
-                ts.finalResponse(resp);
-              },
-              error: () => {
-                ts.onError();
-              }
+            next: (resp) => {
+              ts.finalResponse(resp);
+            },
+            error: () => {
+              ts.onError();
+            }
           });
       } else {
         const payload = ts.isViafirma() ? params : ts.formData;
         this._http.post('/certificate-request', payload)
           .subscribe({
-              next: (resp) => {
-                ts.finalResponse(resp);
-              },
-              error: (err) => {
-                ts.onError();
-                ts.handleHttpError(err);
-              }
+            next: (resp) => {
+              ts.finalResponse(resp);
+            },
+            error: (err) => {
+              ts.onError();
+              ts.handleHttpError(err);
+            }
           });
       }
 
-    }catch (e) {
+    } catch (e) {
       this.debug.error('CreateRequestComponent', 'Error al crear solicitud', e);
       this.loading = false;
       this.mask.hideBlockUI();
@@ -376,7 +376,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     if (!this.customForm) return false;
     return parseFloat(this.customForm.get('type_organization_id')?.value) === 2;
   }
-  
+
   isViafirma(): boolean {
     return this.issuanceProvider === 'viafirma';
   }
@@ -390,7 +390,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       frm.get('legal_rep_last_name')?.setValidators([Validators.required, Validators.minLength(2)]);
       frm.get('legal_rep_email')?.setValidators([Validators.required, Validators.email]);
       frm.get('legal_representative')?.clearValidators();
-      
+
       if (this.isNaturelPerson()) {
         frm.get('company_name')?.clearValidators();
       } else {
@@ -414,11 +414,11 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     this.updateDynamicValidators();
     const isPersonaJuridica = !this.isNaturelPerson();
     const maxFiles = isPersonaJuridica ? 3 : 2;
-    
+
     // Si cambia de tipo y tiene más archivos de los permitidos, advertir al usuario
     if (this.files.length > maxFiles) {
       this._msg.toastMessage(
-        'Atención', 
+        'Atención',
         `Ha cambiado a ${isPersonaJuridica ? 'Persona Jurídica' : 'Persona Natural'}. ` +
         `Solo se permiten ${maxFiles} archivos. Por favor, ajuste los documentos.`,
         4
@@ -442,7 +442,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       this._msg.errorMessage('Límite de archivos alcanzado', 'Solo se permiten 3 archivos como máximo. Si necesitas reemplazar uno, elimínalo primero y luego sube el nuevo.');
       return;
     }
-    
+
     // Verificar que no exista un archivo con el mismo nombre
     const index = this.files.findIndex((f: any) => f.data.name === fileData.data.name);
     if (index !== -1) {
@@ -450,7 +450,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       this._msg.toastMessage('Archivo reemplazado', `El archivo "${fileData.data.name}" fue reemplazado correctamente.`);
       this.files.splice(index, 1);
     }
-    
+
     this.files.push(fileData);
   }
 
@@ -481,7 +481,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       next: (resp: any) => {
         if (resp.dataRecords.data) {
           this.customForm.patchValue(resp.dataRecords.data);
-          this._msg.toastMessage('Autocompletado', 'Datos recuperados de una solicitud anterior.', 2);
+          this._msg.toastInfo(`Se encontraron datos asociados al DNI ${dni}. Los campos del formulario han sido completados automáticamente.`);
         } else {
           this.defaultFormValues();
         }

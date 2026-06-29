@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 
 import Swal from 'sweetalert2';
-import {TranslateService} from "@ngx-translate/core";
-import {GlobalSettingsService} from "../services/global-settings.service";
+import { TranslateService } from "@ngx-translate/core";
+import { GlobalSettingsService } from "../services/global-settings.service";
 
 @Injectable({
   providedIn: 'root'
@@ -11,9 +11,9 @@ import {GlobalSettingsService} from "../services/global-settings.service";
 
 export class MessagesService {
   constructor(
-      private toastr: ToastrService,
-      public _translateService: TranslateService,
-      public settings: GlobalSettingsService
+    private toastr: ToastrService,
+    public _translateService: TranslateService,
+    public settings: GlobalSettingsService
   ) {
   }
   confirm(title: string, message: string) {
@@ -28,28 +28,52 @@ export class MessagesService {
       cancelButtonText: this._translateService.instant('buttons.not'),
     });
   }
-  toastMessage(title: string, msg: string, type: number = 0){
+  toastMessage(title: string, msg: string, type: number = 0) {
     switch (type) {
       case 2:
-        this.toastr.info(msg, title, {positionClass: 'toast-bottom-right'});
+        this.toastr.info(msg, title, { positionClass: 'toast-bottom-right' });
         break;
       case 3:
-        this.toastr.warning(msg, title, {positionClass: 'toast-bottom-right'});
+        this.toastr.warning(msg, title, { positionClass: 'toast-bottom-right' });
         break;
       case 4:
-        this.toastr.error(msg, title, {positionClass: 'toast-bottom-right'});
+        this.toastr.error(msg, title, { positionClass: 'toast-bottom-right' });
         break;
       default:
-        this.toastr.success(msg, title, {positionClass: 'toast-bottom-right'});
+        this.toastr.success(msg, title, { positionClass: 'toast-bottom-right' });
         break;
     }
   }
 
+  // Toastr messages info 
+
+  toastInfo(msg: string) {
+    this.toastr.info(msg, '', { positionClass: 'toast-bottom-right' });
+  }
+
+  // Toastr messages warning
+
+  toastWarning(msg: string) {
+    this.toastr.warning(msg, '', { positionClass: 'toast-bottom-right' });
+  }
+
+  // Toastr messages error
+
+  toastError(msg: string) {
+    this.toastr.error(msg, '', { positionClass: 'toast-bottom-right' });
+  }
+
+  // Toastr messages success
+
+  toastSuccess(msg: string) {
+    this.toastr.success(msg, '', { positionClass: 'toast-bottom-right' });
+  }
+
   onMessage(title: string, msg: string) {
-    Swal.fire((title.length > 1) ? title :  "CERTIFICATE MANAGER", msg, "info");
+    Swal.fire((title.length > 1) ? title : "CERTIFICATE MANAGER", msg, "info");
   }
   errorMessage(title: string, msg: string) {
-    Swal.fire((title.length > 1) ? title :  "Error CERTIFICATE MANAGER", msg, "error");
+    Swal.fire((title.length > 1) ? title : "Error CERTIFICATE MANAGER", msg, "error");
   }
 
 }
