@@ -1,0 +1,1 @@
+{"responses":{"200":{"description":"Lista paginada de órdenes","content":{"application/json":{"schema":{"properties":{"data":{"type":"object"}},"type":"object"}}}}}}

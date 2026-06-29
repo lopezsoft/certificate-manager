@@ -1,0 +1,248 @@
+
+// Green layout 
+.green-layout {
+    // custom form
+  .custom-form {
+    .form-group {
+      input, textarea, select {
+        background-color: $theme-green-form-bg !important;
+        color: $theme-green-form-label-color;
+        border: 1px solid $theme-green-form-border-color !important;
+      }
+      label {
+        color: $theme-green-form-label-color;
+      }
+    }
+    .input-group {
+      .input-group-text {
+        color: $theme-green-form-label-color;
+        border: 1px solid $theme-green-form-border-color !important;
+      }
+    }
+    .custom-control {
+      label {
+        color: $theme-green-form-label-color;
+      }
+    }
+    h1, h2, h3, h4, h5, h6, p, span, label {
+      color: $theme-green-form-label-color;
+    }
+    .ng-option-label {
+      color: inherit;
+    }
+    hr {
+      border-top: 1px solid rgba($theme-green-form-label-color, 0.44);
+    }
+    // placeholder
+    input, textarea {
+      &::placeholder {
+        color: $theme-green-form-placeholder-color;
+      }
+      &:-ms-input-placeholder {
+        color: $theme-green-form-placeholder-color;
+      }
+      &::-ms-input-placeholder {
+        color: $theme-green-form-placeholder-color;
+      }
+      &:-moz-placeholder {
+        color: $theme-green-form-placeholder-color;
+      }
+      &::-moz-placeholder {
+        color: $theme-green-form-placeholder-color;
+      }
+      &:-webkit-autofill {
+        background-color: $theme-green-form-bg !important;
+        color: $theme-green-form-label-color !important;
+        box-shadow: 0 0 0 30px $theme-green-form-bg inset !important;
+      }
+      &:-webkit-autofill::placeholder {
+        color: $theme-green-form-placeholder-color;
+      }
+    }
+    input, textarea, select {
+      background-color: $theme-green-input-bg !important;
+      border: 1px solid $theme-green-form-border-color !important;
+      color: $theme-green-form-label-color;
+      &:not([readonly]):focus {
+        border-color: $theme-green-form-label-color !important;
+        color: $theme-green-form-label-color;
+      }
+      &:disabled, &:read-only {
+        background-color: theme-green-form-disabled-bg !important;
+        color: $theme-green-form-label-color;
+        border-color: lighten($theme-green-form-border-color, 10%);
+      }
+    }
+    select {
+      height: 32px !important;
+    }
+    input {
+      height: 32px !important;
+    }
+    .form-check {
+      input {
+        height: 1em !important;
+        &:checked {
+          background-color: $theme-green-form-label-color !important;
+        }
+      }
+    }
+    .ng-select .ng-select-container {
+      min-height: 32px !important;
+      input {
+        border-width: 0 !important;
+      }
+    }
+    .ng-select-disabled {
+      input {
+        border-width: 0 !important;
+      }
+      .ng-select-container {
+        background-color: $theme-green-form-disabled-bg !important;
+        color: $theme-green-form-label-color !important;
+        border-color: lighten($theme-green-form-border-color, 10%) !important;
+        input {
+          border-width: 0 !important;
+        }
+      }
+    }
+  
+    .ng-select-container {
+      border: 1px solid $theme-green-form-border-color !important;
+      input {
+        border-width: 0 !important;
+      }
+      .ng-value-container {
+        color: $theme-green-form-label-color;
+        input {
+          border-width: 0 !important;
+        }
+      }
+    }
+    .ng-dropdown-panel {
+      border: 1px solid $theme-green-form-border-color !important;
+    }
+  
+    ng-clear-wrapper {
+      color: $theme-green-form-label-color !important;
+    }
+  }
+
+  .btn-success {
+    background-color: $theme-green-button-login-bg !important;
+    border-color: $theme-green-button-login-border-color !important;
+    color: $theme-green-button-login-color !important;
+    span, i {
+      color: $theme-green-button-login-color !important;
+    }
+    &:hover {
+      background-color: $theme-green-button-login-hover-bg !important;
+      border-color: $theme-green-button-login-hover-border-color !important;
+    }
+    &:focus {
+      background-color: $theme-green-button-login-hover-bg !important;
+      border-color: $theme-green-button-login-hover-border-color !important;
+    }
+  }
+
+  p, h1, h2, h3, h4, h5, h6, span, label {
+    color: $theme-green-text-color !important;
+  }
+
+  .card {
+    .card-header {
+      color: $theme-green-text-color !important;
+    }
+  }
+
+  // .custom-button
+  .custom-button {
+    &.border {
+      border: $theme-green-button-border-color 1px solid !important;
+    }
+    &:hover {
+      border-radius: .25rem;
+      background-color: $theme-green-button-hover-bg !important;
+      border: $theme-green-button-hover-border-color 1px solid !important;
+    }
+    &:focus {
+      background-color: $theme-green-button-hover-bg !important;
+      border: $theme-green-button-hover-border-color 1px solid !important;
+    }
+    &:active {
+      background-color: $theme-green-button-hover-bg !important;
+    }
+  }
+  // .custom-button
+  .btn-custom {
+    background-color: $theme-green-button-bg !important;
+    color: $theme-green-button-color !important;
+    box-shadow: 0px 0px 0px 3px rgba($theme-green-button-bg, 0.2) !important;
+    &:hover  {
+      color: $theme-green-button-color !important;
+      background-color: $theme-green-button-hover-bg !important;
+      box-shadow: 0px 0px 3px 3px rgba($theme-green-button-hover-bg, 0.33) !important;
+      border: $theme-green-button-hover-border-color 1px solid !important;
+    }
+    &:focus  {
+      color: $theme-green-button-color !important;
+      background-color: $theme-green-button-hover-bg !important;
+      box-shadow: 0px 0px 3px 3px rgba($theme-green-button-hover-bg, 0.33) !important;
+      border: $theme-green-button-hover-border-color 1px solid !important;
+    }
+    &:active  {
+      color: $theme-green-button-color !important;
+      background-color: $theme-green-button-hover-bg !important;
+      box-shadow: 0px 0px 3px 3px rgba($theme-green-button-hover-bg, 0.33) !important;
+    }
+    &:disabled  {
+      color: $theme-green-button-color !important;
+      background-color: $theme-green-button-bg !important;
+      box-shadow: 0px 0px 3px 3px rgba($theme-green-button-bg, 0.2) !important;
+    }
+  }
+  
+
+  // btn primary
+
+  .btn-primary {
+    background-color: $theme-green-button-bg !important;
+    color: $theme-green-button-color !important;
+    box-shadow: 0px 0px 0px 3px rgba($theme-green-button-bg, 0.2) !important;
+    border: $theme-green-button-border-color 1px solid !important;
+    i {
+      color: $theme-green-button-color !important;
+    }
+    &:hover,  &:focus  {
+      color: $theme-green-button-color !important;
+      background-color: $theme-green-button-hover-bg !important;
+      box-shadow: 0px 0px 3px 3px rgba($theme-green-button-hover-bg, 0.23) !important;
+      border: $theme-green-button-hover-border-color 1px solid !important;
+      border-radius: 3px;
+      i {
+        color: $theme-green-button-color !important;
+      }
+    }
+    &:active  {
+      color: $theme-green-button-color !important;
+      background-color: $theme-green-button-hover-bg !important;
+      box-shadow: 0px 0px 3px 3px rgba($theme-green-button-hover-bg, 0.23) !important;
+    }
+    &:disabled  {
+      color: $theme-green-button-color !important;
+      background-color: $theme-green-button-bg !important;
+      box-shadow: 0px 0px 3px 3px rgba($theme-green-button-bg, 0.2) !important;
+    }
+    &.btn-link {
+      color: $theme-green-button-color !important;
+      background-color: $theme-green-button-bg !important;
+      box-shadow: 0px 0px 3px 3px rgba($theme-green-button-bg, 0.2) !important;
+      &:hover  {
+        color: $theme-green-button-color !important;
+        background-color: $theme-green-button-hover-bg !important;
+        box-shadow: 0px 0px 3px 3px rgba($theme-green-button-hover-bg, 0.23) !important;
+        border: $theme-green-button-hover-border-color 1px solid !important;
+      }
+    }
+  }
+}

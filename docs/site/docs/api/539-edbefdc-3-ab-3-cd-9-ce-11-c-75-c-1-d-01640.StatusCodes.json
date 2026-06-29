@@ -1,0 +1,1 @@
+{"responses":{"200":{"description":"Registro creado exitosamente","content":{"application/json":{"schema":{"properties":{"success":{"type":"boolean","example":true},"message":{"type":"string","example":"Operación exitosa"}},"type":"object","title":"ApiSuccessResponse"}}}},"401":{"description":"No autenticado"},"500":{"description":"Tabla no permitida o error interno"}}}

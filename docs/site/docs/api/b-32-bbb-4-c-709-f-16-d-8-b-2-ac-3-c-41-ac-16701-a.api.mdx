@@ -1,0 +1,70 @@
+---
+id: b-32-bbb-4-c-709-f-16-d-8-b-2-ac-3-c-41-ac-16701-a
+title: "Certificados próximos a vencer"
+description: "Retorna los certificados PROCESSED que vencen dentro del umbral configurado."
+sidebar_label: "Certificados próximos a vencer"
+hide_title: true
+hide_table_of_contents: true
+api: eJzVVsFuGzcQ/RViTkmxXq0k20nUS1RbLRwksWA5KFDHMEbckcRkl9yQXNWCsECvvfcH+gE95dar/6RfUgx3Za8jQe61ggEL4vDN4+PMG67B49zB4AreG69mSqJURpOD6whSctKqwiujYQAX5I3VKDLjhCRbB6fGifHF+cloMhmdii8liSVpSVqkpL01IqVMlPnUYiak0TM1Ly2mJv5oP2rBn+/E1meUF5YcOkYSzmQmZHTlyrjvBaa50sp5RrFUx3iTGhdDBKYgi8z2LIUBTPu96XR6KF8kr2bd4/TltIeyLw+7KLvHL5IuQgQFWszJk2UB1qAxJxhAiisHESg+9JeS7Aq+leL07i90IiWB2lOGUt191eJZSjMsMz8Q/eQ5RODkgnKEwRr8qmBcpT3NyUJVXUdgyRVGO3Ic0EsS/vc4yVvlPHKSR2IX9u7rrcqNE1hLbSECabQn7RkDiyJTMqjQ+eQYaN1iUljWyKs6rSulJOdaFKfGZIQaIqBbzIuMYOBtSVUEOTmHc2rFOm+VnrdD4eQJplUE3njMdojSgjmqIkjR4wVJY9M2PbQW+TaUp9xtK9ZKf5/9Prl45jz6slWufEmPBVHpTmaWMD3X2aoWo8W026tY/LxAvbqpq2efPO/OxOjd+GI0GYpJPIwnMQuSarV/16skOTw6OuwlIXq5X7uXVQSUo8p2Yc6MzdHDoIloJ6G66V5LYy2ZWJocItBlluG0VQTFwugnzthPkm6vf3h0/GIXAN0Wqm7RmxT9Tqh7khxw4FVOj/B7Se/4IOkfdI9EkgzCH2wD39QontL9bLtHjMWYotur0QTmQWhcuRvLQmnetFf03mEVQWnnpOXqJqMl7VSfdJmzz0qrvJLI+i/UfAHcW6kqWfDM/Mq++8CvWeEqU361/yw/mLnxd3+K0/gk3qV9RnPMbizxRZP26NXyibt882H4Xozvfr8Y/QIV924daaafSHqIwCsf4kYsvtLz+/7zBNX2hqoKPzqSpQ2nuVrDlNCSHZZ+AYOrazbGnPzCsH/PyQeL5iXoyAds16EmIbss2eXGv0ubcSgWqrPsbpn2cHwmll3xz29/iLu/tZJsDNYF63amMNZjisAMNgQnbJu1MbRp3iu28L7YynJpPofpJ5C91Yhz3iR6cSLM1JNWKc9El5IYn08uRcO1g6VfdDIzVzoWY7QoQpXZZhaLHOVCaTrw5qD5KkpHYkzWGY2ZGAYfFyG3E8/Gw8vnTZZNAh+WuC7qo/y46bI3P19uZlUYAGE13LbSMxNO29xy63bFO9Q4JyuG47MtBZp5hDLMo2amToLCvNEr5OnamBTU0tPrPCyw8cTScMGHywmA/TiJQ5MXxvkcdQv2qYHzDbf1w6T8HzxnmjLzdOs7RYZKQ7CZYC51W1xBuy2gsUFujOsIFsZ5Dlmvp+jog82qin+uXzTcLqlybBApDGaYOdqj1X967+yk+5lWDy+qJWYlh4QuW6JVtT9dXVcRLAhTsoFXvYdruvCtXVsvm0du8dOI6xgfd2hTzZuiD+ibp4RetbDX6zoidFBVwYZ4aBuorquq+hfSjMoM
+sidebar_class_name: "get api-method"
+info_path: docs/api/certificate-manager-api
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+import Translate from "@docusaurus/Translate";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Certificados próximos a vencer"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/certificates/expiring"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Retorna los certificados PROCESSED que vencen dentro del umbral configurado.
+     *                  Empresas ven solo los suyos; administradores ven todos.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+>
+  <Translate id="theme.openapi.request.title">Request</Translate>
+</Heading>
+
+<ParamsDetails
+  {...require("./b-32-bbb-4-c-709-f-16-d-8-b-2-ac-3-c-41-ac-16701-a.ParamsDetails.json")}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  {...require("./b-32-bbb-4-c-709-f-16-d-8-b-2-ac-3-c-41-ac-16701-a.RequestSchema.json")}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  {...require("./b-32-bbb-4-c-709-f-16-d-8-b-2-ac-3-c-41-ac-16701-a.StatusCodes.json")}
+>
+  
+</StatusCodes>
+
+
+      

@@ -1,0 +1,1 @@
+{"responses":{"302":{"description":"Redirige al frontend (login o reenvío de verificación)"},"403":{"description":"Firma de URL inválida o expirada"}}}

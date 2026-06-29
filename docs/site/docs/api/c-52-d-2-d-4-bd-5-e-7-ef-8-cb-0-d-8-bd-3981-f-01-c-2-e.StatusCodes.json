@@ -1,0 +1,1 @@
+{"responses":{"200":{"description":"Certificado revocado exitosamente"},"400":{"description":"Error de negocio (estado inválido o código erróneo)"},"401":{"description":"No autenticado"},"404":{"description":"Solicitud no encontrada"}}}

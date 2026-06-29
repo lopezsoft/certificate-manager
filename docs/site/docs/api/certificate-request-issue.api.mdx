@@ -1,0 +1,69 @@
+---
+id: certificate-request-issue
+title: "Disparar emisión del certificado (provider-agnostic)"
+description: "Inicia el flujo de emisión usando el proveedor activo (mail / viafirma / futuros). El proveedor se resuelve por cascada: payload override (admin) → companies.issuance_provider → CERTIFICATE_ISSUANCE_PROVIDER → fallback 'mail'. Para Viafirma el cuerpo debe incluir 'email_certificate'."
+sidebar_label: "Disparar emisión del certificado (provider-agnostic)"
+hide_title: true
+hide_table_of_contents: true
+api: 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
+sidebar_class_name: "post api-method"
+info_path: docs/api/certificate-manager-api
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+import Translate from "@docusaurus/Translate";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Disparar emisión del certificado (provider-agnostic)"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"post"}
+  path={"/certificate-request/{id}/issue"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Inicia el flujo de emisión usando el proveedor activo (mail / viafirma / futuros). El proveedor se resuelve por cascada: payload override (admin) → companies.issuance_provider → CERTIFICATE_ISSUANCE_PROVIDER → fallback 'mail'. Para Viafirma el cuerpo debe incluir 'email_certificate'.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+>
+  <Translate id="theme.openapi.request.title">Request</Translate>
+</Heading>
+
+<ParamsDetails
+  {...require("./certificate-request-issue.ParamsDetails.json")}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  {...require("./certificate-request-issue.RequestSchema.json")}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  {...require("./certificate-request-issue.StatusCodes.json")}
+>
+  
+</StatusCodes>
+
+
+      

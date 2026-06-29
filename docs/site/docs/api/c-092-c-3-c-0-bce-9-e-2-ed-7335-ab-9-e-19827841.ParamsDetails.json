@@ -1,0 +1,1 @@
+{"parameters":[{"name":"dni","in":"path","description":"NIT/Cédula a consultar","required":true,"schema":{"type":"string","example":"901091403"}}]}

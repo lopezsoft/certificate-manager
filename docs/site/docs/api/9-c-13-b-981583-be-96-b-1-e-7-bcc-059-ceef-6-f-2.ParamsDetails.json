@@ -1,0 +1,1 @@
+{"parameters":[{"name":"limit","in":"query","description":"Registros por página (default: 15)","schema":{"type":"integer"}}]}

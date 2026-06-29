@@ -1,0 +1,1 @@
+{"parameters":[{"name":"year","in":"path","description":"Año de consulta","required":true,"schema":{"type":"integer","example":2025}}]}

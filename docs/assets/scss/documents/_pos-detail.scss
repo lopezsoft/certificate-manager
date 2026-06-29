@@ -1,0 +1,119 @@
+@import '../../../@core/scss/base/pages/app-ecommerce';
+.bg-card-container {
+  max-height: inherit;
+  min-height: 30rem;
+}
+
+.span-button-lg {
+  border: none !important;
+}
+.ecommerce-card {
+  margin-bottom: 0 !important;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: auto 2fr auto;
+  .input-currency {
+    border: 1px solid rgba(222, 226, 230, 0.7) !important;
+    text-align: right;
+    padding: 2px !important;
+    height: 28px !important;
+    border-radius: 0 !important;
+    margin-left: 2px;
+    font-size: 13px !important;
+  }
+
+  // list view image
+  .item-img {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 38px;
+    margin: auto;
+  }
+
+  .card-body {
+    padding: 4px;
+    border-right: 1px solid $border-color;
+    display: flex;
+    flex-direction: column;
+
+    // item name and ratings order
+    .item-wrapper {
+      order: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      vertical-align: middle;
+      select {
+        width: 100%;
+        height: 28px;
+        border: 1px solid rgba(222, 226, 230, 0.7) !important;
+        border-radius: 0 !important;
+        font-size: 12px !important;
+        padding: 2px !important;
+      }
+      div {
+        padding: 0 2px;
+      }
+    }
+    .item-name {
+      order: 3;
+    }
+    // List view description
+    .item-description {
+      order: 1;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.1;
+      margin-bottom: 2px;
+      font-size: 11px;
+    }
+  }
+  // Common for list-view, checkout and wishlist
+  .item-company {
+    display: inline-flex;
+    font-weight: $font-weight-normal;
+    margin: 0.3rem 0 0.5rem;
+    font-size: 0.875rem;
+
+    .company-name {
+      font-weight: $font-weight-bolder;
+      margin-left: 0.25rem;
+    }
+  }
+
+  // price and btn area of list view
+  .item-options {
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    .item-wrapper {
+      position: relative;
+
+      .item-cost {
+        p {
+          margin-top: 0;
+        }
+        .item-price {
+          color: $primary;
+          margin-bottom: 0;
+        }
+      }
+    }
+    // Shipping free tag
+    .shipping {
+      margin-top: 0.75rem;
+    }
+    // List view btn spacing
+    .btn-wishlist,
+    .btn-cart {
+      margin-top: 3px;
+    }
+  }
+}

@@ -1,0 +1,52 @@
+.exodogrid-input-editing {
+  
+    input:not([type="checkbox"]) {
+      color: $theme-green-input-color !important;
+      &:focus {
+        color: $theme-green-input-color !important;
+        border-color: $theme-green-input-color !important;
+        box-shadow: 0 0 0 0.05rem rgba(13, 253, 85, 0.25);
+      }
+    }
+  
+    input[type="checkbox"] {
+      background-color: $theme-green-input-checkbox-bg !important;
+      &:after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0.35em;  // Ajustado para el cambio en el tamaño
+        height: 0.6em;  // Ajustado para el cambio en el tamaño
+        border: solid #fff;
+        border-width: 0 2px 2px 0;
+        transform: translateY(-50%) translateX(-50%) rotate(45deg);
+        opacity: 0;
+        transition: opacity 0.2s ease-in-out;
+      }
+  
+      &:checked {
+        border-color: $theme-green-input-checkbox-color !important;
+        background-color: $theme-green-input-checkbox-hover-bg !important;
+  
+        &:after {
+          opacity: 1;
+        }
+      }
+  
+      &:focus {
+        border-color: $theme-green-input-checkbox-hover-bg !important;
+        box-shadow: 0 0 0 0.05rem rgba(13, 253, 25, 0.25);
+      }
+  
+      &:disabled {
+        background-color: $theme-green-input-checkbox-bg !important;
+        cursor: not-allowed;
+  
+        &:after {
+          border-color: $theme-green-input-checkbox-hover-bg !important;
+        }
+      }
+    }
+}
+  

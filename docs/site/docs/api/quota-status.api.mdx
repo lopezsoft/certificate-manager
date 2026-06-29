@@ -1,0 +1,59 @@
+---
+id: quota-status
+title: "Consultar disponibilidad de certificados"
+description: "Retorna el estado de cupos de la empresa del usuario autenticado. Incluye cupos POSTPAID (asignados por admin) y PREPAID (comprados vía WOMPI). El campo 'has_quota' indica si la empresa puede crear nuevas solicitudes."
+sidebar_label: "Consultar disponibilidad de certificados"
+hide_title: true
+hide_table_of_contents: true
+api: eJzdVcFuGzcQ/RViLomBtSTbSVHoVMF1CxVILdhuczAEY0SOJSa7JMMhBQvCAvmI/kZPvfXqP+mXFEOtZdlynXtPWu0MZx7fvDe7hoRzhuE1nObgGaYVGGIdbUjWOxjCBSUfHSqqFXFC45UhpSVXHmpU1IRIjMpQrTJnjNYrzIlcshqN76mx03VePRyanF9eTUbjH9VbZDt3aDyr4KNC01h3oFZqcnG2iWvfhFjiy/s/UX08/zAZH/TUWa00NsGrNwvkmy/ZJ3yjrDNWo2K7iyhkEqyRMCqXaYms2NdW25QNcQ8q8IEiykXHBoZQal0mTJmhgkgcvGNiGK7heDCQn6fUnD3jw88SOWs8VKC9EwbkDIZQW1269D+xHFwD6wU1KE8hCoZkN204a01cHtMqEAxh5n1N6KACusMm1ATDFDO1FTTEjHPayeUUrZvvpv4nREV3NnnGhlwiaCswmPCCtI+G92Ftid7nQMC8QvsO31B9+04hUkBrbmyihm9wibbGWU37bU8F3G0RGG8VE8gZKxcq0syM8bGndYnmFHd7vpeGnpN03L8z1rXXmMjsEPxSkUFbQeZvpR0dt6KoBq2TEb2ae/J9K/+CjcQ3mF4a8K2PjURkbPRk4MeD4+8OB+8PT45kqrwR86sSGZ1ejX8/g7bdcuVnn0gnqMDluuO/zGcv46U38u7d4Gh/ZL8+WQtQ0t69YKpORc4rcmKjiAZLJyado00rGF6vYUYYKY5yWsDwetpOxQ9p4cXGcxLsASUE/aLbPj+4mikuKXKpkWMtGRhsf3kEzxffaDJWyyP1z9c/1P3fTraLHLT3fznFPviYCq7pI65LMfVGPLvottwvUgp7Xa78Z3IiVxTne3Uuh9Rxb/BoVUNsqOxN1WHtY06Lfu3n1vXUBCOqIqOI2npHrBrUC+voMPnD7lFlJjWhyN5hrUZly6jSm9XbyejqoOvy0CCVkKzIzVV+ehDcLx+vhMVyVbFyiZbxWHfry21tKrraWjSR+oAO5xTVaDLeY6DblqiL0h2WupeFYTmYLMrcxDoyrQ319ENTAj3tm54uYirDKQVPeoPeADpzN+h2yp56x7lOGJWxst3tzNbWoCkLcmelPAe5flzo/+8PYifVRHepH2q0TngsPll3jrrefCZhu1ymFSw8J4ms1zNk+i3WbSuvv2SK4tZpBUuMdrNJrqdtBQtCQ7GY8DOtxGxaUxDbLrHOgmDvq/nE4j+fiQrxqb86LT5ItlTvQuhWO7XX601G0X/bQtWBKKKHdtq27b9ulyXN
+sidebar_class_name: "get api-method"
+info_path: docs/api/certificate-manager-api
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+import Translate from "@docusaurus/Translate";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Consultar disponibilidad de certificados"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/quota/status"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Retorna el estado de cupos de la empresa del usuario autenticado. Incluye cupos POSTPAID (asignados por admin) y PREPAID (comprados vía WOMPI). El campo 'has_quota' indica si la empresa puede crear nuevas solicitudes.
+
+<ParamsDetails>
+  
+</ParamsDetails>
+
+<RequestSchema
+  {...require("./quota-status.RequestSchema.json")}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  {...require("./quota-status.StatusCodes.json")}
+>
+  
+</StatusCodes>
+
+
+      

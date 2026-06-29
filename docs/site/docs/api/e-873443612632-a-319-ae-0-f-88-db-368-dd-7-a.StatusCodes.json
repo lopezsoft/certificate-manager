@@ -1,0 +1,1 @@
+{"responses":{"200":{"description":"Todas las notificaciones marcadas como leídas","content":{"application/json":{"schema":{"properties":{"success":{"type":"boolean","example":true},"message":{"type":"string","example":"Operación exitosa"}},"type":"object","title":"ApiSuccessResponse"}}}}}}

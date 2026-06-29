@@ -1,0 +1,1 @@
+{"parameters":[{"name":"days","in":"query","description":"Días de antelación (default: 30)","schema":{"type":"integer"}}]}

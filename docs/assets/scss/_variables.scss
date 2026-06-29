@@ -1,0 +1,88 @@
+
+$black: black;
+$border-radius-cols: .25rem;
+$border-radius-card: .25rem;
+$background-color-cols: rgba(236, 236, 236, 0.85);
+$max-height-cols: calc(100vh - .7rem);
+$original-color: #a3c7e0;
+$strong-color: darken($original-color, 35%);
+
+/* Paleta de colores para los estados */
+$table-color-available: #4CAF50;
+$table-color-reserved: #7E57C2;
+$table-color-on-dine:  #FB8C00;
+$table-color-occupied: #F44336;
+
+$white: #fff;
+
+// Variables de color para la personalización
+$whatsapp-green: #1b9348;
+$button-bg: #f1f1f1;
+$shadow-color: rgba(0, 0, 0, 0.2);
+$menu-bg: #ffffff;
+$menu-bg-hover: #f1f1f1;
+$button-bg: #f1f1f1;
+$shadow-color: rgba(0, 0, 0, 0.2);
+$button-size: 46px;
+$button-size-sm: 32px;
+$background-container: #bb4119;
+$hover-border-color: #2556a3;
+$support-button-border-with: 4px;
+$heart-beat-border-color: #FF0000;
+
+// Definición de colores como variables
+$strong-color: darken($original-color, 35%);
+$close-btn-bg: rgba(244, 67, 54, 0.05);
+$close-btn-hover-color: darken(#f44336, 10%);
+$close-btn-border: rgba(244, 67, 54, 0.1);
+$category-bg: rgba(76, 175, 80, 0.2);
+$category-text-color: #1b5e20;
+$price-color: #1a3d7c;
+$textarea-bg: #ecececd9;
+$textarea-border: #efefef;
+$textarea-focus-border: #e5e5e5;
+$quantity-bg: #ecececd9;
+$quantity-btn-bg: $white;
+$quantity-btn-hover-bg: #e0e0e0;
+$add-to-cart-bg: #007bff;
+$add-to-cart-hover-bg: #0056b3;
+$c2556a3: #2556a3;
+// Define los colores para cada estado
+$export-report-colors: (
+    'pdf': #FF0000,
+    'xls': #008000,
+    'doc': #0000FF,
+    'html': #FFA500,
+    'csv': #FF00FF,
+    'pptx': orangeRed,
+);
+
+// Paleta de colores para cada letra del abecedario
+$letter-colors: (
+    a: #f44336, // Rojo
+    b: #e91e63, // Rosa
+    c: #9c27b0, // Morado
+    d: #673ab7, // Morado oscuro
+    e: #3f51b5, // Azul
+    f: #2196f3, // Azul claro
+    g: #03a9f4, // Azul celeste
+    h: #00bcd4, // Cian
+    i: #009688, // Verde azulado
+    j: #4caf50, // Verde
+    k: #8bc34a, // Verde lima
+    l: #cddc39, // Lima
+    m: #ffeb3b, // Amarillo
+    n: #ffc107, // Ámbar
+    o: #ff9800, // Naranja
+    p: #ff5722, // Naranja profundo
+    q: #795548, // Marrón
+    r: #607d8b, // Azul grisáceo
+    s: #9e9e9e, // Gris
+    t: #ff9e80, // Salmón claro
+    u: #b39ddb, // Lavanda
+    v: #80cbc4, // Verde agua
+    w: #ffccbc, // Durazno
+    x: #dcedc8, // Verde claro
+    y: #b3e5fc, // Azul claro pastel
+    z: #f8bbd0  // Rosa claro
+);

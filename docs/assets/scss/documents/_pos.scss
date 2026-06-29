@@ -1,0 +1,168 @@
+
+.create-customer {
+  font-weight: bold !important;
+  background-color: rgb(165, 7, 33) !important;
+  color: #ffffff !important;
+}
+
+
+.bg-card-container {
+  border-radius: .25rem;
+  padding-top: .25rem;
+  background-color: rgb(236, 236, 236) !important;
+  max-height: calc(100vh - 6.5rem);
+  overflow-y: auto;
+}
+
+.search-custom {
+  background: #ffffff !important;
+  border-radius: 10px;
+  padding-bottom: 2px !important;
+}
+
+.search-sku {
+  max-width: 210px;
+}
+
+@media (max-width: 768px) {
+  .search-sku {
+    display: none;
+  }
+}
+
+.search-show{
+  display: inline table !important;
+  background-color: aqua !important;
+  position:absolute; /*El div será ubicado con relación a la pantalla*/
+  left:0px; /*A la derecha deje un espacio de 0px*/
+  right:0px; /*A la izquierda deje un espacio de 0px*/
+  top:0px; /*Abajo deje un espacio de 0px*/
+  height:250px; /*alto del div*/
+  overflow: auto;
+  z-index:1000;
+}
+
+.card-col  {
+  max-height: calc(100vh - 14rem) !important;
+  min-height: 200px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.card-col-detail  {
+  max-height: calc(100vh - 7rem) !important;
+  min-height: 200px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.discounts  {
+  color: green;
+  font-weight: bold;
+}
+
+.total  {
+  color: red;
+  font-weight: bold;
+}
+.total-bg  {
+  color: rgb(255, 0, 0);
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.vat  {
+  color: blue;
+  font-weight: bold;
+}
+
+.card-sales {
+  min-height: 72px !important;
+  border: 2px solid rgba(255, 255, 255, 0.247);
+  padding: 1px !important;
+  margin-bottom: 0 !important;
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 25px 0 rgba($black, 0.25);
+  }
+  .price  {
+    color: red;
+    font-weight: bold;
+    font-size: 12px !important;
+    text-align: right;
+    margin-top: auto;
+    margin-bottom: auto;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-right: 0.4rem;
+    width: 100%;
+  }
+  .card-header {
+    padding: 0 !important;
+  }
+  .stock  {
+    background-color: rgba(187, 65, 25, 0.84);
+    text-align: right;
+    padding: 4px;
+    width: 67%;
+    margin-left: auto;
+    z-index: 2;
+    height: 24px;
+    border-radius: 10px 0 10px 0;
+    position: absolute;
+    .span {
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+    }
+  }
+  .amount-content  {
+    padding: 4px;
+    width: 100%;
+    margin-left: auto;
+    z-index: 2;
+    height: auto;
+    position: absolute;
+    top: 26px;
+    display: flex;
+    justify-content: center;
+  }
+  .product-name{
+    font-weight: 600 !important;
+    font-size: 10px !important;
+    text-align: center;
+    text-transform: uppercase;
+    margin-bottom: 0 !important;
+    line-height: 1 !important;
+  }
+  .unit-name{
+    font-weight: bold;
+    font-size: 12px;
+    text-align: center;
+    text-transform: uppercase;
+    margin-bottom: 0px !important;
+    color:white;
+    background-color: rgb(71, 1, 71);
+    padding: 2px;
+    border-radius: 4px;
+  }
+  .img-product {
+    max-width: 156px;
+    display: block;
+    margin: auto;
+  }
+  .card-body {
+    padding: 1px 2px !important;
+  }
+  &:hover{
+    cursor: pointer;
+    border-color: rgba(183, 183, 183, 0.53) !important;
+  }
+  &::selection, &:focus {
+    border: blueviolet 2px solid !important;
+  }
+  &.selected {
+    border: rgba(138, 43, 226, 0.85) 2px dotted !important;
+    background-color: rgba(138, 43, 226, 0.02) !important;;
+  }
+}

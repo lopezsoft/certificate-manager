@@ -1,0 +1,1 @@
+{"parameters":[{"name":"id","in":"path","description":"ID del encabezado a actualizar","required":true,"schema":{"type":"integer"}}]}

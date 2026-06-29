@@ -1,0 +1,140 @@
+$original-color: #a3c7e0 !default; // Original color for the form elements
+$strong-color: darken($original-color, 35%) !default; // Stronger color for text and borders
+
+.custom-form {
+  .row {
+    --bs-gutter-x: .5rem;
+  }
+  .nav-tabs {
+    padding-bottom: .15rem !important;
+  }
+  .card-header {
+    padding: .5rem 1rem !important;
+    color: $strong-color;
+    font-weight: 600;
+  }
+  .card-body {
+    padding-bottom: .25rem !important;
+  }
+  .card-footer {
+    padding: 0.5rem 1rem !important;
+  }
+  .form-group {
+    margin-bottom: .15rem !important;
+    label {
+      margin-bottom: .15rem !important;
+      color: $strong-color;
+    }
+  }
+  .input-group {
+    .input-group-text {
+      background-color: white;
+      height: 32px !important;
+      color: $strong-color;
+      padding: .238rem 1rem !important;
+      border: 1px solid #a3c7e0 !important;
+    }
+  }
+  .custom-control {
+    label {
+      color: $strong-color;
+    }
+  }
+  h1, h2, h3, h4, h5, h6, p, span, label {
+    color: $strong-color;
+  }
+  .ng-option-label {
+    color: inherit;
+  }
+  hr {
+    margin-top: .25rem;
+    margin-bottom: .25rem;
+    border: 0;
+    border-top: 1px solid rgba(35, 45, 52, 0.44);
+  }
+  input, textarea {
+    background-color: white;
+  }
+  input, textarea, select {
+    border: 1px solid #a3c7e0 !important;
+    transition: border-color 0.5s ease;
+    border-radius: .25rem;
+    color: $strong-color;
+    padding: .15rem .35rem !important;
+    &:not([readonly]):focus {
+      border-color: $strong-color !important;
+      color: $strong-color;
+      box-shadow: none !important;
+      background-color: white;
+    }
+    &:disabled, &:read-only {
+      background-color: #efefef;
+      color: $strong-color;
+      border-color: lighten($original-color, 10%);
+      box-shadow: none !important;
+      &:focus {
+        box-shadow: none !important;
+      }
+    }
+  }
+  select {
+    height: 32px !important;
+  }
+  input {
+    height: 32px !important;
+  }
+  .form-check {
+    input {
+      height: 1em !important;
+      &:checked {
+        background-color: $strong-color !important;
+      }
+    }
+  }
+  .ng-select .ng-select-container {
+    min-height: 32px !important;
+  }
+  .ng-select-disabled {
+    .ng-select-container {
+      background-color: #efefef !important;
+      color: $strong-color !important;
+      border-color: lighten($original-color, 10%) !important;
+      box-shadow: none !important;
+      &:focus {
+        box-shadow: none !important;
+      }
+    }
+  }
+  .ng-select-multiple {
+    .ng-select-container {
+      .ng-value-container {
+        .ng-value {
+          .ng-value-label, .ng-value-icon {
+            color: #fff !important;;
+          }
+        }
+      }
+    }
+  }
+  .ng-select-container {
+    border: 1px solid #a3c7e0 !important;
+    border-radius: .25rem;
+    height: 32px !important;
+    input {
+      border-width: 0 !important;
+      height: inherit !important;
+      padding: 0 !important;
+    }
+    .ng-value-container {
+      color: $strong-color;
+    }
+  }
+  .ng-dropdown-panel {
+    border: 1px solid #a3c7e0 !important;
+  }
+
+  ng-clear-wrapper {
+    color: #a3c7e0 !important;
+  }
+}
+

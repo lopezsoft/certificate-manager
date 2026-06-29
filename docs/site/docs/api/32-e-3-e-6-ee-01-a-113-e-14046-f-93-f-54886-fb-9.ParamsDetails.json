@@ -1,0 +1,1 @@
+{"parameters":[{"name":"id","in":"path","description":"ID de la solicitud de certificado","required":true,"schema":{"type":"integer"}},{"name":"fileId","in":"path","description":"ID del archivo a eliminar","required":true,"schema":{"type":"integer"}}]}

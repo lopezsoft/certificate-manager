@@ -1,0 +1,1 @@
+{"parameters":[{"name":"id","in":"path","description":"ID del registro","required":true,"schema":{"type":"integer"}}]}

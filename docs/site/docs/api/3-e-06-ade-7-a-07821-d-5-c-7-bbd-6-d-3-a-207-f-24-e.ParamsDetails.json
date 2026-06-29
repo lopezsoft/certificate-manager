@@ -1,0 +1,1 @@
+{"parameters":[{"name":"query","in":"query","description":"Búsqueda por nombre o código de ciudad","schema":{"type":"string","example":"Medellín"}},{"name":"code","in":"query","description":"Filtrar por código de ciudad exacto","schema":{"type":"string","example":"05001"}}]}

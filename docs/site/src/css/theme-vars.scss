@@ -1,0 +1,80 @@
+$theme-green-form-bg: #ccc !default;
+$theme-green-form-label-color: #ccc !default;
+$theme-green-form-border-color: #ccc !default;
+$theme-green-form-placeholder-color: #ccc !default;
+$theme-green-input-bg: #ccc !default;
+$theme-green-form-disabled-bg: #ccc !default;
+$theme-green-button-login-bg: #ccc !default;
+$theme-green-button-login-border-color: #ccc !default;
+$theme-green-button-login-color: #ccc !default;
+$theme-green-button-login-hover-bg: #ccc !default;
+$theme-green-button-login-hover-border-color: #ccc !default;
+$theme-green-text-color: #ccc !default;
+$theme-green-button-border-color: #ccc !default;
+$theme-green-button-hover-bg: #ccc !default;
+$theme-green-button-hover-border-color: #ccc !default;
+$theme-green-button-bg: #ccc !default;
+$theme-green-button-color: #ccc !default;
+$theme-green-table-row-bg: #ccc !default;
+$theme-green-table-header-bg: #ccc !default;
+$theme-green-table-border-color: #ccc !default;
+$theme-green-table-row-color: #ccc !default;
+$theme-green-input-border-color: #ccc !default;
+$theme-green-table-bg: #ccc !default;
+$theme-green-table-header-color: #ccc !default;
+$theme-green-table-hover-color: #ccc !default;
+$theme-green-table-striped-bg: #ccc !default;
+$theme-green-table-hover-bg: #ccc !default;
+$theme-green-input-color: #ccc !default;
+$theme-green-input-checkbox-bg: #ccc !default;
+$theme-green-input-checkbox-color: #ccc !default;
+$theme-green-input-checkbox-hover-bg: #ccc !default;
+$theme-green-card-border-color: #ccc !default;
+$theme-green-headings-color: #ccc !default;
+$theme-green-card-selected-border-color: #ccc !default;
+$theme-green-button-hover-color: #ccc !default;
+$theme-green-webkit-scrollbar-track-piece-bg: #ccc !default;
+$theme-green-webkit-scrollbar-track-piece-bg-decrement: #ccc !default;
+$theme-green-webkit-scrollbar-thumb-bg: #ccc !default;
+
+$grid-breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px
+) !default;
+
+@mixin media-breakpoint-only($name, $breakpoints: $grid-breakpoints) {
+  $min: map-get($breakpoints, $name);
+  @if $min {
+    @media (min-width: $min) {
+      @content;
+    }
+  } @else {
+    @content;
+  }
+}
+
+@mixin media-breakpoint-up($name, $breakpoints: $grid-breakpoints) {
+  $min: map-get($breakpoints, $name);
+  @if $min {
+    @media (min-width: $min) {
+      @content;
+    }
+  } @else {
+    @content;
+  }
+}
+
+@mixin media-breakpoint-down($name, $breakpoints: $grid-breakpoints) {
+  $max: map-get($breakpoints, $name);
+  @if $max {
+    @media (max-width: $max) {
+      @content;
+    }
+  } @else {
+    @content;
+  }
+}

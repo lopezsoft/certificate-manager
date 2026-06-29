@@ -1,0 +1,1003 @@
+{
+  "info": {
+    "name": "Certificate Manager API v1",
+    "_postman_id": "certificate-manager-api-v1-2026",
+    "description": "API REST unificada para la gestión completa de solicitudes de certificados digitales.\n\n## Proveedores de emisión\n- **mail** — Flujo legacy por correo electrónico\n- **viafirma** — Flujo Zero-Touch PKCS#10 (Viafirma RA)\n\n## Modo Sandbox\nActiva `VIAFIRMA_SANDBOX_MODE=true` en el servidor para usar el `MockViafirmaClient` sin generar certificados reales.\n\n## Autenticación\nUsa `POST /auth/login` y luego asigna la variable `token`. La colección incluye un script que extrae automáticamente el token del login.\n\n## Variables requeridas\n- `base_url`: URL base (ej. `http://localhost/api/v1`)\n- `token`: Bearer Token (se rellena automáticamente con el script del login)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost/api/v1", "type": "string", "description": "URL base del API sin trailing slash" },
+    { "key": "token", "value": "", "type": "string", "description": "Bearer Token OAuth2 — se rellena automáticamente al hacer login" },
+    { "key": "certificate_request_id", "value": "1", "type": "string", "description": "ID de solicitud de certificado para pruebas" },
+    { "key": "company_id", "value": "1", "type": "string" },
+    { "key": "user_id", "value": "1", "type": "string" },
+    { "key": "token_id", "value": "", "type": "string" },
+    { "key": "webhook_id", "value": "1", "type": "string" },
+    { "key": "notification_id", "value": "", "type": "string" },
+    { "key": "order_uuid", "value": "", "type": "string" },
+    { "key": "quota_id", "value": "1", "type": "string" },
+    { "key": "analysis_id", "value": "1", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "🔐 Autenticación",
+      "description": "Login, registro, verificación de email y recuperación de contraseña.",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    if (body.token) {",
+                  "        pm.collectionVariables.set('token', body.token);",
+                  "        console.log('✅ Token guardado:', body.token.substring(0, 20) + '...');",
+                  "    }",
+                  "}",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Tiene token', () => pm.expect(pm.response.json()).to.have.property('token'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"password\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] },
+            "description": "Obtiene el Bearer Token OAuth2. El token se guarda automáticamente en la variable `token` de la colección."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/auth/logout", "host": ["{{base_url}}"], "path": ["auth", "logout"] },
+            "description": "Revoca el token actual."
+          }
+        },
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Juan Pérez\",\n  \"email\": \"juan@empresa.com\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/register", "host": ["{{base_url}}"], "path": ["register"] }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"juan@empresa.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/forgot-password", "host": ["{{base_url}}"], "path": ["forgot-password"] }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"RESET_TOKEN_FROM_EMAIL\",\n  \"email\": \"juan@empresa.com\",\n  \"password\": \"new_password123\",\n  \"password_confirmation\": \"new_password123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/reset-password", "host": ["{{base_url}}"], "path": ["reset-password"] }
+          }
+        },
+        {
+          "name": "Sync Account [ERP]",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "X-Sync-Signature", "value": "HMAC_SIGNATURE_HERE" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"juan@empresa.com\",\n  \"name\": \"Juan Pérez\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/sync-account", "host": ["{{base_url}}"], "path": ["sync-account"] },
+            "description": "Sincronización de cuenta inter-sistema (ERP). Requiere middleware de firma HMAC."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 Datos Maestros (público)",
+      "description": "Endpoints públicos sin autenticación: países, departamentos, ciudades, tipos de documento.",
+      "item": [
+        {
+          "name": "Países",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/countries", "host": ["{{base_url}}"], "path": ["countries"] }
+          }
+        },
+        {
+          "name": "Departamentos",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/departments", "host": ["{{base_url}}"], "path": ["departments"] }
+          }
+        },
+        {
+          "name": "Ciudades",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/cities", "host": ["{{base_url}}"], "path": ["cities"] }
+          }
+        },
+        {
+          "name": "Tipos de Documento de Identidad",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/identity-documents", "host": ["{{base_url}}"], "path": ["identity-documents"] }
+          }
+        },
+        {
+          "name": "Tipos de Organización DIAN",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/organization-type", "host": ["{{base_url}}"], "path": ["organization-type"] }
+          }
+        },
+        {
+          "name": "Tipos de Documento de Entidad",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/entity-document-types", "host": ["{{base_url}}"], "path": ["entity-document-types"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📄 Solicitudes de Certificado",
+      "description": "CRUD de solicitudes de certificados digitales.",
+      "item": [
+        {
+          "name": "Crear solicitud",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    const id = body?.dataRecords?.id || body?.data?.id;",
+                  "    if (id) pm.collectionVariables.set('certificate_request_id', id);",
+                  "}",
+                  "pm.test('Creación exitosa', () => pm.response.to.have.status(201));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"city_id\": 149,\n  \"identity_document_id\": 1,\n  \"type_organization_id\": 1,\n  \"document_number\": \"1234567890\",\n  \"address\": \"Calle 123 # 45-67\",\n  \"legal_representative\": \"JUAN PÉREZ GÓMEZ\",\n  \"legal_rep_first_name\": \"JUAN PABLO\",\n  \"legal_rep_last_name\": \"PÉREZ GÓMEZ\",\n  \"legal_rep_email\": \"juan.perez@empresa.com\",\n  \"company_name\": \"MI EMPRESA S.A.S.\",\n  \"dni\": \"900455420\",\n  \"life\": 1,\n  \"info\": \"Información adicional\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/certificate-request", "host": ["{{base_url}}"], "path": ["certificate-request"] }
+          }
+        },
+        {
+          "name": "Listar mis solicitudes",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/certificate-request", "host": ["{{base_url}}"], "path": ["certificate-request"] }
+          }
+        },
+        {
+          "name": "Listar todas (admin)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/certificate-request/all", "host": ["{{base_url}}"], "path": ["certificate-request", "all"] }
+          }
+        },
+        {
+          "name": "Buscar por DNI",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/certificate-request/lookup/900455420", "host": ["{{base_url}}"], "path": ["certificate-request", "lookup", "900455420"] }
+          }
+        },
+        {
+          "name": "Estadísticas por empresa",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/certificate-request/stats/{{company_id}}", "host": ["{{base_url}}"], "path": ["certificate-request", "stats", "{{company_id}}"] }
+          }
+        },
+        {
+          "name": "Obtener por ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/certificate-request/{{certificate_request_id}}", "host": ["{{base_url}}"], "path": ["certificate-request", "{{certificate_request_id}}"] }
+          }
+        },
+        {
+          "name": "Historial de cambios",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/certificate-request/{{certificate_request_id}}/history", "host": ["{{base_url}}"], "path": ["certificate-request", "{{certificate_request_id}}", "history"] }
+          }
+        },
+        {
+          "name": "Actualizar solicitud",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address\": \"Carrera 10 # 20-30\",\n  \"legal_rep_email\": \"nuevo@empresa.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/certificate-request/{{certificate_request_id}}", "host": ["{{base_url}}"], "path": ["certificate-request", "{{certificate_request_id}}"] }
+          }
+        },
+        {
+          "name": "Actualizar estado",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"request_status\": \"ACCEPTED\",\n  \"comments\": \"Documentación revisada y aprobada.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/certificate-request/{{certificate_request_id}}/status", "host": ["{{base_url}}"], "path": ["certificate-request", "{{certificate_request_id}}", "status"] }
+          }
+        },
+        {
+          "name": "Eliminar solicitud",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/certificate-request/{{certificate_request_id}}", "host": ["{{base_url}}"], "path": ["certificate-request", "{{certificate_request_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📎 Archivos Adjuntos",
+      "description": "Carga y eliminación de archivos adjuntos a solicitudes de certificado.",
+      "item": [
+        {
+          "name": "Subir archivo",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "description": "Archivo PDF o ZIP" },
+                { "key": "document_type", "value": "ATTACHED", "type": "text" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/certificate-request/{{certificate_request_id}}/files", "host": ["{{base_url}}"], "path": ["certificate-request", "{{certificate_request_id}}", "files"] },
+            "description": "Sube un archivo adjunto (PDF/ZIP, máx 7MB por archivo, 10MB total, máx 3 archivos)."
+          }
+        },
+        {
+          "name": "Eliminar archivo",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/certificate-request/{{certificate_request_id}}/files/1", "host": ["{{base_url}}"], "path": ["certificate-request", "{{certificate_request_id}}", "files", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🚀 Emisión de Certificados",
+      "description": "Emisión agnóstica del proveedor. El sistema resuelve automáticamente si usa 'mail' o 'viafirma' según la configuración.",
+      "item": [
+        {
+          "name": "Emitir certificado [mail]",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comments\": \"Solicitud expedita por convenio empresarial\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/certificate-request/{{certificate_request_id}}/issue", "host": ["{{base_url}}"], "path": ["certificate-request", "{{certificate_request_id}}", "issue"] },
+            "description": "Usa el proveedor 'mail' (default). Solo requiere archivos adjuntos tipo ATTACHED."
+          }
+        },
+        {
+          "name": "Emitir certificado [viafirma sandbox]",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email_certificate\": \"rep.legal@empresa.com\",\n  \"organization_type\": null,\n  \"identity_type_override\": null,\n  \"comments\": \"Emisión Zero-Touch vía Viafirma RA (sandbox)\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/certificate-request/{{certificate_request_id}}/issue", "host": ["{{base_url}}"], "path": ["certificate-request", "{{certificate_request_id}}", "issue"] },
+            "description": "Usa el proveedor 'viafirma'. Requiere VIAFIRMA_PKCS10_ENABLED=true y email_certificate. En sandbox (VIAFIRMA_SANDBOX_MODE=true) no genera certificado real."
+          }
+        },
+        {
+          "name": "Emitir con override de proveedor [admin]",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"viafirma\",\n  \"email_certificate\": \"rep.legal@empresa.com\",\n  \"organization_type\": \"RM\",\n  \"comments\": \"Override forzado por admin\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/certificate-request/{{certificate_request_id}}/issue", "host": ["{{base_url}}"], "path": ["certificate-request", "{{certificate_request_id}}", "issue"] },
+            "description": "Fuerza un proveedor específico. Requiere rol admin y CERTIFICATE_ISSUANCE_ALLOW_OVERRIDE=true."
+          }
+        },
+        {
+          "name": "Consultar estado del trámite",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const status = body?.dataRecords?.status;",
+                  "pm.test('Tiene status normalizado', () => pm.expect(['sent','submitted','processing','ready','completed','failed','unsupported']).to.include(status));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/certificate-request/{{certificate_request_id}}/issuance", "host": ["{{base_url}}"], "path": ["certificate-request", "{{certificate_request_id}}", "issuance"] },
+            "description": "Devuelve el estado normalizado: sent/submitted/processing/ready/completed/failed. Para Viafirma incluye internal_state, remote_status, public_id."
+          }
+        },
+        {
+          "name": "Metadata de descarga P12 (Viafirma)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/certificate-request/{{certificate_request_id}}/issuance/download", "host": ["{{base_url}}"], "path": ["certificate-request", "{{certificate_request_id}}", "issuance", "download"] },
+            "description": "Retorna PIN temporal y URL firmada (24h) para descargar el .p12. Solo disponible cuando internal_state = ASSEMBLED o COMPLETED."
+          }
+        },
+        {
+          "name": "Descarga P12 en Base64",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/certificate-request/{{certificate_request_id}}/issuance/download/base64", "host": ["{{base_url}}"], "path": ["certificate-request", "{{certificate_request_id}}", "issuance", "download", "base64"] },
+            "description": "Devuelve el .p12 codificado en Base64 + PIN. Para uso desatendido/automatizado."
+          }
+        },
+        {
+          "name": "Re-descargar P12 con nuevo PIN [admin]",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/certificate-request/{{certificate_request_id}}/issuance/redownload", "host": ["{{base_url}}"], "path": ["certificate-request", "{{certificate_request_id}}", "issuance", "redownload"] },
+            "description": "Re-descarga el P7B de Viafirma y regenera el P12 con un nuevo PIN. Solo administradores."
+          }
+        },
+        {
+          "name": "Renovar certificado (generar orden)",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/certificate-request/{{certificate_request_id}}/issuance/renew", "host": ["{{base_url}}"], "path": ["certificate-request", "{{certificate_request_id}}", "issuance", "renew"] },
+            "description": "Genera una orden de pago WOMPI para renovar la vigencia del certificado por 1 año adicional."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔏 Viafirma (KYC y Revocación)",
+      "description": "Operaciones específicas del proveedor Viafirma RA.",
+      "item": [
+        {
+          "name": "Obtener link KYC",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/certificate-request/{{certificate_request_id}}/kyc-link", "host": ["{{base_url}}"], "path": ["certificate-request", "{{certificate_request_id}}", "kyc-link"] },
+            "description": "Retorna el link del portal de acreditación biométrica KYC. Solo disponible cuando remote_status = 'accreditation'."
+          }
+        },
+        {
+          "name": "Revocar certificado",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"revoking_code\": \"MOCK-REV-CODE-A1B2C3D4\",\n  \"revocation_reason\": 0\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/certificate-request/{{certificate_request_id}}/revoke", "host": ["{{base_url}}"], "path": ["certificate-request", "{{certificate_request_id}}", "revoke"] },
+            "description": "Revoca el certificado Viafirma. Motivos: 0=unspecified, 1=keyCompromise, 2=cACompromise, 3=affiliationChanged, 4=superseded, 5=cessationOfOperation, 9=privilegeWithdrawn, 10=aACompromise."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏢 Empresa",
+      "item": [
+        {
+          "name": "Ver empresa",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/company", "host": ["{{base_url}}"], "path": ["company"] }
+          }
+        },
+        {
+          "name": "Actualizar empresa",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"MI EMPRESA S.A.S.\",\n  \"issuance_provider\": \"viafirma\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/company/{{company_id}}", "host": ["{{base_url}}"], "path": ["company", "{{company_id}}"] }
+          }
+        },
+        {
+          "name": "Toggle empresa activa [admin]",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{base_url}}/company/{{company_id}}/toggle-active", "host": ["{{base_url}}"], "path": ["company", "{{company_id}}", "toggle-active"] }
+          }
+        },
+        {
+          "name": "Ver configuración empresa",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/company/settings", "host": ["{{base_url}}"], "path": ["company", "settings"] }
+          }
+        },
+        {
+          "name": "Actualizar configuración empresa",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"value\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/company/settings", "host": ["{{base_url}}"], "path": ["company", "settings"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👤 Perfil",
+      "item": [
+        {
+          "name": "Ver perfil propio",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/profile", "host": ["{{base_url}}"], "path": ["profile"] }
+          }
+        },
+        {
+          "name": "Tipos de usuario",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/profile/types", "host": ["{{base_url}}"], "path": ["profile", "types"] }
+          }
+        },
+        {
+          "name": "Actualizar perfil",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nuevo Nombre\",\n  \"phone\": \"3001234567\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/profile/{{user_id}}", "host": ["{{base_url}}"], "path": ["profile", "{{user_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💰 Precios (público)",
+      "item": [
+        {
+          "name": "Consultar tarifas",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/pricing?quantity=5&vigencia=1",
+              "host": ["{{base_url}}"],
+              "path": ["pricing"],
+              "query": [
+                { "key": "quantity", "value": "5" },
+                { "key": "vigencia", "value": "1" }
+              ]
+            },
+            "description": "Consulta pública de tarifas por volumen. No requiere autenticación."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Cupos y Órdenes",
+      "item": [
+        {
+          "name": "Estado de cupo del usuario",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/quota/status", "host": ["{{base_url}}"], "path": ["quota", "status"] },
+            "description": "Devuelve el tipo de facturación activo (PREPAID/POSTPAID) y los cupos disponibles del usuario autenticado."
+          }
+        },
+        {
+          "name": "Listar órdenes",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/orders", "host": ["{{base_url}}"], "path": ["orders"] }
+          }
+        },
+        {
+          "name": "Crear orden PREPAID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if ([200,201].includes(pm.response.code)) {",
+                  "    const body = pm.response.json();",
+                  "    const uuid = body?.data?.uuid || body?.dataRecords?.uuid;",
+                  "    if (uuid) pm.collectionVariables.set('order_uuid', uuid);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 5,\n  \"vigencia\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/orders", "host": ["{{base_url}}"], "path": ["orders"] }
+          }
+        },
+        {
+          "name": "Ver orden",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/orders/{{order_uuid}}", "host": ["{{base_url}}"], "path": ["orders", "{{order_uuid}}"] }
+          }
+        },
+        {
+          "name": "Pagar orden (WOMPI)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payment_token\": \"tok_test_WOMPI_TOKEN\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/orders/{{order_uuid}}/pay", "host": ["{{base_url}}"], "path": ["orders", "{{order_uuid}}", "pay"] }
+          }
+        },
+        {
+          "name": "Reintentar pago fallido",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/orders/{{order_uuid}}/retry", "host": ["{{base_url}}"], "path": ["orders", "{{order_uuid}}", "retry"] }
+          }
+        },
+        {
+          "name": "Cancelar orden",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/orders/{{order_uuid}}", "host": ["{{base_url}}"], "path": ["orders", "{{order_uuid}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏛️ Admin: Cupos POSTPAID",
+      "description": "Solo administradores LOPEZSOFT.",
+      "item": [
+        {
+          "name": "Listar cupos (admin)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/admin/quotas", "host": ["{{base_url}}"], "path": ["admin", "quotas"] }
+          }
+        },
+        {
+          "name": "Asignar cupo POSTPAID",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company_id\": 10,\n  \"allocated_quantity\": 50,\n  \"period_start\": \"2026-06-01\",\n  \"period_end\": \"2026-06-30\",\n  \"notes\": \"Cupo mensual junio 2026\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/admin/quotas", "host": ["{{base_url}}"], "path": ["admin", "quotas"] }
+          }
+        },
+        {
+          "name": "Ver cupo por ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/admin/quotas/{{quota_id}}", "host": ["{{base_url}}"], "path": ["admin", "quotas", "{{quota_id}}"] }
+          }
+        },
+        {
+          "name": "Cupos por empresa",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/admin/quotas/company/{{company_id}}", "host": ["{{base_url}}"], "path": ["admin", "quotas", "company", "{{company_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📈 Consumo",
+      "item": [
+        {
+          "name": "Consumo por año",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/consume/2026", "host": ["{{base_url}}"], "path": ["consume", "2026"] }
+          }
+        },
+        {
+          "name": "Consumo por mes",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/consume/2026/06", "host": ["{{base_url}}"], "path": ["consume", "2026", "06"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔔 Notificaciones",
+      "item": [
+        {
+          "name": "Listar notificaciones",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/notifications", "host": ["{{base_url}}"], "path": ["notifications"] }
+          }
+        },
+        {
+          "name": "Marcar todas como leídas",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/notifications/read-all", "host": ["{{base_url}}"], "path": ["notifications", "read-all"] }
+          }
+        },
+        {
+          "name": "Marcar una como leída",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/notifications/{{notification_id}}/read", "host": ["{{base_url}}"], "path": ["notifications", "{{notification_id}}", "read"] }
+          }
+        },
+        {
+          "name": "Certificados por vencer (usuario)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/certificates/expiring?days=30",
+              "host": ["{{base_url}}"],
+              "path": ["certificates", "expiring"],
+              "query": [{ "key": "days", "value": "30" }]
+            }
+          }
+        },
+        {
+          "name": "[Admin] Disparar notificaciones ahora",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/admin/certificates/notify-now", "host": ["{{base_url}}"], "path": ["admin", "certificates", "notify-now"] },
+            "description": "Dispara el envío de notificaciones de vencimiento inmediatamente. Solo admin. Throttle: 1 vez cada 5 minutos."
+          }
+        },
+        {
+          "name": "[Admin] Certificados por vencer por empresa",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/admin/certificates/expiring-by-company", "host": ["{{base_url}}"], "path": ["admin", "certificates", "expiring-by-company"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔗 Webhooks",
+      "description": "Gestión de endpoints de notificación push en tiempo real.",
+      "item": [
+        {
+          "name": "Eventos disponibles",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/webhooks/events", "host": ["{{base_url}}"], "path": ["webhooks", "events"] },
+            "description": "Lista los eventos a los que se puede suscribir un webhook."
+          }
+        },
+        {
+          "name": "Listar webhooks",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/webhooks", "host": ["{{base_url}}"], "path": ["webhooks"] }
+          }
+        },
+        {
+          "name": "Crear webhook",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if ([200,201].includes(pm.response.code)) {",
+                  "    const id = pm.response.json()?.data?.id || pm.response.json()?.dataRecords?.id;",
+                  "    if (id) pm.collectionVariables.set('webhook_id', id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://mi-erp.com/webhook/certificados\",\n  \"events\": [\"certificate_request.created\", \"certificate_request.status_changed\"],\n  \"description\": \"Notificaciones al ERP de producción\",\n  \"is_active\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/webhooks", "host": ["{{base_url}}"], "path": ["webhooks"] }
+          }
+        },
+        {
+          "name": "Ver webhook",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/webhooks/{{webhook_id}}", "host": ["{{base_url}}"], "path": ["webhooks", "{{webhook_id}}"] }
+          }
+        },
+        {
+          "name": "Actualizar webhook",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://mi-erp.com/webhook/v2\",\n  \"events\": [\"certificate_request.created\"],\n  \"is_active\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/webhooks/{{webhook_id}}", "host": ["{{base_url}}"], "path": ["webhooks", "{{webhook_id}}"] }
+          }
+        },
+        {
+          "name": "Eliminar webhook",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/webhooks/{{webhook_id}}", "host": ["{{base_url}}"], "path": ["webhooks", "{{webhook_id}}"] }
+          }
+        },
+        {
+          "name": "Rotar secret del webhook",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/webhooks/{{webhook_id}}/rotate-secret", "host": ["{{base_url}}"], "path": ["webhooks", "{{webhook_id}}", "rotate-secret"] },
+            "description": "Genera un nuevo secret HMAC-SHA256 para el endpoint. Invalida el secret anterior."
+          }
+        },
+        {
+          "name": "Historial de entregas",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/webhooks/{{webhook_id}}/deliveries", "host": ["{{base_url}}"], "path": ["webhooks", "{{webhook_id}}", "deliveries"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔑 Tokens (PAT)",
+      "description": "Personal Access Tokens para integraciones externas.",
+      "item": [
+        {
+          "name": "Listar tokens",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tokens", "host": ["{{base_url}}"], "path": ["tokens"] }
+          }
+        },
+        {
+          "name": "Crear token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if ([200,201].includes(pm.response.code)) {",
+                  "    const id = pm.response.json()?.token?.id;",
+                  "    if (id) pm.collectionVariables.set('token_id', id);",
+                  "    console.log('⚠️ Guarda el token generado, no se mostrará de nuevo.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Token ERP Producción 2026\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/tokens", "host": ["{{base_url}}"], "path": ["tokens"] }
+          }
+        },
+        {
+          "name": "Ver token",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tokens/{{token_id}}", "host": ["{{base_url}}"], "path": ["tokens", "{{token_id}}"] }
+          }
+        },
+        {
+          "name": "Renovar token",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/tokens/{{token_id}}/renew", "host": ["{{base_url}}"], "path": ["tokens", "{{token_id}}", "renew"] }
+          }
+        },
+        {
+          "name": "Revocar token",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/tokens/{{token_id}}", "host": ["{{base_url}}"], "path": ["tokens", "{{token_id}}"] }
+          }
+        },
+        {
+          "name": "Revocar todos los tokens",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/tokens/revoke-all", "host": ["{{base_url}}"], "path": ["tokens", "revoke-all"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🤖 Analíticas IA",
+      "item": [
+        {
+          "name": "Resultados de análisis",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/analytics/results", "host": ["{{base_url}}"], "path": ["analytics", "results"] }
+          }
+        },
+        {
+          "name": "Estadísticas agregadas",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/analytics/stats", "host": ["{{base_url}}"], "path": ["analytics", "stats"] }
+          }
+        },
+        {
+          "name": "Estado de proveedores IA",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/analytics/providers", "host": ["{{base_url}}"], "path": ["analytics", "providers"] }
+          }
+        },
+        {
+          "name": "Ver resultado de análisis",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/analytics/results/{{analysis_id}}", "host": ["{{base_url}}"], "path": ["analytics", "results", "{{analysis_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "⚙️ Configuración y Sistema",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/health", "host": ["{{base_url}}"], "path": ["health"] },
+            "description": "Verifica la conectividad con servicios externos (WOMPI, etc.)."
+          }
+        },
+        {
+          "name": "Ver encabezado de reportes",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/settings/reports", "host": ["{{base_url}}"], "path": ["settings", "reports"] }
+          }
+        },
+        {
+          "name": "Actualizar encabezado de reportes",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company_name\": \"MI EMPRESA S.A.S.\",\n  \"nit\": \"900455420-8\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/settings/reports/1", "host": ["{{base_url}}"], "path": ["settings", "reports", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💳 Pagos Externos (WOMPI Webhook)",
+      "description": "Webhooks entrantes de WOMPI. No usan Bearer Token — autenticados por firma HMAC-SHA256.",
+      "item": [
+        {
+          "name": "Webhook WOMPI [evento de pago]",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"transaction.updated\",\n  \"data\": {\n    \"transaction\": {\n      \"id\": \"WOMPI-TX-ID\",\n      \"reference\": \"ORD-ABCD1234EFGH\",\n      \"status\": \"APPROVED\",\n      \"amount_in_cents\": 74375000\n    }\n  },\n  \"signature\": {\n    \"properties\": [\"transaction.id\", \"transaction.status\", \"transaction.amount_in_cents\"],\n    \"checksum\": \"HMAC_SHA256_CHECKSUM\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/../webhooks/wompi", "host": ["{{base_url}}"], "path": ["..", "webhooks", "wompi"] },
+            "description": "Endpoint llamado por WOMPI al completar/fallar un pago. La URL es /webhooks/wompi (fuera del prefijo v1). La autenticidad se valida con firma HMAC-SHA256."
+          }
+        }
+      ]
+    }
+  ]
+}

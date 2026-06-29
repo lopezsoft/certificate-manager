@@ -19,7 +19,6 @@
 /backend/storage/framework/cache/*
 /backend/storage/tmp/*
 /backend/storage/logs/*
-/docs/*
 /backend/public/pdf/*
 /backend/public/zip/*
 /backend/public/xml/*
@@ -45,3 +44,5 @@
 **/.angular/**
 /prod
 backend/tmpclaude-94f2-cwd
+/docs/site/build  
+/docs/site/.docusaurus 

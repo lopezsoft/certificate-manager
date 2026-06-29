@@ -1,0 +1,45 @@
+.grid-spinner {
+    border: 4px solid $theme-green-table-row-bg !important;
+    border-left-color: $theme-green-table-header-bg !important;
+}
+
+.card-table {
+    .card-header {
+      border-bottom: 0px solid $theme-green-table-border-color !important;
+      .card-title {
+        color: darken( $theme-green-table-border-color, 20%);
+      }
+    }
+  }
+  
+  .grid-cell { 
+    &:focus-visible {
+      background-color: $theme-green-table-border-color !important;
+    }
+  }
+  
+  .grid-empty {
+    color: $theme-green-table-row-color !important;
+  }
+  
+  .grid-loading {
+    background-color: rgba(25, 68, 31, 0.5);
+  }
+  
+  .grid-search {
+    background-color: $theme-green-input-bg !important;
+  
+    input {
+        background-color: $theme-green-input-bg !important;
+        border-color: $theme-green-input-border-color !important;
+    }
+  
+    button.btn {
+      background-color: $theme-green-button-bg !important;
+      border-color: $theme-green-button-border-color!important;
+      &:hover, &:focus {
+        background-color: darken($theme-green-button-bg , 10%) !important;
+      }
+    }
+  }
+  

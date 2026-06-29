@@ -1,0 +1,69 @@
+---
+id: certificate-request-issuance-download-base-64
+title: "Descarga del P12 en Base64"
+description: "Devuelve el .p12 codificado en Base64 + PIN, para integración desatendida (ERP, scripts). Sólo proveedor Viafirma en estado ASSEMBLED/COMPLETED. El parámetro es el UUID público de la solicitud (`certificate_requests.uuid`), no su ID numérico."
+sidebar_label: "Descarga del P12 en Base64"
+hide_title: true
+hide_table_of_contents: true
+api: eJzlVs1u20YQfpXBnmyUkihFdmqdqlhqoCKOZctuixhGMiJH0ibkLrO7VGMIBPoQfYEee84tV71Jn6SYJSnLluoeil7SkwTuzt83832zK+FwbkXvRgxTaeX6s4KY4JSMkzMZYaytuA1ETDYyMnNSK9ETA1rmlCwJKIFm1u5ApOPqNpCCF2jpuAvfwHj0OoAMDYJUjuYGo8q/RUcqljHCwfByHEDp3B42YbL+nGjIjF4SxdrAjxJn0qTIfsk6jtCfTIZnL14NB63T87Pxq+HVcNCEYcKB1r+n5IwGspza9fVoANn6yzSRkeaqEgSrExlJl8dw8C6qi3T01tDHnKyzzTyX8bvDAJQGm8NoACpP138YGemmCITOyCCjMIpFT2w5uCztR9bmqCIa6F9UojEuoRCBYBRScmQY6pVQmJLoCQ4mAiEZ1AzdQjxG2pfwOPOYILrvDxz8bR2HIhD8QRqKRc+ZnAJhowWlKHor4e4yzsE6I9VcBGKmTYruPiv6hGmW8JWjo5C+7YZhgzon00a3HXcb+Lx93Oh2j4+PjrrdMAxDURS3HM1mWlmyHKAThvzzsKJxu/N4RkQgIq0cKcfXMcsSrkVq1Xpv2Wa1lXRmuAVOlhFsHkVk7VY1U60TQrWdPtddBCJrd95mUu2r/L7Sn599GJ/gRTt9s3yuLjtWVIYzmVDZs6esB93+m+HFxctjJkVtOi1HYAeIU1+yjHkyn6CRCB4FLIrNFz19T5ETRcHfumF7N8hrDZgzst6r8Nf25DLZzJYGxyySjpgBpLgxhk3/2x7NMLHcpJSsxfk/wVzmXotJAmSMNnuACYSTzpv0MznkS5fVfG4wO9kFY5jUSoORyzFhIDIyHhO+iWaO0NrSKJYKnWnjcHP+lcLV3kPoYcIc9o63VWmWE2S5mX+ls1MEwlKUG+nuvKBPCQ2Zfu4Wondzy1KYklto3hJzcn4B8JFobYl1oxLr1ooVt2jJanm04mp7tKa1BFgyy3p35CZhR5jJ1rK9szH64xEs2/Dnr7/B+ouSEQIb+nKrIY1RcH51+hPGvoR7u4gNiAvnsp0oV/oD+YcCcoM0nLMRdJoh6OlG1WxMMD6fXEGVawtzt2glei5VE8YPngVakYUUo4VU1HC6Uf2F3BKMyVitMIG+HwbwsS0cjPtXh1WUOoDzR7yoy1K+r1faDz9diWr3+Snyp77rUs20r7bq9ul9f+AMFc7JQH882kGgGmqM/FBX+3ziEWZDJ9Hy4KUouVsl9PRd6g+akU6bkZdj3xzv8FkzbIZ+aWjrUlRbbge16vDAPligj9Na3TPtf/xKqybX0SfXyhKUimH1tFlVPLwRe3goAtGrX2QVFRnfiow8VCXmt4FYaOvYy2rF365NUhT8+WNOhvXgNhBLNBKnPFI3KxFLy//jSqyeaNrBZfVeO4R///bbi0P1EdWd4CyTnMpp/kB39duvuC0CsSCMyfj0yyOmX+a2jHaU/IHsvRwy5fChmFTEq/npve9NaLUqb3iyF8UmP89wTrAo/gJE/WZ9
+sidebar_class_name: "get api-method"
+info_path: docs/api/certificate-manager-api
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+import Translate from "@docusaurus/Translate";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Descarga del P12 en Base64"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/certificate-request/{uuid}/issuance/download/base64"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Devuelve el .p12 codificado en Base64 + PIN, para integración desatendida (ERP, scripts). Sólo proveedor Viafirma en estado ASSEMBLED/COMPLETED. El parámetro es el UUID público de la solicitud (`certificate_requests.uuid`), no su ID numérico.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+>
+  <Translate id="theme.openapi.request.title">Request</Translate>
+</Heading>
+
+<ParamsDetails
+  {...require("./certificate-request-issuance-download-base-64.ParamsDetails.json")}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  {...require("./certificate-request-issuance-download-base-64.RequestSchema.json")}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  {...require("./certificate-request-issuance-download-base-64.StatusCodes.json")}
+>
+  
+</StatusCodes>
+
+
+      

@@ -1,0 +1,43 @@
+/* 
+  Estilos base del sistema
+  Mantiene la coherencia de la UI y diseño mobile-first.
+*/
+/* Variables generadas para resolver dependencias externas faltantes */
+@import './theme-vars.scss';
+
+@import '../../../assets/scss/styles.scss';
+
+/* 
+  Overrides para Docusaurus
+  Se adaptan las variables de Docusaurus a los colores base del sistema 
+*/
+:root {
+  --ifm-color-primary: #2556a3;
+  --ifm-color-primary-dark: #214d93;
+  --ifm-color-primary-darker: #20498b;
+  --ifm-color-primary-darkest: #1a3c72;
+  --ifm-color-primary-light: #2e60b3;
+  --ifm-color-primary-lighter: #3465b8;
+  --ifm-color-primary-lightest: #4572c0;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  --ifm-color-primary: #6398f9;
+  --ifm-color-primary-dark: #4382f8;
+  --ifm-color-primary-darker: #3377f8;
+  --ifm-color-primary-darkest: #0756f6;
+  --ifm-color-primary-light: #83aefb;
+  --ifm-color-primary-lighter: #93b9fc;
+  --ifm-color-primary-lightest: #c3d9fd;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}
+
+/* Mobile-first adjustments for API docs */
+@media (max-width: 996px) {
+  .theme-doc-markdown {
+    font-size: 16px; /* Better readability on small screens */
+  }
+}

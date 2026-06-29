@@ -1,0 +1,1 @@
+{"parameters":[{"name":"unread_only","in":"query","description":"Solo no leídas (true/false)","schema":{"type":"boolean"}},{"name":"limit","in":"query","description":"Registros por página (default: 20)","schema":{"type":"integer"}}]}

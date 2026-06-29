@@ -1,0 +1,149 @@
+/**
+ * Estilos modernos para el HomePage
+ * Incluye Glassmorphism, Gradientes vivos y Animaciones
+ */
+
+.heroBanner {
+  position: relative;
+  padding: 6rem 0;
+  text-align: center;
+  background: linear-gradient(135deg, #2556a3 0%, #1a3c72 100%);
+  overflow: hidden;
+  color: white;
+}
+
+.heroBackground {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+  animation: rotate 30s linear infinite;
+  z-index: 0;
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.heroContainer {
+  position: relative;
+  z-index: 1;
+}
+
+.heroTitle {
+  font-size: 3.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  letter-spacing: -1px;
+  text-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.heroSubtitle {
+  font-size: 1.5rem;
+  font-weight: 300;
+  margin-bottom: 2.5rem;
+  opacity: 0.9;
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.heroButton {
+  border-radius: 8px;
+  padding: 0.8rem 1.5rem;
+  font-weight: 600;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background-color: white !important;
+  color: #2556a3 !important;
+  border: none !important;
+}
+
+.heroButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+  color: #1a3c72 !important;
+}
+
+.heroButtonOutline {
+  border-radius: 8px;
+  padding: 0.8rem 1.5rem;
+  font-weight: 600;
+  border: 2px solid white !important;
+  color: white !important;
+  background: transparent !important;
+  backdrop-filter: blur(5px);
+  transition: all 0.2s ease;
+}
+
+.heroButtonOutline:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  transform: translateY(-2px);
+}
+
+.mainContent {
+  background-color: var(--ifm-background-color);
+  padding-bottom: 4rem;
+}
+
+.features {
+  padding: 4rem 0;
+  position: relative;
+  margin-top: -3rem;
+  z-index: 2;
+}
+
+.featureCard {
+  background: var(--ifm-color-emphasis-100);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 12px;
+  padding: 2rem;
+  height: 100%;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.featureCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+  border-color: var(--ifm-color-primary);
+}
+
+.featureIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: inline-block;
+  background: linear-gradient(135deg, var(--ifm-color-primary-light), var(--ifm-color-primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.featureTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.featureDescription {
+  font-size: 1rem;
+  color: var(--ifm-color-content-secondary);
+  line-height: 1.6;
+}
+
+@media (max-width: 996px) {
+  .heroTitle {
+    font-size: 2.5rem;
+  }
+  .features {
+    margin-top: 0;
+  }
+}

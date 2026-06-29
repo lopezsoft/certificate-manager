@@ -1,0 +1,1 @@
+{"parameters":[{"name":"id","in":"path","description":"ID del webhook endpoint","required":true,"schema":{"type":"integer"}},{"name":"limit","in":"query","description":"Registros por página (default: 20)","schema":{"type":"integer","example":20}}]}

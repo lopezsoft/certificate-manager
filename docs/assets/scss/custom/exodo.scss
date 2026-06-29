@@ -1,0 +1,176 @@
+
+
+.exodogrid-content-style {
+  .card {
+    background-color: white !important;
+  }
+  nav {
+    display: flex;
+    overflow-x: auto;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: .25rem;
+    min-width: 24rem;
+
+    .span-info {
+      padding: .25rem .5rem;
+      display: flex;
+      align-items: center;
+      height: 100%;
+      min-width: 10rem;
+      margin-right: 1rem;
+      color: rgb(23, 119, 177) !important;
+      font-weight: bold;
+    }
+
+    ul {
+      margin-bottom: 0;
+    }
+  }
+
+  @media (max-width: 40rem) {
+    nav {
+      display: block;
+
+      .span-info {
+        display: none;
+      }
+    }
+  }
+
+  .pagination {
+    .page-item {
+      .page-link {
+        border-color: #aadafa !important;
+
+        &:not(.disabled):hover {
+          background-color: #c4d8e9 !important;
+        }
+      }
+
+      button:focus {
+        box-shadow: none;
+      }
+      button {
+        background-color: transparent !important;
+        border: 1px solid #aadafa !important;
+        transition: background-color 0.5s ease;
+        &:hover, &:focus {
+          background-color: darken(#aadafa, 10%) !important;
+        }
+      }
+
+      .page-link-page {
+        min-height: 1.38rem;
+        min-width: 12rem;
+        color: #2a2e30 !important;
+        display: flex;
+        align-items: center;
+        padding: 5px;
+        background-color: transparent !important;
+        border: 1px solid #aadafa !important;
+        input {
+          border: 0 solid #2a2e30 !important;
+          max-height: 1.35rem !important;
+          padding: 2px !important;
+          margin: 0 4px !important;
+          max-width: 3rem !important;
+        }
+      }
+    }
+
+    // For Pagination lg
+    &.pagination-lg {
+      .page-item .page-link {
+        font-size: 1.25rem;
+        min-width: 2.6rem;
+      }
+    }
+
+    // For Pagination sm
+    &.pagination-sm {
+      .page-item .page-link {
+        font-size: 0.875rem;
+        min-width: 2rem;
+      }
+    }
+  }
+}
+
+// Green layout
+
+.green-layout {
+  .exodogrid-content-style {
+    @import "./exodo-grid-component.scss";
+    @import "./grid-cell-component.scss";
+    table, th, td {
+      border-color: $theme-green-table-border-color !important;
+    }
+    .exodogrid-table{
+      background-color: $theme-green-table-bg !important;
+      thead {
+        tr {
+          background: linear-gradient(to bottom, $theme-green-table-bg, $theme-green-table-bg);
+          border-bottom: 1px solid $theme-green-table-border-color !important;
+          th {
+            color: $theme-green-table-header-color !important;
+            &:hover {
+              background-color: $theme-green-table-header-bg !important;
+              color: $theme-green-table-hover-color !important;
+            }
+          }
+        }
+      }
+
+      tbody {
+        tr {
+          background-color: $theme-green-table-bg !important;
+      
+          &:nth-child(odd) {
+            background-color: $theme-green-table-striped-bg !important;
+          }
+      
+          &:hover {
+            background-color: $theme-green-table-hover-bg !important;
+            color: $theme-green-table-hover-color !important;
+            th, td {
+              color: $theme-green-table-hover-color !important;
+            }
+          }
+        }
+      
+        th,
+        td {
+          border-bottom: 1px solid $theme-green-table-border-color !important;
+          color: $theme-green-table-row-color !important;
+        }
+      }
+    }
+    .nav {
+      .span-info {
+        color: $theme-green-table-header-bg !important;
+      }
+    }
+    .pagination {
+      .page-item {
+        .page-link {
+          border-color: $theme-green-table-header-bg !important;
+          &:not(.disabled):hover {
+            background-color: $theme-green-table-header-bg !important;
+          }
+        }
+        button {
+          background-color: transparent !important;
+          border: 1px solid $theme-green-table-header-bg !important;
+          transition: background-color 0.5s ease;
+          &:hover, &:focus {
+            background-color: darken($theme-green-table-header-bg, 10%) !important;
+          }
+        }
+        .page-link-page {
+          color: $theme-green-table-header-bg !important;
+        }
+      }
+    }
+  }
+}

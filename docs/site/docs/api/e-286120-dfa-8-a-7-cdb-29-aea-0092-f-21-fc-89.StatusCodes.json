@@ -1,0 +1,1 @@
+{"responses":{"200":{"description":"Webhook eliminado","content":{"application/json":{"schema":{"properties":{"message":{"type":"string"},"success":{"type":"boolean","example":true}},"type":"object"}}}},"401":{"description":"No autenticado"},"404":{"description":"No encontrado"}}}

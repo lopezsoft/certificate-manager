@@ -1,0 +1,1 @@
+{"responses":{"200":{"description":"Cuenta actualizada"},"201":{"description":"Cuenta creada"},"401":{"description":"Autenticación HMAC fallida"},"422":{"description":"Validación fallida"}}}

@@ -1,0 +1,48 @@
+.heroBanner {
+  background: linear-gradient(135deg, #1a3c72 0%, #2556a3 100%);
+  color: white;
+  padding: 4rem 0;
+  text-align: center;
+}
+
+.categoryCard {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 12px;
+  text-decoration: none !important;
+  background-color: var(--ifm-background-surface-color);
+  color: inherit;
+}
+
+.categoryCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border-color: var(--ifm-color-primary);
+  color: inherit;
+}
+
+.categoryIcon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.categoryTitle {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.categoryDescription {
+  color: var(--ifm-color-content-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.actionContainer {
+  margin-top: 2rem;
+  text-align: center;
+}

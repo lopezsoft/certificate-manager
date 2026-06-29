@@ -1,0 +1,1 @@
+{"title":"Body","body":{"required":true,"content":{"application/json":{"schema":{"properties":{"records":{"description":"JSON serializado con los campos a actualizar. Ejemplo: {first_name: Juan, last_name: Perez}","type":"string"}},"type":"object"}}}}}

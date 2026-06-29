@@ -1,0 +1,69 @@
+---
+id: certificate-request-issuance-download
+title: "Metadata de descarga del P12 (sólo Viafirma)"
+description: "Retorna el PIN temporal y una URL firmada (24h) para descargar el .p12 ensamblado. Disponible cuando el estado interno es ASSEMBLED o COMPLETED. El parámetro es el UUID público de la solicitud (`certificate_requests.uuid`), no su ID numérico."
+sidebar_label: "Metadata de descarga del P12 (sólo Viafirma)"
+hide_title: true
+hide_table_of_contents: true
+api: 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
+sidebar_class_name: "get api-method"
+info_path: docs/api/certificate-manager-api
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+import Translate from "@docusaurus/Translate";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Metadata de descarga del P12 (sólo Viafirma)"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/certificate-request/{uuid}/issuance/download"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Retorna el PIN temporal y una URL firmada (24h) para descargar el .p12 ensamblado. Disponible cuando el estado interno es ASSEMBLED o COMPLETED. El parámetro es el UUID público de la solicitud (`certificate_requests.uuid`), no su ID numérico.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+>
+  <Translate id="theme.openapi.request.title">Request</Translate>
+</Heading>
+
+<ParamsDetails
+  {...require("./certificate-request-issuance-download.ParamsDetails.json")}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  {...require("./certificate-request-issuance-download.RequestSchema.json")}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  {...require("./certificate-request-issuance-download.StatusCodes.json")}
+>
+  
+</StatusCodes>
+
+
+      

@@ -1,0 +1,136 @@
+th, td {
+  padding: .15rem !important;
+  border: 1px solid #a3c7e0 !important;
+  border-top-width: 0 !important;
+  border-left-width: 0 !important;
+  transition: background-color 0.5s ease, transform 0.4s ease;
+
+  &:last-child {
+    border-right-width: 0 !important;
+  }
+}
+
+tr:last-child td {
+  border-bottom-width: 0 !important;
+}
+
+.padding-form-check-none {
+  padding-left: 0 !important;
+
+  .form-check-input {
+    margin-left: -0.5em !important;
+  }
+}
+
+.batch-input {
+  min-width: 6.5rem;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
+.table-sales {
+  border: 1px solid #a3c7e0 !important;
+  border-radius: .25rem;
+  width: 100%;
+  max-height: calc(100vh - 28rem);
+  min-height: 15rem;
+  margin: 0 auto;
+  display: block;
+  overflow-x: auto;
+  overflow-y: auto;
+  border-spacing: 0;
+  border-collapse: collapse;
+  table-layout: auto;
+
+  thead {
+    th {
+      font-weight: bold;
+      text-align: center;
+      text-transform: uppercase;
+      font-size: 12px !important;
+      vertical-align: middle;
+      &:hover {
+        background-color: #b9d3e7;
+        transform: translateY(-1px);
+      }
+
+      &:active {
+        background: linear-gradient(to bottom, #F9C942, #F5B700);
+        transform: translateY(1px);
+      }
+    }
+
+    tr {
+      position: sticky;
+      top: 0;
+      z-index: 99;
+      background: linear-gradient(to bottom, #cde2eb, #b9d3e7);
+      vertical-align: bottom;
+
+    }
+  }
+
+  tbody {
+    tr, td {
+      border-bottom-width: 1px !important;
+      padding: 0 !important;
+    }
+  }
+}
+
+.td-account-value {
+  min-width: 6rem;
+}
+
+.comments-line {
+  width: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  vertical-align: middle;
+  cursor: pointer;
+  height: 2rem;
+
+  &:hover {
+    border-radius: .15rem;
+    background-color: #b9d3e7;
+    border: #a3c7e0 1px solid;
+  }
+
+  &.is-comment i {
+    color: #ff0000 !important;
+  }
+
+  i {
+    font-size: 1.5rem;
+  }
+}
+
+.text-details {
+  min-width: 18rem;
+  padding: 2px;
+  font-size: 12px !important;
+  text-transform: uppercase;
+
+  textarea {
+    padding: 0.15rem .25rem !important;
+    border-radius: 0 !important;
+    display: flex;
+    align-items: center;
+    vertical-align: middle;
+  }
+}
+
+.text-number {
+  text-align: right !important;
+  padding: .15rem .25rem;
+}
+
+.text-tax {
+  min-width: 6rem;
+
+  select {
+    border-radius: 0 !important;
+    padding: 0.15rem !important;
+  }
+}

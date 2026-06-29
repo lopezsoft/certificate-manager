@@ -1,0 +1,1 @@
+{"parameters":[{"name":"companyId","in":"path","description":"ID de la empresa","required":true,"schema":{"type":"integer"}}]}
