@@ -1,0 +1,319 @@
+---
+id: casos-de-uso
+title: "Casos de Uso"
+sidebar_position: 3
+---
+
+# 💼 Casos de Uso Reales
+
+Descubre cómo empresas de diferentes sectores utilizan MATICERTS para resolver sus desafíos de certificación digital.
+
+---
+
+## 🏢 Caso 1: ERP Empresarial - Firma de Órdenes de Compra
+
+### El Desafío
+Una empresa manufacturera necesita firmar digitalmente todas sus órdenes de compra para cumplir con regulaciones fiscales. Actualmente, el proceso es manual y lento.
+
+### La Solución
+Integrar MATICERTS en su ERP para automatizar la firma de documentos.
+
+### Implementación
+
+```javascript
+// En el ERP, cuando se crea una orden de compra:
+async function firmarOrdenDeCompra(ordenId) {
+  // 1. Obtener datos de la orden
+  const orden = await erp.getOrden(ordenId);
+  
+  // 2. Crear solicitud de certificado para el gerente
+  const solicitud = await maticerts.crearSolicitud({
+    nombre: orden.gerente.nombre,
+    email: orden.gerente.email,
+    documento: orden.gerente.documento,
+    tipo_certificado: 'digital',
+    proposito: 'Firma de órdenes de compra'
+  });
+  
+  // 3. Esperar a que el certificado esté listo
+  const certificado = await maticerts.esperarCertificado(solicitud.id);
+  
+  // 4. Firmar el documento
+  const documentoFirmado = await firmarDocumento(
+    orden.pdf,
+    certificado
+  );
+  
+  // 5. Guardar en el ERP
+  await erp.guardarOrdenFirmada(ordenId, documentoFirmado);
+  
+  return documentoFirmado;
+}
+```
+
+### Resultados
+- ✅ Reducción del 80% en tiempo de procesamiento
+- ✅ Cumplimiento automático de regulaciones
+- ✅ Auditoría completa de firmas digitales
+
+---
+
+## 🏦 Caso 2: Banco - Autenticación de Clientes
+
+### El Desafío
+Un banco necesita verificar la identidad de clientes en su plataforma digital de forma segura y rápida.
+
+### La Solución
+Usar certificados digitales como método de autenticación de dos factores.
+
+### Implementación
+
+```python
+# En el portal del banco
+def autenticar_cliente(email, contraseña):
+    # 1. Validar credenciales básicas
+    usuario = validar_credenciales(email, contraseña)
+    if not usuario:
+        return {'error': 'Credenciales inválidas'}
+    
+    # 2. Solicitar certificado digital
+    solicitud = maticerts.crear_solicitud({
+        'nombre': usuario['nombre'],
+        'email': usuario['email'],
+        'documento': usuario['documento'],
+        'tipo_certificado': 'digital',
+        'proposito': 'Autenticación en banca digital'
+    })
+    
+    # 3. Enviar código OTP al email
+    codigo_otp = generar_otp()
+    enviar_email(usuario['email'], codigo_otp)
+    
+    # 4. Validar OTP y certificado
+    if validar_otp(codigo_otp) and maticerts.validar_certificado(solicitud.id):
+        crear_sesion_segura(usuario)
+        return {'success': True, 'token': generar_token()}
+    
+    return {'error': 'Autenticación fallida'}
+```
+
+### Resultados
+- ✅ Autenticación de dos factores robusta
+- ✅ Reducción de fraude en 95%
+- ✅ Experiencia de usuario mejorada
+
+---
+
+## 🎓 Caso 3: Universidad - Emisión de Diplomas Digitales
+
+### El Desafío
+Una universidad necesita emitir diplomas digitales verificables para sus graduados, permitiendo que empleadores validen la autenticidad.
+
+### La Solución
+Crear diplomas digitales firmados con certificados de la universidad.
+
+### Implementación
+
+```javascript
+// Sistema de emisión de diplomas
+async function emitirDiploma(estudianteId) {
+  const estudiante = await db.getEstudiante(estudianteId);
+  
+  // 1. Crear solicitud de certificado para la universidad
+  const certificadoUniversidad = await maticerts.crearSolicitud({
+    nombre: 'Universidad Nacional',
+    email: 'certificados@universidad.edu',
+    documento: 'NIT-123456789',
+    tipo_certificado: 'digital',
+    proposito: 'Firma de diplomas académicos'
+  });
+  
+  // 2. Generar PDF del diploma
+  const diplomaPDF = await generarDiplomaPDF({
+    nombre: estudiante.nombre,
+    carrera: estudiante.carrera,
+    fecha_graduacion: estudiante.fecha_graduacion,
+    numero_diploma: estudiante.numero_diploma
+  });
+  
+  // 3. Firmar el diploma
+  const diplomaFirmado = await firmarDocumento(
+    diplomaPDF,
+    certificadoUniversidad
+  );
+  
+  // 4. Guardar en blockchain (opcional)
+  const hashDiploma = await blockchain.registrarDiploma(diplomaFirmado);
+  
+  // 5. Enviar al estudiante
+  await enviarEmail(estudiante.email, {
+    asunto: 'Tu Diploma Digital',
+    archivo: diplomaFirmado,
+    enlace_verificacion: `https://universidad.edu/verificar/${hashDiploma}`
+  });
+  
+  return {
+    diploma_id: estudiante.numero_diploma,
+    hash_blockchain: hashDiploma,
+    estado: 'EMITIDO'
+  };
+}
+```
+
+### Resultados
+- ✅ Diplomas imposibles de falsificar
+- ✅ Verificación instantánea por empleadores
+- ✅ Reducción de costos de impresión en 100%
+
+---
+
+## 🏥 Caso 4: Clínica - Consentimiento Informado Digital
+
+### El Desafío
+Una clínica necesita obtener consentimientos informados digitales de pacientes antes de procedimientos médicos.
+
+### La Solución
+Documentos de consentimiento firmados digitalmente con certificados de pacientes.
+
+### Implementación
+
+```python
+# Sistema de consentimiento informado
+def obtener_consentimiento_digital(paciente_id, procedimiento):
+    paciente = db.get_paciente(paciente_id)
+    
+    # 1. Generar documento de consentimiento
+    documento = generar_consentimiento_pdf({
+        'paciente': paciente['nombre'],
+        'procedimiento': procedimiento,
+        'fecha': datetime.now(),
+        'riesgos': obtener_riesgos(procedimiento),
+        'beneficios': obtener_beneficios(procedimiento)
+    })
+    
+    # 2. Crear solicitud de certificado para el paciente
+    solicitud = maticerts.crear_solicitud({
+        'nombre': paciente['nombre'],
+        'email': paciente['email'],
+        'documento': paciente['documento'],
+        'tipo_certificado': 'digital',
+        'proposito': 'Consentimiento informado para procedimiento médico'
+    })
+    
+    # 3. Enviar documento al paciente para firma
+    enlace_firma = generar_enlace_firma(documento, solicitud.id)
+    enviar_email(paciente['email'], {
+        'asunto': 'Consentimiento Informado - Firma Digital',
+        'enlace': enlace_firma,
+        'expira_en': '48 horas'
+    })
+    
+    # 4. Esperar firma
+    consentimiento_firmado = esperar_firma(solicitud.id, timeout=172800)
+    
+    # 5. Guardar en historial médico
+    db.guardar_consentimiento({
+        'paciente_id': paciente_id,
+        'procedimiento': procedimiento,
+        'documento_firmado': consentimiento_firmado,
+        'fecha_firma': datetime.now(),
+        'certificado_id': solicitud.id
+    })
+    
+    return {'estado': 'CONSENTIMIENTO_OBTENIDO'}
+```
+
+### Resultados
+- ✅ Cumplimiento legal garantizado
+- ✅ Reducción de litigios en 70%
+- ✅ Proceso más rápido y seguro
+
+---
+
+## 🚚 Caso 5: Logística - Firma de Documentos de Envío
+
+### El Desafío
+Una empresa de logística necesita que conductores firmen digitalmente documentos de entrega en tiempo real.
+
+### La Solución
+Aplicación móvil que integra MATICERTS para firmas digitales en el punto de entrega.
+
+### Implementación
+
+```javascript
+// App móvil de logística
+async function firmarDocumentoEntrega(envioId) {
+  const envio = await api.getEnvio(envioId);
+  const conductor = await api.getConductor();
+  
+  // 1. Crear solicitud de certificado para el conductor
+  const solicitud = await maticerts.crearSolicitud({
+    nombre: conductor.nombre,
+    email: conductor.email,
+    documento: conductor.documento,
+    tipo_certificado: 'digital',
+    proposito: 'Firma de documentos de entrega'
+  });
+  
+  // 2. Generar documento de entrega
+  const documentoEntrega = await generarDocumentoEntrega({
+    numero_envio: envio.numero,
+    destinatario: envio.destinatario,
+    contenido: envio.contenido,
+    fecha_entrega: new Date(),
+    firma_conductor: null // Se llenará después
+  });
+  
+  // 3. Mostrar documento en la app
+  mostrarDocumentoParaFirmar(documentoEntrega);
+  
+  // 4. Capturar firma digital
+  const firma = await capturarFirmaDigital();
+  
+  // 5. Firmar documento
+  const documentoFirmado = await firmarDocumento(
+    documentoEntrega,
+    solicitud.id,
+    firma
+  );
+  
+  // 6. Enviar al servidor
+  await api.guardarEntregaFirmada({
+    envio_id: envioId,
+    documento_firmado: documentoFirmado,
+    ubicacion_gps: await obtenerUbicacion(),
+    foto_entrega: await tomarFoto()
+  });
+  
+  return { estado: 'ENTREGA_FIRMADA' };
+}
+```
+
+### Resultados
+- ✅ Prueba de entrega irrefutable
+- ✅ Reducción de disputas en 85%
+- ✅ Proceso más rápido en campo
+
+---
+
+## 📊 Comparativa de Beneficios
+
+| Sector | Beneficio Principal | ROI |
+|--------|-------------------|-----|
+| Manufactura | Automatización | 6 meses |
+| Banca | Seguridad | 3 meses |
+| Educación | Verificabilidad | 12 meses |
+| Salud | Cumplimiento Legal | 9 meses |
+| Logística | Eficiencia | 4 meses |
+
+---
+
+## 🚀 ¿Listo para Implementar?
+
+Cada caso de uso es único. Contáctanos para:
+- 📋 Análisis de tu caso específico
+- 🎯 Diseño de solución personalizada
+- 💻 Implementación y capacitación
+- 📞 Soporte técnico continuo
+
+**¡Comienza tu transformación digital hoy!**

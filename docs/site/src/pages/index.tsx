@@ -8,7 +8,7 @@ import Heading from '@theme/Heading';
 import styles from './index.module.css';
 
 function HomepageHeader() {
-  const {siteConfig} = useDocusaurusContext();
+  const { siteConfig } = useDocusaurusContext();
   return (
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
       <div className={styles.heroBackground}></div>
@@ -73,8 +73,50 @@ function Features() {
   );
 }
 
+function QuickStart() {
+  const steps = [
+    {
+      number: '1',
+      title: 'Obtén tu Token',
+      description: 'Genera un Personal Access Token (PAT) desde el panel de administración'
+    },
+    {
+      number: '2',
+      title: 'Crea una Solicitud',
+      description: 'Envía los datos del solicitante para iniciar el proceso de emisión'
+    },
+    {
+      number: '3',
+      title: 'Descarga tu Certificado',
+      description: 'Una vez completado, descarga el certificado digital en formato P12'
+    }
+  ];
+
+  return (
+    <section className={styles.quickStart}>
+      <div className="container">
+        <Heading as="h2" className={styles.quickStartTitle}>
+          🚀 Comienza en 3 Pasos
+        </Heading>
+        <div className="row">
+          {steps.map((step, idx) => (
+            <div key={idx} className={clsx('col col--4')}>
+              <div className={styles.stepCard}>
+                <div className={styles.stepNumber}>{step.number}</div>
+                <Heading as="h3" className={styles.stepTitle}>{step.title}</Heading>
+                <p className={styles.stepDescription}>{step.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
 export default function Home(): JSX.Element {
-  const {siteConfig} = useDocusaurusContext();
+  const { siteConfig } = useDocusaurusContext();
   return (
     <Layout
       title={`Inicio | ${siteConfig.title}`}
@@ -82,6 +124,7 @@ export default function Home(): JSX.Element {
       <HomepageHeader />
       <main className={styles.mainContent}>
         <Features />
+        <QuickStart />
       </main>
     </Layout>
   );

@@ -9,13 +9,22 @@ import TabItem from '@theme/TabItem';
 
 # 🚀 Primeros Pasos con MATICERTS
 
-Bienvenido a la documentación oficial de **MATICERTS API**. Nuestra arquitectura REST unificada (v1) está diseñada para integradores que buscan escalar la emisión y gestión de certificados digitales sin fricciones técnicas.
+Bienvenido a **MATICERTS**, la plataforma moderna para emisión y gestión de certificados digitales. Esta documentación te guiará paso a paso para integrar nuestra API REST en tu aplicación.
+
+:::info ¿Qué es MATICERTS?
+MATICERTS es una solución empresarial que permite emitir, validar y gestionar certificados digitales con seguridad OAuth 2.0. Perfecta para ERPs, CRMs, portales web y sistemas automatizados.
+:::
 
 ---
 
-## 🌍 Entornos Operativos
+## 🌍 Elige tu Entorno
 
-Disponemos de infraestructuras separadas para garantizar que tus pruebas no afecten datos productivos. Parametriza la base URL en tu aplicación (`{{URL}}`) apuntando al entorno deseado:
+Contamos con dos entornos separados para que desarrolles sin riesgos:
+
+**Sandbox (Pruebas)** → Perfecto para aprender y probar  
+**Producción** → Para certificados con validez legal
+
+Parametriza la base URL en tu aplicación (`{{URL}}`) apuntando al entorno deseado:
 
 <div className="row margin-bottom--lg">
   <div className="col col--6">
@@ -46,29 +55,38 @@ Disponemos de infraestructuras separadas para garantizar que tus pruebas no afec
   </div>
 </div>
 
-:::danger Buenas Prácticas de Arquitectura
-**Nunca "hardcodees" las URLs en el código fuente.** 
-Utiliza variables de entorno (ej. `.env`) para parametrizar la conexión y permitir la transición fluida de *Sandbox* a *Producción* sin requerir nuevos despliegues ni refactorizaciones.
+:::warning 🔒 Buena Práctica de Seguridad
+**Nunca hardcodees las URLs en el código.** Usa variables de entorno (`.env`) para cambiar entre Sandbox y Producción sin recompilar tu aplicación.
 :::
 
 ---
 
-## 🔐 Autenticación Segura (OAuth 2.0)
+## 🔐 Autenticación: Elige tu Método
 
-MATICERTS requiere que todas las peticiones (excepto endpoints públicos) estén firmadas con un **Bearer Token**.
+Todas las peticiones a MATICERTS deben incluir un **Bearer Token** en el encabezado `Authorization`. Ofrecemos dos métodos según tu caso de uso:
 
 ### Métodos Soportados
 
 <Tabs groupId="auth-methods">
-  <TabItem value="m2m" label="Integración Backend (M2M)" default>
+  <TabItem value="m2m" label="🤖 Backend (M2M) - Recomendado" default>
     <p>
-      Para sistemas automatizados (ERP, CRM, Cronjobs), utiliza un <strong>Personal Access Token (PAT)</strong>. 
-      Estos tokens se generan directamente desde el panel de administración de MATICERTS, no expiran por defecto y garantizan el mayor rendimiento.
+      <strong>Ideal para:</strong> ERPs, CRMs, Cronjobs, integraciones automatizadas.
     </p>
-  </TabItem>
-  <TabItem value="frontend" label="Aplicaciones Cliente">
     <p>
-      Para portales que actúan en nombre de un usuario específico, obtén un token temporal vía login:
+      Usa un <strong>Personal Access Token (PAT)</strong> generado en el panel de administración. Estos tokens:
+    </p>
+    <ul>
+      <li>✅ No expiran automáticamente</li>
+      <li>✅ Máximo rendimiento</li>
+      <li>✅ Fácil de gestionar</li>
+    </ul>
+  </TabItem>
+  <TabItem value="frontend" label="👤 Aplicaciones Cliente">
+    <p>
+      <strong>Ideal para:</strong> Portales web, aplicaciones móviles, interfaces de usuario.
+    </p>
+    <p>
+      Obtén un token temporal autenticando al usuario final:
     </p>
     
 ```bash
@@ -84,9 +102,9 @@ curl -X POST "{{URL}}/api/v1/auth/login" \
 
 ---
 
-## 🛠️ Tu Primera Petición
+## 🛠️ Tu Primera Petición: Health Check
 
-Inyecta tu token en el encabezado `Authorization` y realiza un *Health Check* para verificar tu conexión con nuestra infraestructura.
+Verifica que tu conexión funciona correctamente. Reemplaza `<TU_ACCESS_TOKEN>` con tu token real:
 
 <Tabs groupId="programming-languages">
   <TabItem value="curl" label="cURL" default>
@@ -133,6 +151,17 @@ print(response.json())
 
 <br/>
 
-:::tip Siguientes Pasos
-Ahora que tu integración base está conectada y autenticada, explora el **Catálogo de API** en el panel lateral para descubrir todas las funciones disponibles.
+---
+
+## 📚 Próximos Pasos
+
+¡Excelente! Ya tienes tu primer endpoint funcionando. Ahora:
+
+1. **Explora el Catálogo de API** en el panel lateral para descubrir todos los endpoints disponibles
+2. **Lee la guía paso a paso** para implementar tu primer flujo de emisión de certificados
+3. **Consulta casos de uso** para ver ejemplos reales de integración
+4. **Revisa troubleshooting** si encuentras algún problema
+
+:::success 🎉 ¿Necesitas ayuda?
+Si tienes dudas, consulta nuestra sección de **Preguntas Frecuentes** o contacta al equipo de soporte.
 :::

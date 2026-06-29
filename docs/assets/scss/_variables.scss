@@ -1,37 +1,51 @@
+// ============================================
+// VARIABLES CENTRALIZADAS - MATICERTS
+// ============================================
 
+// Colores Primarios
+$primary-color: #2556a3;
+$primary-dark: #1a3c72;
+$primary-light: #3465b8;
+
+// Colores Secundarios
+$white: #fff;
 $black: black;
-$border-radius-cols: .25rem;
-$border-radius-card: .25rem;
-$background-color-cols: rgba(236, 236, 236, 0.85);
-$max-height-cols: calc(100vh - .7rem);
-$original-color: #a3c7e0;
-$strong-color: darken($original-color, 35%);
+$gray-light: #f1f1f1;
+$gray-medium: #efefef;
+$gray-dark: #607d8b;
 
-/* Paleta de colores para los estados */
+// Colores de Estado
+$color-success: #4CAF50;
+$color-warning: #FB8C00;
+$color-error: #F44336;
+$color-info: #2196f3;
+
+// Colores de Tabla
 $table-color-available: #4CAF50;
 $table-color-reserved: #7E57C2;
-$table-color-on-dine:  #FB8C00;
+$table-color-on-dine: #FB8C00;
 $table-color-occupied: #F44336;
 
-$white: #fff;
-
-// Variables de color para la personalización
+// Colores Especiales
 $whatsapp-green: #1b9348;
-$button-bg: #f1f1f1;
-$shadow-color: rgba(0, 0, 0, 0.2);
-$menu-bg: #ffffff;
-$menu-bg-hover: #f1f1f1;
-$button-bg: #f1f1f1;
-$shadow-color: rgba(0, 0, 0, 0.2);
-$button-size: 46px;
-$button-size-sm: 32px;
 $background-container: #bb4119;
-$hover-border-color: #2556a3;
-$support-button-border-with: 4px;
 $heart-beat-border-color: #FF0000;
 
-// Definición de colores como variables
-$strong-color: darken($original-color, 35%);
+// Espaciado
+$button-size: 46px;
+$button-size-sm: 32px;
+$border-radius-cols: .25rem;
+$border-radius-card: .25rem;
+
+// Sombras y Efectos
+$shadow-color: rgba(0, 0, 0, 0.2);
+$support-button-border-with: 4px;
+
+// Componentes
+$button-bg: #f1f1f1;
+$menu-bg: #ffffff;
+$menu-bg-hover: #f1f1f1;
+$hover-border-color: #2556a3;
 $close-btn-bg: rgba(244, 67, 54, 0.05);
 $close-btn-hover-color: darken(#f44336, 10%);
 $close-btn-border: rgba(244, 67, 54, 0.1);
@@ -46,6 +60,14 @@ $quantity-btn-bg: $white;
 $quantity-btn-hover-bg: #e0e0e0;
 $add-to-cart-bg: #007bff;
 $add-to-cart-hover-bg: #0056b3;
+
+// Dimensiones
+$background-color-cols: rgba(236, 236, 236, 0.85);
+$max-height-cols: calc(100vh - .7rem);
+
+// Colores Derivados
+$original-color: #a3c7e0;
+$strong-color: darken($original-color, 35%);
 $c2556a3: #2556a3;
 // Define los colores para cada estado
 $export-report-colors: (

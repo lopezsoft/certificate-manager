@@ -139,11 +139,72 @@
   line-height: 1.6;
 }
 
+.quickStart {
+  padding: 4rem 0;
+  background: linear-gradient(135deg, rgba(37, 86, 163, 0.05) 0%, rgba(37, 86, 163, 0.02) 100%);
+}
+
+.quickStartTitle {
+  text-align: center;
+  margin-bottom: 3rem;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--ifm-color-primary);
+}
+
+.stepCard {
+  background: white;
+  border: 2px solid var(--ifm-color-emphasis-200);
+  border-radius: 12px;
+  padding: 2rem;
+  height: 100%;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.stepCard:hover {
+  border-color: var(--ifm-color-primary);
+  box-shadow: 0 10px 30px rgba(37, 86, 163, 0.15);
+  transform: translateY(-3px);
+}
+
+.stepNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, var(--ifm-color-primary-light), var(--ifm-color-primary));
+  color: white;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.stepTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--ifm-color-primary);
+}
+
+.stepDescription {
+  font-size: 0.95rem;
+  color: var(--ifm-color-content-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
 @media (max-width: 996px) {
   .heroTitle {
     font-size: 2.5rem;
   }
   .features {
     margin-top: 0;
+  }
+  .quickStartTitle {
+    font-size: 2rem;
   }
 }
