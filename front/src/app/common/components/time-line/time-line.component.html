@@ -1,7 +1,7 @@
 @if (timelineData?.length > 0) {
 <div class="timeline-container">
   <ul>
-    @for (event of timelineData; track event) {
+    @for (event of timelineData; track event.id) {
     <li class="timeline-item">
       <div class="timeline-marker"></div>
       <div class="timeline-content" [ngClass]="getStatusClass(event.status)">
