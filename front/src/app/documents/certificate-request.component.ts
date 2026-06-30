@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {BaseComponent} from "../@core/components/base/base.component";
 import {SearchDataComponent} from "../common/components/search-data/search-data.component";
 import { ExodoPaginationComponent} from "exodolibs";
@@ -25,7 +25,7 @@ import {Subscription} from "rxjs";
     styleUrl: './certificate-request.component.scss',
     standalone: false
 })
-export class CertificateRequestComponent extends BaseComponent  implements OnInit, AfterViewInit, OnDestroy  {
+export class CertificateRequestComponent extends BaseComponent  implements OnInit, OnDestroy  {
   @ViewChild('searchItems') searchItems: SearchDataComponent;
   @ViewChild('pagination') pagination: ExodoPaginationComponent;
   @ViewChild('documentView') documentView: DocumentViewComponent;
