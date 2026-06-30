@@ -19,6 +19,7 @@ use App\Webhooks\Listeners\DispatchWebhookOnCertificateCreated;
 use App\Webhooks\Listeners\DispatchWebhookOnCertificateDeleted;
 use App\Webhooks\Listeners\DispatchWebhookOnFileUploaded;
 use App\Webhooks\Listeners\DispatchWebhookOnStatusChanged;
+use App\Listeners\SendCertificateStatusNotification;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Events\Verified;
@@ -43,9 +44,10 @@ class EventServiceProvider extends ServiceProvider
         CertificateRequestCreated::class => [
             DispatchWebhookOnCertificateCreated::class,
         ],
-        CertificateStatusChanged::class => [
-            DispatchWebhookOnStatusChanged::class,
-        ],
+         CertificateStatusChanged::class => [
+             DispatchWebhookOnStatusChanged::class,
+             SendCertificateStatusNotification::class,
+         ],
         CertificateFileUploaded::class => [
             DispatchWebhookOnFileUploaded::class,
         ],

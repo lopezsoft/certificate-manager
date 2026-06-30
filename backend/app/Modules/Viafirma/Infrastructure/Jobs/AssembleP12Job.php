@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Viafirma\Infrastructure\Jobs;
 
 use App\Enums\CertificateRequestStatusEnum;
+use App\Events\CertificateStatusChanged;
 use App\Models\CertificateRequest;
 use App\Models\ChangeHistory;
 use App\Services\CertificateValidatorService;
@@ -282,15 +283,27 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
                 $certificateRequest->save();
             }
 
-            ChangeHistory::create([
-                'certificate_request_id' => $entity->certificate_request_id,
-                'status'                 => CertificateRequestStatusEnum::PROCESSED->value,
-                'comments'               => 'Certificado digital generado exitosamente y listo para descarga.',
-                'user_of_change'         => 'SYSTEM',
-                'user_id'                => null,
-            ]);
+             ChangeHistory::create([
+                 'certificate_request_id' => $entity->certificate_request_id,
+                 'status'                 => CertificateRequestStatusEnum::PROCESSED->value,
+                 'comments'               => 'Certificado digital generado exitosamente y listo para descarga.',
+                 'user_of_change'         => 'SYSTEM',
+                 'user_id'                => null,
+             ]);
 
-        } catch (\Throwable $e) {
+             // Disparar evento para notificaciones y webhooks
+             if ($certificateRequest !== null) {
+                 event(new CertificateStatusChanged(
+                     certificateRequestId: $entity->certificate_request_id,
+                     companyId: (int) $certificateRequest->company_id,
+                     previousStatus: CertificateRequestStatusEnum::PROCESSING->value,
+                     newStatus: CertificateRequestStatusEnum::PROCESSED->value,
+                     userId: 0,
+                     comment: 'Certificado digital generado exitosamente.',
+                 ));
+             }
+
+         } catch (\Throwable $e) {
             $logger->error('viafirma.assemble.failed', [
                 'id'    => $entity->id,
                 'error' => $e->getMessage(),

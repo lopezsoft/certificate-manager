@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Viafirma\Application\UseCases;
 
 use App\Enums\CertificateRequestStatusEnum;
+use App\Events\CertificateStatusChanged;
 use App\Models\ChangeHistory;
 use App\Models\FileManager;
 use App\Modules\Viafirma\Application\DTOs\RedownloadResultDto;
@@ -308,6 +309,16 @@ final class RedownloadCertificateUseCase
                 'comments'               => 'Certificado P12 regenerado. ' .
                                             "Estado remoto Viafirma: {$statusResult->status->value}.",
             ]);
+
+            // Disparar evento para notificaciones y webhooks
+            event(new CertificateStatusChanged(
+                certificateRequestId: $cr->id,
+                companyId: (int) $cr->company_id,
+                previousStatus: CertificateRequestStatusEnum::PROCESSING->value,
+                newStatus: CertificateRequestStatusEnum::PROCESSED->value,
+                userId: $adminUserId ?? 0,
+                comment: 'Certificado P12 regenerado exitosamente por Viafirma.',
+            ));
         }
 
         // ── 15. Guardar P12 en file_managers (crear o actualizar) ────────────

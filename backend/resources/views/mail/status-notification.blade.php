@@ -7,7 +7,7 @@
             <br/>
             📝 Le informamos que la solicitud del certificado ha cambiado de estado.
             <br/>
-            Estado de solicitud: <b>{{ $data->request_status }}</b>
+            Estado de solicitud: <b>{{ \App\Enums\CertificateRequestStatusEnum::tryFrom($data->request_status)?->description() ?? $data->request_status }}</b>
         </p>
         <br/>
         <b>Cliente de la solicitud: </b>
