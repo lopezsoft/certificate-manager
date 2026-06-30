@@ -24,5 +24,18 @@ return [
 
     'currency'       => env('WOMPI_CURRENCY', 'COP'),
     'tax_percentage' => (int) env('WOMPI_TAX_PERCENTAGE', 19),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Payment Reference Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuración para generar referencias de pago únicas y trazables.
+    | Formato: {prefix}-{name}-{timestamp}-{random}
+    | Ejemplo: APP3-CERTS-20260629101546-ABC123
+    |
+    */
+    'reference_prefix' => env('WOMPI_REFERENCE_PREFIX', 'APP3'),
+    'reference_name'   => env('WOMPI_REFERENCE_NAME', 'CERTS'),
 ];
 

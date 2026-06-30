@@ -53,9 +53,23 @@ final class RenewCertificateUseCase
             'currency'               => $pricing['currency'],
             'status'                 => 'PENDING',
             'payment_provider'       => config('payments.default_provider', 'WOMPI'),
-            'provider_reference'     => 'RNW-' . strtoupper(Str::random(12)),
+            'provider_reference'     => $this->generateProviderReference(),
         ]);
 
         return $order->refresh();
+    }
+
+    /**
+     * Genera una referencia de pago única y trazable para renovaciones.
+     * Formato: {prefix}-RNW-{timestamp}-{random}
+     * Ejemplo: APP3-RNW-20260629101546-ABC123
+     */
+    private function generateProviderReference(): string
+    {
+        $prefix = config('wompi.reference_prefix', 'APP3');
+        $timestamp = now()->format('YmdHis');
+        $random = strtoupper(Str::random(6));
+
+        return "{$prefix}-RNW-{$timestamp}-{$random}";
     }
 }

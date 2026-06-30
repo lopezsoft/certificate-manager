@@ -15,10 +15,13 @@ use Psr\Log\LoggerInterface;
  * Factory que resuelve qué proveedor concreto debe atender una solicitud
  * de emisión, respetando el orden de precedencia documentado en el plan:
  *
- *   1. Override explícito en payload (requiere config `allow_payload_override`).
- *   2. Configuración por empresa (`companies.issuance_provider`).
- *   3. Feature flag global (`certificate.issuance.default_provider`).
- *   4. Fallback: 'mail' (legacy).
+ *   1. Configuración por empresa (`companies.issuance_provider`) — FUENTE DE VERDAD.
+ *   2. Feature flag global (`certificate.issuance.default_provider`).
+ *   3. Excepción si ninguno está disponible (NO fallback silencioso).
+ *
+ * NOTA IMPORTANTE: El proveedor es determinado por la EMPRESA, no por el rol
+ * del usuario. El campo `issuance_provider` en la tabla `companies` es la
+ * fuente de verdad para cada solicitud.
  *
  * Cumple Open/Closed: añadir un nuevo proveedor sólo requiere registrar
  * su clase en `config('certificate.issuance.providers')`.
@@ -61,81 +64,93 @@ final class CertificateIssuanceProviderFactory
 
     /**
      * Resuelve el proveedor que atenderá la solicitud, aplicando la
-     * cascada de precedencia.
-      *
-     * @param bool $isSystem  true cuando la llamada viene de un job/cron interno;
-     *                        en ese caso el providerHint siempre se respeta sin
-     *                        necesidad del flag allow_payload_override.
+     * cascada de precedencia:
+     *
+     *   1. Configuración por empresa (companies.issuance_provider) — FUENTE DE VERDAD
+     *   2. Feature flag global (certificate.issuance.default_provider)
+     *   3. Excepción si ninguno está disponible
+     *
+     * El proveedor es determinado ÚNICAMENTE por la empresa, no por el rol del usuario.
      */
-    public function resolveFor(IssuanceRequest $request, bool $callerIsAdmin = false, bool $isSystem = false): CertificateIssuanceProvider
+    public function resolveFor(IssuanceRequest $request): CertificateIssuanceProvider
     {
-        // 1) Override explícito en payload:
-        //    – callers HTTP admin con flag habilitado en config, O
-        //    – llamadas internas de sistema ($isSystem=true).
-        $allowOverride = $isSystem
-            || ((bool) config('certificate.issuance.allow_payload_override', false) && $callerIsAdmin);
-
-        if ($request->providerHint !== null && $allowOverride) {
-            $provider = $this->make($request->providerHint);
-            $this->logger->info('certificate.issuance.provider.selected', [
-                'source' => 'payload_override',
-                'name'   => $provider->name(),
-                'cr_id'  => $request->certificateRequestId,
-            ]);
-            return $this->ensureSupports($provider, $request);
-        }
-
-        // 2) Override por empresa — leído de companies.issuance_provider si
-        //    la columna existe (la migración puede no haberse corrido aún).
-        $companyOverride = $this->resolveCompanyOverride($request->certificateRequestId);
-        if ($companyOverride !== null) {
+        // 1) Configuración por empresa — FUENTE DE VERDAD
+        //    El campo companies.issuance_provider determina qué proveedor usar,
+        //    independientemente del rol del usuario.
+        $companyProvider = $this->resolveCompanyOverride($request->certificateRequestId);
+        if ($companyProvider !== null) {
             try {
-                $provider = $this->make($companyOverride);
+                $provider = $this->make($companyProvider);
                 if ($provider->supports($request)) {
                     $this->logger->info('certificate.issuance.provider.selected', [
-                        'source' => 'company_override',
+                        'source' => 'company_configuration',
                         'name'   => $provider->name(),
                         'cr_id'  => $request->certificateRequestId,
                     ]);
                     return $provider;
                 }
-                $this->logger->warning('certificate.issuance.provider.company_override_not_supported', [
-                    'name'  => $provider->name(),
-                    'cr_id' => $request->certificateRequestId,
+                // Si el proveedor de la empresa no soporta la solicitud, lanzar excepción
+                $this->logger->error('certificate.issuance.provider.company_not_supported', [
+                    'company_provider' => $companyProvider,
+                    'cr_id'            => $request->certificateRequestId,
+                    'message'          => "El proveedor '{$companyProvider}' configurado para la empresa no soporta esta solicitud.",
                 ]);
+                throw new CertificateIssuanceException(
+                    "El proveedor '{$companyProvider}' configurado para la empresa no soporta esta solicitud.",
+                    422,
+                    $companyProvider,
+                );
             } catch (CertificateIssuanceException $e) {
-                $this->logger->warning('certificate.issuance.provider.company_override_invalid', [
-                    'name'    => $companyOverride,
-                    'message' => $e->getMessage(),
+                // Re-lanzar excepciones de validación
+                throw $e;
+            } catch (\Exception $e) {
+                $this->logger->error('certificate.issuance.provider.company_error', [
+                    'company_provider' => $companyProvider,
+                    'cr_id'            => $request->certificateRequestId,
+                    'message'          => $e->getMessage(),
                 ]);
+                throw new CertificateIssuanceException(
+                    "Error al resolver el proveedor de la empresa: {$e->getMessage()}",
+                    500,
+                    $companyProvider,
+                    $e,
+                );
             }
         }
 
-        // 3) Feature flag global.
+        // 2) Feature flag global — fallback si la empresa no tiene proveedor configurado
         $defaultName = (string) config('certificate.issuance.default_provider', 'mail');
-        $provider    = $this->make($defaultName);
-
-        if ($provider->supports($request)) {
-            $this->logger->info('certificate.issuance.provider.selected', [
-                'source' => 'default',
-                'name'   => $provider->name(),
-                'cr_id'  => $request->certificateRequestId,
-            ]);
-            return $provider;
+        try {
+            $provider = $this->make($defaultName);
+            if ($provider->supports($request)) {
+                $this->logger->info('certificate.issuance.provider.selected', [
+                    'source' => 'default_global',
+                    'name'   => $provider->name(),
+                    'cr_id'  => $request->certificateRequestId,
+                ]);
+                return $provider;
+            }
+        } catch (CertificateIssuanceException $e) {
+            // Continuar al siguiente fallback
         }
 
-        // 4) Fallback duro al proveedor legacy 'mail' si el default no aplica.
+        // 3) Fallback final: intentar 'mail' si el default no es 'mail'
         if ($defaultName !== 'mail') {
-            $mail = $this->make('mail');
-            if ($mail->supports($request)) {
-                $this->logger->warning('certificate.issuance.provider.fallback_to_mail', [
-                    'attempted' => $defaultName,
-                    'cr_id'     => $request->certificateRequestId,
-                ]);
-                return $mail;
+            try {
+                $mail = $this->make('mail');
+                if ($mail->supports($request)) {
+                    $this->logger->warning('certificate.issuance.provider.fallback_to_mail', [
+                        'attempted' => $defaultName,
+                        'cr_id'     => $request->certificateRequestId,
+                    ]);
+                    return $mail;
+                }
+            } catch (CertificateIssuanceException $e) {
+                // Continuar a la excepción final
             }
         }
 
+        // 4) Ningún proveedor disponible — lanzar excepción clara
         throw new CertificateIssuanceException(
             "Ningún proveedor de emisión disponible soporta la solicitud {$request->certificateRequestId}.",
             422,
@@ -182,19 +197,6 @@ final class CertificateIssuanceProviderFactory
         );
     }
 
-    private function ensureSupports(
-        CertificateIssuanceProvider $provider,
-        IssuanceRequest $request,
-    ): CertificateIssuanceProvider {
-        if (!$provider->supports($request)) {
-            throw new CertificateIssuanceException(
-                "El proveedor '{$provider->name()}' no soporta esta solicitud (prerrequisitos no cumplidos).",
-                422,
-                $provider->name(),
-            );
-        }
-        return $provider;
-    }
 
     /**
      * Lee `companies.issuance_provider` para la solicitud dada.

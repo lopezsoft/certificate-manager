@@ -43,9 +43,8 @@ final class CertificateIssuanceOrchestrator
     /**
      * Dispara la emisión desde un job/proceso interno del sistema.
      *
-     * A diferencia de {@see dispatch()}, respeta el `providerHint` del request
-     * sin requerir `callerIsAdmin`, ya que la llamada proviene de código de
-     * sistema (watchdog, cron) y no de un usuario externo.
+     * La selección del proveedor se realiza automáticamente basada en
+     * la configuración de la empresa (companies.issuance_provider).
      */
     public function dispatchAsSystem(IssuanceRequest $request): IssuanceResult
     {
@@ -58,8 +57,7 @@ final class CertificateIssuanceOrchestrator
             );
         }
 
-        // isSystem=true → providerHint siempre se respeta sin allow_payload_override
-        $provider = $this->factory->resolveFor($request, callerIsAdmin: true, isSystem: true);
+        $provider = $this->factory->resolveFor($request);
 
         $this->logger->info('certificate.issuance.dispatching', [
             'cr_id'    => $cr->id,
@@ -81,6 +79,9 @@ final class CertificateIssuanceOrchestrator
 
     /**
      * Dispara la emisión usando el provider activo.
+     *
+     * La selección del proveedor se realiza automáticamente basada en
+     * la configuración de la empresa (companies.issuance_provider).
      */
     public function dispatch(IssuanceRequest $request, bool $callerIsAdmin = false): IssuanceResult
     {
@@ -93,7 +94,7 @@ final class CertificateIssuanceOrchestrator
             );
         }
 
-        $provider = $this->factory->resolveFor($request, $callerIsAdmin);
+        $provider = $this->factory->resolveFor($request);
 
         $this->logger->info('certificate.issuance.dispatching', [
             'cr_id'    => $cr->id,
