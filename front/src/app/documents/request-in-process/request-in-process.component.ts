@@ -73,9 +73,6 @@ export class RequestInProcessComponent extends BaseComponent  implements OnInit,
 
   ngOnInit(): void {
     this.quotaSub = this.quotaService.quotaStatus$.subscribe();
-  }
-
-  ngAfterViewInit(): void {
     this.onSearch();
   }
   protected onRefreshPagination($event: number) {

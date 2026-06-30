@@ -69,12 +69,7 @@ export class CertificateRequestComponent extends BaseComponent  implements OnIni
   }
 
   ngOnInit(): void {
-    // Ya no se consulta cupo aquí — viene del polling global en AppComponent.
-    // Suscribirse al observable reactivo para refrescar la vista.
     this.quotaSub = this.quotaService.quotaStatus$.subscribe();
-  }
-
-  ngAfterViewInit(): void {
     this.onSearch();
   }
   protected onRefreshPagination($event: number) {
