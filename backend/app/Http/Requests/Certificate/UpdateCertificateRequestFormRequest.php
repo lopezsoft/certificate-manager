@@ -27,7 +27,7 @@ class UpdateCertificateRequestFormRequest extends FormRequest
             'legal_representative'  => ['required', 'string', 'max:120'],
             'company_name'          => ['required', 'string', 'max:120'],
             'dni'                   => ['required', 'string', 'max:30'],
-            'life'                  => ['required', 'integer'],
+            'life'                  => ['required', 'integer', 'in:1,2'],
             'info'                  => ['string', 'max:255', 'nullable'],
         ];
     }
@@ -47,6 +47,7 @@ class UpdateCertificateRequestFormRequest extends FormRequest
             'address.required'              => 'La dirección es requerida',
             'legal_representative.required' => 'El nombre del representante legal es requerido',
             'life.required'                 => 'La vigencia del certificado es requerida',
+            'life.in'                       => 'La vigencia del certificado debe ser 1 o 2 años',
         ];
     }
 }

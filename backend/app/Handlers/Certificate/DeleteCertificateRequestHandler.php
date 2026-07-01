@@ -38,6 +38,13 @@ class DeleteCertificateRequestHandler
             $deletedName    = $certificate->company_name;
 
             DB::transaction(function () use ($certificate, $deletedCompany) {
+                $certificateId = $certificate->id;
+
+                // Limpiar vinculación del item con el certificado
+                DB::table('certificate_order_items')
+                    ->where('certificate_request_id', $certificateId)
+                    ->update(['certificate_request_id' => null]);
+
                 $certificate->delete();
 
                 // Liberar el cupo que se consumió al crear la solicitud

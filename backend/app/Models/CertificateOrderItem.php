@@ -14,6 +14,11 @@ class CertificateOrderItem extends Model
         'certificate_order_id',
         'certificate_request_id',
         'status',
+        'vigencia',
+    ];
+
+    protected $casts = [
+        'vigencia' => 'integer',
     ];
 
     public function order(): BelongsTo

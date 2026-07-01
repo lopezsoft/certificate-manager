@@ -55,10 +55,10 @@ class CreateCertificateRequestHandler
 
             $this->assertNoDuplicateActive($command->companyId, $command->dni, $dv);
 
-            // Validar que la empresa tenga cupo disponible antes de proceder
-            if (! $this->quotaService->hasAvailableQuota($command->companyId)) {
+            // Validar que la empresa tenga cupo disponible para la vigencia solicitada
+            if (! $this->quotaService->hasAvailableQuotaForVigencia($command->companyId, $command->life)) {
                 return HttpResponseMessages::getResponse402([
-                    'message' => 'No tiene certificados disponibles. Debe adquirir un paquete de certificados para continuar.',
+                    'message' => "No tiene certificados disponibles para vigencia de {$command->life} año(s). Debe adquirir un paquete de certificados para continuar.",
                 ]);
             }
 
@@ -119,8 +119,15 @@ class CreateCertificateRequestHandler
                 $this->storeUploadedFiles($command->files, $folderName, $disk, $certificate->id);
             }
 
-            // Consumir un cupo (POSTPAID o PREPAID) de forma atómica
-            $this->quotaService->consumeQuota($command->companyId);
+            // Consumir un cupo (POSTPAID o PREPAID) de forma atómica, validando vigencia
+            $itemId = $this->quotaService->consumeQuotaForVigencia($command->companyId, $command->life);
+
+            // Vincular el item PREPAID consumido con el certificado (si aplica)
+            if ($itemId !== null) {
+                DB::table('certificate_order_items')
+                    ->where('id', $itemId)
+                    ->update(['certificate_request_id' => $certificate->id]);
+            }
 
             DB::commit();
 

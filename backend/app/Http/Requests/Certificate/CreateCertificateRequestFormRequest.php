@@ -33,7 +33,7 @@ class CreateCertificateRequestFormRequest extends FormRequest
             'legal_rep_email'          => ['required', 'email:rfc,dns', 'max:250'],
             'company_name'             => ['required', 'string', 'max:120'],
             'dni'                      => ['required', 'string', 'max:30'],
-            'life'                     => ['required', 'integer'],
+            'life'                     => ['required', 'integer', 'in:1,2'],
         ];
     }
 
@@ -58,6 +58,7 @@ class CreateCertificateRequestFormRequest extends FormRequest
             'legal_rep_email.email'            => 'El correo del representante legal no es válido o no existe',
             'life.required'                    => 'La vigencia del certificado es requerida',
             'life.integer'                     => 'La vigencia del certificado debe ser un número entero',
+            'life.in'                          => 'La vigencia del certificado debe ser 1 o 2 años',
         ];
     }
 

@@ -46,6 +46,36 @@ class QuotaService
     }
 
     /**
+     * Verifica si una empresa tiene cupo disponible para una vigencia específica.
+     * POSTPAID es flexible (sin restricción de vigencia).
+     * PREPAID debe coincidir con la vigencia solicitada.
+     */
+    public function hasAvailableQuotaForVigencia(int $companyId, int $vigencia): bool
+    {
+        // Verificar cupo POSTPAID activo (flexible, sin restricción de vigencia)
+        $postpaid = CertificateQuota::where('company_id', $companyId)
+            ->where('status', QuotaStatusEnum::ACTIVE->value)
+            ->where('period_end', '>=', now()->toDateString())
+            ->whereRaw('used_quantity < allocated_quantity')
+            ->exists();
+
+        if ($postpaid) {
+            return true;
+        }
+
+        // Verificar items PREPAID pendientes con vigencia específica
+        $prepaid = DB::table('certificate_order_items')
+            ->join('certificate_orders', 'certificate_orders.id', '=', 'certificate_order_items.certificate_order_id')
+            ->where('certificate_orders.company_id', $companyId)
+            ->where('certificate_orders.status', 'PAID')
+            ->where('certificate_order_items.status', 'PENDING')
+            ->where('certificate_order_items.vigencia', $vigencia)
+            ->exists();
+
+        return $prepaid;
+    }
+
+    /**
      * Consume un cupo disponible (POSTPAID primero, luego PREPAID).
      * Operación atómica con lockForUpdate para evitar race conditions.
      *
@@ -101,6 +131,73 @@ class QuotaService
             }
 
             throw new \RuntimeException("No se encontró cupo disponible para la empresa {$companyId}.");
+        });
+    }
+
+    /**
+     * Consume un cupo disponible para una vigencia específica.
+     * POSTPAID es flexible (sin restricción de vigencia).
+     * PREPAID debe coincidir con la vigencia solicitada.
+     * Operación atómica con lockForUpdate para evitar race conditions.
+     *
+     * Retorna el ID del item PREPAID consumido (si aplica), o null para POSTPAID.
+     *
+     * @throws \RuntimeException si no hay cupo para esa vigencia
+     * @return int|null ID del item PREPAID consumido, o null si se consumió POSTPAID
+     */
+    public function consumeQuotaForVigencia(int $companyId, int $vigencia): ?int
+    {
+        return DB::transaction(function () use ($companyId, $vigencia): ?int {
+            // Intentar consumir POSTPAID primero (flexible, sin restricción de vigencia)
+            $quota = CertificateQuota::where('company_id', $companyId)
+                ->where('status', QuotaStatusEnum::ACTIVE->value)
+                ->where('period_end', '>=', now()->toDateString())
+                ->whereRaw('used_quantity < allocated_quantity')
+                ->lockForUpdate()
+                ->first();
+
+            if ($quota) {
+                $quota->increment('used_quantity');
+
+                // Si el cupo se agotó, cambiar estado
+                if ($quota->fresh()->getRemaining() === 0) {
+                    $quota->update(['status' => QuotaStatusEnum::EXHAUSTED->value]);
+                }
+
+                Log::info('[QUOTA] Cupo POSTPAID consumido.', [
+                    'company_id' => $companyId,
+                    'quota_id'   => $quota->id,
+                    'vigencia'   => $vigencia,
+                    'remaining'  => $quota->fresh()->getRemaining(),
+                ]);
+                return null;  // POSTPAID no tiene item_id
+            }
+
+            // Intentar consumir un item PREPAID con vigencia específica
+            $item = DB::table('certificate_order_items')
+                ->join('certificate_orders', 'certificate_orders.id', '=', 'certificate_order_items.certificate_order_id')
+                ->where('certificate_orders.company_id', $companyId)
+                ->where('certificate_orders.status', 'PAID')
+                ->where('certificate_order_items.status', 'PENDING')
+                ->where('certificate_order_items.vigencia', $vigencia)
+                ->lockForUpdate()
+                ->select('certificate_order_items.id')
+                ->first();
+
+            if ($item) {
+                DB::table('certificate_order_items')
+                    ->where('id', $item->id)
+                    ->update(['status' => 'USED']);
+
+                Log::info('[QUOTA] Item PREPAID consumido.', [
+                    'company_id' => $companyId,
+                    'item_id'    => $item->id,
+                    'vigencia'   => $vigencia,
+                ]);
+                return (int) $item->id;  // Retornar ID del item consumido
+            }
+
+            throw new \RuntimeException("No se encontró cupo disponible para vigencia de {$vigencia} año(s).");
         });
     }
 

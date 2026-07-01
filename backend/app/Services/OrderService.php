@@ -18,6 +18,7 @@ class OrderService
 
     /**
      * Crea una CertificateOrder PENDING con precios calculados.
+     * También crea los items PREPAID asociados con la vigencia especificada.
      */
     public function createOrder(int $companyId, int $userId, int $quantity, int $vigencia, int $userTypeId): CertificateOrder
     {
@@ -39,7 +40,17 @@ class OrderService
         ]);
 
         // Refrescar para obtener el UUID generado por el trigger de BD
-        return $order->refresh();
+        $order = $order->refresh();
+
+        // Crear items PREPAID con la vigencia especificada
+        for ($i = 0; $i < $quantity; $i++) {
+            $order->items()->create([
+                'status'   => 'PENDING',
+                'vigencia' => $vigencia,
+            ]);
+        }
+
+        return $order;
     }
 
     /**
