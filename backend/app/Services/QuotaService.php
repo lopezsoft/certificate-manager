@@ -318,7 +318,7 @@ class QuotaService
     }
 
     /**
-     * Retorna el estado de cupos de una empresa.
+     * Retorna el estado de cupos de una empresa, desglosado por vigencia.
      */
     public function getQuotaStatus(int $companyId): array
     {
@@ -328,12 +328,20 @@ class QuotaService
             ->orderByDesc('id')
             ->first();
 
-        $pendingPrepaid = DB::table('certificate_order_items')
+        // Contar items PREPAID pendientes por vigencia
+        $prepaidByVigencia = DB::table('certificate_order_items')
             ->join('certificate_orders', 'certificate_orders.id', '=', 'certificate_order_items.certificate_order_id')
             ->where('certificate_orders.company_id', $companyId)
             ->where('certificate_orders.status', 'PAID')
             ->where('certificate_order_items.status', 'PENDING')
-            ->count();
+            ->selectRaw('certificate_order_items.vigencia, COUNT(*) as count')
+            ->groupBy('certificate_order_items.vigencia')
+            ->get()
+            ->keyBy('vigencia');
+
+        $pendingPrepaid1Year = (int) ($prepaidByVigencia->get(1)?->count ?? 0);
+        $pendingPrepaid2Year = (int) ($prepaidByVigencia->get(2)?->count ?? 0);
+        $totalPendingPrepaid = $pendingPrepaid1Year + $pendingPrepaid2Year;
 
         return [
             'postpaid' => $quota ? [
@@ -343,8 +351,10 @@ class QuotaService
                 'expires_at' => $quota->period_end->toDateString(),
                 'status'     => $quota->status,
             ] : null,
-            'prepaid_items_available' => $pendingPrepaid,
-            'has_quota'               => $quota !== null || $pendingPrepaid > 0,
+            'prepaid_items_available' => $totalPendingPrepaid,
+            'prepaid_1_year'          => $pendingPrepaid1Year,
+            'prepaid_2_year'          => $pendingPrepaid2Year,
+            'has_quota'               => $quota !== null || $totalPendingPrepaid > 0,
         ];
     }
 
