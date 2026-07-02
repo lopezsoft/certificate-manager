@@ -14,6 +14,7 @@ use App\Models\Company;
 use App\Models\FileManager;
 use App\Jobs\Certificate\AutoIssueViafirmaJob;
 use App\Notifications\CertificateRequestCreateNotification;
+use App\Services\Base64DecoderService;
 use App\Services\QuotaService;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -110,13 +111,17 @@ class CreateCertificateRequestHandler
                 'user_id'                => $command->userId,
             ]);
 
-            // Excel y archivos solo para flujo mail
-            if ($requiresFiles && !empty($command->files)) {
+            // Excel solo para flujo mail
+            if ($requiresFiles) {
                 $certificate->load(['city', 'identity']);
 
                 [$reader, $activeSheet] = $this->loadExcelTemplate();
                 $this->fillAndStoreExcel($activeSheet, $certificate, $command->dni, $dv, $folderName, $disk);
-                $this->storeUploadedFiles($command->files, $folderName, $disk, $certificate->id);
+            }
+
+            // Guardar adjuntos SIEMPRE que estén presentes, independiente del proveedor
+            if (!empty($command->attachments)) {
+                $this->storeUploadedFiles($command->attachments, $folderName, $disk, $certificate->id);
             }
 
             // Consumir un cupo (POSTPAID o PREPAID) de forma atómica, validando vigencia
@@ -163,35 +168,26 @@ class CreateCertificateRequestHandler
 
     // ── Validaciones ──────────────────────────────────────────────────────────
 
+    /**
+     * Valida adjuntos Base64 (ya validados en Form Request, pero se mantiene para seguridad).
+     * Esta validación es redundante pero proporciona una capa adicional de seguridad.
+     */
     private function validateFiles(CreateCertificateRequestCommand $command): void
     {
-        $maxFiles         = config('certificate.file_upload.max_files', 3);
-        $minFiles         = config('certificate.file_upload.min_files', 2);
-        $maxFileSize      = config('certificate.file_upload.max_file_size', 7);
-        $maxTotalSize     = config('certificate.file_upload.max_total_size', 10);
-        $maxFileSizeBytes = $maxFileSize * 1024 * 1024;
-        $maxTotalBytes    = $maxTotalSize * 1024 * 1024;
-
-        if (count($command->files) > $maxFiles) {
-            throw new Exception("El número de archivos adjuntos supera los {$maxFiles} soportados.", 400);
-        }
-        if (count($command->files) < $minFiles) {
-            throw new Exception("Debe enviar al menos {$minFiles} archivos adjuntos.", 400);
+        // La validación principal ocurre en CreateCertificateRequestFormRequest
+        // Esta función se mantiene como capa adicional de seguridad
+        if (empty($command->attachments)) {
+            return;
         }
 
-        $total = 0;
-        foreach ($command->files as $file) {
-            $size = $file->getSize();
-            if ($size > $maxFileSizeBytes) {
-                $mb = round($size / 1024 / 1024, 2);
-                throw new Exception("El archivo '{$file->getClientOriginalName()}' supera el tamaño máximo de {$maxFileSize} MB (tamaño: {$mb} MB).", 400);
-            }
-            $total += $size;
-        }
+        $maxFiles = config('certificate.file_upload.max_files', 3);
+        $minFiles = config('certificate.file_upload.min_files', 2);
 
-        if ($total > $maxTotalBytes) {
-            $mb = round($total / 1024 / 1024, 2);
-            throw new Exception("El tamaño total de los archivos supera los {$maxTotalSize} MB permitidos. Total: {$mb} MB.", 400);
+        if (count($command->attachments) > $maxFiles) {
+            throw new Exception("El número de archivos supera los {$maxFiles} soportados.", 400);
+        }
+        if (count($command->attachments) < $minFiles) {
+            throw new Exception("Debe enviar al menos {$minFiles} archivos.", 400);
         }
     }
 
@@ -268,24 +264,121 @@ class CreateCertificateRequestHandler
         ]);
     }
 
+    /**
+     * Procesa y almacena archivos en Base64.
+     * Soporta archivos con prefijo Data URI (data:application/pdf;base64,...)
+     * Detecta automáticamente MIME type y nombre si no están presentes.
+     */
     private function storeUploadedFiles(array $files, string $folderName, $disk, int $certificateId): void
     {
-        foreach ($files as $file) {
-            $fileName = $file->getClientOriginalName();
-            $path     = "{$folderName}/{$fileName}";
-            $disk->putFileAs($folderName, $file, $fileName);
+        $decoder = app(Base64DecoderService::class);
 
+        foreach ($files as $file) {
+            // Decodificar Base64 (soporta prefijo Data URI)
+            try {
+                $metadata = $decoder->decodeWithMetadata($file['base64']);
+                $binaryContent = $metadata['binary_content'];
+                $extractedMimeType = $metadata['mime_type'];
+            } catch (Exception $e) {
+                throw new Exception("El archivo contiene Base64 inválido", 400);
+            }
+
+            // Obtener o generar nombre del archivo
+            $fileName = $file['name'] ?? null;
+            if (empty($fileName)) {
+                $fileName = $this->generateFileName($file['type'] ?? $extractedMimeType, $binaryContent);
+            }
+
+            // Obtener o detectar MIME type (prioridad: enviado > extraído del prefijo > detectado)
+            $mimeType = $file['type'] ?? $extractedMimeType;
+            if (empty($mimeType)) {
+                $mimeType = $this->detectMimeType($binaryContent);
+            }
+
+            // Guardar archivo
+            $path = "{$folderName}/{$fileName}";
+            $disk->put($path, $binaryContent);
+
+            // Registrar en FileManager
             FileManager::create([
                 'certificate_request_id' => $certificateId,
                 'file_name'              => $fileName,
                 'file_path'              => $path,
-                'extension_file'         => pathinfo($path, PATHINFO_EXTENSION),
-                'mime_type'              => $disk->mimeType($path),
-                'file_size'              => $disk->size($path),
-                'last_modified'          => date('Y-m-d H:i:s', $disk->lastModified($path)),
+                'extension_file'         => pathinfo($fileName, PATHINFO_EXTENSION),
+                'mime_type'              => $mimeType,
+                'file_size'              => strlen($binaryContent),
+                'last_modified'          => date('Y-m-d H:i:s'),
                 'status'                 => 'COMPLETED',
                 'document_type'          => 'ATTACHED',
             ]);
         }
+    }
+
+    /**
+     * Detecta el MIME type del contenido binario.
+     */
+    private function detectMimeType(string $binaryContent): string
+    {
+        // Usar finfo para detectar MIME type
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mimeType = finfo_buffer($finfo, $binaryContent);
+        finfo_close($finfo);
+
+        return $mimeType ?: 'application/octet-stream';
+    }
+
+    /**
+     * Genera un nombre de archivo basado en el MIME type.
+     */
+    private function generateFileName(?string $mimeType, string $binaryContent): string
+    {
+        $extension = 'bin';
+
+        if (!empty($mimeType)) {
+            $extension = match ($mimeType) {
+                'application/pdf' => 'pdf',
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/gif' => 'gif',
+                'image/webp' => 'webp',
+                'application/msword' => 'doc',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+                'application/vnd.ms-excel' => 'xls',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx',
+                default => $this->getExtensionFromMimeType($mimeType)
+            };
+        } else {
+            // Detectar extensión del contenido binario
+            $detected = $this->detectMimeType($binaryContent);
+            $extension = match ($detected) {
+                'application/pdf' => 'pdf',
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/gif' => 'gif',
+                'image/webp' => 'webp',
+                default => 'bin'
+            };
+        }
+
+        return 'document_' . Str::uuid() . '.' . $extension;
+    }
+
+    /**
+     * Obtiene la extensión de un MIME type.
+     */
+    private function getExtensionFromMimeType(string $mimeType): string
+    {
+        $mimeMap = [
+            'application/pdf' => 'pdf',
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/webp' => 'webp',
+            'text/plain' => 'txt',
+            'text/csv' => 'csv',
+            'application/json' => 'json',
+        ];
+
+        return $mimeMap[$mimeType] ?? 'bin';
     }
 }

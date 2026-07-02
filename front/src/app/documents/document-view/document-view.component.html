@@ -380,7 +380,7 @@
               <div class="card card-accounting-voucher h-100"
                 [ngClass]="{'selected': file.id === selectedFile?.id}"
                 (dblclick)="selectFile(null)" (click)="selectFile(file)">
-                <div class="card-body" [title]="file.file_name">
+                <div class="card-body" [appCustomTooltip]="file.file_name">
                   <div class="img-container">
                     <img
                       src="assets/files/128/{{file.extension_file.toLowerCase()}}.png"

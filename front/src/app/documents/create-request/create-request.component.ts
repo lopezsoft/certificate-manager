@@ -309,17 +309,13 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       ts.loading = true;
 
       if (!ts.canEdit && !ts.isViafirma()) {
-        ts.formData = new FormData();
-        // Append all files to formData
-        ts.files.forEach((file: any, index) => {
-          ts.formData.append('file' + index, file.data);
-        });
-        // Append all form values to formData
-        for (const key in params) {
-          if (params.hasOwnProperty(key)) {
-            ts.formData.append(key, params[key]);
-          }
-        }
+        // Crear objeto con archivos en base64 en lugar de FormData
+        params.attachments = ts.files.map((file: any) => ({
+          name: file.data.name,
+          type: file.data.type,
+          size: file.data.size,
+          base64: file.base64
+        }));
       }
       this.mask.showBlockUI('Procesando solicitud...');
       if (ts.canEdit) {
@@ -335,7 +331,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
             }
           });
       } else {
-        const payload = ts.isViafirma() ? params : ts.formData;
+        const payload = ts.isViafirma() ? params : params;
         this._http.post('/certificate-request', payload)
           .subscribe({
             next: (resp) => {
@@ -451,7 +447,8 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       this.files.splice(index, 1);
     }
 
-    this.files.push(fileData);
+    // Convertir archivo a base64 antes de agregarlo
+    this.convertFileToBase64(fileData);
   }
 
   /**
@@ -481,7 +478,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       next: (resp: any) => {
         if (resp.dataRecords.data) {
           this.customForm.patchValue(resp.dataRecords.data);
-          this._msg.toastInfo(`Se encontraron datos asociados al DNI ${dni}. Los campos del formulario han sido completados automáticamente.`);
+          this._msg.toastInfo(`Se encontraron datos asociados al N.I.T ${dni}. Los campos del formulario han sido completados automáticamente.`);
         } else {
           this.defaultFormValues();
         }
@@ -537,6 +534,27 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
           ts._router.navigate(['/requests/list']);
         }
       });
+  }
+
+  /**
+   * Convierte un archivo a base64 y lo agrega a la lista de archivos
+   */
+  private convertFileToBase64(fileData: FileUploadData): void {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      // Crear un nuevo objeto con el contenido en base64
+      const base64Data = e.target?.result as string;
+      const fileWithBase64: any = {
+        ...fileData,
+        base64: base64Data
+      };
+      this.files.push(fileWithBase64);
+    };
+    reader.onerror = () => {
+      this.debug.error('CreateRequestComponent', 'Error al convertir archivo a base64');
+      this._msg.errorMessage('Error', 'No se pudo procesar el archivo. Por favor, intenta de nuevo.');
+    };
+    reader.readAsDataURL(fileData.data);
   }
 
   private defaultFormValues() {

@@ -21,7 +21,7 @@ class EloquentCertificateRequestRepository implements CertificateRequestReposito
     private const DEFAULT_RELATIONS = [
         'identity:id,document_name',
         'organization:id,description',
-        'city:id,name_city',
+        'city',
         'files:id,certificate_request_id,file_name,file_path,extension_file,mime_type,file_size,last_modified,status,document_type',
     ];
 
@@ -29,9 +29,9 @@ class EloquentCertificateRequestRepository implements CertificateRequestReposito
     private const ADMIN_RELATIONS = [
         'identity:id,document_name',
         'organization:id,description',
-        'city:id,name_city',
+        'city',
         'files:id,certificate_request_id,file_name,file_path,extension_file,mime_type,file_size,last_modified,status,document_type',
-        'company:id,company_name,dni,dv,address,email,phone',
+        'company:id,company_name,dni,dv,address,email,phone,issuance_provider,has_agreement,active,uuid',
         'history'
     ];
 

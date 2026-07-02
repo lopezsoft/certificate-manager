@@ -1,8 +1,8 @@
 import { Directive, ElementRef, HostListener, Input, Renderer2, OnDestroy } from '@angular/core';
 
 @Directive({
-    selector: '[appCustomTooltip]',
-    standalone: false
+  selector: '[appCustomTooltip]',
+  standalone: true
 })
 export class CustomTooltipDirective implements OnDestroy {
   @Input('appCustomTooltip') tooltipText: string | undefined | null;
@@ -31,7 +31,7 @@ export class CustomTooltipDirective implements OnDestroy {
   private tooltipElement: HTMLElement | null = null;
   private readonly scrollOffset = 5;
 
-  constructor(private el: ElementRef<HTMLElement>, private renderer: Renderer2) {}
+  constructor(private el: ElementRef<HTMLElement>, private renderer: Renderer2) { }
 
   @HostListener('mouseenter')
   onMouseEnter(): void {
@@ -51,7 +51,7 @@ export class CustomTooltipDirective implements OnDestroy {
     this.destroyTooltip();
   }
 
-  @HostListener('document:keydown.escape', ['$event'])
+  @HostListener('document:keydown.escape')
   onEscapeKey(): void {
     this.destroyTooltip();
   }

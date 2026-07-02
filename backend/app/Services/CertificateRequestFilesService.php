@@ -15,11 +15,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class CertificateRequestFilesService
 {
-    public function createFile(Request $request, $certificateRequestId): JsonResponse
+    public function createFilesFromBase64(Request $request, mixed $certificateRequestId): JsonResponse
     {
         try {
             $certificateRequest = CertificateRequest::query()
@@ -28,124 +28,138 @@ class CertificateRequestFilesService
             if (!$certificateRequest) {
                 throw new Exception("No se ha encontrado la solicitud de certificado.", 400);
             }
-            $file = request()->file('file');
-            if (!$file) {
-                throw new Exception("No se ha encontrado el archivo.", 400);
+
+            // Obtener el array de attachments
+            $attachments = $request->input('attachments', []);
+            if (!is_array($attachments) || empty($attachments)) {
+                throw new Exception("No se han proporcionado archivos.", 400);
             }
 
-            $files = FileManager::query()
+            // Validar que no se hayan excedido los 6 archivos
+            $existingFiles = FileManager::query()
                 ->where('certificate_request_id', $certificateRequestId)
-                ->get();
-            if ($files->count() >= 6) {
-                throw new Exception("No se pueden subir más de 6 archivos.", 400);
-            }
-            $fileSize = $file->getSize();
-            if ($fileSize > 2 * 1024 * 1024) {
-                throw new Exception("El tamaño del archivo no puede superar los 2MB.", 400);
+                ->count();
+            
+            if ($existingFiles + count($attachments) > 6) {
+                throw new Exception("No se pueden subir más de 6 archivos en total.", 400);
             }
 
-            // Validar tipo MIME real del archivo (no solo la extensión)
-            $mimeValidator = Validator::make(
-                ['file' => $file],
-                ['file' => [
-                    'required',
-                    'mimetypes:application/pdf,image/jpeg,image/png,image/gif,application/zip,application/x-zip-compressed',
-                ]],
-                ['file.mimetypes' => 'Tipo de archivo no permitido. Solo se aceptan PDF, imágenes (JPG, PNG, GIF) y archivos ZIP.']
-            );
-            if ($mimeValidator->fails()) {
-                throw new Exception($mimeValidator->errors()->first('file'), 422);
-            }
-            $company        = CompanyQueries::getCompany();
-            $pin            = $request->input('pin');
-            $disk           = Storage::disk(config('certificate.storage.legacy_disk', 'attachment'));
-            $basePath       = $certificateRequest->base_path;
+            // Preparar ruta de almacenamiento
+            $company = CompanyQueries::getCompany();
+            $disk = Storage::disk(config('certificate.storage.disk'));
+            $basePath = $certificateRequest->base_path;
             if (!$basePath) {
-                $year           = date('Y');
-                $month          = date('m');
-                $dni            = $company->dni;
-                $dv             = $company->dv;
-                $basePath       = "companies/{$company->id}/{$year}/{$month}/{$dni}{$dv}";
-                $disk->makeDirectory($basePath);
+               throw new Exception("La solicitud de certificado no tiene una ruta de almacenamiento definida.", 400);
             }
 
-            $fileName       = $file->getClientOriginalName();
-            $path           = "{$basePath}/{$fileName}";
-            $disk->putFileAs($basePath, $file, $fileName);
-
-            $format         = pathinfo($path, PATHINFO_EXTENSION);
-            $mimeType       = $disk->mimeType($path);
-            $sizeFile       = $disk->size($path);
-            $lastModified   = $disk->lastModified($path);
             DB::beginTransaction();
-            $file = FileManager::create([
-                'certificate_request_id'    =>  $certificateRequestId,
-                'file_name'         =>  $fileName,
-                'file_path'         =>  $path,
-                'extension_file'    =>  $format,
-                'mime_type'         =>  $mimeType,
-                'file_size'         =>  $sizeFile,
-                'last_modified'     =>  date('Y-m-d H:i:s', $lastModified),
-                'status'            =>  'COMPLETED',
-                'document_type'     => $request->input('document_type') ?? 'ATTACHED'
-            ]);
-            if ($pin && $format == 'zip') {
-                // Nombre del archivo sin la extensión
-                $fileNameWithoutExtension = pathinfo($fileName, PATHINFO_FILENAME);
-                $extractToPath  = $disk->path("{$basePath}/zip");
-                $password       = $certificateRequest->dni;
-                if ($certificateRequest->type_organization_id == 1) {
-                    $password = "{$certificateRequest->dni}{$certificateRequest->dv}";
+            $createdFiles = [];
+            $decoder = app(Base64DecoderService::class);
+
+            foreach ($attachments as $attachment) {
+                // Obtener el Base64 (obligatorio)
+                $base64String = $attachment['base64'] ?? null;
+                if (!$base64String) {
+                    throw new Exception("El contenido en base64 es requerido para cada archivo.", 400);
                 }
-                $zipFilePath    = $disk->path($path);
-                if ((new ZipExtractorService())->extract((object)[
-                    'zipFilePath'     => $zipFilePath,
-                    'password'        => $password,
-                    'extractToPath'   => $extractToPath,
-                    'fileName'        => $fileNameWithoutExtension,
-                ])) {
-                    $allFiles = $disk->allFiles("{$basePath}/zip");
-                    $content = null;
-                    foreach ($allFiles as $allFile) {
-                        $content = base64_encode($disk->get($allFile));
-                        $extension = pathinfo($allFile, PATHINFO_EXTENSION);
-                        if ($extension == 'p12' || $extension == 'pfx') {
-                            break;
+
+                // Decodificar el Base64
+                try {
+                    $metadata = $decoder->decodeWithMetadata($base64String);
+                    $binaryContent = $metadata['binary_content'];
+                    $mimeType = $metadata['mime_type'];
+                } catch (\Exception $e) {
+                    throw new Exception("Error al decodificar el archivo: " . $e->getMessage(), 400);
+                }
+
+                // Obtener o generar nombre del archivo
+                $fileName = $attachment['name'] ?? null;
+                if (!$fileName) {
+                    $extension = $this->getExtensionFromMimeTypeBase64($mimeType);
+                    $fileName = 'document_' . Str::uuid() . '.' . $extension;
+                }
+
+                // Obtener o calcular tamaño
+                $fileSize = $attachment['size'] ?? strlen($binaryContent);
+
+                // Guardar archivo
+                $path = "{$basePath}/{$fileName}";
+                $disk->put($path, $binaryContent);
+
+                // Registrar en FileManager
+                $file = FileManager::create([
+                    'certificate_request_id' => $certificateRequestId,
+                    'file_name'              => $fileName,
+                    'file_path'              => $path,
+                    'extension_file'         => pathinfo($fileName, PATHINFO_EXTENSION),
+                    'mime_type'              => $mimeType,
+                    'file_size'              => $fileSize,
+                    'last_modified'          => date('Y-m-d H:i:s'),
+                    'status'                 => 'COMPLETED',
+                    'document_type'          => $request->input('document_type') ?? 'ATTACHED'
+                ]);
+
+                // Procesar ZIP con PIN si aplica
+                $pin = $request->input('pin');
+                if ($pin && pathinfo($fileName, PATHINFO_EXTENSION) === 'zip') {
+                    $fileNameWithoutExtension = pathinfo($fileName, PATHINFO_FILENAME);
+                    $extractToPath = storage_path("app/" . config('certificate.storage.legacy_disk', 'attachment') . "/{$basePath}/zip");
+                    $password = $certificateRequest->dni;
+                    if ($certificateRequest->type_organization_id == 1) {
+                        $password = "{$certificateRequest->dni}{$certificateRequest->dv}";
+                    }
+                    $zipFilePath = storage_path("app/" . config('certificate.storage.legacy_disk', 'attachment') . "/{$path}");
+                    if ((new ZipExtractorService())->extract((object)[
+                        'zipFilePath'     => $zipFilePath,
+                        'password'        => $password,
+                        'extractToPath'   => $extractToPath,
+                        'fileName'        => $fileNameWithoutExtension,
+                    ])) {
+                        $allFiles = $disk->allFiles("{$basePath}/zip");
+                        $content = null;
+                        foreach ($allFiles as $allFile) {
+                            $content = base64_encode($disk->get($allFile));
+                            $extension = pathinfo($allFile, PATHINFO_EXTENSION);
+                            if ($extension == 'p12' || $extension == 'pfx') {
+                                break;
+                            }
                         }
-                    }
-                    if (!$content) {
-                        throw new Exception("No se ha encontrado el archivo P12 o PFX en el ZIP.", 400);
-                    }
+                        if (!$content) {
+                            throw new Exception("No se ha encontrado el archivo P12 o PFX en el ZIP.", 400);
+                        }
 
-                    $expirationDate = CertificateValidatorService::getExpirationDate($content, $pin);
-                    $certificateRequest->update([
-                        'expiration_date' => $expirationDate,
-                        'pin'             => $pin,
-                    ]);
-                    // Eliminar el archivo ZIP extraído
-                    $disk->deleteDirectory("{$basePath}/zip");
+                        $expirationDate = CertificateValidatorService::getExpirationDate($content, $pin);
+                        $certificateRequest->update([
+                            'expiration_date' => $expirationDate,
+                            'pin'             => $pin,
+                        ]);
+                        // Eliminar el archivo ZIP extraído
+                        $disk->deleteDirectory("{$basePath}/zip");
+                    }
                 }
-            }
-            
-            event(new CertificateFileUploaded(
-                certificateRequestId: $certificateRequestId,
-                companyId: $certificateRequest->company_id,
-                fileId: $file->id,
-                fileName: $file->file_name,
-                documentType: $file->document_type,
-            ));
 
-            // Process image files with AI if they are supported formats
-            $this->processFileWithAI($file, $certificateRequestId);
-            
+                event(new CertificateFileUploaded(
+                    certificateRequestId: $certificateRequestId,
+                    companyId: $certificateRequest->company_id,
+                    fileId: $file->id,
+                    fileName: $file->file_name,
+                    documentType: $file->document_type,
+                ));
+
+                // Process image files with AI if they are supported formats
+                $this->processFileWithAI($file, $certificateRequestId);
+
+                $createdFiles[] = $file;
+            }
+
             // Check if we should trigger comprehensive document analysis
             $this->checkForComprehensiveAnalysis($certificateRequestId);
-            
+
             DB::commit();
             return HttpResponseMessages::getResponse([
-                'message' => 'Archivo creado correctamente.',
+                'message' => 'Archivos creados correctamente.',
                 'dataRecords' => [
-                    'data' => [$file],
+                    'data' => $createdFiles,
                 ],
             ]);
         } catch (Exception $e) {
@@ -154,7 +168,7 @@ class CertificateRequestFilesService
         }
     }
 
-    public function deleteFile($id, $fileId): JsonResponse
+    public function deleteFile(mixed $id, mixed $fileId): JsonResponse
     {
         try {
             $file = FileManager::query()
@@ -164,7 +178,7 @@ class CertificateRequestFilesService
             if (!$file) {
                 throw new Exception("No se ha encontrado el archivo.", 400);
             }
-            Storage::disk(config('certificate.storage.legacy_disk', 'attachment'))->delete($file->file_path);
+            Storage::disk(config('certificate.storage.disk'))->delete($file->file_path);
             $file->delete();
             return HttpResponseMessages::getResponse([
                 'message' => 'Archivo eliminado correctamente.',
@@ -210,7 +224,7 @@ class CertificateRequestFilesService
             }
 
             // Check if file exists before processing
-            $disk = Storage::disk(config('certificate.storage.legacy_disk', 'attachment'));
+            $disk = Storage::disk(config('certificate.storage.disk'));
             if (!$disk->exists($file->file_path)) {
                 Log::error("File not found for AI processing", [
                     'file_id' => $file->id,
@@ -267,6 +281,24 @@ class CertificateRequestFilesService
             ]);
             return 'Estimado usuario';
         }
+    }
+
+    /**
+     * Obtiene la extensión de un MIME type.
+     */
+    private function getExtensionFromMimeTypeBase64(string $mimeType): string
+    {
+        $mimeMap = [
+            'application/pdf' => 'pdf',
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/webp' => 'webp',
+            'application/zip' => 'zip',
+            'application/x-zip-compressed' => 'zip',
+        ];
+
+        return $mimeMap[$mimeType] ?? 'bin';
     }
 
     /**

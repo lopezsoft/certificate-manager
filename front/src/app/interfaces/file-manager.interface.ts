@@ -1,7 +1,8 @@
-import {Company} from "./shipping-intetface";
-import {Cities, IdentityDocuments, TypeOrganzation} from "../models/general-model";
-import {DocumentStatusEnum, FileDocumentTypeEnum, UserOfChangeEnum} from "../common/enums/DocumentStatus";
-import {Users} from "../models/users-model";
+
+import { Cities, IdentityDocuments, TypeOrganzation } from "../models/general-model";
+import { DocumentStatusEnum, FileDocumentTypeEnum, UserOfChangeEnum } from "../common/enums/DocumentStatus";
+import { Users } from "../models/users-model";
+import { Company } from "app/models/companies-model";
 
 
 export interface FileManager {

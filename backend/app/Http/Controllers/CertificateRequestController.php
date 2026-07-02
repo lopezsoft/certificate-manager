@@ -20,12 +20,12 @@ class CertificateRequestController extends Controller
      *     path="/certificate-request",
      *     tags={"Solicitudes de Certificado"},
      *     summary="Crear solicitud de certificado",
-     *     description="Crea una nueva solicitud de certificado digital. Requiere adjuntar entre 2 y 3 archivos (PDF/imagen). Límite: 10 solicitudes/minuto.",
+     *     description="Crea una nueva solicitud de certificado digital. Los archivos se envían en Base64 dentro del payload JSON. Para Viafirma: email requerido. Para otros proveedores: email opcional. Límite: 10 solicitudes/minuto.",
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\MediaType(
-     *             mediaType="multipart/form-data",
+     *             mediaType="application/json",
      *             @OA\Schema(
      *                 schema="CreateCertificateRequestBody",
      *                 required={"city_id","identity_document_id","type_organization_id","document_number","address","legal_representative","company_name","dni","life"},
@@ -38,11 +38,21 @@ class CertificateRequestController extends Controller
      *                 @OA\Property(property="legal_representative", type="string", example="JUAN PÉREZ", description="Requerido si no se envían los nombres separados. Usado en flujo legacy."),
      *                 @OA\Property(property="legal_rep_first_name", type="string", example="JUAN PABLO", description="Obligatorio para flujo Viafirma"),
      *                 @OA\Property(property="legal_rep_last_name", type="string", example="PÉREZ GÓMEZ", description="Obligatorio para flujo Viafirma"),
-     *                 @OA\Property(property="legal_rep_email", type="string", example="juan.perez@empresa.com", description="Requerido si viafirma y persona jurídica", nullable=true),
+     *                 @OA\Property(property="legal_rep_email", type="string", example="juan.perez@empresa.com", description="Requerido solo para proveedor Viafirma. Opcional para otros proveedores.", nullable=true),
      *                 @OA\Property(property="company_name", type="string", example="MI EMPRESA S.A.S."),
      *                 @OA\Property(property="dni", type="string", example="900455420"),
-     *                 @OA\Property(property="life", type="integer", example=1),
-     *                 @OA\Property(property="info", type="string", nullable=true)
+     *                 @OA\Property(property="life", type="integer", example=1, description="Vigencia: 1 o 2 años"),
+     *                 @OA\Property(property="info", type="string", nullable=true),
+     *                 @OA\Property(property="attachments", type="array", description="Array de adjuntos en Base64 (requerido para proveedores que no sean Viafirma)",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         required={"base64"},
+     *                         @OA\Property(property="base64", type="string", description="Contenido del adjunto en Base64. Soporta prefijo Data URI (data:application/pdf;base64,...) o solo el contenido Base64"),
+     *                         @OA\Property(property="name", type="string", nullable=true, description="Nombre del adjunto (se genera si no está presente)"),
+     *                         @OA\Property(property="type", type="string", nullable=true, description="MIME type (se detecta si no está presente). Ej: application/pdf, image/jpeg"),
+     *                         @OA\Property(property="size", type="integer", nullable=true, description="Tamaño en bytes (se calcula si no está presente)")
+     *                     )
+     *                 )
      *             )
      *         )
      *     ),

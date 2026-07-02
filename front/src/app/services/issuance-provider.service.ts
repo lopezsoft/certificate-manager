@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Company } from 'app/models/companies-model';
 import TokenService from 'app/utils/token.service';
 
 @Injectable({
@@ -15,6 +16,10 @@ export class IssuanceProviderService {
 
   isViafirma(): boolean {
     return this.issuanceProvider === 'viafirma';
+  }
+
+  isViafirmaByCompany(company: Company): boolean {
+    return company?.issuance_provider === 'viafirma';
   }
 
 

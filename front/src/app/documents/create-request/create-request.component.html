@@ -6,17 +6,20 @@
     <div class="card-body">
       <form [formGroup]="customForm">
         <div class="form-group">
-          <h6>{{ (isViafirma() && isNaturelPerson()) ? 'DATOS DEL SOLICITANTE' : 'DATOS EMPRESARIALES' }}</h6>
+          <h6>{{ (isViafirma() && isNaturelPerson()) ? 'DATOS DEL SOLICITANTE' :
+            'DATOS EMPRESARIALES' }}</h6>
           <hr>
         </div>
         <div class="row">
           <div class="col-md-6">
             <div class="form-group">
               <label>
-                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                <span class="asterisk">{{ 'general.asterisk' | translate
+                  }}</span>
                 {{'companies.type_organization' | translate}}
               </label>
-              <ng-select (change)="onChangeTypeOrganization($event)" formControlName="type_organization_id"
+              <ng-select (change)="onChangeTypeOrganization($event)"
+                formControlName="type_organization_id"
                 placeholder="Tipo de contribuyente">
                 @for (org of organizations; track org) {
                 <ng-option [value]="org.id">{{ org.description }}</ng-option>
@@ -27,11 +30,15 @@
           <div class="col-md-6">
             <div class="form-group">
               <label>
-                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                <span class="asterisk">{{ 'general.asterisk' | translate
+                  }}</span>
                 N.I.T sin digito de verificación
               </label>
-              <input class="form-control" type="text" formControlName="dni" #dniInput autofocus (blur)="onLookupDni()"
-                (change)="onChangeDni($event)" placeholder="N.I.T sin digito de verificación" inputmode="numeric"
+              <input class="form-control" type="text" formControlName="dni"
+                #dniInput autofocus (blur)="onLookupDni()"
+                (change)="onChangeDni($event)"
+                placeholder="N.I.T sin digito de verificación"
+                inputmode="numeric"
                 autocomplete="off" [class.is-invalid]="isInvalid('dni')">
               @if (isInvalid('dni')) {
               <small class="text-danger">N.I.T incorrecto</small>
@@ -46,7 +53,8 @@
             <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
             {{'companies.company_name' | translate}}
           </label>
-          <input class="form-control" type="text" formControlName="company_name" placeholder="Nombre o razón social"
+          <input class="form-control" type="text" formControlName="company_name"
+            placeholder="Nombre o razón social"
             autocomplete="off" [class.is-invalid]="isInvalid('company_name')">
           @if (isInvalid('company_name')) {
           <small class="text-danger">Nombre o razón social muy corto</small>
@@ -66,9 +74,12 @@
             <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
             Nombre completo de representante legal
           </label>
-          <input class="form-control" type="text" formControlName="legal_representative"
-            placeholder="Nombre completo de representante legal" inputmode="text" [disabled]="isNaturelPerson()"
-            autocomplete="on" [class.is-invalid]="isInvalid('legal_representative')">
+          <input class="form-control" type="text"
+            formControlName="legal_representative"
+            placeholder="Nombre completo de representante legal"
+            inputmode="text" [disabled]="isNaturelPerson()"
+            autocomplete="on"
+            [class.is-invalid]="isInvalid('legal_representative')">
           @if (isInvalid('legal_representative')) {
           <small class="text-danger">
             Nombre completo de representante legal muy corto
@@ -80,11 +91,14 @@
           <div class="col-md-6">
             <div class="form-group">
               <label>
-                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                <span class="asterisk">{{ 'general.asterisk' | translate
+                  }}</span>
                 Nombres
               </label>
-              <input class="form-control" type="text" formControlName="legal_rep_first_name" placeholder="Nombres"
-                autocomplete="on" [class.is-invalid]="isInvalid('legal_rep_first_name')">
+              <input class="form-control" type="text"
+                formControlName="legal_rep_first_name" placeholder="Nombres"
+                autocomplete="on"
+                [class.is-invalid]="isInvalid('legal_rep_first_name')">
               @if (isInvalid('legal_rep_first_name')) {
               <small class="text-danger">Nombres requeridos</small>
               }
@@ -93,11 +107,14 @@
           <div class="col-md-6">
             <div class="form-group">
               <label>
-                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                <span class="asterisk">{{ 'general.asterisk' | translate
+                  }}</span>
                 Apellidos
               </label>
-              <input class="form-control" type="text" formControlName="legal_rep_last_name" placeholder="Apellidos"
-                autocomplete="on" [class.is-invalid]="isInvalid('legal_rep_last_name')">
+              <input class="form-control" type="text"
+                formControlName="legal_rep_last_name" placeholder="Apellidos"
+                autocomplete="on"
+                [class.is-invalid]="isInvalid('legal_rep_last_name')">
               @if (isInvalid('legal_rep_last_name')) {
               <small class="text-danger">Apellidos requeridos</small>
               }
@@ -109,7 +126,8 @@
         <div class="row">
           <div class="col-md-6">
             <div class="form-group">
-              <label><span class="asterisk">{{ 'general.asterisk' | translate }}</span>{{'companies.identity_document' |
+              <label><span class="asterisk">{{ 'general.asterisk' | translate
+                  }}</span>{{'companies.identity_document' |
                 translate}}</label>
               <ng-select formControlName="identity_document_id" required
                 [class.is-invalid]="isInvalid('invalidIdentity')">
@@ -124,12 +142,16 @@
           <div class="col-md-6">
             <div class="form-group">
               <label>
-                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                <span class="asterisk">{{ 'general.asterisk' | translate
+                  }}</span>
                 Número de documento de identidad
               </label>
-              <input class="form-control" type="text" formControlName="document_number" #documentInput
-                (change)="onChangeDocument($event)" placeholder="Documento sin digito de verificación"
-                inputmode="numeric" autocomplete="off" [class.is-invalid]="isInvalid('document_number')">
+              <input class="form-control" type="text"
+                formControlName="document_number" #documentInput
+                (change)="onChangeDocument($event)"
+                placeholder="Documento sin digito de verificación"
+                inputmode="numeric" autocomplete="off"
+                [class.is-invalid]="isInvalid('document_number')">
               @if (isInvalid('document_number')) {
               <small class="text-danger">Número de documento incorrecto</small>
               }
@@ -142,7 +164,8 @@
           <div class="col-md-12">
             <div class="form-group">
               <label>
-                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
+                <span class="asterisk">{{ 'general.asterisk' | translate
+                  }}</span>
                 Tipo de documento constitutivo
               </label>
               <ng-select formControlName="entity_document_type_id" required>
@@ -166,14 +189,20 @@
           <div class="col-md-12">
             <div class="form-group">
               <label>
-                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
-                {{ isNaturelPerson() ? 'Email de contacto' : 'Email del representante legal' }}
+                @if(isViafirma()){
+                <span class="asterisk">{{ 'general.asterisk' | translate
+                  }}</span>
+                }
+                {{ isNaturelPerson() ? 'Email de contacto' :
+                'Email del representante legal' }}
               </label>
-              <input class="form-control" type="email" formControlName="legal_rep_email"
+              <input class="form-control" type="email"
+                formControlName="legal_rep_email"
                 placeholder="ejemplo@empresa.com" autocomplete="email"
                 [class.is-invalid]="isInvalid('legal_rep_email')">
               @if (isInvalid('legal_rep_email')) {
-              <small class="text-danger">Correo electrónico inválido o requerido</small>
+              <small class="text-danger">Correo electrónico inválido o
+                requerido</small>
               }
             </div>
           </div>
@@ -185,7 +214,8 @@
               <label>
                 Número teléfono móvil
               </label>
-              <input class="form-control" type="text" formControlName="mobile" placeholder="Número teléfono móvil"
+              <input class="form-control" type="text" formControlName="mobile"
+                placeholder="Número teléfono móvil"
                 autocomplete="on" inputmode="tel">
             </div>
           </div>
@@ -194,7 +224,8 @@
               <label>
                 Teléfono fijo y extensión
               </label>
-              <input class="form-control" type="text" formControlName="phone" placeholder="Teléfono fijo y extensión"
+              <input class="form-control" type="text" formControlName="phone"
+                placeholder="Teléfono fijo y extensión"
                 autocomplete="on" inputmode="tel">
             </div>
           </div>
@@ -204,14 +235,18 @@
           <div class="col-md-6">
             <div class="form-group">
               <label>
-                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
-                {{ (isViafirma() && isNaturelPerson()) ? 'Ciudad de residencia' : 'companies.city' | translate }}
+                <span class="asterisk">{{ 'general.asterisk' | translate
+                  }}</span>
+                {{ (isViafirma() && isNaturelPerson()) ? 'Ciudad de residencia'
+                : 'companies.city' | translate }}
               </label>
-              <ng-select data-live-search="true" formControlName="city_id" placeholder="Ciudad o municipio"
+              <ng-select data-live-search="true" formControlName="city_id"
+                placeholder="Ciudad o municipio"
                 [virtualScroll]="true">
                 @for (city of cities; track city) {
                 <ng-option [value]="city.id">
-                  {{city.city_code}} - {{ city.name_city }} ({{city.department.name_department}})
+                  {{city.city_code}} - {{ city.name_city }}
+                  ({{city.department.name_department}})
                 </ng-option>
                 }
               </ng-select>
@@ -220,10 +255,13 @@
           <div class="col-md-6">
             <div class="form-group">
               <label>
-                <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
-                {{ (isViafirma() && isNaturelPerson()) ? 'Dirección de residencia' : 'Dirección de la empresa' }}
+                <span class="asterisk">{{ 'general.asterisk' | translate
+                  }}</span>
+                {{ (isViafirma() && isNaturelPerson()) ?
+                'Dirección de residencia' : 'Dirección de la empresa' }}
               </label>
-              <input class="form-control" type="text" formControlName="address" placeholder="Dirección"
+              <input class="form-control" type="text" formControlName="address"
+                placeholder="Dirección"
                 autocomplete="on" [class.is-invalid]="isInvalid('address')">
               @if (isInvalid('address')) {
               <small class="text-danger">Dirección muy corta</small>
@@ -237,11 +275,14 @@
           <div class="col-md-12">
             <div class="alert alert-info p-50 mb-50">
               <i class="fas fa-info-circle me-50"></i>
-              @if (!isNaturelPerson() && f['entity_document_type_id']?.value === 1) {
-              Se enviará un enlace de verificación biométrica al correo del representante legal una vez procesada la
+              @if (!isNaturelPerson() && f['entity_document_type_id']?.value ===
+              1) {
+              Se enviará un enlace de verificación biométrica al correo del
+              representante legal una vez procesada la
               solicitud.
               } @else {
-              Un asesor de la entidad certificadora le contactará por correo electrónico para
+              Un asesor de la entidad certificadora le contactará por correo
+              electrónico para
               continuar con el proceso.
               }
             </div>
@@ -256,7 +297,8 @@
               <label>
                 Información adicional
               </label>
-              <textarea class="form-control" formControlName="info" placeholder="Información adicional"
+              <textarea class="form-control" formControlName="info"
+                placeholder="Información adicional"
                 inputmode="text"></textarea>
             </div>
           </div>
@@ -273,7 +315,8 @@
             <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
             Seleccione la vigencia del certificado
           </label>
-          <ng-select formControlName="life" required [class.is-invalid]="isInvalid('life')">
+          <ng-select formControlName="life" required
+            [class.is-invalid]="isInvalid('life')">
             @for (validity of validities; track validity) {
             <ng-option [value]="validity.id">
               {{ validity.name }}
@@ -289,18 +332,22 @@
         </div>
         <!-- Subida de archivos UNIFICADA -->
         <div class="col-md-12">
-          <app-file-upload [config]="uploadConfig" [currentFiles]="files" [totalUploadedSize]="getTotalUploadedSize()"
-            (fileSelected)="onFileSelected($event)" (fileRemoved)="onFileRemoved($event)"
+          <app-file-upload [config]="uploadConfig" [currentFiles]="files"
+            [totalUploadedSize]="getTotalUploadedSize()"
+            (fileSelected)="onFileSelected($event)"
+            (fileRemoved)="onFileRemoved($event)"
             (validationError)="onFileValidationError($event)">
           </app-file-upload>
         </div>
         }
       </form>
-      <div class="card-footer mt-2 d-flex justify-content-between align-items-center">
+      <div
+        class="card-footer mt-2 d-flex justify-content-between align-items-center">
         <div>
           @if (!canSaveForm && !canEdit) {
           <small [class.text-danger]="files.length > maxFilesAllowed"
-            [class.text-warning]="files.length < maxFilesAllowed || files.length === 0" class="fw-bold">
+            [class.text-warning]="files.length < maxFilesAllowed || files.length === 0"
+            class="fw-bold">
             <i class="fas fa-exclamation-triangle"></i>
             {{ documentValidationMessage }}
           </small>
@@ -313,19 +360,23 @@
           }
         </div>
         <div class="d-flex gap-2">
-          <button type="button" class="btn custom-button border btn-block" (click)="onCancel()">
+          <button type="button" class="btn custom-button border btn-block"
+            (click)="onCancel()">
             <i class="fas fa-times me-1"></i>
             Cancelar
           </button>
-          <button (click)="onSave()" type="button" class="btn ms-1 custom-button btn-primary btn-block text-white"
-            [disabled]="!canSaveForm || loading" [class.disabled]="!canSaveForm">
+          <button (click)="onSave()" type="button"
+            class="btn ms-1 custom-button btn-primary btn-block text-white"
+            [disabled]="!canSaveForm || loading"
+            [class.disabled]="!canSaveForm">
             @if (!loading) {
             <span>Crear solicitud</span>
             }
             @if (loading) {
             <span>Procesando solicitud... </span>
             }
-            <i class="fas-fa-save fas ms-1" [ngClass]="{'fa-plus' :!loading, 'fa-spinner fa-spin': loading }"></i>
+            <i class="fas-fa-save fas ms-1"
+              [ngClass]="{'fa-plus' :!loading, 'fa-spinner fa-spin': loading }"></i>
           </button>
         </div>
       </div>

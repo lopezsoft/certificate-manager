@@ -37,7 +37,7 @@ class CertificateRequestService
     public function createCertificateRequest(Request $request): JsonResponse
     {
         $company = CompanyQueries::getCompany();
-
+        $attachments = $request->attachments ?? [];
         return $this->createHandler->handle(new CreateCertificateRequestCommand(
             companyId:             $company->id,
             cityId:                (int) $request->city_id,
@@ -56,7 +56,7 @@ class CertificateRequestService
             phone:                 $request->input('phone'),
             life:                  (int) ($request->input('life') ?? 2),
             info:                  $request->input('info'),
-            files:                 array_values($request->files->all()),
+            attachments:           array_values($attachments),
             userId:                auth()->id(),
         ));
     }

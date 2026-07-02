@@ -2,15 +2,23 @@
 
 namespace App\Commands\Certificate;
 
-use Illuminate\Http\UploadedFile;
-
 /**
  * Comando para crear una nueva solicitud de certificado.
+ *
+ * Los adjuntos se reciben como array de objetos con estructura:
+ * [
+ *   {
+ *     "base64": "...",      // Requerido
+ *     "name": "...",        // Opcional (se genera si no existe)
+ *     "type": "...",        // Opcional (se detecta si no existe)
+ *     "size": 12345         // Opcional (se calcula si no existe)
+ *   }
+ * ]
  */
 final class CreateCertificateRequestCommand implements CertificateCommandInterface
 {
     /**
-     * @param UploadedFile[] $files
+     * @param array $attachments Array de adjuntos con estructura {base64, name?, type?, size?}
      */
     public function __construct(
         public readonly int     $companyId,
@@ -30,7 +38,7 @@ final class CreateCertificateRequestCommand implements CertificateCommandInterfa
         public readonly ?string $info,
         public readonly ?string $mobile,
         public readonly ?string $phone,
-        public readonly array   $files,
+        public readonly array   $attachments,
         public readonly int     $userId,
     ) {}
 }

@@ -1,36 +1,11 @@
-import {Currency} from "../models/general-model";
+import { Company } from "app/models/companies-model";
+import { Currency } from "../models/general-model";
 
 export interface UserType {
   id: number;
   user_type_name: string;
   type: number;
   active: number;
-}
-
-export interface Company {
-  id: number;
-  country_id: number | string;
-  city_id: number | string;
-  identity_document_id: number | string;
-  type_organization_id: number | string;
-  tax_regime_id: number | string;
-  tax_level_id: number | string;
-  company_name: string;
-  trade_name?: string;
-  dni: string;
-  dv: number;
-  address: string;
-  merchant_registration: string;
-  postal_code: string;
-  mobile?: string;
-  phone?: string;
-  image: string;
-  mime: string;
-  email: string;
-  verified_email: number;
-  web: string;
-  active: number;
-  full_path_image: string;
 }
 
 export interface User {

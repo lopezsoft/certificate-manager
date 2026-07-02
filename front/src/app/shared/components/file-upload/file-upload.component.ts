@@ -213,6 +213,9 @@ export class FileUploadComponent {
   }
 
   getFileIcon(file: File): string {
+    if (!file || !file.name) {
+      return 'fas fa-file text-secondary';
+    }
     const extension = file.name.split('.').pop()?.toLowerCase();
     switch (extension) {
       case 'pdf':

@@ -5,7 +5,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { ngxLoadingAnimationTypes, NgxLoadingModule } from 'ngx-loading';
 
-import{ jqxEditorModule } from 'jqwidgets-ng/jqxeditor';
+import { jqxEditorModule } from 'jqwidgets-ng/jqxeditor';
 import { NgSelectModule } from '@ng-select/ng-select';
 /*
   * Translation
@@ -15,35 +15,34 @@ import { TranslateModule } from '@ngx-translate/core';
 import { SidebarComponent, FooterComponent, HeaderComponent, BodyComponent } from './layout';
 import {
   FooterFormComponent,
- } from '.';
+} from '.';
 import { DataGridComponent } from './components/grid/data-grid.component';
-import {CustomTooltipDirective} from "./directives/custom-tooltip.directive";
+import { CustomTooltipDirective } from "./directives/custom-tooltip.directive";
 @NgModule({
   exports: [
-      SidebarComponent,
-      FooterComponent,
-      HeaderComponent,
-      BodyComponent,
-      FooterFormComponent,
-      RouterModule,
-      CommonModule,
-      jqxEditorModule,
-      TranslateModule,
-      NgSelectModule,
-      NgxLoadingModule,
-      ReactiveFormsModule,
-      FormsModule,
-      CustomTooltipDirective
-	],
+    SidebarComponent,
+    FooterComponent,
+    HeaderComponent,
+    BodyComponent,
+    FooterFormComponent,
+    RouterModule,
+    CommonModule,
+    jqxEditorModule,
+    TranslateModule,
+    NgSelectModule,
+    NgxLoadingModule,
+    ReactiveFormsModule,
+    FormsModule,
+    CustomTooltipDirective
+  ],
   declarations: [
     FooterFormComponent,
     SidebarComponent,
     FooterComponent,
     HeaderComponent,
     BodyComponent,
-    DataGridComponent,
-      CustomTooltipDirective
-	],
+    DataGridComponent
+  ],
   imports: [
     RouterModule,
     CommonModule,
@@ -51,6 +50,7 @@ import {CustomTooltipDirective} from "./directives/custom-tooltip.directive";
     NgSelectModule,
     ReactiveFormsModule,
     FormsModule,
+    CustomTooltipDirective,
     NgxLoadingModule.forRoot({
       animationType: ngxLoadingAnimationTypes.circleSwish,
       backdropBackgroundColour: 'rgba(0,0,0,0.75)',

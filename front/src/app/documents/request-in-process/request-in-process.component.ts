@@ -1,34 +1,34 @@
-import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {BaseComponent} from "../../@core/components/base/base.component";
-import {SearchDataComponent} from "../../common/components/search-data/search-data.component";
-import {ExodoPaginationComponent} from "exodolibs";
-import {DocumentViewComponent} from "../document-view/document-view.component";
-import { ProcessSoftware, SoftwareTest} from "../../models/general-model";
-import {FormBuilder, FormGroup} from "@angular/forms";
-import {HttpResponsesService, MessagesService} from "../../utils";
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { BaseComponent } from "../../@core/components/base/base.component";
+import { SearchDataComponent } from "../../common/components/search-data/search-data.component";
+import { ExodoPaginationComponent } from "exodolibs";
+import { DocumentViewComponent } from "../document-view/document-view.component";
+import { ProcessSoftware, SoftwareTest } from "../../models/general-model";
+import { FormBuilder, FormGroup } from "@angular/forms";
+import { HttpResponsesService, MessagesService } from "../../utils";
 import TokenService from "../../utils/token.service";
-import {ActivatedRoute, Router} from "@angular/router";
-import {TranslateService} from "@ngx-translate/core";
-import {GlobalSettingsService} from "../../services/global-settings.service";
-import {ShippingService} from "../../services/shipping.service";
-import {LoadMaskService} from "../../services/load-mask.service";
-import {FormatsService} from "../../services/formats.service";
-import {DateManager} from "../../common/class/date-manager";
-import {CertificateRequest} from "../../interfaces/file-manager.interface";
+import { ActivatedRoute, Router } from "@angular/router";
+import { TranslateService } from "@ngx-translate/core";
+import { GlobalSettingsService } from "../../services/global-settings.service";
+import { ShippingService } from "../../services/shipping.service";
+import { LoadMaskService } from "../../services/load-mask.service";
+import { FormatsService } from "../../services/formats.service";
+import { DateManager } from "../../common/class/date-manager";
+import { CertificateRequest } from "../../interfaces/file-manager.interface";
 import {
   DocumentStatusDescription,
   DocumentStatusEnumArray
 } from "../../common/enums/DocumentStatus";
-import {QuotaService} from "../../services/quota.service";
-import {Subscription} from "rxjs";
+import { QuotaService } from "../../services/quota.service";
+import { Subscription } from "rxjs";
 
 @Component({
-    selector: 'app-request-in-process',
-    templateUrl: './request-in-process.component.html',
-    styleUrl: './request-in-process.component.scss',
-    standalone: false
+  selector: 'app-request-in-process',
+  templateUrl: './request-in-process.component.html',
+  styleUrl: './request-in-process.component.scss',
+  standalone: false
 })
-export class RequestInProcessComponent extends BaseComponent  implements OnInit, OnDestroy  {
+export class RequestInProcessComponent extends BaseComponent implements OnInit, OnDestroy {
   @ViewChild('searchItems') searchItems: SearchDataComponent;
   @ViewChild('pagination') pagination: ExodoPaginationComponent;
   @ViewChild('documentView') documentView: DocumentViewComponent;
@@ -47,18 +47,18 @@ export class RequestInProcessComponent extends BaseComponent  implements OnInit,
   private quotaSub: Subscription | null = null;
 
   constructor(
-      public msg: MessagesService,
-      public api: HttpResponsesService,
-      public _token: TokenService,
-      public router: Router,
-      public fb: FormBuilder,
-      public translate: TranslateService,
-      public aRouter: ActivatedRoute,
-      public settings: GlobalSettingsService,
-      public shipping: ShippingService,
-      private mask: LoadMaskService,
-      public format: FormatsService,
-      public quotaService: QuotaService,
+    public msg: MessagesService,
+    public api: HttpResponsesService,
+    public _token: TokenService,
+    public router: Router,
+    public fb: FormBuilder,
+    public translate: TranslateService,
+    public aRouter: ActivatedRoute,
+    public settings: GlobalSettingsService,
+    public shipping: ShippingService,
+    private mask: LoadMaskService,
+    public format: FormatsService,
+    public quotaService: QuotaService,
   ) {
     super(_token, router, translate);
     this.isAdmin = this._token.isAdmin();
@@ -81,11 +81,11 @@ export class RequestInProcessComponent extends BaseComponent  implements OnInit,
     });
   }
   protected onSearch(query: any = {}): void {
-    const values  = this.modalForm.getRawValue();
+    const values = this.modalForm.getRawValue();
     if ((values.start_date.length > 0 && values.end_date.length > 0)) {
-      values.limit  = 20;
+      values.limit = 20;
     }
-    query = {...query, ...values};
+    query = { ...query, ...values };
     this.mask.showBlockUI('Cargando datos...');
     if (this.shipping.currentRequestAll) {
       this.shipping.currentRequestAll.checked = false;
@@ -123,7 +123,7 @@ export class RequestInProcessComponent extends BaseComponent  implements OnInit,
 
   toggleNavbar() {
     this.isClicked = false;
-    const currentProduct  = this.shipping.requestDataAll.find((row) => row.checked);
+    const currentProduct = this.shipping.requestDataAll.find((row) => row.checked);
     currentProduct.checked = false;
     this.shipping.currentRequestAll = null;
   }

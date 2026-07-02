@@ -11,7 +11,7 @@
 @if (currentShipping) {
 <div class="row" [@fadeInOut]>
   <div class="layout-wrapper custom-form">
-    @if(!issuanceProvider.isViafirma()){
+    @if(!isViafirma()){
     <div class="card">
       <div class="card-body">
         <div class="row">
@@ -136,7 +136,7 @@
       </div>
     </div>
     }}@else if ((currentShipping.request_status ===
-    DocumentStatusEnum.PROCESSED) && issuanceProvider.isViafirma() &&
+    DocumentStatusEnum.PROCESSED) && isViafirma() &&
     (viafirmaStatus?.revocation_code))
     {
     <div class="card">
@@ -455,7 +455,7 @@
         </div>
       </div>
     </div>
-    @if (currentShipping.files.length > 0 && !issuanceProvider.isViafirma()) {
+    @if (currentShipping.files.length > 0 && !isViafirma()) {
     <div class="content-div">
       <hr>
     </div>
@@ -484,7 +484,7 @@
                 [ngClass]="{'selected': file.id === selectedFile?.id}"
                 (dblclick)="selectFile(null)"
                 (click)="selectFile(file)">
-                <div class="card-body">
+                <div class="card-body" [appCustomTooltip]="file.file_name">
                   <div class="img-container">
                     <img
                       src="assets/files/128/{{file.extension_file.toLowerCase()}}.png"
@@ -495,11 +495,12 @@
                       {{ file.file_name }} - <b>{{file.document_type}}</b>
                     </small>
                     <div class="content-p">
-                      <p class="card-text" title="Tamaño">
+                      <p class="card-text" appCustomTooltip="Tamaño">
                         <i class="fas fa-hdd"></i>
                         {{ convertBytesToMB(file.file_size) }}<br>
                       </p>
-                      <p class="card-text" title="Última modificación">
+                      <p class="card-text"
+                        appCustomTooltip="Última modificación">
                         <i class="fas fa-calendar-day"></i> {{
                         file.last_modified }}
                       </p>
@@ -508,7 +509,7 @@
                   <div class="actions-content">
                     <button
                       [disabled]="!canSendEmail()"
-                      title="Eliminar archivo"
+                      appCustomTooltip="Eliminar archivo"
                       class="btn custom-button fas-fa-trash fas-fa-delete"
                       (click)="onDeleteFile(file)">
                       <i
@@ -516,7 +517,8 @@
                     </button>
                     <button
                       class="btn custom-button fas-fa-save"
-                      (click)="onDownload(file)">
+                      (click)="onDownload(file)"
+                      appCustomTooltip="Descargar archivo">
                       <i class="fas fa-download fas-fa-18 fas-fa-save"></i>
                     </button>
                   </div>

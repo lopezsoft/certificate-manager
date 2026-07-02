@@ -258,6 +258,8 @@ export class DocumentViewComponent implements OnDestroy {
 		} else {
 			this.files = [];
 			this.files.push({ data: file, inProgress: false, progress: 0 });
+			// Convertir a base64
+			this.convertFileToBase64(this.files[0]);
 		}
 	}
 
@@ -284,6 +286,8 @@ export class DocumentViewComponent implements OnDestroy {
 		} else {
 			this.files = [];
 			this.files.push({ data: file, inProgress: false, progress: 0 });
+			// Convertir a base64
+			this.convertFileToBase64(this.files[0]);
 		}
 	}
 
@@ -292,17 +296,30 @@ export class DocumentViewComponent implements OnDestroy {
 			this.msg.errorMessage('', 'No hay archivos para subir');
 			return;
 		}
-		this.formData = new FormData();
-		this.files.forEach((file) => {
-			this.formData.append('file', file.data);
-		});
+
+		// Verificar que el archivo tenga base64 convertido
+		if (!this.files[0].base64) {
+			this.msg.errorMessage('', 'El archivo aún se está procesando. Por favor, intenta de nuevo.');
+			return;
+		}
+
+		const payload: any = {
+			attachments: [
+				{
+					name: this.files[0].data.name,
+					type: this.files[0].data.type,
+					size: this.files[0].data.size,
+					base64: this.files[0].base64
+				}
+			]
+		};
 
 		if (this.document_type === FileDocumentTypeEnum.PAYMENT) {
-			this.formData.append('document_type', FileDocumentTypeEnum.PAYMENT);
+			payload.document_type = FileDocumentTypeEnum.PAYMENT;
 		}
 
 		this.mask.showBlockUI("Subiendo archivo...");
-		this.http.post(`/certificate-request/${this.currentShipping.id}/files`, this.formData)
+		this.http.post(`/certificate-request/${this.currentShipping.id}/files`, payload)
 			.subscribe({
 				next: (resp: any) => {
 					this.currentShipping.files.push(resp.dataRecords.data[0]);
@@ -649,6 +666,22 @@ export class DocumentViewComponent implements OnDestroy {
 				}
 			});
 		});
+	}
+
+	/**
+	 * Convierte un archivo a base64 y lo agrega a la lista de archivos
+	 */
+	private convertFileToBase64(fileData: any): void {
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			const base64Data = e.target?.result as string;
+			fileData.base64 = base64Data;
+		};
+		reader.onerror = () => {
+			this.debug.error('DocumentViewComponent', 'Error al convertir archivo a base64');
+			this.msg.errorMessage('Error', 'No se pudo procesar el archivo. Por favor, intenta de nuevo.');
+		};
+		reader.readAsDataURL(fileData.data);
 	}
 
 	ngOnDestroy(): void {
