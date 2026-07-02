@@ -56,7 +56,7 @@ class SendCertificateStatusNotification implements ShouldQueue
         // Si el estado es PROCESSED y no hay comentario personalizado, usar mensaje por defecto
         if ($newStatus === 'PROCESSED' && empty($comment)) {
             return "<p style='font-size: 12px;'>El certificado digital ha sido procesado exitosamente.</p>
-                    <p style='font-size: 12px;'>Puede proceder con la descarga del certificado desde la interfaz web de CERTIFICATE MANAGER</p>
+                    <p style='font-size: 12px;'>Puede proceder con la descarga del certificado desde la interfaz web de MATICERTS</p>
                     <p style='font-size: 12px'>Si tiene alguna pregunta o necesita más información, no dude en ponerse en contacto con nosotros.</p>";
         }
 

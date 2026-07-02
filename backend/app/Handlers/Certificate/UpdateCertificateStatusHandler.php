@@ -98,7 +98,7 @@ class UpdateCertificateStatusHandler
 
         $comments = $isProcessed
             ? "<p style='font-size: 12px;'>La solicitud <b>({$certificate->uuid})</b> de certificado ha sido procesada exitosamente.</p>
-               <p style='font-size: 12px;'>Puede proceder con la descarga del certificado desde la interfaz web de CERTIFICATE MANAGER</p>
+               <p style='font-size: 12px;'>Puede proceder con la descarga del certificado desde la interfaz web de MATICERTS</p>
                <p style='font-size: 12px'>Si tiene alguna pregunta o necesita más información, no dude en ponerse en contacto con nosotros.</p>"
             : $command->comments;
 

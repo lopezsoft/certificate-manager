@@ -1,6 +1,6 @@
 # 🛣️ Roadmap de Desarrollo — Integración Viafirma RA Colombia (PKCS#10)
 
-**Proyecto:** CERTIFICATE MANAGER v3.0 — Plataforma de Gestión y Emisión de Certificados Digitales (integrado al ecosistema de Facturación Electrónica DIAN)
+**Proyecto:** MATICERTS v3.0 — Plataforma de Gestión y Emisión de Certificados Digitales (integrado al ecosistema de Facturación Electrónica DIAN)
 **Módulo:** Emisión automatizada de Certificados Digitales (Zero-Touch)
 **Proveedor RA:** Viafirma Colombia — Endpoints **100% configurables por entorno** (ver `config/viafirma.php` y variables `VIAFIRMA_*` en §3.3). No se asume ningún dominio fijo en código.
 **Documento generado:** 2026-05-14 10:00 (UTC-5) · **Última revisión:** 2026-05-15 (alineado a PDF Viafirma "Uso del API para perfiles PKCS#10 V1.1 — 15/05/2026")
@@ -9,22 +9,22 @@
 
 ### 📒 Changelog del Roadmap
 
-| Fecha       | Versión | Cambios principales                                                                                                 |
-|-------------|:-------:|---------------------------------------------------------------------------------------------------------------------|
-| 2026-05-14  | 1.0     | Versión inicial del roadmap (basada en PDF V1.0 de Viafirma + colección Postman).                                   |
-| 2026-05-15  | 1.1     | **Alineación con PDF V1.1**: soporte de **dos perfiles** (FE-PJ y FE-PN) con payloads y CSRs distintos · sub-estados de `accreditation` (`accreditation_check`, `accreditation_completed`, `accreditation_verified`) · nuevo estado terminal `Generated_And_Downloaded` (re-descargable) · query param `codRa` en `/ra/available-profiles` · enum `identityType` (IDC/PAS) y `organizationType` (RM/PROP/RUNEOL/RNT/ESAL/ESOL/JUEGOS/EXTRANJERAS) · validez del cert = 730 días · doble endpoint base (`.com` sandbox local / `.do` documentado oficial). |
-| 2026-05-15  | 1.2     | **Homologación con DB de producción**: nueva sección §3.0 que mapea catálogos reales (`identity_documents`, `type_organization`) a enums Viafirma · `viafirma_certificate_requests` deja de duplicar datos del solicitante y se enlaza por FK a `certificate_requests` + `companies` (fuente única de verdad) · nuevos campos requeridos en `certificate_requests` (representante legal estructurado) vía migración aditiva NO destructiva · seeder de homologación opcional para añadir `Pasaporte` a `identity_documents`. **Cero cambios destructivos sobre data productiva existente.** |
-| 2026-05-15  | 1.3     | **🚀 Sprint 1 CERRADO**: 11 historias completadas + 4 entregables extra (`viafirma:migrate`, `openssl.cnf` empaquetado, excepciones tipadas, validación ISO-3166). 21 tests verdes · suite global 214/214 · cero dependencias nuevas instaladas · cero cambios en `.env`/`docker-compose.yml`. Ver §Sprint 1 con resultado por historia, ADRs implícitos y árbol de archivos producidos. |
-| 2026-05-15  | 1.4     | **🚀 Sprint 2 CERRADO**: 11 historias completadas. Capa Presentation completa (Controller REST + FormRequest + API Resource + 3 rutas). Swagger/OpenAPI con tag `v2 - Viafirma Certificados` + 2 schemas nuevos. Bug fix en `IssueCertificateUseCase` L119 (`.base64` → `->base64`). Binding de `ViafirmaCertificateRequestRepositoryContract` en ServiceProvider. Tests: 4 unit (domain validation) + 8 feature (HTTP layer). 9 archivos lint OK · cero dependencias nuevas · cero cambios en `.env`/`docker-compose.yml`. |
-| 2026-05-15  | 1.5     | **🚀 Sprint 3 CERRADO**: 9/10 historias completadas (V-310 Horizon omitida → Telescope en el futuro). `RemoteStatus` enum (14 estados remotos con clasificación semántica) · `StateMachine` FSM con guard clauses + historial · `PollingScheduler` (backoff exponencial + jitter) · `ViafirmaCircuitBreaker` (Cache-backed) · `PollViafirmaStatusJob` (ShouldBeUnique + auto-reschedule) · `ReviveStalledViafirmaPollsJob` (watchdog cron 15min) · 3 eventos de dominio · `NotifyClientOnAccreditationListener` + Notification database · 21 archivos lint OK · cero dependencias nuevas · cero cambios en `.env`/`docker-compose.yml`. |
-| 2026-05-15  | 1.6     | **🚀 Sprint 4 CERRADO**: 10/10 historias completadas. `downloadP7b()` en contrato + GuzzleViafirmaClient (binary response handling + Content-Type validation) · `DownloadP7bJob` (ShouldBeUnique + retry transient) · `AssembleP12Job` (orquesta KeyVault → assembleP12 → CSPRNG PIN → Storage → COMPLETED) · `PurgeExpiredKeysJob` (purga segura 72h, cron diario 02:00 COT) · Endpoints `GET /{id}/download` (PIN + metadata) + `GET /{id}/download/file` (streaming binario) · `DispatchDownloadOnReadyListener` conecta Sprint 3 → Sprint 4 · `ViafirmaCertificateReadyNotification` (canal database) · 8 tests pipeline · 13 archivos lint OK · cero dependencias nuevas · cero cambios en `.env`/`docker-compose.yml`. |
-| 2026-05-15  | 1.7     | **🚀 Sprint 5 CERRADO**: 9/9 historias completadas. `assembleP12()` implementación real (PKCS#7 parse + EE cert match + `openssl_pkcs12_export`) · `AwsKmsKeyVault` (envelope encryption con KMS GenerateDataKey + AES-256-GCM) · `ViafirmaHealthCheckCommand` (métricas: estados, fail ratio, CB, stalled, feature flag) · `ViafirmaFeatureGate` middleware (rollout gradual por CRC32 de company_id) · Runbook operativo `docs/runbooks/viafirma-incidents.md` · Feature flag en config + middleware aplicado a rutas · 6 tests assembleP12 + 4 tests feature gate · 9 archivos lint OK · cero dependencias nuevas · cero cambios en `.env`/`docker-compose.yml`. |
+| Fecha      | Versión | Cambios principales                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ---------- | :-----: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-05-14 |   1.0   | Versión inicial del roadmap (basada en PDF V1.0 de Viafirma + colección Postman).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| 2026-05-15 |   1.1   | **Alineación con PDF V1.1**: soporte de **dos perfiles** (FE-PJ y FE-PN) con payloads y CSRs distintos · sub-estados de `accreditation` (`accreditation_check`, `accreditation_completed`, `accreditation_verified`) · nuevo estado terminal `Generated_And_Downloaded` (re-descargable) · query param `codRa` en `/ra/available-profiles` · enum `identityType` (IDC/PAS) y `organizationType` (RM/PROP/RUNEOL/RNT/ESAL/ESOL/JUEGOS/EXTRANJERAS) · validez del cert = 730 días · doble endpoint base (`.com` sandbox local / `.do` documentado oficial).                                                                                                                                                                   |
+| 2026-05-15 |   1.2   | **Homologación con DB de producción**: nueva sección §3.0 que mapea catálogos reales (`identity_documents`, `type_organization`) a enums Viafirma · `viafirma_certificate_requests` deja de duplicar datos del solicitante y se enlaza por FK a `certificate_requests` + `companies` (fuente única de verdad) · nuevos campos requeridos en `certificate_requests` (representante legal estructurado) vía migración aditiva NO destructiva · seeder de homologación opcional para añadir `Pasaporte` a `identity_documents`. **Cero cambios destructivos sobre data productiva existente.**                                                                                                                                 |
+| 2026-05-15 |   1.3   | **🚀 Sprint 1 CERRADO**: 11 historias completadas + 4 entregables extra (`viafirma:migrate`, `openssl.cnf` empaquetado, excepciones tipadas, validación ISO-3166). 21 tests verdes · suite global 214/214 · cero dependencias nuevas instaladas · cero cambios en `.env`/`docker-compose.yml`. Ver §Sprint 1 con resultado por historia, ADRs implícitos y árbol de archivos producidos.                                                                                                                                                                                                                                                                                                                                     |
+| 2026-05-15 |   1.4   | **🚀 Sprint 2 CERRADO**: 11 historias completadas. Capa Presentation completa (Controller REST + FormRequest + API Resource + 3 rutas). Swagger/OpenAPI con tag `v2 - Viafirma Certificados` + 2 schemas nuevos. Bug fix en `IssueCertificateUseCase` L119 (`.base64` → `->base64`). Binding de `ViafirmaCertificateRequestRepositoryContract` en ServiceProvider. Tests: 4 unit (domain validation) + 8 feature (HTTP layer). 9 archivos lint OK · cero dependencias nuevas · cero cambios en `.env`/`docker-compose.yml`.                                                                                                                                                                                                  |
+| 2026-05-15 |   1.5   | **🚀 Sprint 3 CERRADO**: 9/10 historias completadas (V-310 Horizon omitida → Telescope en el futuro). `RemoteStatus` enum (14 estados remotos con clasificación semántica) · `StateMachine` FSM con guard clauses + historial · `PollingScheduler` (backoff exponencial + jitter) · `ViafirmaCircuitBreaker` (Cache-backed) · `PollViafirmaStatusJob` (ShouldBeUnique + auto-reschedule) · `ReviveStalledViafirmaPollsJob` (watchdog cron 15min) · 3 eventos de dominio · `NotifyClientOnAccreditationListener` + Notification database · 21 archivos lint OK · cero dependencias nuevas · cero cambios en `.env`/`docker-compose.yml`.                                                                                      |
+| 2026-05-15 |   1.6   | **🚀 Sprint 4 CERRADO**: 10/10 historias completadas. `downloadP7b()` en contrato + GuzzleViafirmaClient (binary response handling + Content-Type validation) · `DownloadP7bJob` (ShouldBeUnique + retry transient) · `AssembleP12Job` (orquesta KeyVault → assembleP12 → CSPRNG PIN → Storage → COMPLETED) · `PurgeExpiredKeysJob` (purga segura 72h, cron diario 02:00 COT) · Endpoints `GET /{id}/download` (PIN + metadata) + `GET /{id}/download/file` (streaming binario) · `DispatchDownloadOnReadyListener` conecta Sprint 3 → Sprint 4 · `ViafirmaCertificateReadyNotification` (canal database) · 8 tests pipeline · 13 archivos lint OK · cero dependencias nuevas · cero cambios en `.env`/`docker-compose.yml`. |
+| 2026-05-15 |   1.7   | **🚀 Sprint 5 CERRADO**: 9/9 historias completadas. `assembleP12()` implementación real (PKCS#7 parse + EE cert match + `openssl_pkcs12_export`) · `AwsKmsKeyVault` (envelope encryption con KMS GenerateDataKey + AES-256-GCM) · `ViafirmaHealthCheckCommand` (métricas: estados, fail ratio, CB, stalled, feature flag) · `ViafirmaFeatureGate` middleware (rollout gradual por CRC32 de company_id) · Runbook operativo `docs/runbooks/viafirma-incidents.md` · Feature flag en config + middleware aplicado a rutas · 6 tests assembleP12 + 4 tests feature gate · 9 archivos lint OK · cero dependencias nuevas · cero cambios en `.env`/`docker-compose.yml`.                                                          |
 
 ---
 
 ## 1. 🎯 Objetivo Estratégico
 
-Migrar el proceso **manual** de emisión de certificados de firma electrónica (descarga directa `.p12`) a un flujo **Zero-Touch PKCS#10** dentro de **CERTIFICATE MANAGER**, donde:
+Migrar el proceso **manual** de emisión de certificados de firma electrónica (descarga directa `.p12`) a un flujo **Zero-Touch PKCS#10** dentro de **MATICERTS**, donde:
 
 1. La **llave privada nunca sale** del servidor de Certificate Manager.
 2. El cliente final sólo realiza la prueba KYC (acreditación biométrica).
@@ -37,7 +37,7 @@ Migrar el proceso **manual** de emisión de certificados de firma electrónica (
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│                       CERTIFICATE MANAGER v3.0                            │
+│                       MATICERTS v3.0                            │
 │                                                                           │
 │  ┌─────────────┐   ┌──────────────────┐   ┌──────────────────────────┐  │
 │  │ Controller  │──▶│ Application Svc  │──▶│  Domain (Use Cases)      │  │
@@ -91,15 +91,15 @@ El API expone **dos perfiles** para Factura Electrónica DIAN. Certificate Manag
 
 ### 2.bis.1 Resumen comparativo
 
-| Aspecto                     | **FE-PJ** (Persona Jurídica)                                          | **FE-PN** (Persona Natural)                              |
-|-----------------------------|------------------------------------------------------------------------|----------------------------------------------------------|
-| `codProfile` (ejemplo)      | `FE-PJ en formato PKCS10`                                              | `FE-PN en formato PKCS10`                                |
-| `organizationType` en POST  | **Requerido** (`RM`,`PROP`,`RUNEOL`,`RNT`,`ESAL`,`ESOL`,`JUEGOS`,`EXTRANJERAS`) | **""** (vacío) o ausente                          |
-| Atributos en el CSR         | **10**: C, ST, L, STREET, O, OU, SERIALNUMBER (NIT), E, GN, SN          | **9**: C, ST, L, STREET, SERIALNUMBER (cédula), E, GN, SN |
-| `SERIALNUMBER` representa   | **NIT** de la empresa (ej. `900400300`)                                | **Cédula** de la persona (ej. `1002000400`)              |
-| `rues_check`                | **Sí** aplica (validación de NIT)                                      | **No** aplica                                            |
-| Validez del certificado     | 730 días (2 años)                                                      | 730 días (2 años)                                        |
-| Token                       | `P7B`                                                                  | `P7B`                                                    |
+| Aspecto                    | **FE-PJ** (Persona Jurídica)                                                    | **FE-PN** (Persona Natural)                               |
+| -------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `codProfile` (ejemplo)     | `FE-PJ en formato PKCS10`                                                       | `FE-PN en formato PKCS10`                                 |
+| `organizationType` en POST | **Requerido** (`RM`,`PROP`,`RUNEOL`,`RNT`,`ESAL`,`ESOL`,`JUEGOS`,`EXTRANJERAS`) | **""** (vacío) o ausente                                  |
+| Atributos en el CSR        | **10**: C, ST, L, STREET, O, OU, SERIALNUMBER (NIT), E, GN, SN                  | **9**: C, ST, L, STREET, SERIALNUMBER (cédula), E, GN, SN |
+| `SERIALNUMBER` representa  | **NIT** de la empresa (ej. `900400300`)                                         | **Cédula** de la persona (ej. `1002000400`)               |
+| `rues_check`               | **Sí** aplica (validación de NIT)                                               | **No** aplica                                             |
+| Validez del certificado    | 730 días (2 años)                                                               | 730 días (2 años)                                         |
+| Token                      | `P7B`                                                                           | `P7B`                                                     |
 
 ### 2.bis.2 Payloads `POST /request/fromCSR`
 
@@ -132,16 +132,16 @@ El API expone **dos perfiles** para Factura Electrónica DIAN. Certificate Manag
 
 ### 2.bis.3 Atributos comunes (DTO)
 
-| Atributo            | Tipo      | Enum / Formato                                                       | Notas                                                    |
-|---------------------|-----------|----------------------------------------------------------------------|----------------------------------------------------------|
-| `identityType`      | `string`  | `IDC` (cédula) · `PAS` (pasaporte)                                   | Tipo de documento del **solicitante** (KYC).             |
-| `countryCode`       | `string`  | ISO 3166-1 alpha-2 (ej. `CO`)                                        | País emisor del documento.                               |
-| `identity`          | `string`  | número (sin puntos)                                                  | Cédula/pasaporte del solicitante.                        |
-| `ra`                | `string`  | `viafirmaco`                                                         | Código RA. Se obtiene de `available-profiles`.           |
-| `codProfile`        | `string`  | base64 opaco                                                         | Del `GET /ra/available-profiles?codRa={ra}`.             |
-| `emailCertificate`  | `string`  | email RFC 5322                                                       | Email para envío del link KYC; **puede diferir** del E del CSR. |
-| `organizationType`  | `string?` | `RM` · `PROP` · `RUNEOL` · `RNT` · `ESAL` · `ESOL` · `JUEGOS` · `EXTRANJERAS` | **Solo PJ**. Vacío para PN.                       |
-| `csr`               | `string`  | base64 del CSR PEM                                                   | Codificación: base64 estándar (no URL-safe).             |
+| Atributo           | Tipo      | Enum / Formato                                                                | Notas                                                           |
+| ------------------ | --------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `identityType`     | `string`  | `IDC` (cédula) · `PAS` (pasaporte)                                            | Tipo de documento del **solicitante** (KYC).                    |
+| `countryCode`      | `string`  | ISO 3166-1 alpha-2 (ej. `CO`)                                                 | País emisor del documento.                                      |
+| `identity`         | `string`  | número (sin puntos)                                                           | Cédula/pasaporte del solicitante.                               |
+| `ra`               | `string`  | `viafirmaco`                                                                  | Código RA. Se obtiene de `available-profiles`.                  |
+| `codProfile`       | `string`  | base64 opaco                                                                  | Del `GET /ra/available-profiles?codRa={ra}`.                    |
+| `emailCertificate` | `string`  | email RFC 5322                                                                | Email para envío del link KYC; **puede diferir** del E del CSR. |
+| `organizationType` | `string?` | `RM` · `PROP` · `RUNEOL` · `RNT` · `ESAL` · `ESOL` · `JUEGOS` · `EXTRANJERAS` | **Solo PJ**. Vacío para PN.                                     |
+| `csr`              | `string`  | base64 del CSR PEM                                                            | Codificación: base64 estándar (no URL-safe).                    |
 
 ### 2.bis.4 Modelado en código
 
@@ -198,31 +198,31 @@ final class CsrBuilderFactory {
 
 **FE-PJ — 10 atributos:**
 
-| OID / Alias   | Campo CSR        | Ejemplo                                      |
-|---------------|------------------|----------------------------------------------|
-| `C`           | Country (ISO)    | `CO`                                         |
-| `ST`          | Departamento     | `ANTIOQUIA`                                  |
-| `L`           | Ciudad           | `MEDELLÍN`                                   |
-| `STREET`      | Dirección        | `Carrera 65 #3`                              |
-| `O`           | Organización     | `MI COMPAÑÍA SAS`                            |
-| `OU`          | Unidad org.      | `FACTURACIÓN`                                |
-| `SERIALNUMBER`| NIT empresa      | `900400300`                                  |
-| `E`           | Email            | `info@empresa.com`                           |
-| `GN`          | Nombre rep.legal | `Paula`                                      |
-| `SN`          | Apellidos        | `Ibarra`                                     |
+| OID / Alias    | Campo CSR        | Ejemplo            |
+| -------------- | ---------------- | ------------------ |
+| `C`            | Country (ISO)    | `CO`               |
+| `ST`           | Departamento     | `ANTIOQUIA`        |
+| `L`            | Ciudad           | `MEDELLÍN`         |
+| `STREET`       | Dirección        | `Carrera 65 #3`    |
+| `O`            | Organización     | `MI COMPAÑÍA SAS`  |
+| `OU`           | Unidad org.      | `FACTURACIÓN`      |
+| `SERIALNUMBER` | NIT empresa      | `900400300`        |
+| `E`            | Email            | `info@empresa.com` |
+| `GN`           | Nombre rep.legal | `Paula`            |
+| `SN`           | Apellidos        | `Ibarra`           |
 
 **FE-PN — 9 atributos** (sin `O` ni `OU`; `SERIALNUMBER` = cédula):
 
-| OID / Alias   | Campo CSR     | Ejemplo                                      |
-|---------------|---------------|----------------------------------------------|
-| `C`           | Country       | `CO`                                         |
-| `ST`          | Departamento  | `ANTIOQUIA`                                  |
-| `L`           | Ciudad        | `MEDELLÍN`                                   |
-| `STREET`      | Dirección     | `Carrera 65 #3`                              |
-| `SERIALNUMBER`| Cédula        | `1002000400`                                 |
-| `E`           | Email         | `info@correo.com`                            |
-| `GN`          | Nombre        | `Paula`                                      |
-| `SN`          | Apellidos     | `Ibarra`                                     |
+| OID / Alias    | Campo CSR    | Ejemplo           |
+| -------------- | ------------ | ----------------- |
+| `C`            | Country      | `CO`              |
+| `ST`           | Departamento | `ANTIOQUIA`       |
+| `L`            | Ciudad       | `MEDELLÍN`        |
+| `STREET`       | Dirección    | `Carrera 65 #3`   |
+| `SERIALNUMBER` | Cédula       | `1002000400`      |
+| `E`            | Email        | `info@correo.com` |
+| `GN`           | Nombre       | `Paula`           |
+| `SN`           | Apellidos    | `Ibarra`          |
 
 > ⚠️ El `dnPattern` real del perfil viene en la respuesta del `GET /ra/available-profiles?codRa={ra}` y **debe respetarse al construir el CSR** (orden y casing de los componentes). El builder validará el CSR generado contra ese `dnPattern` antes de enviarlo.
 
@@ -247,15 +247,15 @@ final class CsrBuilderFactory {
 
 #### 3.0.1 Catálogos existentes en producción (fuente única de verdad)
 
-| Catálogo productivo                              | Uso por este módulo                                                              |
-|--------------------------------------------------|----------------------------------------------------------------------------------|
-| `identity_documents` (modelo `IdentityDocument`) | Tipo de documento DIAN del solicitante / representante legal                     |
-| `type_organization` (modelo `TypeOrganization`)  | Naturaleza del cliente: Persona Jurídica / Persona Natural                       |
-| `companies` (modelo `Company`)                   | **Empresa cliente** (NIT, DV, dirección, ciudad, país, email). NO se duplica.    |
+| Catálogo productivo                                  | Uso por este módulo                                                                         |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `identity_documents` (modelo `IdentityDocument`)     | Tipo de documento DIAN del solicitante / representante legal                                |
+| `type_organization` (modelo `TypeOrganization`)      | Naturaleza del cliente: Persona Jurídica / Persona Natural                                  |
+| `companies` (modelo `Company`)                       | **Empresa cliente** (NIT, DV, dirección, ciudad, país, email). NO se duplica.               |
 | `certificate_requests` (modelo `CertificateRequest`) | **Solicitud "negocio" existente** (manual). El nuevo flujo Viafirma se **engancha** a ésta. |
-| `countries`, `cities`, `departments`             | Geografía. `companies.country_id = 45` (Colombia) por defecto.                   |
-| `file_managers` (FK `certificate_request_id`)    | Documentos adjuntos del solicitante (RUT, cédula RL, comprobante de pago, etc.). |
-| `change_histories` (FK `certificate_request_id`) | Auditoría de cambios de estado del proceso "negocio".                            |
+| `countries`, `cities`, `departments`                 | Geografía. `companies.country_id = 45` (Colombia) por defecto.                              |
+| `file_managers` (FK `certificate_request_id`)        | Documentos adjuntos del solicitante (RUT, cédula RL, comprobante de pago, etc.).            |
+| `change_histories` (FK `certificate_request_id`)     | Auditoría de cambios de estado del proceso "negocio".                                       |
 
 **Valores reales productivos verificados (no se modifican):**
 
@@ -276,14 +276,14 @@ INSERT INTO `type_organization` (`id`, `code`, `description`) VALUES
 
 Estos mappers serán implementados como **enums PHP 8.2** + métodos `fromIdentityDocument()` / `fromTypeOrganization()` en `app/Modules/Viafirma/Domain/Mappers/`. **Sin if-else regados por servicios.**
 
-| Local                                            | Viafirma (`profileType`) | Viafirma (`identityType`) | Notas                                                                 |
-|--------------------------------------------------|--------------------------|---------------------------|-----------------------------------------------------------------------|
-| `type_organization.code = 1` (Persona Jurídica)  | `FE_PJ`                  | (KYC al **representante legal**) | El `identity` enviado a Viafirma **NO** es el NIT; es la CC/CE/PAS del RL. |
-| `type_organization.code = 2` (Persona Natural)   | `FE_PN`                  | derivado del documento del titular | `identity` = `certificate_requests.document_number` (CC/CE/PAS).      |
-| `identity_documents.abbreviation = 'CC'` (`code=13`) | —                    | `IDC`                     | Cédula de Ciudadanía.                                                 |
-| `identity_documents.abbreviation = 'CE'` (`code=22`) | —                    | `IDC`                     | Cédula de Extranjería. (Viafirma trata ambas como Identity Card.)     |
-| `identity_documents.abbreviation = 'PAS'` (futuro, `code='41'`) | —          | `PAS`                     | **No existe aún en producción**: ver seeder aditivo §3.0.4.           |
-| `identity_documents.abbreviation = 'NIT'` (`code=31`) | —                    | **N/A**                   | El NIT identifica a la empresa, no al solicitante; jamás se envía como `identityType`. |
+| Local                                                           | Viafirma (`profileType`) | Viafirma (`identityType`)          | Notas                                                                                  |
+| --------------------------------------------------------------- | ------------------------ | ---------------------------------- | -------------------------------------------------------------------------------------- |
+| `type_organization.code = 1` (Persona Jurídica)                 | `FE_PJ`                  | (KYC al **representante legal**)   | El `identity` enviado a Viafirma **NO** es el NIT; es la CC/CE/PAS del RL.             |
+| `type_organization.code = 2` (Persona Natural)                  | `FE_PN`                  | derivado del documento del titular | `identity` = `certificate_requests.document_number` (CC/CE/PAS).                       |
+| `identity_documents.abbreviation = 'CC'` (`code=13`)            | —                        | `IDC`                              | Cédula de Ciudadanía.                                                                  |
+| `identity_documents.abbreviation = 'CE'` (`code=22`)            | —                        | `IDC`                              | Cédula de Extranjería. (Viafirma trata ambas como Identity Card.)                      |
+| `identity_documents.abbreviation = 'PAS'` (futuro, `code='41'`) | —                        | `PAS`                              | **No existe aún en producción**: ver seeder aditivo §3.0.4.                            |
+| `identity_documents.abbreviation = 'NIT'` (`code=31`)           | —                        | **N/A**                            | El NIT identifica a la empresa, no al solicitante; jamás se envía como `identityType`. |
 
 **El `organizationType` Viafirma** (`RM` / `PROP` / `RUNEOL` / `RNT` / `ESAL` / `ESOL` / `JUEGOS` / `EXTRANJERAS`) **no está en el modelo actual**. Se introduce como columna nueva **opcional** en la tabla del módulo (no en `companies`) ya que es un dato específico del trámite Viafirma y no de la empresa en sí.
 
@@ -516,21 +516,21 @@ nextDelay(state, attempts):
     return base * growth + jitter
 ```
 
-| Estado remoto                | Intervalo base | Comportamiento                                                |
-|------------------------------|---------------:|---------------------------------------------------------------|
-| `rues_check`                 |  30 s          | Validación RUES rápida (**solo PJ**); backoff agresivo        |
-| `rues_error`                 |  —             | **STOP polling**, requiere operador RA. Marca `FAILED_RECOVERABLE` |
-| `accreditation`              | 300 s (5 min)  | Espera KYC humano; backoff progresivo hasta ~40 min           |
-| `accreditation_check`        | 120 s          | KYC en curso (validación automática del documento)            |
-| `accreditation_completed`    |  60 s          | KYC completado; transición inminente a `verified`             |
-| `accreditation_verified`     |  30 s          | KYC verificado; próximo paso `proposeFor`                     |
-| `accreditation_rejected`     |  —             | **STOP polling**, operador RA decide (re-enviar link o rechazar) |
-| `proposeFor` / `proposed…`   | 120 s          | Validación interna RA                                         |
-| `inProcess`                  |  60 s          | Generación del certificado en la CA (≤ 5 min según SLA Viafirma) |
-| `All_Ok`                     |  30 s          | Inminente paso a `Generated_Not_Downloaded`                   |
-| `Generated_Not_Downloaded`   |  —             | **STOP polling**, dispara `DownloadP7bJob` inmediatamente     |
-| `Generated_And_Downloaded`   |  —             | **Terminal OK** (re-descargable). No re-poll salvo solicitud manual. |
-| `fail`                       |  —             | **STOP polling**, marca `FAILED`, notifica al cliente         |
+| Estado remoto              | Intervalo base | Comportamiento                                                       |
+| -------------------------- | -------------: | -------------------------------------------------------------------- |
+| `rues_check`               |           30 s | Validación RUES rápida (**solo PJ**); backoff agresivo               |
+| `rues_error`               |              — | **STOP polling**, requiere operador RA. Marca `FAILED_RECOVERABLE`   |
+| `accreditation`            |  300 s (5 min) | Espera KYC humano; backoff progresivo hasta ~40 min                  |
+| `accreditation_check`      |          120 s | KYC en curso (validación automática del documento)                   |
+| `accreditation_completed`  |           60 s | KYC completado; transición inminente a `verified`                    |
+| `accreditation_verified`   |           30 s | KYC verificado; próximo paso `proposeFor`                            |
+| `accreditation_rejected`   |              — | **STOP polling**, operador RA decide (re-enviar link o rechazar)     |
+| `proposeFor` / `proposed…` |          120 s | Validación interna RA                                                |
+| `inProcess`                |           60 s | Generación del certificado en la CA (≤ 5 min según SLA Viafirma)     |
+| `All_Ok`                   |           30 s | Inminente paso a `Generated_Not_Downloaded`                          |
+| `Generated_Not_Downloaded` |              — | **STOP polling**, dispara `DownloadP7bJob` inmediatamente            |
+| `Generated_And_Downloaded` |              — | **Terminal OK** (re-descargable). No re-poll salvo solicitud manual. |
+| `fail`                     |              — | **STOP polling**, marca `FAILED`, notifica al cliente                |
 
 #### 4.2.2 Implementación (esqueleto)
 
@@ -607,15 +607,15 @@ $schedule->job(new ReviveStalledViafirmaPollsJob)->everyFifteenMinutes()->withou
 
 ## 5. 🔐 Seguridad de Llaves Privadas (No Negociable)
 
-| Riesgo                                     | Mitigación                                                                   |
-|--------------------------------------------|------------------------------------------------------------------------------|
-| Llave en texto plano en FS                 | **AES-256-GCM** vía Laravel `Crypt` + clave por-tenant derivada (HKDF)       |
-| Acceso indebido al servidor                | Almacenamiento delegado a **AWS KMS / Secrets Manager** en producción        |
-| Log accidental del PEM                     | Redactor en `smart-logger.service` (regex `BEGIN .* PRIVATE KEY`)            |
-| Backup con llaves                          | Disco S3 dedicado con bucket policy + SSE-KMS + Object Lock                  |
-| Llave huérfana tras `FAILED`               | Job de purga: borrado seguro (overwrite + delete) a las 72h del fallo        |
-| Robo del PIN del `.p12`                    | PIN aleatorio 32 chars (CSPRNG), almacenado encriptado, rotable              |
-| Reutilización indebida CSR                 | `csr_fingerprint` único; rechazo si ya existe en `ASSEMBLED`                 |
+| Riesgo                       | Mitigación                                                             |
+| ---------------------------- | ---------------------------------------------------------------------- |
+| Llave en texto plano en FS   | **AES-256-GCM** vía Laravel `Crypt` + clave por-tenant derivada (HKDF) |
+| Acceso indebido al servidor  | Almacenamiento delegado a **AWS KMS / Secrets Manager** en producción  |
+| Log accidental del PEM       | Redactor en `smart-logger.service` (regex `BEGIN .* PRIVATE KEY`)      |
+| Backup con llaves            | Disco S3 dedicado con bucket policy + SSE-KMS + Object Lock            |
+| Llave huérfana tras `FAILED` | Job de purga: borrado seguro (overwrite + delete) a las 72h del fallo  |
+| Robo del PIN del `.p12`      | PIN aleatorio 32 chars (CSPRNG), almacenado encriptado, rotable        |
+| Reutilización indebida CSR   | `csr_fingerprint` único; rechazo si ya existe en `ASSEMBLED`           |
 
 **Interfaz `KeyVault`** (DIP — Dependency Inversion):
 
@@ -660,19 +660,19 @@ final class AwsKmsKeyVault       implements KeyVault { /* producción  */ }
 
 #### Backlog
 
-| ID    | Historia / Tarea                                                              | SP | Tipo   |
-|-------|--------------------------------------------------------------------------------|----|--------|
-| V-101 | Crear módulo `app/Modules/Viafirma/` (Domain, Application, Infrastructure)     | 3  | Arch   |
-| V-102 | `config/viafirma.php` + variables `.env.example`                              | 1  | Config |
-| V-103 | `CryptoService::generateKeyPair()` (RSA-2048 vía phpseclib3)                  | 3  | Dev    |
-| V-104 | `CsrBuilderFactory` + `FePjCsrBuilder` (10 attrs) + `FePnCsrBuilder` (9 attrs) | 8  | Dev    |
-| V-105 | Interfaz `KeyVault` + impl. `EncryptedLocalKeyVault` (AES-256-GCM)            | 5  | Sec    |
-| V-106 | `ViafirmaRaClient` (Saloon Connector) con OAuth1 HMAC-SHA1 Middleware         | 5  | Dev    |
-| V-107 | Endpoint `GET /ra/available-profiles?codRa={ra}` envuelto en `GetProfilesRequest` con parser de `dnPattern`, `validity` y `token` | 3  | Dev    |
-| V-108 | Tests unitarios `CryptoService` + ambos builders (PJ/PN) con golden CSRs      | 5  | QA     |
-| V-109 | Tests Feature con Saloon `MockClient` para profiles                           | 2  | QA     |
-| V-110 | Logger seguro: extender `smart-logger.service` con redactor de PEMs            | 2  | Sec    |
-| V-111 | Enums `CertificateProfile`, `IdentityType`, `OrganizationType` + validadores  | 2  | Dev    |
+| ID    | Historia / Tarea                                                                                                                  | SP  | Tipo   |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------- | --- | ------ |
+| V-101 | Crear módulo `app/Modules/Viafirma/` (Domain, Application, Infrastructure)                                                        | 3   | Arch   |
+| V-102 | `config/viafirma.php` + variables `.env.example`                                                                                  | 1   | Config |
+| V-103 | `CryptoService::generateKeyPair()` (RSA-2048 vía phpseclib3)                                                                      | 3   | Dev    |
+| V-104 | `CsrBuilderFactory` + `FePjCsrBuilder` (10 attrs) + `FePnCsrBuilder` (9 attrs)                                                    | 8   | Dev    |
+| V-105 | Interfaz `KeyVault` + impl. `EncryptedLocalKeyVault` (AES-256-GCM)                                                                | 5   | Sec    |
+| V-106 | `ViafirmaRaClient` (Saloon Connector) con OAuth1 HMAC-SHA1 Middleware                                                             | 5   | Dev    |
+| V-107 | Endpoint `GET /ra/available-profiles?codRa={ra}` envuelto en `GetProfilesRequest` con parser de `dnPattern`, `validity` y `token` | 3   | Dev    |
+| V-108 | Tests unitarios `CryptoService` + ambos builders (PJ/PN) con golden CSRs                                                          | 5   | QA     |
+| V-109 | Tests Feature con Saloon `MockClient` para profiles                                                                               | 2   | QA     |
+| V-110 | Logger seguro: extender `smart-logger.service` con redactor de PEMs                                                               | 2   | Sec    |
+| V-111 | Enums `CertificateProfile`, `IdentityType`, `OrganizationType` + validadores                                                      | 2   | Dev    |
 
 **Definition of Done:**
 - `php artisan tinker` → `app(CsrBuilderFactory::class)->for(CertificateProfile::FE_PJ)->build($dto)` retorna CSR PEM válido con los **10 atributos** requeridos (verificable con `openssl req -in csr.pem -noout -text`).
@@ -688,19 +688,19 @@ final class AwsKmsKeyVault       implements KeyVault { /* producción  */ }
 
 #### Backlog
 
-| ID    | Historia / Tarea                                                              | SP | Resultado |
-|-------|--------------------------------------------------------------------------------|----|-----------|
-| V-201 | Migraciones (carpeta `database/migrations/viafirma/`) ejecutadas con `--path`  | 3  | ✅ Sprint 1 (3 archivos) |
-| V-202 | Modelos Eloquent + `ViafirmaCertificateRequestRepository`                      | 3  | ✅ Sprint 1 (2 modelos + repo + contrato) |
-| V-203 | DTO `IssueCertificateCommand` con validación (FormRequest), discriminado por `profile_type` (PJ/PN) | 5  | ✅ Command (Sprint 1) + `IssueCertificateFormRequest` (Sprint 2) |
-| V-204 | `IssueCertificateUseCase` (orquesta: resolver perfil→genKey→CSR via factory→submit→persist→dispatch poll) | 8  | ✅ 337 líneas. Bug fix L119 `.base64` → `->base64` |
-| V-205 | `SubmitCsrRequest` (Guzzle) → `POST /request/fromCSR` con payload condicional (`organizationType` solo si PJ) | 5  | ✅ `GuzzleViafirmaClient::submitCsr()` |
-| V-206 | `GetPublicIdRequest` (Guzzle) → `GET /request/{cod}/publicId`                 | 2  | ✅ `GuzzleViafirmaClient::getPublicId()` |
-| V-207 | Controllers `POST /api/v2/certificates/viafirma/issue` (auto-detecta PJ/PN) + OpenAPI/Swagger | 3  | ✅ `ViafirmaCertificateController` (3 endpoints) + `ViafirmaCertificateResource` + Swagger tag + 2 schemas |
-| V-208 | Validación de `organizationType` contra enum `OrganizationType` (rechazo si PN lo envía) | 2  | ✅ `UseCase::enforceOrganizationTypeRule()` |
-| V-209 | Tests Feature E2E con mocks: **PJ camino feliz**, **PN camino feliz**, 4xx, 5xx | 8  | ✅ 4 unit tests + 8 feature tests (auth, validación, 409, 502, 201) |
-| V-210 | Hook a `ChangeHistory` para auditoría de creación de solicitud                 | 1  | ✅ UseCase L165 |
-| V-211 | Validación cruzada: DN del CSR coincide con `dnPattern` del perfil obtenido    | 3  | ✅ `DnPatternValidator` + wiring en UseCase L97 |
+| ID    | Historia / Tarea                                                                                              | SP  | Resultado                                                                                                 |
+| ----- | ------------------------------------------------------------------------------------------------------------- | --- | --------------------------------------------------------------------------------------------------------- |
+| V-201 | Migraciones (carpeta `database/migrations/viafirma/`) ejecutadas con `--path`                                 | 3   | ✅ Sprint 1 (3 archivos)                                                                                   |
+| V-202 | Modelos Eloquent + `ViafirmaCertificateRequestRepository`                                                     | 3   | ✅ Sprint 1 (2 modelos + repo + contrato)                                                                  |
+| V-203 | DTO `IssueCertificateCommand` con validación (FormRequest), discriminado por `profile_type` (PJ/PN)           | 5   | ✅ Command (Sprint 1) + `IssueCertificateFormRequest` (Sprint 2)                                           |
+| V-204 | `IssueCertificateUseCase` (orquesta: resolver perfil→genKey→CSR via factory→submit→persist→dispatch poll)     | 8   | ✅ 337 líneas. Bug fix L119 `.base64` → `->base64`                                                         |
+| V-205 | `SubmitCsrRequest` (Guzzle) → `POST /request/fromCSR` con payload condicional (`organizationType` solo si PJ) | 5   | ✅ `GuzzleViafirmaClient::submitCsr()`                                                                     |
+| V-206 | `GetPublicIdRequest` (Guzzle) → `GET /request/{cod}/publicId`                                                 | 2   | ✅ `GuzzleViafirmaClient::getPublicId()`                                                                   |
+| V-207 | Controllers `POST /api/v2/certificates/viafirma/issue` (auto-detecta PJ/PN) + OpenAPI/Swagger                 | 3   | ✅ `ViafirmaCertificateController` (3 endpoints) + `ViafirmaCertificateResource` + Swagger tag + 2 schemas |
+| V-208 | Validación de `organizationType` contra enum `OrganizationType` (rechazo si PN lo envía)                      | 2   | ✅ `UseCase::enforceOrganizationTypeRule()`                                                                |
+| V-209 | Tests Feature E2E con mocks: **PJ camino feliz**, **PN camino feliz**, 4xx, 5xx                               | 8   | ✅ 4 unit tests + 8 feature tests (auth, validación, 409, 502, 201)                                        |
+| V-210 | Hook a `ChangeHistory` para auditoría de creación de solicitud                                                | 1   | ✅ UseCase L165                                                                                            |
+| V-211 | Validación cruzada: DN del CSR coincide con `dnPattern` del perfil obtenido                                   | 3   | ✅ `DnPatternValidator` + wiring en UseCase L97                                                            |
 
 **DoD:**
 - ✅ POST a `/api/v2/certificates/viafirma/issue` con payload de empresa real crea registro con `cod_request` y `public_id` no nulos, estado interno `SUBMITTED`, llave privada cifrada en vault.
@@ -739,18 +739,18 @@ tests/Feature/Viafirma/ViafirmaCertificateControllerTest.php
 
 #### Backlog
 
-| ID    | Historia / Tarea                                                              | SP | Resultado |
-|-------|--------------------------------------------------------------------------------|----|-----------|
-| V-301 | `StateMachine` (transiciones válidas + guard clauses + sub-estados de `accreditation`) | 8  | ✅ `StateMachine.php` (208 líneas) + `RemoteStatus` enum (14 estados, 6 métodos semánticos) |
-| V-302 | `PollingScheduler` (intervalos + exponential backoff + jitter)                 | 3  | ✅ `PollingScheduler.php` con fórmula §4.2.1 |
-| V-303 | `PollViafirmaStatusJob` (`ShouldBeUnique` + auto-reschedule)                   | 5  | ✅ `PollViafirmaStatusJob.php` con 6 guards + circuit breaker |
-| V-304 | `GetStatusRequest` (Guzzle) con parser tipado                                  | 2  | ✅ `getStatus()` en contrato + `GuzzleViafirmaClient` + `StatusResultDto` |
-| V-305 | `ReviveStalledViafirmaPollsJob` (watchdog cron cada 15 min)                    | 2  | ✅ `ReviveStalledViafirmaPollsJob.php` + Kernel scheduler |
-| V-306 | Circuit Breaker (Cache-backed) ante 5xx repetidos                              | 3  | ✅ `ViafirmaCircuitBreaker.php` (CLOSED/OPEN/HALF_OPEN) |
-| V-307 | Eventos: `ViafirmaStatusChanged`, `ViafirmaRequestFailed`, `…ReadyToDownload`  | 2  | ✅ 3 eventos en `Domain/Events/` |
-| V-308 | Listener: `NotifyClientOnAccreditationListener` (notificación con link KYC)     | 3  | ✅ Listener + `ViafirmaAccreditationPendingNotification` (canal database) |
-| V-309 | Tests time-travel (`Carbon::setTestNow`) para validar backoff                  | 3  | ✅ `StateMachineTest` (10 tests) + `PollingSchedulerTest` (7 tests) + `RemoteStatusTest` (6 tests) |
-| V-310 | Dashboard Horizon: tag jobs por `viafirma:*` + alertas de fallidos             | 2  | ⚠️ Omitido — se usará **Telescope** en su momento. Tags `viafirma:*` ya presentes en los jobs. |
+| ID    | Historia / Tarea                                                                       | SP  | Resultado                                                                                         |
+| ----- | -------------------------------------------------------------------------------------- | --- | ------------------------------------------------------------------------------------------------- |
+| V-301 | `StateMachine` (transiciones válidas + guard clauses + sub-estados de `accreditation`) | 8   | ✅ `StateMachine.php` (208 líneas) + `RemoteStatus` enum (14 estados, 6 métodos semánticos)        |
+| V-302 | `PollingScheduler` (intervalos + exponential backoff + jitter)                         | 3   | ✅ `PollingScheduler.php` con fórmula §4.2.1                                                       |
+| V-303 | `PollViafirmaStatusJob` (`ShouldBeUnique` + auto-reschedule)                           | 5   | ✅ `PollViafirmaStatusJob.php` con 6 guards + circuit breaker                                      |
+| V-304 | `GetStatusRequest` (Guzzle) con parser tipado                                          | 2   | ✅ `getStatus()` en contrato + `GuzzleViafirmaClient` + `StatusResultDto`                          |
+| V-305 | `ReviveStalledViafirmaPollsJob` (watchdog cron cada 15 min)                            | 2   | ✅ `ReviveStalledViafirmaPollsJob.php` + Kernel scheduler                                          |
+| V-306 | Circuit Breaker (Cache-backed) ante 5xx repetidos                                      | 3   | ✅ `ViafirmaCircuitBreaker.php` (CLOSED/OPEN/HALF_OPEN)                                            |
+| V-307 | Eventos: `ViafirmaStatusChanged`, `ViafirmaRequestFailed`, `…ReadyToDownload`          | 2   | ✅ 3 eventos en `Domain/Events/`                                                                   |
+| V-308 | Listener: `NotifyClientOnAccreditationListener` (notificación con link KYC)            | 3   | ✅ Listener + `ViafirmaAccreditationPendingNotification` (canal database)                          |
+| V-309 | Tests time-travel (`Carbon::setTestNow`) para validar backoff                          | 3   | ✅ `StateMachineTest` (10 tests) + `PollingSchedulerTest` (7 tests) + `RemoteStatusTest` (6 tests) |
+| V-310 | Dashboard Horizon: tag jobs por `viafirma:*` + alertas de fallidos                     | 2   | ⚠️ Omitido — se usará **Telescope** en su momento. Tags `viafirma:*` ya presentes en los jobs.     |
 
 **DoD:**
 - ✅ Test E2E: `RemoteStatusTest` valida ciclo completo de estados con clasificación semántica.
@@ -804,18 +804,18 @@ Tests:
 
 #### Backlog
 
-| ID    | Historia / Tarea                                                              | SP | Resultado |
-|-------|--------------------------------------------------------------------------------|----|-----------|
-| V-401 | `downloadP7b()` en contrato + GuzzleViafirmaClient (binary response)          | 3  | ✅ `downloadP7b()` con OAuth1, Content-Type validation, error handling |
-| V-402 | `DownloadP7bJob` (guarda en storage, valida Content-Type)                      | 3  | ✅ `DownloadP7bJob.php` (ShouldBeUnique, retry transient, chains AssembleP12Job) |
-| V-403 | `CryptoService::assembleP12` (ya implementado Sprint 1)                        | 8  | ✅ Verificado — contrato existente con firma `(privateKeyPem, p7bDer, friendlyName, exportPassword): string` |
-| V-404 | Validación post-ensamblaje                                                     | 3  | ✅ AssembleP12Job lanza excepc. si assembleP12 falla → FAILED + error log |
-| V-405 | `AssembleP12Job` (orquesta descarga→ensamblaje→limpieza)                       | 3  | ✅ `AssembleP12Job.php` (KeyVault retrieval → CSPRNG PIN → assembleP12 → Storage → COMPLETED) |
-| V-406 | Endpoint `GET /{id}/download` + `GET /{id}/download/file`                      | 3  | ✅ 2 endpoints: JSON metadata+PIN / streaming binario con Content-Disposition |
-| V-407 | Notificación al cliente con link descarga                                      | 3  | ✅ `ViafirmaCertificateReadyNotification` (canal database) |
-| V-408 | Eventos del ciclo de vida (wiring ReadyToDownload → DownloadP7bJob)            | 3  | ✅ `DispatchDownloadOnReadyListener` en EventServiceProvider |
-| V-409 | Tests de validación P12 pipeline                                               | 5  | ✅ `DownloadAssemblePipelineTest` (8 tests: guards, states, paths, purge) |
-| V-410 | Job de retención: purga segura de llaves tras retención 72h                     | 2  | ✅ `PurgeExpiredKeysJob` (cron diario 02:00 COT, PURGED marker) |
+| ID    | Historia / Tarea                                                     | SP  | Resultado                                                                                                   |
+| ----- | -------------------------------------------------------------------- | --- | ----------------------------------------------------------------------------------------------------------- |
+| V-401 | `downloadP7b()` en contrato + GuzzleViafirmaClient (binary response) | 3   | ✅ `downloadP7b()` con OAuth1, Content-Type validation, error handling                                       |
+| V-402 | `DownloadP7bJob` (guarda en storage, valida Content-Type)            | 3   | ✅ `DownloadP7bJob.php` (ShouldBeUnique, retry transient, chains AssembleP12Job)                             |
+| V-403 | `CryptoService::assembleP12` (ya implementado Sprint 1)              | 8   | ✅ Verificado — contrato existente con firma `(privateKeyPem, p7bDer, friendlyName, exportPassword): string` |
+| V-404 | Validación post-ensamblaje                                           | 3   | ✅ AssembleP12Job lanza excepc. si assembleP12 falla → FAILED + error log                                    |
+| V-405 | `AssembleP12Job` (orquesta descarga→ensamblaje→limpieza)             | 3   | ✅ `AssembleP12Job.php` (KeyVault retrieval → CSPRNG PIN → assembleP12 → Storage → COMPLETED)                |
+| V-406 | Endpoint `GET /{id}/download` + `GET /{id}/download/file`            | 3   | ✅ 2 endpoints: JSON metadata+PIN / streaming binario con Content-Disposition                                |
+| V-407 | Notificación al cliente con link descarga                            | 3   | ✅ `ViafirmaCertificateReadyNotification` (canal database)                                                   |
+| V-408 | Eventos del ciclo de vida (wiring ReadyToDownload → DownloadP7bJob)  | 3   | ✅ `DispatchDownloadOnReadyListener` en EventServiceProvider                                                 |
+| V-409 | Tests de validación P12 pipeline                                     | 5   | ✅ `DownloadAssemblePipelineTest` (8 tests: guards, states, paths, purge)                                    |
+| V-410 | Job de retención: purga segura de llaves tras retención 72h          | 2   | ✅ `PurgeExpiredKeysJob` (cron diario 02:00 COT, PURGED marker)                                              |
 
 **DoD:**
 - ✅ `assembleP12` contrato verificado con firma completa.
@@ -856,18 +856,18 @@ Tests:
 
 #### Backlog
 
-| ID    | Historia / Tarea                                                              | SP | Resultado |
-|-------|--------------------------------------------------------------------------------|----|-----------|
-| V-501 | Migrar `KeyVault` a `AwsKmsKeyVault` en entorno productivo                     | 5  | ✅ `AwsKmsKeyVault` (envelope encryption KMS + AES-256-GCM) + driver activado en ServiceProvider |
-| V-502 | Métricas: latencia, tasa de éxito, tiempos KYC                                | 3  | ✅ `ViafirmaHealthCheckCommand` con tabla de estados, fail ratio, stalled, CB status |
-| V-503 | Alertas: solicitud > 24h en `accreditation`, ratio fail > 5%                   | 2  | ✅ Alertas integradas en health check (colores ✅/⚠️/❌) |
-| V-504 | Runbook operativo                                                              | 2  | ✅ `docs/runbooks/viafirma-incidents.md` (6 incidentes, comandos diagnóstico, contactos) |
-| V-505 | Pruebas de carga (k6): 100 req/hora sustained                                  | 3  | ⚠️ Pendiente para staging con infraestructura k6 |
-| V-506 | Pen-test interno enfocado en `/issue` y `/download`                            | 5  | ⚠️ Pendiente — requiere equipo de seguridad |
-| V-507 | Documentación API pública (Swagger) + ejemplos cURL                            | 2  | ✅ Swagger ya implementado en Sprint 2 · endpoints Sprint 4 con @OA anotaciones |
-| V-508 | Feature flag `viafirma_pkcs10_enabled` + rollout gradual                        | 3  | ✅ `ViafirmaFeatureGate` middleware (CRC32 rollout) + config `feature_flag` |
-| V-509 | Sesión de KT con equipo de soporte + grabación                                 | 1  | ⚠️ Pendiente — actividad de gestión, no código |
-| V-PRE | `assembleP12()` implementación real (stub desde Sprint 1)                       | 5  | ✅ P7B parse (DER/PEM) + EE cert match + `openssl_pkcs12_export` con cadena CA |
+| ID    | Historia / Tarea                                             | SP  | Resultado                                                                                       |
+| ----- | ------------------------------------------------------------ | --- | ----------------------------------------------------------------------------------------------- |
+| V-501 | Migrar `KeyVault` a `AwsKmsKeyVault` en entorno productivo   | 5   | ✅ `AwsKmsKeyVault` (envelope encryption KMS + AES-256-GCM) + driver activado en ServiceProvider |
+| V-502 | Métricas: latencia, tasa de éxito, tiempos KYC               | 3   | ✅ `ViafirmaHealthCheckCommand` con tabla de estados, fail ratio, stalled, CB status             |
+| V-503 | Alertas: solicitud > 24h en `accreditation`, ratio fail > 5% | 2   | ✅ Alertas integradas en health check (colores ✅/⚠️/❌)                                            |
+| V-504 | Runbook operativo                                            | 2   | ✅ `docs/runbooks/viafirma-incidents.md` (6 incidentes, comandos diagnóstico, contactos)         |
+| V-505 | Pruebas de carga (k6): 100 req/hora sustained                | 3   | ⚠️ Pendiente para staging con infraestructura k6                                                 |
+| V-506 | Pen-test interno enfocado en `/issue` y `/download`          | 5   | ⚠️ Pendiente — requiere equipo de seguridad                                                      |
+| V-507 | Documentación API pública (Swagger) + ejemplos cURL          | 2   | ✅ Swagger ya implementado en Sprint 2 · endpoints Sprint 4 con @OA anotaciones                  |
+| V-508 | Feature flag `viafirma_pkcs10_enabled` + rollout gradual     | 3   | ✅ `ViafirmaFeatureGate` middleware (CRC32 rollout) + config `feature_flag`                      |
+| V-509 | Sesión de KT con equipo de soporte + grabación               | 1   | ⚠️ Pendiente — actividad de gestión, no código                                                   |
+| V-PRE | `assembleP12()` implementación real (stub desde Sprint 1)    | 5   | ✅ P7B parse (DER/PEM) + EE cert match + `openssl_pkcs12_export` con cadena CA                   |
 
 **DoD release:**
 - ✅ Go-Live con feature flag configurable: `VIAFIRMA_PKCS10_ENABLED=true` + `VIAFIRMA_PKCS10_ROLLOUT_PCT={10|50|100}`
@@ -940,28 +940,28 @@ app/
 
 > ⚠️ Ninguna se instalará sin orden explícita (regla operativa). Solo se listan para validación.
 
-| Paquete                              | Propósito                              | Justificación                              |
-|--------------------------------------|----------------------------------------|--------------------------------------------|
-| `phpseclib/phpseclib:^3.0`           | Generación RSA + CSR PKCS#10           | Puro PHP, no depende de ext-openssl quirks |
-| `saloonphp/saloon:^3.0`              | Cliente HTTP estructurado              | Testabilidad (MockClient), tipado          |
-| `saloonphp/laravel-plugin:^3.0`      | Integración Laravel                    | DI, caching, events                        |
-| `guzzlehttp/oauth-subscriber:^0.8`   | Firma OAuth 1.0 HMAC-SHA1              | Implementación probada del estándar        |
-| `spatie/laravel-data:^4.0`           | DTOs tipados                           | Reemplaza arrays inseguros                 |
-| `aws/aws-sdk-php:^3.0` *(prod)*      | KMS / Secrets Manager                  | Custodia de llaves en producción           |
+| Paquete                            | Propósito                    | Justificación                              |
+| ---------------------------------- | ---------------------------- | ------------------------------------------ |
+| `phpseclib/phpseclib:^3.0`         | Generación RSA + CSR PKCS#10 | Puro PHP, no depende de ext-openssl quirks |
+| `saloonphp/saloon:^3.0`            | Cliente HTTP estructurado    | Testabilidad (MockClient), tipado          |
+| `saloonphp/laravel-plugin:^3.0`    | Integración Laravel          | DI, caching, events                        |
+| `guzzlehttp/oauth-subscriber:^0.8` | Firma OAuth 1.0 HMAC-SHA1    | Implementación probada del estándar        |
+| `spatie/laravel-data:^4.0`         | DTOs tipados                 | Reemplaza arrays inseguros                 |
+| `aws/aws-sdk-php:^3.0` *(prod)*    | KMS / Secrets Manager        | Custodia de llaves en producción           |
 
 ---
 
 ## 9. 🚨 Riesgos & Mitigaciones
 
-| Riesgo                                                  | Probabilidad | Impacto | Mitigación                                         |
-|---------------------------------------------------------|:------------:|:-------:|----------------------------------------------------|
-| Viafirma cambia formato OAuth1 sin aviso                |     Baja     |  Alto   | Contract tests semanales contra sandbox            |
-| KYC del cliente nunca se completa                       |    Media     |  Medio  | SLA 72h → `EXPIRED`, notificación + retry manual   |
-| Pérdida del par de llaves antes del ensamblaje          |     Baja     | Crítico | Backup encriptado en S3 con versionado + KMS       |
-| `.p12` no acepta firma DIAN por DN mal formado          |    Media     |  Alto   | Pre-validación DN contra `dnPattern` del perfil    |
-| Saturación del worker por backlog                       |     Baja     |  Medio  | Horizon autoscaling + queue dedicada `viafirma`    |
-| Filtración de PIN del `.p12` por email                  |    Media     |  Alto   | Link 24h con token firmado; PIN nunca en body plano|
-| Variable `clientSecret_RA` filtrada en git              |     Baja     | Crítico | Pre-commit hook + scan secretos + AWS Secrets Mgr  |
+| Riesgo                                         | Probabilidad | Impacto | Mitigación                                          |
+| ---------------------------------------------- | :----------: | :-----: | --------------------------------------------------- |
+| Viafirma cambia formato OAuth1 sin aviso       |     Baja     |  Alto   | Contract tests semanales contra sandbox             |
+| KYC del cliente nunca se completa              |    Media     |  Medio  | SLA 72h → `EXPIRED`, notificación + retry manual    |
+| Pérdida del par de llaves antes del ensamblaje |     Baja     | Crítico | Backup encriptado en S3 con versionado + KMS        |
+| `.p12` no acepta firma DIAN por DN mal formado |    Media     |  Alto   | Pre-validación DN contra `dnPattern` del perfil     |
+| Saturación del worker por backlog              |     Baja     |  Medio  | Horizon autoscaling + queue dedicada `viafirma`     |
+| Filtración de PIN del `.p12` por email         |    Media     |  Alto   | Link 24h con token firmado; PIN nunca en body plano |
+| Variable `clientSecret_RA` filtrada en git     |     Baja     | Crítico | Pre-commit hook + scan secretos + AWS Secrets Mgr   |
 
 ---
 
@@ -1037,12 +1037,12 @@ Esto se implementará en `app/Console/Commands/Viafirma/ViafirmaMigrateCommand.p
 
 ### 12.bis.1 Por qué estábamos bloqueados
 
-| Componente bloqueante               | Comportamiento en PHP 8.1 + OpenSSL 1.1 | Comportamiento en PHP 8.2+ + OpenSSL 3.x |
-|--------------------------------------|------------------------------------------|-------------------------------------------|
-| `openssl_pkcs12_read($p12Legacy)`    | ✅ Funciona transparentemente            | ❌ `error:0308010C:digital envelope routines::unsupported` |
-| Cifrado interno del `.p12` heredado  | RC2-40-CBC / 3DES-CBC + SHA-1            | Marcado **legacy**, requiere `OSSL_PROVIDER_load(NULL, "legacy")` |
-| MAC del `.p12`                       | HMAC-SHA1 con iteración baja             | Considerado inseguro por defecto          |
-| Compilación PHP en distros modernas  | OpenSSL 1.1 disponible (EOL Sep 2023)    | Solo OpenSSL 3.x ⇒ rompe `.p12` viejos    |
+| Componente bloqueante               | Comportamiento en PHP 8.1 + OpenSSL 1.1 | Comportamiento en PHP 8.2+ + OpenSSL 3.x                          |
+| ----------------------------------- | --------------------------------------- | ----------------------------------------------------------------- |
+| `openssl_pkcs12_read($p12Legacy)`   | ✅ Funciona transparentemente            | ❌ `error:0308010C:digital envelope routines::unsupported`         |
+| Cifrado interno del `.p12` heredado | RC2-40-CBC / 3DES-CBC + SHA-1           | Marcado **legacy**, requiere `OSSL_PROVIDER_load(NULL, "legacy")` |
+| MAC del `.p12`                      | HMAC-SHA1 con iteración baja            | Considerado inseguro por defecto                                  |
+| Compilación PHP en distros modernas | OpenSSL 1.1 disponible (EOL Sep 2023)   | Solo OpenSSL 3.x ⇒ rompe `.p12` viejos                            |
 
 **Consecuencia:** un upgrade del stack rompía la capacidad de firmar XML DIAN con certificados ya emitidos, lo que era inaceptable en producción.
 
@@ -1051,29 +1051,29 @@ Esto se implementará en `app/Console/Commands/Viafirma/ViafirmaMigrateCommand.p
 Con el nuevo flujo controlamos **el ciclo de vida criptográfico completo** del certificado:
 
 | Aspecto                  | Antes (`.p12` recibido externo) | Ahora (PKCS#10 generado en casa) |
-|--------------------------|----------------------------------|-----------------------------------|
-| Generación de par RSA    | Externa, algoritmos opacos       | **Local**, RSA-2048 (o 3072)       |
-| Hash de firma            | SHA-1 en muchos casos            | **SHA-256** garantizado            |
-| Cifrado del `.p12`       | RC2-40 / 3DES (legacy)           | **AES-256-CBC** (FIPS-friendly)    |
-| MAC                      | HMAC-SHA1 baja iteración         | **HMAC-SHA-256** alta iteración    |
-| Compatibilidad OpenSSL 3 | ❌ Requiere legacy provider       | ✅ Nativo, sin flags                |
+| ------------------------ | ------------------------------- | -------------------------------- |
+| Generación de par RSA    | Externa, algoritmos opacos      | **Local**, RSA-2048 (o 3072)     |
+| Hash de firma            | SHA-1 en muchos casos           | **SHA-256** garantizado          |
+| Cifrado del `.p12`       | RC2-40 / 3DES (legacy)          | **AES-256-CBC** (FIPS-friendly)  |
+| MAC                      | HMAC-SHA1 baja iteración        | **HMAC-SHA-256** alta iteración  |
+| Compatibilidad OpenSSL 3 | ❌ Requiere legacy provider      | ✅ Nativo, sin flags              |
 
 ➡️ **Conclusión:** una vez completado el Sprint 4 (ensamblaje P12 moderno), el Certificate Manager queda **técnicamente libre** para actualizarse a PHP 8.3/8.4 y Laravel 11/12 sin afectar la operación de firma DIAN. **Lo mismo aplica para todas las APIs satélite** (ERPs, motores de facturación, micro-servicios de firma) que dependían de los certificados antiguos.
 
 ### 12.bis.3 Estado actual del stack vs. objetivo
 
-| Componente              | Versión actual | Objetivo corto plazo | Objetivo largo plazo |
-|-------------------------|----------------|----------------------|----------------------|
-| PHP                     | `^8.1.6`       | **8.3**              | **8.4 LTS**          |
-| Laravel Framework       | `^10.10`       | **11.x**             | **12.x**             |
-| Laravel Passport        | `^11.8`        | `^12.x`              | `^13.x`              |
-| PHPUnit                 | `^10.1`        | `^11.x`              | `^11.x`              |
-| AWS SDK                 | `^3.356`       | última               | última               |
-| Guzzle                  | `^7.9`         | `^7.9` (OK)          | `^7.9` (OK)          |
-| `lopezsoft/ubl21dian`   | `^3.1`         | revisar PHP 8.3 OK   | fork si bloqueante   |
-| `mpdf/mpdf`             | `^8.1`         | `^8.2`               | revisar v9           |
-| `darkaonline/l5-swagger`| `^8.6`         | `^9.x`               | `^9.x`               |
-| OpenSSL en imagen Docker| 1.1.x          | **3.0+**             | **3.2+**             |
+| Componente               | Versión actual | Objetivo corto plazo | Objetivo largo plazo |
+| ------------------------ | -------------- | -------------------- | -------------------- |
+| PHP                      | `^8.1.6`       | **8.3**              | **8.4 LTS**          |
+| Laravel Framework        | `^10.10`       | **11.x**             | **12.x**             |
+| Laravel Passport         | `^11.8`        | `^12.x`              | `^13.x`              |
+| PHPUnit                  | `^10.1`        | `^11.x`              | `^11.x`              |
+| AWS SDK                  | `^3.356`       | última               | última               |
+| Guzzle                   | `^7.9`         | `^7.9` (OK)          | `^7.9` (OK)          |
+| `lopezsoft/ubl21dian`    | `^3.1`         | revisar PHP 8.3 OK   | fork si bloqueante   |
+| `mpdf/mpdf`              | `^8.1`         | `^8.2`               | revisar v9           |
+| `darkaonline/l5-swagger` | `^8.6`         | `^9.x`               | `^9.x`               |
+| OpenSSL en imagen Docker | 1.1.x          | **3.0+**             | **3.2+**             |
 
 ### 12.bis.4 Riesgos a auditar antes del upgrade
 
@@ -1103,29 +1103,29 @@ Con el nuevo flujo controlamos **el ciclo de vida criptográfico completo** del 
 
 #### Sprint U-1 — Auditoría y Pre-flight (1 semana)
 
-| ID    | Tarea                                                                          | SP |
-|-------|---------------------------------------------------------------------------------|----|
-| U-101 | Inventario completo de APIs/servicios afectados (Certificate Manager + N APIs) | 3  |
-| U-102 | Matriz de dependencias y compatibilidad PHP 8.3 / Laravel 11                   | 5  |
-| U-103 | Ejecutar suite de tests en contenedor PHP 8.3-fpm + OpenSSL 3.2 (read-only)    | 3  |
-| U-104 | Identificar uso residual de `openssl_pkcs12_read` con `.p12` antiguos           | 5  |
-| U-105 | Definir KPI de "salud certificados modernos" (% de clientes en PKCS#10)        | 2  |
-| U-106 | Diseñar estrategia *strangler fig* para `.p12` heredados (helper compat)       | 3  |
+| ID    | Tarea                                                                          | SP  |
+| ----- | ------------------------------------------------------------------------------ | --- |
+| U-101 | Inventario completo de APIs/servicios afectados (Certificate Manager + N APIs) | 3   |
+| U-102 | Matriz de dependencias y compatibilidad PHP 8.3 / Laravel 11                   | 5   |
+| U-103 | Ejecutar suite de tests en contenedor PHP 8.3-fpm + OpenSSL 3.2 (read-only)    | 3   |
+| U-104 | Identificar uso residual de `openssl_pkcs12_read` con `.p12` antiguos          | 5   |
+| U-105 | Definir KPI de "salud certificados modernos" (% de clientes en PKCS#10)        | 2   |
+| U-106 | Diseñar estrategia *strangler fig* para `.p12` heredados (helper compat)       | 3   |
 
 **Gate de salida:** documento `MIGRATION-READINESS-2026-XX.md` con go/no-go por servicio.
 
 #### Sprint U-2 — Upgrade PHP 8.1 → 8.3 (2 semanas)
 
-| ID    | Tarea                                                                          | SP |
-|-------|---------------------------------------------------------------------------------|----|
-| U-201 | Actualizar `Dockerfile` y `compose.yaml` → `php:8.3-fpm-alpine` + OpenSSL 3.2  | 3  |
-| U-202 | Actualizar `composer.json` → `"php": "^8.3"`                                   | 1  |
-| U-203 | Rector + PHPStan nivel 6 sobre `app/` (PHP 8.3 ready set)                      | 8  |
-| U-204 | Fix de breaking changes: `utf8_encode`, dynamic properties, `mt_rand`, etc.    | 5  |
-| U-205 | Suite completa de regresión + smoke E2E firma DIAN con cert PKCS#10            | 5  |
-| U-206 | Helper de compatibilidad para `.p12` legacy residuales (carga `legacy_provider`) | 3  |
-| U-207 | Despliegue canario al 10% del tráfico de producción                            | 3  |
-| U-208 | Promoción al 100% + monitoreo 48h                                              | 2  |
+| ID    | Tarea                                                                            | SP  |
+| ----- | -------------------------------------------------------------------------------- | --- |
+| U-201 | Actualizar `Dockerfile` y `compose.yaml` → `php:8.3-fpm-alpine` + OpenSSL 3.2    | 3   |
+| U-202 | Actualizar `composer.json` → `"php": "^8.3"`                                     | 1   |
+| U-203 | Rector + PHPStan nivel 6 sobre `app/` (PHP 8.3 ready set)                        | 8   |
+| U-204 | Fix de breaking changes: `utf8_encode`, dynamic properties, `mt_rand`, etc.      | 5   |
+| U-205 | Suite completa de regresión + smoke E2E firma DIAN con cert PKCS#10              | 5   |
+| U-206 | Helper de compatibilidad para `.p12` legacy residuales (carga `legacy_provider`) | 3   |
+| U-207 | Despliegue canario al 10% del tráfico de producción                              | 3   |
+| U-208 | Promoción al 100% + monitoreo 48h                                                | 2   |
 
 **Helper de compatibilidad (puente):**
 
@@ -1170,26 +1170,26 @@ RUN echo -e "openssl_conf = openssl_init\n\n[openssl_init]\nproviders = provider
 
 #### Sprint U-3 — Upgrade Laravel 10 → 11 (2 semanas)
 
-| ID    | Tarea                                                                          | SP |
-|-------|---------------------------------------------------------------------------------|----|
-| U-301 | `composer require laravel/framework:^11.0 --with-all-dependencies`             | 1  |
-| U-302 | Adaptar `app/Http/Kernel.php` → `bootstrap/app.php` (nuevo skeleton L11)        | 5  |
-| U-303 | Migrar `app/Console/Kernel.php` → `routes/console.php` + `bootstrap/app.php`   | 3  |
-| U-304 | Actualizar Passport a `^12.x` + migraciones `oauth_*` **individuales**          | 5  |
-| U-305 | Adaptar middleware groups (api, web) al nuevo registro                         | 3  |
-| U-306 | Actualizar `l5-swagger` a `^9.x` y revisar anotaciones rotas                   | 3  |
-| U-307 | Refactor a `casts()` method en modelos (recomendación L11)                     | 3  |
-| U-308 | Suite de regresión + carga                                                     | 5  |
-| U-309 | Canario + Go-Live                                                               | 3  |
+| ID    | Tarea                                                                        | SP  |
+| ----- | ---------------------------------------------------------------------------- | --- |
+| U-301 | `composer require laravel/framework:^11.0 --with-all-dependencies`           | 1   |
+| U-302 | Adaptar `app/Http/Kernel.php` → `bootstrap/app.php` (nuevo skeleton L11)     | 5   |
+| U-303 | Migrar `app/Console/Kernel.php` → `routes/console.php` + `bootstrap/app.php` | 3   |
+| U-304 | Actualizar Passport a `^12.x` + migraciones `oauth_*` **individuales**       | 5   |
+| U-305 | Adaptar middleware groups (api, web) al nuevo registro                       | 3   |
+| U-306 | Actualizar `l5-swagger` a `^9.x` y revisar anotaciones rotas                 | 3   |
+| U-307 | Refactor a `casts()` method en modelos (recomendación L11)                   | 3   |
+| U-308 | Suite de regresión + carga                                                   | 5   |
+| U-309 | Canario + Go-Live                                                            | 3   |
 
 #### Sprint U-4 — PHP 8.4 + Laravel 12 (opcional, Q4 2026)
 
-| ID    | Tarea                                                                          | SP |
-|-------|---------------------------------------------------------------------------------|----|
-| U-401 | Property hooks + asymmetric visibility audit (oportunidades de refactor)       | 3  |
-| U-402 | Upgrade a Laravel 12 (cuando alcance estabilidad LTS)                          | 5  |
-| U-403 | Eliminación definitiva del `legacy_provider` de OpenSSL en Docker              | 2  |
-| U-404 | Validar 0 `.p12` antiguos en producción (KPI ≥ 99.5% PKCS#10)                  | 2  |
+| ID    | Tarea                                                                    | SP  |
+| ----- | ------------------------------------------------------------------------ | --- |
+| U-401 | Property hooks + asymmetric visibility audit (oportunidades de refactor) | 3   |
+| U-402 | Upgrade a Laravel 12 (cuando alcance estabilidad LTS)                    | 5   |
+| U-403 | Eliminación definitiva del `legacy_provider` de OpenSSL en Docker        | 2   |
+| U-404 | Validar 0 `.p12` antiguos en producción (KPI ≥ 99.5% PKCS#10)            | 2   |
 
 ### 12.bis.6 Estrategia para las demás APIs DIAN del ecosistema
 
@@ -1225,14 +1225,14 @@ RUN echo -e "openssl_conf = openssl_init\n\n[openssl_init]\nproviders = provider
 
 ## 12. ✅ Resumen Ejecutivo
 
-| Sprint | Duración | Foco                                  | Entregable Tangible                          | Estado |
-|:------:|:--------:|----------------------------------------|----------------------------------------------|:------:|
-| 0      | 3 días   | Spike técnico                          | Go/No-Go documentado                         | ✅     |
-| 1      | 2 sem    | Cripto local + Auth OAuth1             | CSR + cliente HTTP probado                   | ✅     |
-| 2      | 2 sem    | Endpoints de emisión                   | Solicitud creada end-to-end                  | ✅     |
-| 3      | 2 sem    | Polling resiliente + FSM               | Solicitudes avanzan solas                    | ✅     |
-| 4      | 2 sem    | Descarga + Ensamblaje P12              | `.p12` válido firma XML DIAN                 | ✅     |
-| 5      | 1-2 sem  | Hardening + Go-Live                    | Producción al 100% con observabilidad        | ✅     |
+| Sprint | Duración | Foco                       | Entregable Tangible                   | Estado |
+| :----: | :------: | -------------------------- | ------------------------------------- | :----: |
+|   0    |  3 días  | Spike técnico              | Go/No-Go documentado                  |   ✅    |
+|   1    |  2 sem   | Cripto local + Auth OAuth1 | CSR + cliente HTTP probado            |   ✅    |
+|   2    |  2 sem   | Endpoints de emisión       | Solicitud creada end-to-end           |   ✅    |
+|   3    |  2 sem   | Polling resiliente + FSM   | Solicitudes avanzan solas             |   ✅    |
+|   4    |  2 sem   | Descarga + Ensamblaje P12  | `.p12` válido firma XML DIAN          |   ✅    |
+|   5    | 1-2 sem  | Hardening + Go-Live        | Producción al 100% con observabilidad |   ✅    |
 
 **Duración total estimada:** ~10-12 semanas (≈ 3 meses) con un equipo de 2 backend + QA.
 
@@ -1240,12 +1240,12 @@ RUN echo -e "openssl_conf = openssl_init\n\n[openssl_init]\nproviders = provider
 
 La migración a PKCS#10 **desbloquea** la modernización de plataforma que llevaba años represada por la incompatibilidad de los `.p12` heredados con OpenSSL 3.x / PHP 8.2+:
 
-| Sprint  | Duración | Foco                                | Resultado                                  |
-|:-------:|:--------:|--------------------------------------|--------------------------------------------|
-| U-1     | 1 sem    | Auditoría pre-upgrade                | Matriz de readiness por servicio           |
-| U-2     | 2 sem    | PHP 8.1 → 8.3 + OpenSSL 3.2          | Stack moderno con `legacy_provider` puente |
-| U-3     | 2 sem    | Laravel 10 → 11                      | Skeleton moderno, Passport 12              |
-| U-4     | 2 sem    | PHP 8.4 + Laravel 12 (opcional)      | Plataforma LTS, eliminación de legacy      |
+| Sprint | Duración | Foco                            | Resultado                                  |
+| :----: | :------: | ------------------------------- | ------------------------------------------ |
+|  U-1   |  1 sem   | Auditoría pre-upgrade           | Matriz de readiness por servicio           |
+|  U-2   |  2 sem   | PHP 8.1 → 8.3 + OpenSSL 3.2     | Stack moderno con `legacy_provider` puente |
+|  U-3   |  2 sem   | Laravel 10 → 11                 | Skeleton moderno, Passport 12              |
+|  U-4   |  2 sem   | PHP 8.4 + Laravel 12 (opcional) | Plataforma LTS, eliminación de legacy      |
 
 Aplicable también a **todas las demás APIs del ecosistema** que firman documentos DIAN.
 

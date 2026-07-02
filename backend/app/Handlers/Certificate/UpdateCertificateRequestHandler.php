@@ -42,7 +42,6 @@ class UpdateCertificateRequestHandler
                 'dv'                    => $dv,
                 'info'                  => strip_tags($command->info ?? ''),
                 'life'                  => $command->life,
-                'postal_code'           => $command->postalCode,
                 'phone'                 => $command->phone,
                 'mobile'                => $command->mobile,
             ]);

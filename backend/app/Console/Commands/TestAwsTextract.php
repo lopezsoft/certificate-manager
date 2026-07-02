@@ -28,7 +28,7 @@ class TestAwsTextract extends Command
      */
     public function handle()
     {
-        $this->info('🎯 PRUEBA DE AWS TEXTRACT PARA CERTIFICATE MANAGER');
+        $this->info('🎯 PRUEBA DE AWS TEXTRACT PARA MATICERTS');
         $this->info('Fecha: ' . date('Y-m-d H:i:s'));
         $this->line(str_repeat('=', 60));
         

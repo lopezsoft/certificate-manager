@@ -107,7 +107,7 @@ function testCertificateProcessing()
 // Función principal
 function main()
 {
-    echo "🎯 PRUEBA DE AWS TEXTRACT PARA CERTIFICATE MANAGER\n";
+    echo "🎯 PRUEBA DE AWS TEXTRACT PARA MATICERTS\n";
     echo "Fecha: " . date('Y-m-d H:i:s') . "\n";
     echo "=" . str_repeat("=", 60) . "\n";
     
