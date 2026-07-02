@@ -22,7 +22,9 @@ class CertificateRequestMailService
         try {
             $company    = CompanyQueries::getCompany();
             $query      = CertificateRequest::query()
-                ->with(['files'])
+                ->with(['files' => function ($query) {
+                    $query->where('document_type', 'ATTACHED');
+                }])
                 ->whereHas("files", function ($query) {
                     $query->where('document_type', 'ATTACHED');
                 })->where('id', $id)

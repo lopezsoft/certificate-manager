@@ -88,7 +88,14 @@ class SendMail extends Mailable implements ShouldQueue
         $attachments = [];
         if($this->messageData->files) {
             foreach ($this->messageData->files as $file) {
-                $attachments[] = Attachment::fromStorageDisk('attachment', $file->file_path);
+                // Los archivos se guardan en AWS S3 bajo certificate_requests.base_path
+                // El file_path ya contiene la ruta completa relativa al disco S3
+                $disk = config('certificate.storage.disk', 's3');
+                
+                // Validar que el archivo exista antes de adjuntarlo
+                if (\Illuminate\Support\Facades\Storage::disk($disk)->exists($file->file_path)) {
+                    $attachments[] = Attachment::fromStorageDisk($disk, $file->file_path);
+                }
             }
         }
         return $attachments;
