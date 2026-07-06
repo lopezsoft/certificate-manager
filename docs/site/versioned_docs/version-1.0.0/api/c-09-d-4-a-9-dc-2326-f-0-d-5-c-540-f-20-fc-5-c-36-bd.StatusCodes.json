@@ -1,0 +1,1 @@
+{"responses":{"200":{"description":"Token revocado","content":{"application/json":{"schema":{"properties":{"success":{"type":"boolean","example":true},"message":{"type":"string","example":"Operación exitosa"}},"type":"object","title":"ApiSuccessResponse"}}}},"401":{"description":"No autenticado"},"404":{"description":"Token no encontrado"}}}

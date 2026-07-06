@@ -1,0 +1,1 @@
+{"title":"Body","body":{"required":true,"content":{"application/json":{"schema":{"properties":{"revoking_code":{"description":"Código de revocación recibido por el usuario","type":"string"},"revocation_reason":{"description":"Motivo: 0,1,2,3,4,5,9,10","type":"integer"}},"type":"object"}}}}}

@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 import type * as OpenApiPlugin from 'docusaurus-plugin-openapi-docs';
 
 const config: Config = {
-  title: 'MATICERTS',
+  title: 'MATICERTS.COM',
   tagline: 'Documentación oficial y unificada v1',
   favicon: 'img/logo-circle-blue.ico',
   url: 'https://docs.certificatemanager.local',
@@ -34,7 +34,14 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           docItemComponent: "@theme/ApiItem", // Required for OpenAPI docs
         },
-        blog: false, // Disabling blog for this API documentation site
+        blog: {
+          path: 'changelog',
+          routeBasePath: 'changelog',
+          blogTitle: 'Changelog',
+          blogDescription: 'Registro de cambios y versiones de la API',
+          blogSidebarTitle: 'Versiones Recientes',
+          blogSidebarCount: 'ALL',
+        },
         theme: {
           customCss: './src/css/custom.scss',
         },
@@ -99,7 +106,7 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'MATICERTS',
+      title: 'MATICERTS.COM',
       logo: {
         alt: 'MATICERTS Logo',
         src: 'img/logo-horizontal-blue.png',
@@ -144,6 +151,11 @@ const config: Config = {
               to: '/docs/api/sistema',
             }
           ]
+        },
+        {
+          to: '/changelog',
+          label: 'Changelog',
+          position: 'left',
         },
         {
           href: '/certificate-manager-api-v1.postman_collection.json',

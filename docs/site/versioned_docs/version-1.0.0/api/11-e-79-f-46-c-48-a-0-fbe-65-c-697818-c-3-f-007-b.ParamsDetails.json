@@ -1,0 +1,1 @@
+{"parameters":[{"name":"id","in":"path","description":"ID del registro","required":true,"schema":{"type":"integer"}},{"name":"tbPrefix","in":"query","description":"Prefijo identificador de la tabla","required":true,"schema":{"type":"string","example":"contacts"}}]}

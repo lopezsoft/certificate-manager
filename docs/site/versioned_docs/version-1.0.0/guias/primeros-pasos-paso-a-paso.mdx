@@ -1,0 +1,487 @@
+---
+id: primeros-pasos-paso-a-paso
+title: "Guía Paso a Paso"
+sidebar_position: 2
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# 📖 Guía Paso a Paso: Tu Primera Emisión de Certificado
+
+En esta guía aprenderás a emitir tu primer certificado digital usando MATICERTS. Seguiremos un flujo completo desde la autenticación hasta la validación del certificado.
+
+---
+
+## 📋 Requisitos Previos
+
+Antes de comenzar, asegúrate de tener:
+
+- ✅ Una cuenta en MATICERTS
+- ✅ Un **Personal Access Token (PAT)** o credenciales de usuario
+- ✅ Una herramienta para hacer peticiones HTTP (cURL, Postman, o tu lenguaje favorito)
+- ✅ Datos del solicitante (nombre, email, documento de identidad)
+
+---
+
+## Paso 1️⃣: Obtén tu Token de Acceso
+
+### Opción A: Usando Personal Access Token (PAT)
+
+Si ya tienes un PAT, puedes usarlo directamente. Los PATs no expiran y son ideales para integraciones backend.
+
+```bash
+# Simplemente guarda tu PAT en una variable
+export ACCESS_TOKEN="tu-pat-aqui"
+```
+
+### Opción B: Autenticarse como Usuario
+
+Si prefieres autenticarte con credenciales de usuario:
+
+<Tabs groupId="auth-languages">
+  <TabItem value="curl" label="cURL">
+
+```bash
+curl -X POST "https://sandbox-api.maticerts.com/api/v1/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "tu-email@empresa.com",
+    "password": "tu-contraseña"
+  }'
+```
+
+**Respuesta esperada:**
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIs...",
+  "token_type": "Bearer",
+  "expires_in": 3600
+}
+```
+
+  </TabItem>
+  <TabItem value="javascript" label="Node.js">
+
+```javascript
+const response = await fetch('https://sandbox-api.maticerts.com/api/v1/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    email: 'tu-email@empresa.com',
+    password: 'tu-contraseña'
+  })
+});
+
+const data = await response.json();
+const accessToken = data.access_token;
+console.log('Token obtenido:', accessToken);
+```
+
+  </TabItem>
+  <TabItem value="python" label="Python">
+
+```python
+import requests
+
+response = requests.post(
+  'https://sandbox-api.maticerts.com/api/v1/auth/login',
+  json={
+    'email': 'tu-email@empresa.com',
+    'password': 'tu-contraseña'
+  }
+)
+
+data = response.json()
+access_token = data['access_token']
+print(f'Token obtenido: {access_token}')
+```
+
+  </TabItem>
+</Tabs>
+
+:::tip Guarda tu Token
+Almacena el token en una variable de entorno para usarlo en los siguientes pasos:
+```bash
+export ACCESS_TOKEN="tu-token-aqui"
+```
+:::
+
+---
+
+## Paso 2️⃣: Verifica la Conexión (Health Check)
+
+Antes de continuar, verifica que tu token funciona correctamente:
+
+<Tabs groupId="verify-languages">
+  <TabItem value="curl" label="cURL">
+
+```bash
+curl -X GET "https://sandbox-api.maticerts.com/api/v1/sistema/health" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Accept: application/json"
+```
+
+**Respuesta esperada:**
+```json
+{
+  "status": "ok",
+  "timestamp": "2024-06-28T23:55:00Z",
+  "version": "1.0.0"
+}
+```
+
+  </TabItem>
+  <TabItem value="javascript" label="Node.js">
+
+```javascript
+const response = await fetch('https://sandbox-api.maticerts.com/api/v1/sistema/health', {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${accessToken}`,
+    'Accept': 'application/json'
+  }
+});
+
+const data = await response.json();
+console.log('Estado del sistema:', data);
+```
+
+  </TabItem>
+  <TabItem value="python" label="Python">
+
+```python
+import requests
+
+headers = {
+  'Authorization': f'Bearer {access_token}',
+  'Accept': 'application/json'
+}
+
+response = requests.get(
+  'https://sandbox-api.maticerts.com/api/v1/sistema/health',
+  headers=headers
+)
+
+print('Estado del sistema:', response.json())
+```
+
+  </TabItem>
+</Tabs>
+
+✅ Si ves `"status": "ok"`, ¡tu conexión funciona!
+
+---
+
+## Paso 3️⃣: Crea una Solicitud de Certificado
+
+Ahora crearemos una solicitud para emitir un certificado. Necesitarás proporcionar datos del solicitante:
+
+<Tabs groupId="request-languages">
+  <TabItem value="curl" label="cURL">
+
+```bash
+curl -X POST "https://sandbox-api.maticerts.com/api/v1/solicitudes-de-certificado" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nombre": "Juan Pérez",
+    "email": "juan@empresa.com",
+    "documento": "1234567890",
+    "tipo_documento": "CC",
+    "tipo_certificado": "digital",
+    "proposito": "Firma de documentos"
+  }'
+```
+
+**Respuesta esperada:**
+```json
+{
+  "id": "req-12345",
+  "estado": "PENDIENTE",
+  "numero_solicitud": "SOL-2024-001",
+  "fecha_creacion": "2024-06-28T23:55:00Z",
+  "solicitante": {
+    "nombre": "Juan Pérez",
+    "email": "juan@empresa.com"
+  }
+}
+```
+
+  </TabItem>
+  <TabItem value="javascript" label="Node.js">
+
+```javascript
+const requestData = {
+  nombre: 'Juan Pérez',
+  email: 'juan@empresa.com',
+  documento: '1234567890',
+  tipo_documento: 'CC',
+  tipo_certificado: 'digital',
+  proposito: 'Firma de documentos'
+};
+
+const response = await fetch(
+  'https://sandbox-api.maticerts.com/api/v1/solicitudes-de-certificado',
+  {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(requestData)
+  }
+);
+
+const data = await response.json();
+console.log('Solicitud creada:', data);
+const requestId = data.id;
+```
+
+  </TabItem>
+  <TabItem value="python" label="Python">
+
+```python
+import requests
+
+request_data = {
+  'nombre': 'Juan Pérez',
+  'email': 'juan@empresa.com',
+  'documento': '1234567890',
+  'tipo_documento': 'CC',
+  'tipo_certificado': 'digital',
+  'proposito': 'Firma de documentos'
+}
+
+headers = {
+  'Authorization': f'Bearer {access_token}',
+  'Content-Type': 'application/json'
+}
+
+response = requests.post(
+  'https://sandbox-api.maticerts.com/api/v1/solicitudes-de-certificado',
+  json=request_data,
+  headers=headers
+)
+
+data = response.json()
+print('Solicitud creada:', data)
+request_id = data['id']
+```
+
+  </TabItem>
+</Tabs>
+
+:::info Guarda el ID de la Solicitud
+Necesitarás el `id` de la solicitud para los siguientes pasos. En este ejemplo es `req-12345`.
+:::
+
+---
+
+## Paso 4️⃣: Monitorea el Estado de la Solicitud
+
+Verifica el progreso de tu solicitud:
+
+<Tabs groupId="status-languages">
+  <TabItem value="curl" label="cURL">
+
+```bash
+curl -X GET "https://sandbox-api.maticerts.com/api/v1/solicitudes-de-certificado/req-12345" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Accept: application/json"
+```
+
+**Respuesta esperada:**
+```json
+{
+  "id": "req-12345",
+  "estado": "VALIDANDO",
+  "numero_solicitud": "SOL-2024-001",
+  "progreso": 50,
+  "pasos": [
+    {
+      "nombre": "Validación de datos",
+      "estado": "COMPLETADO",
+      "fecha": "2024-06-28T23:55:30Z"
+    },
+    {
+      "nombre": "Generación de CSR",
+      "estado": "EN_PROGRESO",
+      "fecha": "2024-06-28T23:56:00Z"
+    }
+  ]
+}
+```
+
+  </TabItem>
+  <TabItem value="javascript" label="Node.js">
+
+```javascript
+const response = await fetch(
+  `https://sandbox-api.maticerts.com/api/v1/solicitudes-de-certificado/${requestId}`,
+  {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Accept': 'application/json'
+    }
+  }
+);
+
+const data = await response.json();
+console.log('Estado de la solicitud:', data);
+console.log(`Progreso: ${data.progreso}%`);
+```
+
+  </TabItem>
+  <TabItem value="python" label="Python">
+
+```python
+response = requests.get(
+  f'https://sandbox-api.maticerts.com/api/v1/solicitudes-de-certificado/{request_id}',
+  headers=headers
+)
+
+data = response.json()
+print('Estado de la solicitud:', data)
+print(f"Progreso: {data['progreso']}%")
+```
+
+  </TabItem>
+</Tabs>
+
+:::tip Polling
+Repite esta petición cada 5-10 segundos hasta que el estado sea `COMPLETADO` o `ERROR`.
+:::
+
+---
+
+## Paso 5️⃣: Descarga el Certificado
+
+Una vez que el estado sea `COMPLETADO`, descarga tu certificado:
+
+<Tabs groupId="download-languages">
+  <TabItem value="curl" label="cURL">
+
+```bash
+curl -X GET "https://sandbox-api.maticerts.com/api/v1/solicitudes-de-certificado/req-12345/certificado" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -o certificado.p12
+```
+
+  </TabItem>
+  <TabItem value="javascript" label="Node.js">
+
+```javascript
+const response = await fetch(
+  `https://sandbox-api.maticerts.com/api/v1/solicitudes-de-certificado/${requestId}/certificado`,
+  {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`
+    }
+  }
+);
+
+const buffer = await response.arrayBuffer();
+const fs = require('fs');
+fs.writeFileSync('certificado.p12', Buffer.from(buffer));
+console.log('Certificado descargado: certificado.p12');
+```
+
+  </TabItem>
+  <TabItem value="python" label="Python">
+
+```python
+response = requests.get(
+  f'https://sandbox-api.maticerts.com/api/v1/solicitudes-de-certificado/{request_id}/certificado',
+  headers=headers
+)
+
+with open('certificado.p12', 'wb') as f:
+  f.write(response.content)
+
+print('Certificado descargado: certificado.p12')
+```
+
+  </TabItem>
+</Tabs>
+
+✅ ¡Tu certificado está listo para usar!
+
+---
+
+## Paso 6️⃣: Valida tu Certificado
+
+Verifica que el certificado es válido:
+
+<Tabs groupId="validate-languages">
+  <TabItem value="curl" label="cURL">
+
+```bash
+curl -X POST "https://sandbox-api.maticerts.com/api/v1/certificados/validar" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "numero_serie": "ABC123DEF456",
+    "huella_digital": "SHA256:..."
+  }'
+```
+
+  </TabItem>
+  <TabItem value="javascript" label="Node.js">
+
+```javascript
+const validationData = {
+  numero_serie: 'ABC123DEF456',
+  huella_digital: 'SHA256:...'
+};
+
+const response = await fetch(
+  'https://sandbox-api.maticerts.com/api/v1/certificados/validar',
+  {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(validationData)
+  }
+);
+
+const data = await response.json();
+console.log('Validación:', data);
+```
+
+  </TabItem>
+</Tabs>
+
+---
+
+## 🎉 ¡Felicidades!
+
+Has completado exitosamente el flujo de emisión de certificados. Ahora puedes:
+
+- 📝 Firmar documentos digitales
+- 🔐 Validar la autenticidad de certificados
+- 📊 Gestionar múltiples certificados
+- 🔄 Renovar certificados próximos a expirar
+
+---
+
+## 🆘 Solución de Problemas
+
+### Error: "Token inválido"
+- Verifica que el token no haya expirado
+- Comprueba que incluyes `Bearer` antes del token
+- Regenera el token si es necesario
+
+### Error: "Solicitud no encontrada"
+- Asegúrate de usar el ID correcto de la solicitud
+- Verifica que la solicitud pertenece a tu cuenta
+
+### Error: "Datos incompletos"
+- Revisa que todos los campos requeridos estén presentes
+- Valida el formato de los datos (emails, documentos, etc.)
+
+Para más ayuda, consulta la sección de **Troubleshooting**.

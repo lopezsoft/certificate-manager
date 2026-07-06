@@ -1,0 +1,1 @@
+{"responses":{"200":{"description":"Orden de renovación generada exitosamente"},"400":{"description":"Error al procesar la renovación (ej. ya tiene vida máxima)"},"401":{"description":"No autenticado"},"404":{"description":"Trámite no encontrado"}}}

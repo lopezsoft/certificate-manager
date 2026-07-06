@@ -1,0 +1,69 @@
+---
+id: 9-d-78-f-7-cf-6056-dc-9-c-37-cb-23-eeb-7326183
+title: "Subir archivo a una solicitud"
+description: "Adjunta un archivo (PDF, imagen o ZIP con certificado P12/PFX) a una solicitud existente. Máximo 6 archivos por solicitud. Límite de tamaño: 2 MB por archivo. Límite: 10 cargas/minuto."
+sidebar_label: "Subir archivo a una solicitud"
+hide_title: true
+hide_table_of_contents: true
+api: eJzdVs1uGzcQfhWCJxtYa1eyY8c6VfFP6iC2F7aCFjUMY0SOJCa75IbkGlaEBfIQfYE+QA9Fb736TfokxXBXf5bsFO2pvS24M8OZ7/tmOFPuYeR494b3rBire+P4bcQlOmFV4ZXRvMt78mOpPbBSM6iN2FZ6fBoxlcMINTPsp7OUCaOZQOvVUAmQhqXtTpye/rjNyBGYM5kSypeS4YNyHrXHFjt//OVB5YbtzwI7Vhi7sG2x94+/5sojk8g85PD4m+myDjt/E+wap7lVl7UTJsCOwMW50qU3LR5xU6AFKuVM8i4/lAevhwdiuJ+82pfiUOweiEFnF3FwsNvZb7/e5REvwEKOHi3hMuUacuRdriSPuCI8CvBj/hSks2PKMVsuVOIyIDziFj+XyqLkXW9LjLgTY8yBd6fcT4pwh/Y4Qsur6ra2RuffGDkhk6fOwmhCkX7lZeZVAdbHQ2PzHQk+BF2EX/je8KHKkDguLAHjFTqyCKfd6VPmG7qBQa0B2zD/Ln0bsfTibUTUb/NoVoDzVukRjzglAp53+UBpsBNeRVwaUeao/V1tO13zQV3mQYn9fu/o+5NjyhIfIC8otcVpFfGCeHiabHp2wSRmKyLcciYzjAhdKGwm1plAN2SvyyyDAV1LWFfV3MIMPqLwvKrozKIrjHY1gJ0keR4/Vw6UNEwYa1F4IBSQr1AIRZEpEWQaf3RGr/K3ypWSGyRD6YC81NlkJpA5dO0q4nNQPN41wrp7Js6KH+niru6ADYTNybn60N/BvLDooFXIIZ95hlZ50VOYvACt0MXtuJN09uKkHR8myd6rV3ud5HW8ITA+eNROGX03E+3z0RuXXOX4vOzm1sskLFfh1JdveLaTzl6S/DOVR/ztycXJVa//kuKdB1+6l5M4ujxP359QmHXFRtwrH6xOVYbnoKGeM2S5t0m61/Mxpg1DTVK1ICFi2WIiz1sKMgH6CzWcmT8REnNwis5GFrT8F3p3pRDolosfGJMh6OXqh5A5JKrRORh9g67julShHn/XYWagtca+CFuvUCdkdNU0/Ry79jp2F4ZBSZXWg5/MOofrZscNQuCaR+v/CBFpF0VplZ+E13SAYNH2SpoLN7f0zuXox4ae5sI4H55f+sfjpZG104yseKpkFVNPElYO7f3skS5tRj5QqPi+vfY499Izdt9mf379mT3+oZUARo6hNGcKYz1I4JTLLNVrwrmGdjnhOWBj74u1W/rmE+rQF0SGYZfkxDqthJmBR00vgEQnkaWX133W5BpD6cdxZkZKt1hKD1WYxBaEMhody0GMlcYdb3aaT1Y6ZClaZzRkrBeIZ+Fux7bSXn+7uWV2gQ+/aBOqSzmdPc3vfujzZgkJigl/A8NKD02otmH2aEEFa2YH66Vnawg0AgYRBNwsTtcBYXL0Kmgcc1DEVg09fpeHHy1h8pYI3RLICQF3W0krjFXSRg56OWw5UPMV8OmS+TSz6aKx/uvrbKNAjw8+LjJQmuAJ8p82rXPDN7QOj3g3rLB199xGfEzt1r3h0+kAHH6wWVXR8ecSLbXqbcTvwap6DbqZcqkcfctmjrwA8NZVs25us7+zFW8sqDkEPeGUR1ZiLa9POKl38eq2ivgYQaIN6dU/juokdvrkvnDctCBX0cyJWqjwS+Zrk3dlTFH3UjM1e3luJPlQ4BA3WnzSgIs4rI6Ops1m3RiS31jtdFpbhNauqnnxoZ+p/qr6C9E2ty0=
+sidebar_class_name: "post api-method"
+info_path: docs/api/certificate-manager-api
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+import Translate from "@docusaurus/Translate";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Subir archivo a una solicitud"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"post"}
+  path={"/certificate-request/{id}/files"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Adjunta un archivo (PDF, imagen o ZIP con certificado P12/PFX) a una solicitud existente. Máximo 6 archivos por solicitud. Límite de tamaño: 2 MB por archivo. Límite: 10 cargas/minuto.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+>
+  <Translate id="theme.openapi.request.title">Request</Translate>
+</Heading>
+
+<ParamsDetails
+  {...require("./9-d-78-f-7-cf-6056-dc-9-c-37-cb-23-eeb-7326183.ParamsDetails.json")}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  {...require("./9-d-78-f-7-cf-6056-dc-9-c-37-cb-23-eeb-7326183.RequestSchema.json")}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  {...require("./9-d-78-f-7-cf-6056-dc-9-c-37-cb-23-eeb-7326183.StatusCodes.json")}
+>
+  
+</StatusCodes>
+
+
+      

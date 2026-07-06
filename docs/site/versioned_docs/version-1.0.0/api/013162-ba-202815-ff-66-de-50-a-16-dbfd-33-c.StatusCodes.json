@@ -1,0 +1,1 @@
+{"responses":{"200":{"description":"Lista de departamentos","content":{"application/json":{"schema":{"properties":{"success":{"type":"boolean","example":true},"dataRecords":{"properties":{"data":{"type":"array","items":{"properties":{"id":{"type":"integer","example":5},"name":{"type":"string","example":"Antioquia"}},"type":"object"}}},"type":"object"}},"type":"object"}}}}}}

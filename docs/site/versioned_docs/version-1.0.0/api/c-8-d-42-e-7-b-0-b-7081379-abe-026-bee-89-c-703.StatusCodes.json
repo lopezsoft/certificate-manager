@@ -1,0 +1,1 @@
+{"responses":{"200":{"description":"Evento recibido y encolado"},"401":{"description":"Firma HMAC inválida"}}}

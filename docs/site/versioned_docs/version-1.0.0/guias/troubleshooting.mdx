@@ -1,0 +1,415 @@
+---
+id: troubleshooting
+title: "Solución de Problemas"
+sidebar_position: 4
+---
+
+# 🔧 Solución de Problemas
+
+Aquí encontrarás soluciones a los problemas más comunes al usar MATICERTS.
+
+---
+
+## 🔐 Problemas de Autenticación
+
+### Error: "Token inválido" o "Unauthorized"
+
+**Síntomas:**
+```json
+{
+  "error": "unauthorized",
+  "message": "Invalid or expired token"
+}
+```
+
+**Causas Posibles:**
+- Token expirado
+- Token mal formado
+- Falta el prefijo `Bearer`
+- Token revocado
+
+**Soluciones:**
+
+1. **Verifica el formato del token:**
+   ```bash
+   # ❌ INCORRECTO
+   curl -H "Authorization: eyJhbGciOiJIUzI1NiIs..."
+   
+   # ✅ CORRECTO
+   curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
+   ```
+
+2. **Regenera el token si ha expirado:**
+   ```bash
+   curl -X POST "https://sandbox-api.maticerts.com/api/v1/auth/login" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "email": "tu-email@empresa.com",
+       "password": "tu-contraseña"
+     }'
+   ```
+
+3. **Si usas PAT, verifica que no esté revocado:**
+   - Accede al panel de administración
+   - Revisa la sección "Tokens"
+   - Regenera si es necesario
+
+---
+
+### Error: "Credenciales inválidas"
+
+**Síntomas:**
+```json
+{
+  "error": "invalid_credentials",
+  "message": "Email or password is incorrect"
+}
+```
+
+**Soluciones:**
+
+1. **Verifica tu email y contraseña:**
+   - Asegúrate de escribir correctamente
+   - Verifica mayúsculas/minúsculas
+   - Comprueba que no haya espacios
+
+2. **Restablece tu contraseña:**
+   - Ve a https://maticerts.com/forgot-password
+   - Sigue las instrucciones en tu email
+   - Intenta nuevamente
+
+3. **Verifica que tu cuenta esté activa:**
+   - Comprueba tu email para confirmación
+   - Contacta al soporte si no recibiste el email
+
+---
+
+## 📝 Problemas con Solicitudes
+
+### Error: "Solicitud no encontrada"
+
+**Síntomas:**
+```json
+{
+  "error": "not_found",
+  "message": "Request with ID 'req-12345' not found"
+}
+```
+
+**Soluciones:**
+
+1. **Verifica el ID de la solicitud:**
+   ```bash
+   # Asegúrate de usar el ID correcto
+   curl -X GET "https://sandbox-api.maticerts.com/api/v1/solicitudes-de-certificado/req-12345" \
+     -H "Authorization: Bearer $TOKEN"
+   ```
+
+2. **Comprueba que la solicitud pertenece a tu cuenta:**
+   - Listar todas tus solicitudes:
+   ```bash
+   curl -X GET "https://sandbox-api.maticerts.com/api/v1/solicitudes-de-certificado" \
+     -H "Authorization: Bearer $TOKEN"
+   ```
+
+3. **Verifica que no haya sido eliminada:**
+   - Las solicitudes se conservan por 90 días
+   - Después se archivan automáticamente
+
+---
+
+### Error: "Datos incompletos" o "Validación fallida"
+
+**Síntomas:**
+```json
+{
+  "error": "validation_error",
+  "message": "Field 'email' is required",
+  "details": {
+    "email": "This field is required"
+  }
+}
+```
+
+**Soluciones:**
+
+1. **Verifica que todos los campos requeridos estén presentes:**
+   ```javascript
+   const solicitud = {
+     nombre: "Juan Pérez",           // ✅ Requerido
+     email: "juan@empresa.com",      // ✅ Requerido
+     documento: "1234567890",        // ✅ Requerido
+     tipo_documento: "CC",           // ✅ Requerido
+     tipo_certificado: "digital",    // ✅ Requerido
+     proposito: "Firma de documentos" // ✅ Requerido
+   };
+   ```
+
+2. **Valida el formato de los datos:**
+   ```javascript
+   // Email válido
+   const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+   
+   // Documento válido (números)
+   const documentoValido = /^\d+$/.test(documento);
+   
+   // Nombre no vacío
+   const nombreValido = nombre.trim().length > 0;
+   ```
+
+3. **Revisa los valores permitidos:**
+   ```javascript
+   const tiposDocumento = ['CC', 'CE', 'PA', 'NIT'];
+   const tiposCertificado = ['digital', 'codigo_firma', 'sello_tiempo'];
+   
+   if (!tiposDocumento.includes(tipo_documento)) {
+     console.error('Tipo de documento no válido');
+   }
+   ```
+
+---
+
+## ⏳ Problemas de Estado y Progreso
+
+### La solicitud está "PENDIENTE" por mucho tiempo
+
+**Síntomas:**
+- Estado no cambia después de 30 minutos
+- Progreso se detiene en 0%
+
+**Soluciones:**
+
+1. **Verifica el estado actual:**
+   ```bash
+   curl -X GET "https://sandbox-api.maticerts.com/api/v1/solicitudes-de-certificado/req-12345" \
+     -H "Authorization: Bearer $TOKEN"
+   ```
+
+2. **Revisa los pasos completados:**
+   ```json
+   {
+     "estado": "PENDIENTE",
+     "pasos": [
+       {
+         "nombre": "Validación de datos",
+         "estado": "PENDIENTE",
+         "error": "Email no verificado"
+       }
+     ]
+   }
+   ```
+
+3. **Acciones según el error:**
+   - **Email no verificado:** Revisa tu bandeja de entrada
+   - **Documento rechazado:** Verifica que sea válido
+   - **Datos incompletos:** Actualiza la solicitud
+
+---
+
+### Error: "Solicitud expirada"
+
+**Síntomas:**
+```json
+{
+  "error": "request_expired",
+  "message": "This request has expired and can no longer be processed"
+}
+```
+
+**Soluciones:**
+
+1. **Las solicitudes expiran después de 7 días:**
+   - Crea una nueva solicitud
+   - Asegúrate de completarla dentro del plazo
+
+2. **Para solicitudes urgentes:**
+   - Contacta al soporte
+   - Podemos extender el plazo en casos especiales
+
+---
+
+## 📥 Problemas de Descarga
+
+### Error: "Certificado no disponible"
+
+**Síntomas:**
+```json
+{
+  "error": "not_available",
+  "message": "Certificate is not ready for download yet"
+}
+```
+
+**Soluciones:**
+
+1. **Verifica que el estado sea "COMPLETADO":**
+   ```bash
+   curl -X GET "https://sandbox-api.maticerts.com/api/v1/solicitudes-de-certificado/req-12345" \
+     -H "Authorization: Bearer $TOKEN"
+   ```
+
+2. **Espera a que se complete el proceso:**
+   - Tiempo promedio: 5-15 minutos
+   - Máximo: 24 horas
+
+3. **Si sigue sin estar disponible:**
+   - Contacta al soporte
+   - Proporciona el ID de la solicitud
+
+---
+
+### Error: "Archivo corrupto" al descargar
+
+**Síntomas:**
+- El archivo descargado no se puede abrir
+- Mensaje de error al importar el certificado
+
+**Soluciones:**
+
+1. **Intenta descargar nuevamente:**
+   ```bash
+   curl -X GET "https://sandbox-api.maticerts.com/api/v1/solicitudes-de-certificado/req-12345/certificado" \
+     -H "Authorization: Bearer $TOKEN" \
+     -o certificado.p12
+   ```
+
+2. **Verifica la integridad del archivo:**
+   ```bash
+   # En Linux/Mac
+   file certificado.p12
+   
+   # Debería mostrar: "data" o "PKCS#12 data"
+   ```
+
+3. **Si el problema persiste:**
+   - Elimina el archivo descargado
+   - Intenta nuevamente
+   - Contacta al soporte si continúa
+
+---
+
+## 🔄 Problemas de Integración
+
+### Error: "CORS - Cross-Origin Request Blocked"
+
+**Síntomas:**
+```
+Access to XMLHttpRequest at 'https://sandbox-api.maticerts.com/...' 
+from origin 'http://localhost:3000' has been blocked by CORS policy
+```
+
+**Soluciones:**
+
+1. **Configura CORS en tu servidor:**
+   ```javascript
+   // Node.js con Express
+   const cors = require('cors');
+   app.use(cors({
+     origin: 'https://tu-dominio.com',
+     credentials: true
+   }));
+   ```
+
+2. **Usa un proxy en desarrollo:**
+   ```javascript
+   // En package.json
+   "proxy": "https://sandbox-api.maticerts.com"
+   ```
+
+3. **Realiza las peticiones desde el backend:**
+   ```javascript
+   // ❌ Evita hacer peticiones directas desde el frontend
+   // ✅ Usa tu backend como intermediario
+   
+   // Frontend
+   const response = await fetch('/api/certificados/validar', {
+     method: 'POST',
+     body: JSON.stringify(data)
+   });
+   
+   // Backend
+   app.post('/api/certificados/validar', async (req, res) => {
+     const result = await maticerts.validar(req.body);
+     res.json(result);
+   });
+   ```
+
+---
+
+### Error: "Timeout - La petición tardó demasiado"
+
+**Síntomas:**
+```
+Error: Request timeout after 30000ms
+```
+
+**Soluciones:**
+
+1. **Aumenta el timeout en tu cliente:**
+   ```javascript
+   // Node.js
+   const response = await fetch(url, {
+     timeout: 60000 // 60 segundos
+   });
+   
+   // Python
+   response = requests.get(url, timeout=60)
+   ```
+
+2. **Usa polling en lugar de esperar:**
+   ```javascript
+   async function esperarCertificado(solicitudId, maxIntentos = 120) {
+     for (let i = 0; i < maxIntentos; i++) {
+       const solicitud = await obtenerSolicitud(solicitudId);
+       
+       if (solicitud.estado === 'COMPLETADO') {
+         return solicitud;
+       }
+       
+       if (solicitud.estado === 'ERROR') {
+         throw new Error(solicitud.error);
+       }
+       
+       // Espera 5 segundos antes de intentar nuevamente
+       await new Promise(resolve => setTimeout(resolve, 5000));
+     }
+     
+     throw new Error('Timeout esperando certificado');
+   }
+   ```
+
+3. **Contacta al soporte si el servidor es lento:**
+   - Podemos investigar problemas de rendimiento
+   - Proporciona el ID de la solicitud
+
+---
+
+## 📞 Contacto y Soporte
+
+Si ninguna solución funciona:
+
+1. **Reúne información:**
+   - ID de la solicitud
+   - Timestamp del error
+   - Pasos que realizaste
+   - Mensaje de error exacto
+
+2. **Contacta al soporte:**
+   - Email: soporte@maticerts.com
+   - Teléfono: +57 1 XXXX-XXXX
+   - Chat: https://maticerts.com/chat
+
+3. **Proporciona logs:**
+   ```bash
+   # Exporta los logs de tu aplicación
+   # Esto ayuda a diagnosticar el problema más rápido
+   ```
+
+---
+
+## 📚 Recursos Adicionales
+
+- [Documentación Completa](/docs/api)
+- [Ejemplos de Código](https://github.com/maticerts/examples)
+- [Preguntas Frecuentes](/docs/faq)
+- [Estado del Sistema](https://status.maticerts.com)

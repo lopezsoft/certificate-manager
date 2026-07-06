@@ -1,0 +1,1 @@
+{"title":"Body","body":{"required":true,"content":{"application/json":{"schema":{"required":["tbPrefix","records"],"properties":{"tbPrefix":{"description":"Prefijo identificador de la tabla","type":"string","example":"contacts"},"records":{"description":"JSON serializado con los campos a actualizar","type":"string"}},"type":"object"}}}}}

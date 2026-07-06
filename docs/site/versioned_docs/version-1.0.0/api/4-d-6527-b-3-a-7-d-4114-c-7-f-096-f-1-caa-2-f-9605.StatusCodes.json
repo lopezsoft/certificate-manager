@@ -1,0 +1,1 @@
+{"responses":{"200":{"description":"Tarifas obtenidas"},"401":{"description":"No autenticado"},"422":{"description":"Parámetros inválidos"}}}

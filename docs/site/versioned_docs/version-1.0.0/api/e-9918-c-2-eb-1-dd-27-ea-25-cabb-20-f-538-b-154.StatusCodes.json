@@ -1,0 +1,1 @@
+{"responses":{"200":{"description":"Datos frescos para el widget de pago"},"404":{"description":"Orden no encontrada o no está en estado PENDING"}}}

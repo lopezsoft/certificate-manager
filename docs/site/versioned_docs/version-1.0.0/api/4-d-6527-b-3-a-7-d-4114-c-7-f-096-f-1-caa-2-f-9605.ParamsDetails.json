@@ -1,0 +1,1 @@
+{"parameters":[{"name":"quantity","in":"query","required":false,"schema":{"type":"integer","minimum":1}},{"name":"vigencia","in":"query","description":"Años: 1 o 2","required":false,"schema":{"type":"integer","enum":[1,2]}}]}

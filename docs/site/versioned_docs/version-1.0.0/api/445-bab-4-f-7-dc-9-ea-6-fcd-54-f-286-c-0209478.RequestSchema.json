@@ -1,0 +1,1 @@
+{"title":"Body","body":{"required":true,"content":{"application/json":{"schema":{"required":["quantity","vigencia"],"properties":{"quantity":{"description":"Cantidad de certificados","type":"integer","minimum":1,"example":5},"vigencia":{"description":"Vigencia en años","type":"integer","enum":[1,2],"example":1}},"type":"object"}}}}}
