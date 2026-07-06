@@ -28,7 +28,7 @@ class UploadCertificateFileBase64Request extends FormRequest
             'attachments.*.name'         => ['nullable', 'string', 'max:255'],
             'attachments.*.type'         => ['nullable', 'string', 'max:100'],
             'attachments.*.size'         => ['nullable', 'integer'],
-            'document_type'              => ['nullable', 'string', 'in:ATTACHED,PAYMENT'],
+            'document_type'              => ['nullable', 'string', 'in:ATTACHED,PAYMENT,CERTIFICATE'],
             'pin'                        => ['nullable', 'string', 'max:50'],
         ];
     }
@@ -46,7 +46,7 @@ class UploadCertificateFileBase64Request extends FormRequest
             'attachments.*.type.string'      => 'El tipo debe ser un texto',
             'attachments.*.type.max'         => 'El tipo no puede exceder 100 caracteres',
             'attachments.*.size.integer'     => 'El tamaño debe ser un número entero',
-            'document_type.in'               => 'El tipo de documento debe ser ATTACHED o PAYMENT',
+            'document_type.in'               => 'El tipo de documento debe ser ATTACHED, PAYMENT o CERTIFICATE',
             'pin.string'                     => 'El PIN debe ser un texto',
             'pin.max'                        => 'El PIN no puede exceder 50 caracteres',
         ];

@@ -47,7 +47,7 @@ class CertificateRequestFilesController extends Controller
      *     @OA\Response(response=401, description="No autenticado")
      * )
      */
-    public function createFile(UploadCertificateFileBase64Request $request, $certificateRequestId): JsonResponse
+    public function createFile(UploadCertificateFileBase64Request $request, mixed $certificateRequestId): JsonResponse
     {
         return $this->filesService->createFilesFromBase64($request, $certificateRequestId);
     }
@@ -65,7 +65,7 @@ class CertificateRequestFilesController extends Controller
      *     @OA\Response(response=401, description="No autenticado")
      * )
      */
-    public function deleteFile($id, $fileId): JsonResponse
+    public function deleteFile(mixed $id, mixed $fileId): JsonResponse
     {
         return $this->filesService->deleteFile($id, $fileId);
     }

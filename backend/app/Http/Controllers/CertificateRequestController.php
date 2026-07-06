@@ -170,7 +170,7 @@ class CertificateRequestController extends Controller
      *     @OA\Response(response=401, description="No autenticado")
      * )
      */
-    public function updateCertificateRequest(UpdateCertificateRequestFormRequest $request, $id): JsonResponse
+    public function updateCertificateRequest(UpdateCertificateRequestFormRequest $request, mixed $id): JsonResponse
     {
         return $this->service->updateCertificateRequest($request, $id);
     }
@@ -196,7 +196,7 @@ class CertificateRequestController extends Controller
      *     @OA\Response(response=401, description="No autenticado")
      * )
      */
-    public function updateCertificateRequestStatus(Request $request, $id): JsonResponse
+    public function updateCertificateRequestStatus(Request $request, mixed $id): JsonResponse
     {
         return $this->service->updateCertificateRequestStatus($request, $id);
     }
@@ -212,7 +212,7 @@ class CertificateRequestController extends Controller
      *     @OA\Response(response=401, description="No autenticado")
      * )
      */
-    public function deleteCertificateRequest($id): JsonResponse
+    public function deleteCertificateRequest(mixed $id): JsonResponse
     {
         return $this->service->deleteCertificateRequest($id);
     }

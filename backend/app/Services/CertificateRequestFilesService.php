@@ -82,9 +82,22 @@ class CertificateRequestFilesService
                 // Obtener o calcular tamaño
                 $fileSize = $attachment['size'] ?? strlen($binaryContent);
 
-                // Guardar archivo
+                // Preparar ruta relativa para archivo
                 $path = "{$basePath}/{$fileName}";
-                $disk->put($path, $binaryContent);
+                $localFilePath = storage_path("app/{$path}");
+                
+                // Crear directorio local si no existe
+                $localDir = dirname($localFilePath);
+                if (!is_dir($localDir)) {
+                    if (!mkdir($localDir, 0755, true)) {
+                        throw new Exception("No se pudo crear el directorio local: {$localDir}", 500);
+                    }
+                }
+
+                // Guardar archivo en LOCAL para validación
+                if (file_put_contents($localFilePath, $binaryContent) === false) {
+                    throw new Exception("No se pudo guardar el archivo localmente: {$localFilePath}", 500);
+                }
 
                 // Registrar en FileManager
                 $file = FileManager::create([
@@ -99,43 +112,86 @@ class CertificateRequestFilesService
                     'document_type'          => $request->input('document_type') ?? 'ATTACHED'
                 ]);
 
-                // Procesar ZIP con PIN si aplica
+                // Procesar ZIP con PIN si aplica - validación local
                 $pin = $request->input('pin');
                 if ($pin && pathinfo($fileName, PATHINFO_EXTENSION) === 'zip') {
-                    $fileNameWithoutExtension = pathinfo($fileName, PATHINFO_FILENAME);
-                    $extractToPath = storage_path("app/" . config('certificate.storage.legacy_disk', 'attachment') . "/{$basePath}/zip");
-                    $password = $certificateRequest->dni;
-                    if ($certificateRequest->type_organization_id == 1) {
-                        $password = "{$certificateRequest->dni}{$certificateRequest->dv}";
-                    }
-                    $zipFilePath = storage_path("app/" . config('certificate.storage.legacy_disk', 'attachment') . "/{$path}");
-                    if ((new ZipExtractorService())->extract((object)[
-                        'zipFilePath'     => $zipFilePath,
-                        'password'        => $password,
-                        'extractToPath'   => $extractToPath,
-                        'fileName'        => $fileNameWithoutExtension,
-                    ])) {
-                        $allFiles = $disk->allFiles("{$basePath}/zip");
-                        $content = null;
-                        foreach ($allFiles as $allFile) {
-                            $content = base64_encode($disk->get($allFile));
-                            $extension = pathinfo($allFile, PATHINFO_EXTENSION);
-                            if ($extension == 'p12' || $extension == 'pfx') {
-                                break;
-                            }
-                        }
-                        if (!$content) {
-                            throw new Exception("No se ha encontrado el archivo P12 o PFX en el ZIP.", 400);
+                    try {
+                        $fileNameWithoutExtension = pathinfo($fileName, PATHINFO_FILENAME);
+                        $extractToPath = storage_path("app/{$basePath}/zip");
+                        $password = $certificateRequest->dni;
+                        if ($certificateRequest->type_organization_id == 1) {
+                            $password = "{$certificateRequest->dni}{$certificateRequest->dv}";
                         }
 
-                        $expirationDate = CertificateValidatorService::getExpirationDate($content, $pin);
-                        $certificateRequest->update([
-                            'expiration_date' => $expirationDate,
-                            'pin'             => $pin,
-                        ]);
-                        // Eliminar el archivo ZIP extraído
-                        $disk->deleteDirectory("{$basePath}/zip");
+                        // Descomprimir desde LOCAL (archivo existe ahora)
+                        if ((new ZipExtractorService())->extract((object)[
+                            'zipFilePath'     => $localFilePath,
+                            'password'        => $password,
+                            'extractToPath'   => $extractToPath,
+                            'fileName'        => $fileNameWithoutExtension,
+                        ])) {
+                            // Validación exitosa: extraer P12/PFX
+                            $allFiles = glob("{$extractToPath}/*");
+                            $content = null;
+                            
+                            foreach ($allFiles as $allFile) {
+                                if (is_file($allFile)) {
+                                    $content = base64_encode(file_get_contents($allFile));
+                                    $extension = pathinfo($allFile, PATHINFO_EXTENSION);
+                                    if (in_array($extension, ['p12', 'pfx'])) {
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            if (!$content) {
+                                // Limpiar en caso de error
+                                $this->recursiveDelete($extractToPath);
+                                throw new Exception("No se ha encontrado el archivo P12 o PFX en el ZIP.", 400);
+                            }
+
+                            // Validar expiración del certificado
+                            $expirationDate = CertificateValidatorService::getExpirationDate($content, $pin);
+                            $certificateRequest->update([
+                                'expiration_date' => $expirationDate,
+                                'pin'             => $pin,
+                            ]);
+
+                            // Limpiar carpeta de extracción temporal
+                            $this->recursiveDelete($extractToPath);
+
+                            // ZIP validado: Subir a S3
+                            if (file_exists($localFilePath)) {
+                                $disk->put($path, file_get_contents($localFilePath));
+                                unlink($localFilePath);  // Eliminar versión local después de subir
+                            }
+
+                            Log::info("ZIP validado y subido a S3 exitosamente", [
+                                'certificate_request_id' => $certificateRequestId,
+                                'file_name' => $fileName,
+                                'expiration_date' => $expirationDate,
+                                'file_path' => $path
+                            ]);
+                        } else {
+                            // Falló la extracción/validación - eliminar archivo inválido
+                            if (file_exists($localFilePath)) {
+                                unlink($localFilePath);
+                            }
+                            throw new Exception("No se pudo validar el archivo ZIP. Verifica la contraseña o la integridad del archivo.", 400);
+                        }
+                    } catch (Exception $e) {
+                        // En caso de error, limpiar archivos temporales
+                        if (file_exists($localFilePath)) {
+                            unlink($localFilePath);
+                        }
+                        if (isset($extractToPath) && is_dir($extractToPath)) {
+                            $this->recursiveDelete($extractToPath);
+                        }
+                        throw $e;
                     }
+                } else {
+                    // Si no es ZIP o no hay PIN, guardar en disco (S3)
+                    $disk->put($path, $binaryContent);
                 }
 
                 event(new CertificateFileUploaded(
@@ -342,5 +398,28 @@ class CertificateRequestFilesService
                 'certificate_request_id' => $certificateRequestId
             ]);
         }
+    }
+
+    /**
+     * Elimina recursivamente un directorio y su contenido
+     *
+     * @param string $dirPath
+     * @return void
+     */
+    private function recursiveDelete(string $dirPath): void
+    {
+        if (!is_dir($dirPath)) {
+            return;
+        }
+
+        $files = glob("{$dirPath}/*");
+        foreach ($files as $file) {
+            if (is_dir($file)) {
+                $this->recursiveDelete($file);
+            } else {
+                @unlink($file);
+            }
+        }
+        @rmdir($dirPath);
     }
 }
