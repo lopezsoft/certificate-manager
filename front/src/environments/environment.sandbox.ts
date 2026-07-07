@@ -3,8 +3,9 @@ export const environment = {
   hmr: false,
   SOCKET_URL: '',
   APIJWT: 'sandbox-api-jwt',
-  APPURL: 'https://sandbox.example.com',
-  APIURL: 'https://sandbox.example.com/api/v1',
+  APPURL: 'https://sandbox-api.maticerts.com',
+  APIURL: 'https://sandbox-api.maticerts.com/api/v1',
+  WOMPI_PUBLIC_KEY: 'pub_test_q4gEVnZWpzfEROZMScHdZgH4ChcGHW2E',
   VERSION: '1.9.0',
   config: {
     name: 'MATICERTS SANDBOX',
