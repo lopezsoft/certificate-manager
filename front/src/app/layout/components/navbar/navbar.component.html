@@ -1,13 +1,3 @@
-<!-- SANDBOX BANNER - WITHIN NAVBAR -->
-@if (isSandbox) {
-<div class="sandbox-banner">
-  <span class="sandbox-bullet">●</span>
-  <span class="sandbox-label">SANDBOX</span>
-  <span class="sandbox-bullet">●</span>
-</div>
-}
-<!-- / SANDBOX BANNER -->
-
 @if (horizontalMenu) {
 <div class="navbar-header d-xl-block d-none">
   <!-- Navbar brand -->
@@ -19,6 +9,9 @@
             width="36" />
         </span>
         <h2 class="brand-text mb-0">{{ coreConfig.app.appName }}</h2>
+        @if (isSandbox) {
+        <span class="badge-sandbox">SANDBOX</span>
+        }
       </a>
     </li>
   </ul>

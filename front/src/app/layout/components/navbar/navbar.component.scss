@@ -159,52 +159,22 @@ app-navbar-bookmark {
 }
 
 // =============================================
-// SANDBOX BANNER — parte del navbar
+// SANDBOX BADGE — Indicador discreto
 // =============================================
-.sandbox-banner {
-  width: 100%;
-  background-color: #ff9800;
-  color: white;
-  text-align: center;
-  padding: 8px 0;
-  font-weight: bold;
-  font-size: 0.9rem;
-  letter-spacing: 1.5px;
-  border-bottom: 3px solid #e68900;
-  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+.badge-sandbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #ff9800;
+  background: rgba(255, 152, 0, 0.1);
+  border: 1px solid rgba(255, 152, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-left: 6px;
+  text-transform: uppercase;
   user-select: none;
-
-  .sandbox-bullet {
-    margin: 0 8px;
-    display: inline-block;
-    font-size: 1rem;
-    line-height: 1;
-  }
-
-  .sandbox-label {
-    display: inline-block;
-    font-weight: 800;
-    letter-spacing: 2.5px;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-}
-
-// Responsive design for mobile
-@media (max-width: 768px) {
-  .sandbox-banner {
-    padding: 6px 0;
-    font-size: 0.8rem;
-    letter-spacing: 1px;
-    border-bottom-width: 2px;
-
-    .sandbox-bullet {
-      margin: 0 6px;
-      font-size: 0.9rem;
-    }
-
-    .sandbox-label {
-      letter-spacing: 1.5px;
-    }
-  }
 }
 
