@@ -59,13 +59,14 @@ final class MigrateLegacyCertificatesToS3Command extends Command
         $from = Storage::disk($fromDisk);
         $to   = Storage::disk($toDisk);
 
-        // Solicitudes vigentes legacy (PROCESADAS y EN PROCESO).
+        // Solicitudes vigentes legacy (PROCESADAS, EN PROCESO, ENVIADAS).
         // Migra a S3: todos los certificados vigentes necesitan estar en almacenamiento cloud.
         // Nota: Viafirma es nuevo en esta versión, por lo que no hay registros históricos que filtrar.
         $query = CertificateRequest::query()
             ->whereIn('request_status', [
                 CertificateRequestStatusEnum::PROCESSED->value,
                 CertificateRequestStatusEnum::PROCESSING->value,
+                CertificateRequestStatusEnum::SENT->value,
             ])
             ->whereNotNull('expiration_date')
             ->where('expiration_date', '>', now())
