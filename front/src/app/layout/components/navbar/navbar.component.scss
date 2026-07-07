@@ -2,11 +2,11 @@
 @import '@core/scss/base/components/include'; // Components includes
 
 // =============================================
-// NAVBAR COMPONENT HOST — Layout vertical
+// NAVBAR COMPONENT HOST — Modern CSS Grid Layout
 // =============================================
 :host {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto 1fr;
   width: 100%;
 }
 
