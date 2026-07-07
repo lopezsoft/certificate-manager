@@ -22,7 +22,7 @@ class EloquentCertificateRequestRepository implements CertificateRequestReposito
         'identity:id,document_name',
         'organization:id,description',
         'city',
-        'files:id,certificate_request_id,file_name,file_path,extension_file,mime_type,file_size,last_modified,status,document_type',
+        'files:id,uuid,certificate_request_id,file_name,file_path,extension_file,mime_type,file_size,last_modified,status,document_type',
     ];
 
     /** Relaciones extendidas para la vista admin */
@@ -30,7 +30,7 @@ class EloquentCertificateRequestRepository implements CertificateRequestReposito
         'identity:id,document_name',
         'organization:id,description',
         'city',
-        'files:id,certificate_request_id,file_name,file_path,extension_file,mime_type,file_size,last_modified,status,document_type',
+        'files:id,uuid,certificate_request_id,file_name,file_path,extension_file,mime_type,file_size,last_modified,status,document_type',
         'company:id,company_name,dni,dv,address,email,phone,issuance_provider,has_agreement,active,uuid',
         'history'
     ];

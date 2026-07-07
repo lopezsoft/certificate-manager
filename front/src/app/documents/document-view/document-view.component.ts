@@ -22,7 +22,6 @@ import { Subject, interval, Subscription } from "rxjs";
 import { takeUntil, switchMap } from "rxjs/operators";
 import { ViafirmaInternalStateEnum, ViafirmaInternalStateDescription } from "../../common/enums/ViafirmaInternalState";
 import { IssuanceProviderService } from 'app/services/issuance-provider.service';
-import { DownloadFile } from 'app/common/class/download-file';
 
 @Component({
 	selector: 'app-document-view',
@@ -180,13 +179,24 @@ export class DocumentViewComponent implements OnDestroy {
 			|| this.currentShipping.request_status == DocumentStatusEnum.REJECTED;
 	}
 
-	onDownload(file: FileManager) {
-		const url = `${this.http.getAppUrl()}/attachments/${file.file_path}`;
-		if (file.extension_file === 'pdf') {
-			this.documentViewerService.open(url, this.currentShipping.company_name);
-		} else {
-			this.http.openDocument(url);
-		}
+	protected onDownload(file: FileManager) {
+		const requestId = this.currentShipping.uuid;
+		const fileUuid = file.uuid;
+		this.mask.showBlockUI('Procesando descarga de certificado...');
+		this.issuanceService.getDownloadFile(requestId, fileUuid).subscribe({
+			next: (meta) => {
+				this.mask.hideBlockUI();
+				if (file.extension_file === 'pdf') {
+					this.documentViewerService.open(meta.download_url, this.currentShipping.company_name + ' - ' + file.file_name);
+				} else {
+					this.http.openDocument(meta.download_url);
+				}
+			},
+			error: () => {
+				this.mask.hideBlockUI();
+				this.issuanceLoading = false;
+			}
+		});
 	}
 
 	protected selectFile(file: FileManager) {

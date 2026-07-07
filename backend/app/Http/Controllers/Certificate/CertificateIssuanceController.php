@@ -14,10 +14,10 @@ use App\Modules\Viafirma\Application\Services\ViafirmaDownloadService;
 use App\Modules\Viafirma\Application\UseCases\RedownloadCertificateUseCase;
 use App\Modules\Viafirma\Domain\Exceptions\ViafirmaException;
 use App\Services\Certificate\CertificateIssuanceOrchestrator;
-use App\Services\Certificate\Providers\ViafirmaIssuanceProvider;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Controlador HTTP unificado para la emisión y consulta de certificados
@@ -161,15 +161,44 @@ class CertificateIssuanceController extends Controller
                 ]);
             }
 
-            $provider = $this->orchestrator->providerFor($certificateRequest->id, $this->callerIsAdmin($request));
+            // Obtener el archivo desde file_managers (agnóstico del proveedor)
+            $certificateFile = \App\Models\FileManager::where('certificate_request_id', $certificateRequest->id)
+                ->where('document_type', 'CERTIFICATE')
+                ->first();
 
-            if ($provider->name() !== ViafirmaIssuanceProvider::NAME) {
-                return HttpResponseMessages::getResponse409([
-                    'message' => "El proveedor '{$provider->name()}' no soporta descarga binaria.",
+            if ($certificateFile === null) {
+                return HttpResponseMessages::getResponse404([
+                    'message' => 'Archivo de certificado no encontrado.',
                 ]);
             }
 
-            return $viafirmaDownload->metadataFor($uuid, $request->user()?->id);
+            // Generar URL firmada de S3
+            $disk = Storage::disk(config('certificate.storage.disk'));
+            if (!$disk->exists($certificateFile->file_path)) {
+                return HttpResponseMessages::getResponse404([
+                    'message' => 'Archivo no disponible en almacenamiento.',
+                ]);
+            }
+
+            $temporaryUrl = null;
+            try {
+                $temporaryUrl = $disk->temporaryUrl($certificateFile->file_path, now()->addHours(24));
+            } catch (\RuntimeException) {
+                $temporaryUrl = null; // disco local sin soporte de URLs firmadas
+            }
+
+            $pin = $certificateRequest->pin ?? 'NO_PIN';
+
+            return HttpResponseMessages::getResponse([
+                'dataRecords' => [
+                    'data' => [
+                        'p12_pin'      => $pin,
+                        'p12_filename' => $certificateFile->file_name,
+                        'download_url' => $temporaryUrl,
+                        'expires_at'   => now()->addHours(24)->toISOString(),
+                    ],
+                ]
+            ]);
         } catch (Exception $e) {
             return MessageExceptionResponse::response($e);
         }
@@ -209,15 +238,43 @@ class CertificateIssuanceController extends Controller
                 ]);
             }
 
-            $provider = $this->orchestrator->providerFor($certificateRequest->id, $this->callerIsAdmin($request));
+            // Obtener el archivo desde file_managers (agnóstico del proveedor)
+            $certificateFile = \App\Models\FileManager::where('certificate_request_id', $certificateRequest->id)
+                ->where('document_type', 'CERTIFICATE')
+                ->first();
 
-            if ($provider->name() !== ViafirmaIssuanceProvider::NAME) {
-                return HttpResponseMessages::getResponse409([
-                    'message' => "El proveedor '{$provider->name()}' no soporta descarga binaria.",
+            if ($certificateFile === null) {
+                return HttpResponseMessages::getResponse404([
+                    'message' => 'Archivo de certificado no encontrado.',
                 ]);
             }
 
-            return $viafirmaDownload->base64For($uuid, $request->user()?->id);
+            // Leer contenido desde S3
+            $disk = Storage::disk(config('certificate.storage.disk'));
+            if (!$disk->exists($certificateFile->file_path)) {
+                return HttpResponseMessages::getResponse404([
+                    'message' => 'Archivo no disponible en almacenamiento.',
+                ]);
+            }
+
+            $binary = $disk->get($certificateFile->file_path);
+            if ($binary === null || $binary === '') {
+                return HttpResponseMessages::getResponse410([
+                    'message' => 'No se pudo leer el archivo del almacenamiento.',
+                ]);
+            }
+
+            $pin = $certificateRequest->pin ?? 'NO_PIN';
+
+            return HttpResponseMessages::getResponse([
+                'dataRecords' => [
+                    'data' => [
+                        'p12_pin'      => $pin,
+                        'p12_filename' => $certificateFile->file_name,
+                        'p12_base64'   => base64_encode($binary),
+                    ],
+                ]
+            ]);
         } catch (Exception $e) {
             return MessageExceptionResponse::response($e);
         }
@@ -280,6 +337,92 @@ class CertificateIssuanceController extends Controller
                 'success' => false,
                 'message' => "No se encontró un trámite Viafirma para la solicitud {$id}.",
             ], JsonResponse::HTTP_NOT_FOUND);
+        } catch (Exception $e) {
+            return MessageExceptionResponse::response($e);
+        }
+    }
+
+    /**
+     * Descarga de archivo adjunto por UUID.
+     *
+     * @OA\Get(
+     *     path="/certificate-request/{uuid}/files/{fileUuid}/download",
+     *     operationId="certificateRequestFileDownload",
+     *     tags={"Archivos"},
+     *     summary="Descargar archivo adjunto",
+     *     description="Retorna una URL firmada (24h) para descargar un archivo adjunto asociado a la solicitud. Bloquea descarga de tipos sensibles (P7B_CERTIFICATE, PRIVATE_KEY).",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="uuid", in="path", required=true, description="UUID de la solicitud de certificado", @OA\Schema(type="string", format="uuid")),
+     *     @OA\Parameter(name="fileUuid", in="path", required=true, description="UUID del archivo (FileManager.uuid)", @OA\Schema(type="string", format="uuid")),
+     *     @OA\Response(response=200, description="URL firmada + metadatos", @OA\JsonContent(
+     *         @OA\Property(property="success", type="boolean", example=true),
+     *         @OA\Property(property="dataRecords", type="object",
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="file_name", type="string", example="documento.pdf"),
+     *                 @OA\Property(property="download_url", type="string", format="uri"),
+     *                 @OA\Property(property="expires_at", type="string", format="date-time")
+     *             )
+     *         )
+     *     )),
+     *     @OA\Response(response=404, description="Solicitud o archivo no encontrado"),
+     *     @OA\Response(response=409, description="Tipo de archivo no permitido para descarga"),
+     *     @OA\Response(response=401, description="No autenticado")
+     * )
+     */
+    public function downloadFile(Request $request, string $uuid, string $fileUuid): JsonResponse
+    {
+        try {
+            // Buscar solicitud por UUID
+            $certificateRequest = \App\Models\CertificateRequest::where('uuid', $uuid)->first();
+            if ($certificateRequest === null) {
+                return HttpResponseMessages::getResponse404([
+                    'message' => 'Solicitud de certificado no encontrada.',
+                ]);
+            }
+
+            // Buscar archivo por UUID y validar pertenencia
+            $file = \App\Models\FileManager::where('uuid', $fileUuid)
+                ->where('certificate_request_id', $certificateRequest->id)
+                ->first();
+
+            if ($file === null) {
+                return HttpResponseMessages::getResponse404([
+                    'message' => 'Archivo no encontrado.',
+                ]);
+            }
+
+            // Bloquear descarga de tipos sensibles
+            if (in_array($file->document_type, ['P7B_CERTIFICATE', 'PRIVATE_KEY'])) {
+                return HttpResponseMessages::getResponse409([
+                    'message' => 'Este tipo de archivo no puede descargarse.',
+                ]);
+            }
+
+            // Acceder a S3 y generar URL firmada
+            $disk = Storage::disk(config('certificate.storage.disk'));
+            if (!$disk->exists($file->file_path)) {
+                return HttpResponseMessages::getResponse404([
+                    'message' => 'Archivo no disponible en almacenamiento.',
+                ]);
+            }
+
+            $temporaryUrl = null;
+            try {
+                $temporaryUrl = $disk->temporaryUrl($file->file_path, now()->addHours(24));
+            } catch (\RuntimeException) {
+                $temporaryUrl = null; // disco local sin soporte de URLs firmadas
+            }
+
+            return HttpResponseMessages::getResponse([
+                'dataRecords' => [
+                    'data' => [
+                        'file_name' => $file->file_name,
+                        'download_url' => $temporaryUrl,
+                        'expires_at' => now()->addHours(24)->toISOString(),
+                        'extension_file' => $file->extension_file,
+                    ],
+                ]
+            ]);
         } catch (Exception $e) {
             return MessageExceptionResponse::response($e);
         }

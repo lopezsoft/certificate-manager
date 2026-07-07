@@ -5,6 +5,46 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.9.0] - 2026-07-07
+
+### Añadido
+
+- **Validación mejorada de archivos ZIP** (`/documents`):
+  - Validación mejorada y almacenamiento local con limpieza automática
+  - Mejor manejo de errores durante descompresión y validación de archivos ZIP
+  - Prevención de memory leaks con limpieza de recursos temporales
+
+- **Unificación de rutas API v1**:
+  - Parámetros mixtos en métodos de solicitud de certificados
+  - Consistencia mejorada en endpoints de API (`/certificate-requests`)
+  - Mejor tipado TypeScript para compatibilidad con múltiples tipos de parámetros
+
+- **Opción CERTIFICATE en validación de document_type**:
+  - Nuevas opciones de tipo de documento para solicitudes
+  - Validación más flexible en formularios de solicitud
+
+### Cambiado
+
+- **Servicio de manejo de archivos**:
+  - Filtrado de archivos adjuntos en consultas de notificación
+  - Validación de existencia antes de adjuntar archivos en correos
+  - Mejor gestión de rutas y nombres de archivo
+
+- **API de cupos**:
+  - Desglose de estado de cupos por vigencia en consulta de disponibilidad
+  - Respuestas más granulares para análisis de cupos por año
+
+### Corregido
+
+- **Componente jqxEditor**: Corrección de capitalización en vista de solicitud en proceso
+- **Memory leaks**: Prevención en manejo de archivos temporales durante validaciones
+
+### Técnico
+
+- **Angular**: 20.0.0
+- **TypeScript**: 5.8.0
+- **Archivos modificados**: `document-service.ts`, `order.service.ts`, `certificate-request.component.ts`, `request-in-process.component.ts`
+
 ## [1.8.0] - 2026-06-06
 
 ### Añadido

@@ -78,6 +78,22 @@ export class IssuanceService {
   }
 
   /**
+  * Obtiene la metadata de descarga de archivos adjuntos a la solicitud.
+  *  path="/certificate-request/{uuid}/files/{fileUuid}/download"
+  */
+
+  getDownloadFile(requestUuid: string, fileUuid: string): Observable<IssuanceDownloadMeta> {
+    return this.http.get(`/certificate-request/${requestUuid}/files/${fileUuid}/download`).pipe(
+      map((res: any) => {
+        const meta = res.dataRecords.data as IssuanceDownloadMeta;
+        this.debug.log('IssuanceService', `Metadata descarga archivo solicitud #${requestUuid}`, meta);
+        return meta;
+      }),
+    );
+  }
+
+
+  /**
    * Obtiene el archivo P12 binario para descarga directa, en base64 o streaming.
    * El backend responde con un streaming binario, no JSON.
    */

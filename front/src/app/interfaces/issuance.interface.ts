@@ -27,6 +27,7 @@ export interface IssuanceDownloadMeta {
   pin: string;
   download_url: string;
   expires_at: string;
+  file_name: string;
 }
 
 export interface Base64DownloadResponse {

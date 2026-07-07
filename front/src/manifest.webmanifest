@@ -1,12 +1,12 @@
 {
-  "name": "CERTIFICATE MANAGER",
-  "short_name": "CERT MG",
+  "name": "MATIASCERT - CERTIFICADOS DIGITALES",
+  "short_name": "MATIASCERT",
   "theme_color": "#1976d2",
   "background_color": "#fafafa",
   "display": "standalone",
   "scope": "./",
   "start_url": "./",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "icons": [
     {
       "src": "assets/icons/logo-empresa-72.png",

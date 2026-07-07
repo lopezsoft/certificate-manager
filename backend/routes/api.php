@@ -80,6 +80,9 @@ Route::group(['prefix' => 'v1'], function () {
                 Route::get('/{uuid}/issuance/download/base64', 'downloadBase64')
                     ->name('v1.certificate-request.issuance.download.base64');
 
+                Route::get('/{uuid}/files/{fileUuid}/download', 'downloadFile')
+                    ->name('v1.certificate-request.file.download');
+
                 Route::post('/{id}/issuance/redownload', 'redownload')
                     ->name('v1.certificate-request.issuance.redownload');
 

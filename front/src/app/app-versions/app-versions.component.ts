@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 export interface Change {
   type: 'caracteristica' | 'bug' | 'mejora';
@@ -13,10 +13,10 @@ export interface Version {
 }
 
 @Component({
-    selector: 'app-app-versions',
-    templateUrl: './app-versions.component.html',
-    styleUrls: ['./app-versions.component.scss'],
-    standalone: false
+  selector: 'app-app-versions',
+  templateUrl: './app-versions.component.html',
+  styleUrls: ['./app-versions.component.scss'],
+  standalone: false
 })
 export class AppVersionsComponent implements OnInit {
   protected versiones: Version[] = [];
@@ -24,6 +24,37 @@ export class AppVersionsComponent implements OnInit {
 
   ngOnInit(): void {
     this.versiones = [
+      {
+        isShow: true,
+        number: '1.9.0',
+        date: '07-JUL-2026',
+        changes: [
+          {
+            type: 'caracteristica',
+            description: 'Mejora en manejo de archivos ZIP: validación mejorada y almacenamiento local con limpieza automática'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Unificación de rutas API v1: parámetros mixtos en métodos de solicitud de certificados'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Opción CERTIFICATE agregada a validación de document_type en solicitudes'
+          },
+          {
+            type: 'mejora',
+            description: 'Validación de existencia de archivos antes de adjuntarlos en notificaciones por correo'
+          },
+          {
+            type: 'mejora',
+            description: 'Desglose de estado de cupos por vigencia en API de consulta'
+          },
+          {
+            type: 'bug',
+            description: 'Corrección de capitalización del componente jqxEditor en vista de solicitud en proceso'
+          }
+        ]
+      },
       {
         isShow: true,
         number: '1.8.0',
@@ -201,11 +232,11 @@ export class AppVersionsComponent implements OnInit {
         date: "27-JUN-2025",
         changes: [
           {
-            type:  "caracteristica",
+            type: "caracteristica",
             description: "Se agregó la opción de agregar el soporte de pago de las solicitudes"
           },
           {
-            type:  "mejora",
+            type: "mejora",
             description: "Mejora en la visualización de las fechas de las solicitudes"
           }
         ]
@@ -216,7 +247,7 @@ export class AppVersionsComponent implements OnInit {
         date: "01-MAY-2025",
         changes: [
           {
-            type:  "caracteristica",
+            type: "caracteristica",
             description: "Se agregó la opción WEB PWA para la aplicación"
           },
         ]
@@ -227,19 +258,19 @@ export class AppVersionsComponent implements OnInit {
         date: "30-ABR-2025",
         changes: [
           {
-            type:  "caracteristica",
+            type: "caracteristica",
             description: "Se agregó la opción de filtrar por fecha y estado en el historial de solicitudes"
           },
           {
-            type:  "caracteristica",
+            type: "caracteristica",
             description: "Se agregó la opción de importar el zip del certificado de la solicitud. Para usuarios administradores"
           },
           {
-            type:  "caracteristica",
+            type: "caracteristica",
             description: "Se agregó visor de documentos para los certificados de la solicitud"
           },
           {
-            type:  "mejora",
+            type: "mejora",
             description: "Mejora en la interfaz de usuario"
           }
         ]
@@ -250,15 +281,15 @@ export class AppVersionsComponent implements OnInit {
         date: "29-ABR-2025",
         changes: [
           {
-            type:  "bug",
+            type: "bug",
             description: "Corrección de errores en la interfaz de usuario"
           },
           {
-            type:  "bug",
+            type: "bug",
             description: "Corrección de errores en enlace al crear un nuevo usuario"
           },
           {
-            type:  "mejora",
+            type: "mejora",
             description: "Mejora en la descripción de los mensajes de el estado de las solicitudes"
           },
           {
@@ -273,7 +304,7 @@ export class AppVersionsComponent implements OnInit {
         date: "27-ABR-2025",
         changes: [
           {
-            type:  "caracteristica",
+            type: "caracteristica",
             description: "Limitación de accesos para usuarios no administradores"
           },
         ]
@@ -284,7 +315,7 @@ export class AppVersionsComponent implements OnInit {
         date: "27-ABR-2025",
         changes: [
           {
-            type:  "caracteristica",
+            type: "caracteristica",
             description: "Versión BETA, con todas las funcionalidades, con posibilidad de errores"
           }
         ]
@@ -295,7 +326,7 @@ export class AppVersionsComponent implements OnInit {
         date: "24-ABR-2025",
         changes: [
           {
-            type:  "caracteristica",
+            type: "caracteristica",
             description: "Versión inicial"
           }
         ]

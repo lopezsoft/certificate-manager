@@ -113,9 +113,9 @@
         </app-help-information>
         <div class="row">
           <div class="col-md-12">
-            <jqxEditor  #myEditor [theme]="'fluent'" [(ngModel)]='comments'
+            <jqxeditor #myEditor [theme]="'fluent'" [(ngModel)]='comments'
               [width]="'100%'" [height]="220">
-            </jqxEditor>
+            </jqxeditor>
           </div>
         </div>
         <div class="d-flex justify-content-end mt-1">
@@ -304,8 +304,9 @@
                       </div>
                       <div class="actions-content">
                         <button
+                          appCustomTooltip="Descargar archivo"
                           class="btn custom-button fas-fa-save"
-                          (click)="onDownload(file)">
+                          (click)="onGetDownloadMeta()">
                           <i class="fas fa-download fas-fa-18 fas-fa-save"></i>
                         </button>
                       </div>
