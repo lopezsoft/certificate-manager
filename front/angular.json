@@ -21,7 +21,6 @@
               "hammerjs",
               "node-waves",
               "app/main/ui/icons/feather/feather.component",
-
               "ngx-quill",
               "lodash",
               "uuid",
@@ -56,10 +55,8 @@
               "./node_modules/jqwidgets-ng/jqwidgets/styles/jqx.fluent.css",
               "src/assets/fonts/feather/iconfont.css",
               "src/assets/fonts/font-awesome/css/font-awesome.min.css",
-
               "node_modules/font-awesome/css/font-awesome.css",
               "node_modules/angular-calendar/scss/angular-calendar.scss",
-
               "node_modules/ngx-toastr/toastr.css"
             ],
             "stylePreprocessorOptions": {
@@ -106,17 +103,17 @@
                 }
               ]
             },
-            "prosof": {
+            "sandbox": {
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.prosof.ts"
+                  "with": "src/environments/environment.sandbox.ts"
                 }
               ],
               "baseHref": "/",
               "optimization": true,
               "outputHashing": "all",
-              "outputPath": "dist/prosof",
+              "outputPath": "dist/sandbox",
               "sourceMap": false,
               "namedChunks": false,
               "extractLicenses": true,
