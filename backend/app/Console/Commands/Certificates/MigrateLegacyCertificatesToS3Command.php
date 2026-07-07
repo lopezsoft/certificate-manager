@@ -21,8 +21,8 @@ use Symfony\Component\Console\Attribute\AsCommand;
  * CERT_LEGACY_DISK=s3 para que las lecturas usen S3 (ver config/certificates.php).
  *
  * Criterio de selección:
- *   - request_status = PROCESSED
- *   - expiration_date > now() (vigentes)
+ *   - request_status IN (PROCESSED, PROCESSING, SENT)
+ *   - expiration_date IS NULL OR expiration_date > now() (vigentes + sin procesar)
  *   - SIN viafirma_certificate_requests asociado (otro proveedor)
  *
  * Uso:
@@ -62,14 +62,17 @@ final class MigrateLegacyCertificatesToS3Command extends Command
         // Solicitudes vigentes legacy (PROCESADAS, EN PROCESO, ENVIADAS).
         // Migra a S3: todos los certificados vigentes necesitan estar en almacenamiento cloud.
         // Nota: Viafirma es nuevo en esta versión, por lo que no hay registros históricos que filtrar.
+        // Se incluyen certificados con expiration_date NULL (sin procesar) y vigentes (expiration_date > now).
         $query = CertificateRequest::query()
             ->whereIn('request_status', [
                 CertificateRequestStatusEnum::PROCESSED->value,
                 CertificateRequestStatusEnum::PROCESSING->value,
                 CertificateRequestStatusEnum::SENT->value,
             ])
-            ->whereNotNull('expiration_date')
-            ->where('expiration_date', '>', now())
+            ->where(function ($q) {
+                $q->whereNull('expiration_date')
+                  ->orWhere('expiration_date', '>', now());
+            })
             ->with('files');
 
         $total      = $query->count();
