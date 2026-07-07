@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Console\Attribute\AsCommand;
 
 /**
- * Migra a S3 los archivos de los certificados del OTRO proveedor (no Viafirma).
+ * Migra a S3 los archivos de los certificados VIGENTES del OTRO proveedor (no Viafirma).
  *
  * Viafirma es el proveedor nuevo: no tiene certificados emitidos que migrar y escribe
  * directo a S3 desde su emisión. Por eso esta migración es EXCLUSIVA del proveedor legacy.
@@ -21,9 +21,9 @@ use Symfony\Component\Console\Attribute\AsCommand;
  * CERT_LEGACY_DISK=s3 para que las lecturas usen S3 (ver config/certificates.php).
  *
  * Criterio de selección:
- *   - expiration_date es NULL o expiration_date > now() (vigentes + sin fecha)
+ *   - request_status = PROCESSED
+ *   - expiration_date > now() (vigentes)
  *   - SIN viafirma_certificate_requests asociado (otro proveedor)
- *   - Incluye TODOS los estados de request_status
  *
  * Uso:
  *   php artisan certificates:migrate-legacy-to-s3            # dry-run (no copia)
@@ -59,16 +59,17 @@ final class MigrateLegacyCertificatesToS3Command extends Command
         $from = Storage::disk($fromDisk);
         $to   = Storage::disk($toDisk);
 
-        // Solicitudes legacy para migrar a S3.
-        // Migra a S3: todos los certificados legacy (independiente de estado) que tengan archivos.
+        // Solicitudes vigentes legacy (PROCESADAS, EN PROCESO, ENVIADAS).
+        // Migra a S3: todos los certificados vigentes necesitan estar en almacenamiento cloud.
         // Nota: Viafirma es nuevo en esta versión, por lo que no hay registros históricos que filtrar.
-        //
-        // Criterio: certificados con expiration_date NULL (sin procesar) O vigentes (expiration_date > now)
         $query = CertificateRequest::query()
-            ->where(function ($q) {
-                $q->whereNull('expiration_date')
-                  ->orWhere('expiration_date', '>', now());
-            })
+            ->whereIn('request_status', [
+                CertificateRequestStatusEnum::PROCESSED->value,
+                CertificateRequestStatusEnum::PROCESSING->value,
+                CertificateRequestStatusEnum::SENT->value,
+            ])
+            ->whereNotNull('expiration_date')
+            ->where('expiration_date', '>', now())
             ->with('files');
 
         $total      = $query->count();
@@ -77,7 +78,7 @@ final class MigrateLegacyCertificatesToS3Command extends Command
         $missing    = 0;
         $reqHandled = 0;
 
-        $this->info("Solicitudes legacy (vigentes + sin fecha) a procesar: {$total} (origen='{$fromDisk}' → destino='{$toDisk}').");
+        $this->info("Solicitudes legacy vigentes a procesar: {$total} (origen='{$fromDisk}' → destino='{$toDisk}').");
 
         $query->chunkById(100, function ($requests) use ($from, $to, $apply, &$copied, &$skipped, &$missing, &$reqHandled) {
             foreach ($requests as $request) {
