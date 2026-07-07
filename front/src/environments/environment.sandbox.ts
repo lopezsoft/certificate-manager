@@ -1,6 +1,7 @@
 export const environment = {
   production: true,
   hmr: false,
+  isSandbox: true,
   SOCKET_URL: '',
   APIJWT: 'sandbox-api-jwt',
   APPURL: 'https://sandbox-api.maticerts.com',

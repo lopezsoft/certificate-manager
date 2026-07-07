@@ -5,6 +5,7 @@
 export const environment = {
   hmr: false,
   production: false,
+  isSandbox: true,
   SOCKET_URL: '',
   APIJWT: 'maticerts-app-jwt',
   APPURL: 'http://cm-api.test',
