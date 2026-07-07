@@ -19,7 +19,6 @@ import { HttpResponsesService, MessagesService } from "../../../utils";
 import TokenService from "../../../utils/token.service";
 import { CompanyService } from "../../../services/companies";
 import Swal from "sweetalert2";
-import { environment } from 'environments/environment';
 
 @Component({
   selector: 'app-navbar',
@@ -33,7 +32,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
   public companyData: any = null;
   public userData: any = null;
   public companyImg: string = '';
-  public isSandbox: boolean = false;
 
   public horizontalMenu: boolean;
   public hiddenMenu: boolean;
@@ -254,9 +252,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
    * On init
    */
   ngOnInit(): void {
-    // Detectar si es ambiente SANDBOX
-    this.isSandbox = environment.config.name === 'MATICERTS SANDBOX';
-
     if (this._token.isAuthenticated()) {
       this.user = this._token.getCurrentUser();
       const data = this._token.getToken();

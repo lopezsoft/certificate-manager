@@ -1,97 +1,106 @@
+<!-- SANDBOX BANNER - GLOBAL TOP -->
+@if (isSandbox) {
+<div class="sandbox-banner-global">
+  <span class="sandbox-bullet">●</span>
+  <span class="sandbox-label">SANDBOX</span>
+  <span class="sandbox-bullet">●</span>
+</div>
+}
+<!-- / SANDBOX BANNER -->
+
 <!-- vertical-layout -->
 @if (coreConfig.layout.type === 'vertical') {
-  <vertical-layout></vertical-layout>
+<vertical-layout></vertical-layout>
 }
 <!-- / vertical-layout -->
 
 <!-- horizontal-layout -->
 @if (coreConfig.layout.type === 'horizontal') {
-  <horizontal-layout></horizontal-layout>
+<horizontal-layout></horizontal-layout>
 }
 <!-- / horizontal-layout -->
 
 <!-- theme customizer -->
 @if (coreConfig.layout.customizer) {
-  <core-sidebar
-    name="themeCustomizer"
-    class="customizer d-none d-md-block"
-    >
-    <a
-      class="customizer-toggle d-flex align-items-center justify-content-center"
-      (click)="toggleSidebar('themeCustomizer')"
-      >
-      <span [data-feather]="'settings'" [class]="'spinner'"></span>
-    </a>
-    <core-theme-customizer></core-theme-customizer>
-  </core-sidebar>
+<core-sidebar
+  name="themeCustomizer"
+  class="customizer d-none d-md-block">
+  <a
+    class="customizer-toggle d-flex align-items-center justify-content-center"
+    (click)="toggleSidebar('themeCustomizer')">
+    <span [data-feather]="'settings'" [class]="'spinner'"></span>
+  </a>
+  <core-theme-customizer></core-theme-customizer>
+</core-sidebar>
 }
 <!-- / theme customizer -->
 
 <ngx-loading [show]="_globalSettings.loading"></ngx-loading>
 <block-ui></block-ui>
 @if (canShowAppSupport) {
-  <app-support-button></app-support-button>
+<app-support-button></app-support-button>
 }
 
 @if (viewerState$ | async; as state) {
-  @if (state.isVisible) {
-    <app-document-viewer
-      [sourceUrl]="state.sourceUrl"
-      [title]="state.title"
-      (closeRequested)="closeViewer()">
-    </app-document-viewer>
-  }
+@if (state.isVisible) {
+<app-document-viewer
+  [sourceUrl]="state.sourceUrl"
+  [title]="state.title"
+  (closeRequested)="closeViewer()">
+</app-document-viewer>
+}
 }
 
 <!-- Modal de asignación de cuota para administrador -->
 @if (quotaModalPayload) {
-  <app-modal-card
-    [visible]="showQuotaModal"
-    [title]="'Asignar cuota de administrador'"
-    [confirmText]="'Asignar cuota'"
-    [loading]="quotaModalSaving"
-    size="sm"
-    (onConfirm)="confirmQuotaModal()"
-    (onClose)="closeQuotaModal()">
-    <div class="custom-form">
-      <div class="alert alert-info py-1 px-2 mb-1">
-        <small>
-          <i class="fas fa-info-circle me-50"></i>
-          No tiene cupos vigentes. Confirme los datos para asignar cuota.
-        </small>
-      </div>
-      <div class="form-group">
-        <label>Tier</label>
-        <input type="text" class="form-control" value="INCLUDED (Administrador)" readonly>
-      </div>
-      <div class="form-group">
-        <label>Cantidad</label>
-        <input type="number" class="form-control"
-          [(ngModel)]="quotaModalPayload.quantity">
-      </div>
-      <div class="row">
-        <div class="col-6">
-          <div class="form-group">
-            <label>Fecha inicio</label>
-            <input type="date" class="form-control"
-              [(ngModel)]="quotaModalPayload.period_start">
-          </div>
-        </div>
-        <div class="col-6">
-          <div class="form-group">
-            <label>Fecha fin</label>
-            <input type="date" class="form-control"
-              [(ngModel)]="quotaModalPayload.period_end">
-          </div>
+<app-modal-card
+  [visible]="showQuotaModal"
+  [title]="'Asignar cuota de administrador'"
+  [confirmText]="'Asignar cuota'"
+  [loading]="quotaModalSaving"
+  size="sm"
+  (onConfirm)="confirmQuotaModal()"
+  (onClose)="closeQuotaModal()">
+  <div class="custom-form">
+    <div class="alert alert-info py-1 px-2 mb-1">
+      <small>
+        <i class="fas fa-info-circle me-50"></i>
+        No tiene cupos vigentes. Confirme los datos para asignar cuota.
+      </small>
+    </div>
+    <div class="form-group">
+      <label>Tier</label>
+      <input type="text" class="form-control" value="INCLUDED (Administrador)"
+        readonly>
+    </div>
+    <div class="form-group">
+      <label>Cantidad</label>
+      <input type="number" class="form-control"
+        [(ngModel)]="quotaModalPayload.quantity">
+    </div>
+    <div class="row">
+      <div class="col-6">
+        <div class="form-group">
+          <label>Fecha inicio</label>
+          <input type="date" class="form-control"
+            [(ngModel)]="quotaModalPayload.period_start">
         </div>
       </div>
-      <div class="form-group">
-        <label>Notas</label>
-        <input type="text" class="form-control"
-          [(ngModel)]="quotaModalPayload.notes">
+      <div class="col-6">
+        <div class="form-group">
+          <label>Fecha fin</label>
+          <input type="date" class="form-control"
+            [(ngModel)]="quotaModalPayload.period_end">
+        </div>
       </div>
     </div>
-  </app-modal-card>
+    <div class="form-group">
+      <label>Notas</label>
+      <input type="text" class="form-control"
+        [(ngModel)]="quotaModalPayload.notes">
+    </div>
+  </div>
+</app-modal-card>
 }
 
 <!-- Modal global de pago Wompi -->

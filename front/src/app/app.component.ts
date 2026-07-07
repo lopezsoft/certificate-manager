@@ -2,7 +2,7 @@ import { Component, Inject, OnDestroy, OnInit, ElementRef, Renderer2, DOCUMENT }
 
 import { Title } from '@angular/platform-browser';
 
-import {Observable, Subject} from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import * as Waves from 'node-waves';
@@ -19,18 +19,19 @@ import { locale as menuEnglish } from 'app/menu/i18n/en';
 import { locale as menuFrench } from 'app/menu/i18n/fr';
 import { locale as menuGerman } from 'app/menu/i18n/de';
 import { locale as menuPortuguese } from 'app/menu/i18n/pt';
-import {GlobalSettingsService} from "./services/global-settings.service";
+import { GlobalSettingsService } from "./services/global-settings.service";
 import TokenService from './utils/token.service';
-import {DocumentViewerState} from "./interfaces/file-manager.interface";
-import {DocumentViewerService} from "./services/document-viewer.service";
-import {QuotaService, AdminQuotaPayload} from "./services/quota.service";
-import {MessagesService} from "./utils";
+import { DocumentViewerState } from "./interfaces/file-manager.interface";
+import { DocumentViewerService } from "./services/document-viewer.service";
+import { QuotaService, AdminQuotaPayload } from "./services/quota.service";
+import { MessagesService } from "./utils";
+import { environment } from 'environments/environment';
 
 @Component({
-    selector: 'app-root',
-    templateUrl: './app.component.html',
-    styleUrls: ['./app.component.scss'],
-    standalone: false
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss'],
+  standalone: false
 })
 export class AppComponent implements OnInit, OnDestroy {
   coreConfig: any;
@@ -38,6 +39,7 @@ export class AppComponent implements OnInit, OnDestroy {
   viewerState$: Observable<DocumentViewerState>;
   defaultLanguage: 'es'; // This language will be used as a fallback when a translation isn't found in the current language
   appLanguage: 'es'; // Set application default language i.e fr
+  isSandbox: boolean = false;
 
   // Public
 
@@ -108,8 +110,10 @@ export class AppComponent implements OnInit, OnDestroy {
    * On init
    */
   ngOnInit(): void {
+    // Detectar si es ambiente SANDBOX
+    this.isSandbox = environment.config.name === 'MATICERTS SANDBOX';
 
-    if (this._token.isAuthenticated()){
+    if (this._token.isAuthenticated()) {
       const token = this._token.getToken();
       const user = token.user;
       this.canShowAppSupport = (user && ((user.type_id === 1) || (user && user.type_id === 2)));
