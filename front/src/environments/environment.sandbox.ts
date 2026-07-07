@@ -8,7 +8,7 @@ export const environment = {
   WOMPI_PUBLIC_KEY: 'pub_test_q4gEVnZWpzfEROZMScHdZgH4ChcGHW2E',
   VERSION: '1.9.0',
   config: {
-    name: 'MATICERTS SANDBOX',
+    name: 'MATICERTS',
     title: 'MATICERTS SANDBOX - Testing Environment',
     logo: 'assets/images/logo/logo-horizontal-blue.png',
     logoHome: 'assets/images/logo/logo-circle-blue.png',

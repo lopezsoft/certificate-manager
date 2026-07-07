@@ -24,6 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // app()->usePublicPath(__DIR__.'/public'); // TODO: Enable this line when you are ready to deploy to production
         // NOTA: usePublicPath se habilita solo en producción vía el script de deploy.
         Passport::ignoreRoutes();
 
