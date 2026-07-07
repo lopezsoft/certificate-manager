@@ -1,13 +1,13 @@
 {
     "openapi": "3.0.0",
     "info": {
-        "title": "Certificate Manager API",
-        "description": "API REST unificada (v1) para la gestión completa de solicitudes de certificados digitales.\\n\\n**Proveedores de emisión soportados:**\\n- `mail` — Flujo legacy: la solicitud se envía a la Autoridad Certificadora por correo electrónico.\\n- `viafirma` — Flujo Zero-Touch PKCS#10: el sistema genera la CSR localmente, la envía a Viafirma RA y hace polling automático hasta ensamblar el P12.\\n\\n**Modo Sandbox (Viafirma):** Al activar `VIAFIRMA_SANDBOX_MODE=true` en el servidor, se sustituye el cliente HTTP real por `MockViafirmaClient`, que simula el ciclo completo de emisión (getProfiles → submitCsr → 3 polls → downloadP7b → revoke) sin interactuar con la infraestructura externa. Requiere `CACHE_DRIVER=file` o `redis` para que el estado persista entre requests.\\n\\n**Autenticación:** OAuth 2.0 Bearer Token (Laravel Passport). Obtenga su token con `POST /api/v1/auth/login`. Para integraciones externas puede usar Personal Access Tokens (PAT) desde el endpoint `/api/v1/tokens`.",
+        "title": "MatiCerts",
+        "description": "API REST unificada (v1) para la gestión completa de solicitudes de certificados digitales.\\n\\n**Autenticación:** La API utiliza tokens OAuth 2.0 (Bearer Token). Puede obtener su token de sesión a través del endpoint `POST /api/v1/auth/login`. Para integraciones de sistema a sistema o desarrolladores externos, recomendamos utilizar Personal Access Tokens (PAT) generados desde el endpoint `/api/v1/tokens`.",
         "contact": {
             "name": "Soporte Matias",
             "email": "soporte@matias.com.co"
         },
-        "version": "3.0.0"
+        "version": "1.9.0"
     },
     "servers": [
         {
@@ -1238,12 +1238,12 @@
                     "Solicitudes de Certificado"
                 ],
                 "summary": "Crear solicitud de certificado",
-                "description": "Crea una nueva solicitud de certificado digital. Requiere adjuntar entre 2 y 3 archivos (PDF/imagen). Límite: 10 solicitudes/minuto.",
+                "description": "Crea una nueva solicitud de certificado digital. Los archivos se envían en Base64 dentro del payload JSON. Para Viafirma: email requerido. Para otros proveedores: email opcional. Límite: 10 solicitudes/minuto.",
                 "operationId": "8cbf351b63af3d2435b0538bb7f08d59",
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "multipart/form-data": {
+                        "application/json": {
                             "schema": {
                                 "schema": "CreateCertificateRequestBody",
                                 "required": [
@@ -1299,7 +1299,7 @@
                                         "example": "PÉREZ GÓMEZ"
                                     },
                                     "legal_rep_email": {
-                                        "description": "Requerido si viafirma y persona jurídica",
+                                        "description": "Requerido solo para proveedor Viafirma. Opcional para otros proveedores.",
                                         "type": "string",
                                         "example": "juan.perez@empresa.com",
                                         "nullable": true
@@ -1313,12 +1313,44 @@
                                         "example": "900455420"
                                     },
                                     "life": {
+                                        "description": "Vigencia: 1 o 2 años",
                                         "type": "integer",
                                         "example": 1
                                     },
                                     "info": {
                                         "type": "string",
                                         "nullable": true
+                                    },
+                                    "attachments": {
+                                        "description": "Array de adjuntos en Base64 (requerido para proveedores que no sean Viafirma)",
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "base64"
+                                            ],
+                                            "properties": {
+                                                "base64": {
+                                                    "description": "Contenido del adjunto en Base64. Soporta prefijo Data URI (data:application/pdf;base64,...) o solo el contenido Base64",
+                                                    "type": "string"
+                                                },
+                                                "name": {
+                                                    "description": "Nombre del adjunto (se genera si no está presente)",
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "type": {
+                                                    "description": "MIME type (se detecta si no está presente). Ej: application/pdf, image/jpeg",
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "size": {
+                                                    "description": "Tamaño en bytes (se calcula si no está presente)",
+                                                    "type": "integer",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
                                     }
                                 },
                                 "type": "object"
@@ -1920,8 +1952,8 @@
                 "tags": [
                     "Archivos"
                 ],
-                "summary": "Subir archivo a una solicitud",
-                "description": "Adjunta un archivo (PDF, imagen o ZIP con certificado P12/PFX) a una solicitud existente. Máximo 6 archivos por solicitud. Límite de tamaño: 2 MB por archivo. Límite: 10 cargas/minuto.",
+                "summary": "Subir archivos en Base64 a una solicitud",
+                "description": "Adjunta uno o más archivos en Base64 (PDF, imagen o ZIP con certificado P12/PFX) a una solicitud existente. Máximo 6 archivos por solicitud. Límite de tamaño: 2 MB por archivo. Límite: 10 cargas/minuto.",
                 "operationId": "9d78f7cf6056dc9c37cb23eeb7326183",
                 "parameters": [
                     {
@@ -1937,23 +1969,51 @@
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "multipart/form-data": {
+                        "application/json": {
                             "schema": {
                                 "required": [
-                                    "file"
+                                    "attachments"
                                 ],
                                 "properties": {
-                                    "file": {
-                                        "description": "Archivo a adjuntar (PDF, JPG, PNG, ZIP)",
-                                        "type": "string",
-                                        "format": "binary"
+                                    "attachments": {
+                                        "description": "Array de archivos en Base64",
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "base64"
+                                            ],
+                                            "properties": {
+                                                "base64": {
+                                                    "description": "Contenido del archivo en Base64. Soporta prefijo Data URI (data:application/pdf;base64,...) o solo el contenido Base64",
+                                                    "type": "string"
+                                                },
+                                                "name": {
+                                                    "description": "Nombre del archivo (se genera si no está presente)",
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "type": {
+                                                    "description": "MIME type (se detecta si no está presente)",
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "size": {
+                                                    "description": "Tamaño en bytes",
+                                                    "type": "integer",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
                                     },
                                     "document_type": {
+                                        "description": "Tipo de documento",
                                         "type": "string",
                                         "enum": [
-                                            "ATTACHED"
+                                            "ATTACHED",
+                                            "PAYMENT"
                                         ],
-                                        "example": "ATTACHED"
+                                        "example": "PAYMENT"
                                     },
                                     "pin": {
                                         "description": "PIN del certificado (solo para archivos ZIP con P12/PFX)",
@@ -1968,7 +2028,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Archivo subido correctamente",
+                        "description": "Archivos subidos correctamente",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1978,7 +2038,7 @@
                         }
                     },
                     "400": {
-                        "description": "Solicitud no encontrada, límite de archivos alcanzado o archivo demasiado grande",
+                        "description": "Solicitud no encontrada, límite de archivos alcanzado, archivo demasiado grande o Base64 inválido",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2495,6 +2555,92 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/certificate-request/{uuid}/files/{fileUuid}/download": {
+            "get": {
+                "tags": [
+                    "Archivos"
+                ],
+                "summary": "Descargar archivo adjunto",
+                "description": "Retorna una URL firmada (24h) para descargar un archivo adjunto asociado a la solicitud. Bloquea descarga de tipos sensibles (P7B_CERTIFICATE, PRIVATE_KEY).",
+                "operationId": "certificateRequestFileDownload",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "UUID de la solicitud de certificado",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "fileUuid",
+                        "in": "path",
+                        "description": "UUID del archivo (FileManager.uuid)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "URL firmada + metadatos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "data": {
+                                                    "properties": {
+                                                        "file_name": {
+                                                            "type": "string",
+                                                            "example": "documento.pdf"
+                                                        },
+                                                        "download_url": {
+                                                            "type": "string",
+                                                            "format": "uri"
+                                                        },
+                                                        "expires_at": {
+                                                            "type": "string",
+                                                            "format": "date-time"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Solicitud o archivo no encontrado"
+                    },
+                    "409": {
+                        "description": "Tipo de archivo no permitido para descarga"
                     },
                     "401": {
                         "description": "No autenticado"
@@ -4332,7 +4478,7 @@
                     "Cupos"
                 ],
                 "summary": "Consultar disponibilidad de certificados",
-                "description": "Retorna el estado de cupos de la empresa del usuario autenticado. Incluye cupos POSTPAID (asignados por admin) y PREPAID (comprados vía WOMPI). El campo 'has_quota' indica si la empresa puede crear nuevas solicitudes.",
+                "description": "Retorna el estado de cupos de la empresa del usuario autenticado. Incluye cupos POSTPAID (asignados por admin) y PREPAID (comprados vía WOMPI) desglosados por vigencia. El campo 'has_quota' indica si la empresa puede crear nuevas solicitudes.",
                 "operationId": "quotaStatus",
                 "responses": {
                     "200": {
@@ -4357,9 +4503,19 @@
                                                     "example": true
                                                 },
                                                 "prepaid_items_available": {
-                                                    "description": "Certificados PREPAID pendientes de usar",
+                                                    "description": "Total de certificados PREPAID pendientes de usar",
                                                     "type": "integer",
                                                     "example": 5
+                                                },
+                                                "prepaid_1_year": {
+                                                    "description": "Certificados PREPAID de 1 año disponibles",
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "prepaid_2_year": {
+                                                    "description": "Certificados PREPAID de 2 años disponibles",
+                                                    "type": "integer",
+                                                    "example": 2
                                                 },
                                                 "postpaid": {
                                                     "properties": {
@@ -4930,21 +5086,22 @@
                 ]
             }
         },
-        "/certificate-request/{id}/revoke": {
+        "/certificate-request/{uuid}/revoke": {
             "post": {
                 "tags": [
                     "Viafirma"
                 ],
                 "summary": "Revocar un certificado Viafirma ya emitido",
-                "operationId": "c52d2d4bd5e7ef8cb0d8bd3981f01c2e",
+                "operationId": "f27707de9eae41b18a6606a13b8a5871",
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "uuid",
                         "in": "path",
-                        "description": "ID de la solicitud de certificado (certificate_requests.id)",
+                        "description": "UUID de la solicitud de certificado (certificate_requests.uuid)",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 ],

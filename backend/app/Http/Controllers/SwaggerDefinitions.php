@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 /**
  * @OA\Info(
- *     version="3.0.0",
- *     title="Certificate Manager API",
- *     description="API REST unificada (v1) para la gestión completa de solicitudes de certificados digitales.\n\n**Proveedores de emisión soportados:**\n- `mail` — Flujo legacy: la solicitud se envía a la Autoridad Certificadora por correo electrónico.\n- `viafirma` — Flujo Zero-Touch PKCS#10: el sistema genera la CSR localmente, la envía a Viafirma RA y hace polling automático hasta ensamblar el P12.\n\n**Modo Sandbox (Viafirma):** Al activar `VIAFIRMA_SANDBOX_MODE=true` en el servidor, se sustituye el cliente HTTP real por `MockViafirmaClient`, que simula el ciclo completo de emisión (getProfiles → submitCsr → 3 polls → downloadP7b → revoke) sin interactuar con la infraestructura externa. Requiere `CACHE_DRIVER=file` o `redis` para que el estado persista entre requests.\n\n**Autenticación:** OAuth 2.0 Bearer Token (Laravel Passport). Obtenga su token con `POST /api/v1/auth/login`. Para integraciones externas puede usar Personal Access Tokens (PAT) desde el endpoint `/api/v1/tokens`.",
+ *     version="1.9.0",
+ *     title="MatiCerts",
+ *     description="API REST unificada (v1) para la gestión completa de solicitudes de certificados digitales.\n\n**Autenticación:** La API utiliza tokens OAuth 2.0 (Bearer Token). Puede obtener su token de sesión a través del endpoint `POST /api/v1/auth/login`. Para integraciones de sistema a sistema o desarrolladores externos, recomendamos utilizar Personal Access Tokens (PAT) generados desde el endpoint `/api/v1/tokens`.",
  *     @OA\Contact(
  *         email="soporte@matias.com.co",
  *         name="Soporte Matias"
