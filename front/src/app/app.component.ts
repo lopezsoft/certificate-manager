@@ -25,7 +25,6 @@ import { DocumentViewerState } from "./interfaces/file-manager.interface";
 import { DocumentViewerService } from "./services/document-viewer.service";
 import { QuotaService, AdminQuotaPayload } from "./services/quota.service";
 import { MessagesService } from "./utils";
-import { environment } from 'environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -39,7 +38,6 @@ export class AppComponent implements OnInit, OnDestroy {
   viewerState$: Observable<DocumentViewerState>;
   defaultLanguage: 'es'; // This language will be used as a fallback when a translation isn't found in the current language
   appLanguage: 'es'; // Set application default language i.e fr
-  isSandbox: boolean = false;
 
   // Public
 
@@ -110,9 +108,6 @@ export class AppComponent implements OnInit, OnDestroy {
    * On init
    */
   ngOnInit(): void {
-    // Detectar si es ambiente SANDBOX desde la configuración del environment
-    this.isSandbox = environment.isSandbox;
-
     if (this._token.isAuthenticated()) {
       const token = this._token.getToken();
       const user = token.user;
