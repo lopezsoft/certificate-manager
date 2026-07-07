@@ -110,8 +110,8 @@ export class AppComponent implements OnInit, OnDestroy {
    * On init
    */
   ngOnInit(): void {
-    // Detectar si es ambiente SANDBOX
-    this.isSandbox = environment.config.name === 'MATICERTS SANDBOX';
+    // Detectar si es ambiente SANDBOX desde la configuración del environment
+    this.isSandbox = environment.isSandbox;
 
     if (this._token.isAuthenticated()) {
       const token = this._token.getToken();
