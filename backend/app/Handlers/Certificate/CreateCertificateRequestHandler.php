@@ -213,7 +213,8 @@ class CreateCertificateRequestHandler
 
     private function buildFolderName(int $companyId, string $dni, int $dv): string
     {
-        return sprintf('companies/%d/%s/%s/%s%d', $companyId, date('Y'), date('m'), $dni, $dv);
+        $mainPath = config('certificate.storage.main_path');
+        return sprintf('%s/%d/%s/%s/%s%d', $mainPath, $companyId, date('Y'), date('m'), $dni, $dv);
     }
 
     private function loadExcelTemplate(): array

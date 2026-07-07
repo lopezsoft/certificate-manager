@@ -248,6 +248,11 @@ return [
         'disk'   => env('CERT_STORAGE_DISK', env('VIAFIRMA_DISK', 'local')),
         'prefix' => env('CERT_STORAGE_PREFIX', 'local'),
 
+        // Ruta principal para almacenar archivos de solicitudes de certificados.
+        // Configurable por entorno para separar el guardado de archivos.
+        // Ej: AWS_MAIN_PATH=companies-prod, AWS_MAIN_PATH=companies-staging
+        'main_path' => env('AWS_MAIN_PATH', 'companies'),
+
         // Disco del proveedor LEGACY (otro proveedor). Históricamente 'attachment'.
         // Al migrar a S3 se cambia a 's3' y, como los archivos se copian a la MISMA
         // ruta relativa, las lecturas siguen funcionando sin reescribir rutas en BD.
