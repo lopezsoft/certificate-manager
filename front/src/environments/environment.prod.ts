@@ -10,8 +10,8 @@ export const environment = {
   config: {
     name: 'MATICERTS',
     title: 'MATICERTS - Aplicación para la gestión de solicitudes de certificados de firma digital',
-    logo: 'assets/img/logo-empresa-32.png',
-    logoHome: 'assets/img/logo-empresa-32.png',
+    logo: 'assets/images/logo/logo-horizontal-blue.png',
+    logoHome: 'assets/images/logo/logo-circle-blue.png',
     skin: 'default', // default, dark, bordered, semi-dark, green
     type: 'vertical', // vertical, horizontal
   }
