@@ -2,13 +2,9 @@
 // SANDBOX BANNER — indicador global de ambiente
 // =============================================
 
-// Banner global en el TOP de toda la aplicación
+// Banner SANDBOX — parte del flujo normal del layout
 .sandbox-banner-global {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  width: 100vw;
+  width: 100%;
   background-color: #ff9800;
   color: white;
   text-align: center;
@@ -17,8 +13,7 @@
   font-size: 0.9rem;
   letter-spacing: 1.5px;
   border-bottom: 3px solid #e68900;
-  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
-  z-index: 10000; // Alto z-index para estar sobre todo
+  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
   user-select: none;
 
   .sandbox-bullet {
@@ -33,13 +28,6 @@
     font-weight: 800;
     letter-spacing: 2.5px;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-}
-
-// Agregar padding-top al app para compensar el banner fijo
-:host {
-  &.sandbox-enabled {
-    padding-top: 38px;
   }
 }
 
