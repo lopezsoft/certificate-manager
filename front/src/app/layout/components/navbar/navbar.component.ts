@@ -15,24 +15,26 @@ import { User } from 'app/auth/models';
 
 import { coreConfig } from 'app/app-config';
 import { Router } from '@angular/router';
-import {HttpResponsesService, MessagesService} from "../../../utils";
+import { HttpResponsesService, MessagesService } from "../../../utils";
 import TokenService from "../../../utils/token.service";
-import {CompanyService} from "../../../services/companies";
+import { CompanyService } from "../../../services/companies";
 import Swal from "sweetalert2";
+import { environment } from 'environments/environment';
 
 @Component({
-    selector: 'app-navbar',
-    templateUrl: './navbar.component.html',
-    styleUrls: ['./navbar.component.scss'],
-    encapsulation: ViewEncapsulation.None,
-    standalone: false
+  selector: 'app-navbar',
+  templateUrl: './navbar.component.html',
+  styleUrls: ['./navbar.component.scss'],
+  encapsulation: ViewEncapsulation.None,
+  standalone: false
 })
 export class NavbarComponent implements OnInit, OnDestroy {
-  public user: User = {avatar: "", email: "", firstName: "", id: 0, lastName: ""};
+  public user: User = { avatar: "", email: "", firstName: "", id: 0, lastName: "" };
   public companyData: any = null;
   public userData: any = null;
   public companyImg: string = '';
-  
+  public isSandbox: boolean = false;
+
   public horizontalMenu: boolean;
   public hiddenMenu: boolean;
 
@@ -215,12 +217,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
    */
   logout() {
     this._authenticationService.logout();
-    const ts    = this;
-    const lang  = ts._translateService;
+    const ts = this;
+    const lang = ts._translateService;
     Swal.fire({
-      title : lang.instant('Cerrar sesión'),
-      text  : lang.instant('¿Seguro que desea salir del sistema?'),
-      icon  : 'question',
+      title: lang.instant('Cerrar sesión'),
+      text: lang.instant('¿Seguro que desea salir del sistema?'),
+      icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
@@ -252,11 +254,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
    * On init
    */
   ngOnInit(): void {
-    if (this._token.isAuthenticated()){
+    // Detectar si es ambiente SANDBOX
+    this.isSandbox = environment.config.name === 'MATICERTS SANDBOX';
+
+    if (this._token.isAuthenticated()) {
       this.user = this._token.getCurrentUser();
       const data = this._token.getToken();
-      this.companyData  = data.company;
-      this.userData     = data.user;
+      this.companyData = data.company;
+      this.userData = data.user;
     }
     // get the currentUser details from localStorage
 

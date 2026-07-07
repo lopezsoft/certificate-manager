@@ -149,3 +149,30 @@ app-navbar-bookmark {
   color: #2556a3 !important;
 }
 
+// =============================================
+// SANDBOX BANNER — indicador de ambiente
+// =============================================
+.sandbox-banner {
+  background-color: #ff9800;
+  color: white;
+  text-align: center;
+  padding: 6px 0;
+  font-weight: bold;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  border-bottom: 2px solid #e68900;
+  width: 100%;
+  box-shadow: 0 2px 4px rgba(255, 152, 0, 0.3);
+
+  .sandbox-dot {
+    margin: 0 6px;
+    display: inline-block;
+  }
+
+  .sandbox-text {
+    display: inline-block;
+    font-weight: 700;
+    letter-spacing: 2px;
+  }
+}
+
