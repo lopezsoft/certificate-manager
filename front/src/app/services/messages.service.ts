@@ -30,7 +30,7 @@ export class MessagesService {
   }
 
   onMessage(title: string, msg: string, iconMsg: SweetAlertIcon = 'info') {
-    const titleMsg = (title.length > 1) ? title :  'CERTIFICATE MANAGER'
+    const titleMsg = (title.length > 1) ? title :  'Maticerts'
     Swal.fire({
         title: '<strong>' + titleMsg + '</strong>',
         icon: iconMsg,
@@ -38,7 +38,7 @@ export class MessagesService {
     }).then();
   }
   errorMessage(title: string, msg: string) {
-    Swal.fire((title.length > 1) ? title :  'Error CERTIFICATE MANAGER', msg, 'error');
+    Swal.fire((title.length > 1) ? title :  'Error Maticerts', msg, 'error');
   }
 
   confirm(title: string, message: string) {

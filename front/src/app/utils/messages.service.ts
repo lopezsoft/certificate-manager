@@ -70,10 +70,10 @@ export class MessagesService {
   }
 
   onMessage(title: string, msg: string) {
-    Swal.fire((title.length > 1) ? title : "CERTIFICATE MANAGER", msg, "info");
+    Swal.fire((title.length > 1) ? title : "Maticerts", msg, "info");
   }
   errorMessage(title: string, msg: string) {
-    Swal.fire((title.length > 1) ? title : "Error CERTIFICATE MANAGER", msg, "error");
+    Swal.fire((title.length > 1) ? title : "Error Maticerts", msg, "error");
   }
 
 }
