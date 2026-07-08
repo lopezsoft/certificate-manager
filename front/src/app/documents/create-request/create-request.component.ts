@@ -564,9 +564,6 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     this.customForm.get('legal_rep_first_name')?.setValue('');
     this.customForm.get('legal_rep_last_name')?.setValue('');
     this.customForm.get('legal_rep_email')?.setValue('');
-    this.customForm.get('identity_document_id')?.setValue(3);
-    this.customForm.get('type_organization_id')?.setValue(2);
-    this.customForm.get('entity_document_type_id')?.setValue(1);
     this.customForm.get('mobile')?.setValue('');
     this.customForm.get('phone')?.setValue('');
     this.customForm.get('info')?.setValue('');

@@ -1,0 +1,1 @@
+ALTER TABLE `companies` CHANGE COLUMN `issuance_provider` `issuance_provider` VARCHAR(32) NULL DEFAULT 'viafirma' COMMENT 'Override del proveedor de emisión: mail|viafirma|null=default' COLLATE 'utf8_general_ci' AFTER `has_agreement`;
