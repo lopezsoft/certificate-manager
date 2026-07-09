@@ -255,7 +255,6 @@ final class IssueCertificateUseCase
         ?OrganizationType $organizationType,
         ?string $emailCertificate,
     ): CsrInputDto {
-        // Todos los datos vienen de CertificateRequest, ya validados en CreateCertificateRequestFormRequest.
         // Ciudad y departamento vienen de la SOLICITUD (cr->city), no de la empresa.
         $department = mb_strtoupper((string) $cr->city->department->name_department);
         $cityName   = mb_strtoupper((string) $cr->city->name_city);
@@ -279,7 +278,7 @@ final class IssueCertificateUseCase
                 givenName:        $givenName,
                 surname:          $surname,
                 organization:     (string) $cr->company_name,
-                organizationUnit: (string) $cr->company_name,
+                organizationUnit: 'FACTURACION',
                 organizationType: $organizationType,
                 emailCertificate: $emailCertificate,
                 identity:         (string) $cr->document_number,
