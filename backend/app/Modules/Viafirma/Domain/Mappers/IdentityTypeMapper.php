@@ -45,9 +45,22 @@ final class IdentityTypeMapper
 
     public function fromIdentityDocument(IdentityDocument $document): IdentityType
     {
-        $code = (string) ($document->code ?? '');
-        $abbreviation = strtoupper((string) ($document->abbreviation ?? ''));
+        if (empty($document->code)) {
+            throw new UnsupportedIdentityDocumentException(
+                "IdentityDocument id={$document->id} sin code (DIAN). Este campo es obligatorio."
+            );
+        }
 
+        if (empty($document->abbreviation)) {
+            throw new UnsupportedIdentityDocumentException(
+                "IdentityDocument id={$document->id} sin abbreviation. Este campo es obligatorio."
+            );
+        }
+
+        $code = (string) $document->code;
+        $abbreviation = strtoupper((string) $document->abbreviation);
+
+        // Primero intentar mapeo por código DIAN (más fiable)
         if (in_array($code, self::IDC_CODES, true)) {
             return IdentityType::IDC;
         }
@@ -56,13 +69,15 @@ final class IdentityTypeMapper
             return IdentityType::PAS;
         }
 
+        // Fallback: mapeo por abbreviation (si el código DIAN no está en nuestro catálogo)
         if (isset(self::ABBREVIATION_MAP[$abbreviation])) {
             return self::ABBREVIATION_MAP[$abbreviation];
         }
 
+        // Si llegamos aquí, el documento no es soportado por Viafirma
         throw new UnsupportedIdentityDocumentException(
             "IdentityDocument id={$document->id} (code='{$code}', abbreviation='{$abbreviation}') "
-            . 'no es válido como identityType de Viafirma RA. '
+            . 'no es soportado como identityType de Viafirma RA. Valores válidos: IDC (cédula) o PAS (pasaporte).'
         );
     }
 }

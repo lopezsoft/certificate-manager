@@ -22,7 +22,9 @@ final class ProfileTypeMapper
 {
     public function fromTypeOrganization(TypeOrganization $organization): CertificateProfile
     {
-        $code = (int) ($organization->code ?? 0);
+        $code = (int) ($organization->code ?? throw new UnsupportedOrganizationTypeException(
+            "TypeOrganization id={$organization->id} no tiene código definido."
+        ));
 
         return match ($code) {
             1 => CertificateProfile::FE_PJ,
