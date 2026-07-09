@@ -82,23 +82,12 @@ final class IssueCertificateUseCase
         $this->enforceOrganizationTypeRule($profile, $cmd->organizationType);
 
         // ── 2) Leer ra_code y cod_profile desde config (.env) ─────────────
+        // Config fue validada al arrancar la app. Si llegamos aquí, existe.
         $raCode = (string) config('viafirma.ra_code');
-        if ($raCode === '') {
-            throw new ViafirmaException('config(viafirma.ra_code) está vacío — verifique VIAFIRMA_RA_CODE.');
-        }
 
         $codProfile = $profile === CertificateProfile::FE_PJ
             ? (string) config('viafirma.cod_profile_corporate')
             : (string) config('viafirma.cod_profile_individual');
-
-        if ($codProfile === '') {
-            $envVar = $profile === CertificateProfile::FE_PJ
-                ? 'VIAFIRMA_COD_PROFILE_CORPORATE'
-                : 'VIAFIRMA_COD_PROFILE_INDIVIDUAL';
-            throw new ViafirmaException(
-                "config(viafirma.cod_profile_{$profile->value}) está vacío — verifique {$envVar}."
-            );
-        }
 
         $validityDays = (int) config('viafirma.certificate_validity_days', 730);
 
