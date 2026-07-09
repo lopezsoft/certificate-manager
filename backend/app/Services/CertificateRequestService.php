@@ -43,7 +43,7 @@ class CertificateRequestService
             cityId:                (int) $request->city_id,
             identityDocumentId:    (int) $request->identity_document_id,
             typeOrganizationId:    (int) $request->type_organization_id,
-            entityDocumentTypeId:  (int) ($request->input('entity_document_type_id') ?? 1),
+            entityDocumentTypeId:  $request->filled('entity_document_type_id') ? (int) $request->input('entity_document_type_id') : null,
             documentNumber:        $request->document_number,
             address:               $request->address,
             legalRepresentative:   $request->input('legal_representative'),

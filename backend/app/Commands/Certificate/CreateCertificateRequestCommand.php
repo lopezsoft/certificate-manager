@@ -25,7 +25,7 @@ final class CreateCertificateRequestCommand implements CertificateCommandInterfa
         public readonly int     $cityId,
         public readonly int     $identityDocumentId,
         public readonly int     $typeOrganizationId,
-        public readonly int     $entityDocumentTypeId,
+        public readonly ?int    $entityDocumentTypeId,
         public readonly string  $documentNumber,
         public readonly string  $address,
         public readonly ?string $legalRepresentative,

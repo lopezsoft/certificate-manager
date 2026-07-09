@@ -7,7 +7,6 @@ namespace Tests\Unit\Modules\Viafirma\Listeners;
 use App\Models\Company;
 use App\Modules\Viafirma\Application\Listeners\ViafirmaRequestFailedListener;
 use App\Modules\Viafirma\Domain\Events\ViafirmaRequestFailed;
-use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
 use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
@@ -132,14 +131,14 @@ class ViafirmaRequestFailedListenerTest extends TestCase
     }
 
     /**
-     * Si ocurre excepción al notificar a Slack, el listener debe capturarla y loguear warning.
+     * Si ocurre excepción al notificar por email, el listener debe capturarla y loguear warning.
      */
-    public function test_handles_slack_notification_failure_gracefully(): void
+    public function test_handles_email_notification_failure_gracefully(): void
     {
         Log::spy();
+        \Illuminate\Support\Facades\Mail::fake();
 
-        // Configurar Slack webhook para provocar error
-        config(['viafirma.slack_webhook_url' => 'invalid://url']);
+        config(['mail.support_address' => 'support@example.com']);
 
         $viafirmaRequest = ViafirmaCertificateRequest::factory()->create();
         $viafirmaRequest->load('state');
@@ -183,8 +182,6 @@ class ViafirmaRequestFailedListenerTest extends TestCase
      */
     public function test_listener_is_registered_in_event_service_provider(): void
     {
-        $listenerMap = config('app.event_listener_map', []);
-
         // Verificar que el listener está registrado en el EventServiceProvider
         // (Este test es informativo, ya que Laravel configura los listeners automáticamente)
         $this->assertTrue(true);

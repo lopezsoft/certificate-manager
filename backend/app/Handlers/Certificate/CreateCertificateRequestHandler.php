@@ -63,13 +63,6 @@ class CreateCertificateRequestHandler
                 ]);
             }
 
-            if ($provider === 'viafirma') {
-                if (empty($command->legalRepFirstName) || empty($command->legalRepLastName)) {
-                    return HttpResponseMessages::getResponse422([
-                        'message' => 'Los nombres y apellidos del representante legal (legal_rep_first_name, legal_rep_last_name) deben enviarse por separado.',
-                    ]);
-                }
-            }
             $diskName    = config('certificate.storage.disk', 'local');
             $disk        = Storage::disk($diskName);
             $folderName  = $this->buildFolderName($command->companyId, $command->dni, $dv);
@@ -80,12 +73,11 @@ class CreateCertificateRequestHandler
                 ? CertificateRequestStatusEnum::PROCESSING->value 
                 : CertificateRequestStatusEnum::DRAFT->value;
 
-            $certificate = CertificateRequest::create([
+            $attributes = [
                 'company_id'               => $command->companyId,
                 'city_id'                  => $command->cityId,
                 'identity_document_id'     => $command->identityDocumentId,
                 'type_organization_id'     => $command->typeOrganizationId,
-                'entity_document_type_id'  => $command->entityDocumentTypeId,
                 'document_number'          => strip_tags($command->documentNumber),
                 'address'                  => strip_tags($command->address),
                 'legal_representative'     => $command->legalRepresentative ? Str::upper(strip_tags($command->legalRepresentative)) : null,
@@ -101,7 +93,19 @@ class CreateCertificateRequestHandler
                 'phone'                    => $command->phone ? strip_tags($command->phone) : null,
                 'base_path'                => $folderName,
                 'request_status'           => $initialStatus,
-            ]);
+            ];
+
+            // entity_document_type_id: la columna es NOT NULL con DEFAULT en BD.
+            // Se omite la clave (en vez de forzar null) cuando no aplica (Persona
+            // Natural), dejando que el default de BD aplique — inofensivo, ya que
+            // el campo no participa en ninguna decisión de negocio para PN.
+            // Para Persona Jurídica, CreateCertificateRequestFormRequest ya
+            // garantizó que el valor está presente y es válido.
+            if ($command->entityDocumentTypeId !== null) {
+                $attributes['entity_document_type_id'] = $command->entityDocumentTypeId;
+            }
+
+            $certificate = CertificateRequest::create($attributes);
 
             ChangeHistory::create([
                 'certificate_request_id' => $certificate->id,

@@ -3,7 +3,9 @@
 namespace App\Http\Requests\Certificate;
 
 use App\Models\Company;
+use App\Models\EntityDocumentType;
 use App\Modules\Company\CompanyQueries;
+use App\Modules\Viafirma\Domain\Enums\OrganizationType;
 use App\Services\Base64DecoderService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -28,7 +30,7 @@ class CreateCertificateRequestFormRequest extends FormRequest
             'city_id'                  => ['required', 'integer', 'exists:cities,id'],
             'identity_document_id'     => ['required', 'integer', 'exists:identity_documents,id'],
             'type_organization_id'     => ['required', 'integer', 'exists:type_organization,id'],
-            'entity_document_type_id'  => ['sometimes', 'integer', 'exists:entity_document_types,id'],
+            'entity_document_type_id'  => ['required_if:type_organization_id,1', 'nullable', 'integer', 'exists:entity_document_types,id'],
             'document_number'          => ['required', 'string', 'max:30'],
             'address'                  => ['required', 'string', 'max:255'],
             'legal_representative'     => ['required_without_all:legal_rep_first_name,legal_rep_last_name', 'string', 'max:120'],
@@ -55,7 +57,8 @@ class CreateCertificateRequestFormRequest extends FormRequest
             'identity_document_id.exists'      => 'El tipo de documento no existe',
             'type_organization_id.required'    => 'El tipo de organización es requerido',
             'type_organization_id.exists'      => 'El tipo de organización no existe',
-            'entity_document_type_id.exists'   => 'El tipo de documento constitutivo no existe',
+            'entity_document_type_id.exists'      => 'El tipo de documento constitutivo no existe',
+            'entity_document_type_id.required_if' => 'El tipo de documento constitutivo es requerido para Persona Jurídica',
             'dni.required'                     => 'El NIT es requerido',
             'document_number.required'         => 'El número de documento del representante legal es requerido',
             'company_name.required'            => 'La razón social es requerida',
@@ -81,8 +84,19 @@ class CreateCertificateRequestFormRequest extends FormRequest
                 $company = CompanyQueries::getCompany();
                 $provider = $company->issuance_provider;
 
-                if ($provider === 'viafirma' && empty($this->input('legal_rep_email'))) {
-                    $validator->errors()->add('legal_rep_email', 'El correo del representante legal es requerido para el proveedor Viafirma');
+                if ($provider === 'viafirma') {
+                    if (empty($this->input('legal_rep_email'))) {
+                        $validator->errors()->add('legal_rep_email', 'El correo del representante legal es requerido para el proveedor Viafirma');
+                    }
+
+                    // Viafirma requiere nombres y apellidos del representante legal por separado
+                    // (no basta con legal_representative como texto único).
+                    if (empty($this->input('legal_rep_first_name')) || empty($this->input('legal_rep_last_name'))) {
+                        $validator->errors()->add(
+                            'legal_rep_first_name',
+                            'Los nombres y apellidos del representante legal deben enviarse por separado (legal_rep_first_name, legal_rep_last_name) para el proveedor Viafirma.'
+                        );
+                    }
                 }
 
                 // Validación de adjuntos SOLO si el proveedor NO es Viafirma
@@ -97,8 +111,54 @@ class CreateCertificateRequestFormRequest extends FormRequest
                     }
                     $this->validateFilesStructure($validator, $attachments);
                 }
-            }
+            },
+            function (Validator $validator) {
+                $this->validateEntityDocumentTypeMapsToOrganizationType($validator);
+            },
         ];
+    }
+
+    /**
+     * Para Persona Jurídica (type_organization_id === 1), garantiza que el
+     * entity_document_type_id seleccionado esté activo y que su `code`
+     * mapee a un OrganizationType soportado por Viafirma.
+     *
+     * NOTA: el catálogo real de `entity_document_types` en BD puede no
+     * coincidir con el seed trackeado en la migración (ver
+     * database/migrations/2026_06_06_103900_create_entity_document_types_table.php).
+     * Por eso se valida dinámicamente contra el enum OrganizationType::tryFrom()
+     * en lugar de contra IDs fijos — funciona sea cual sea el catálogo real.
+     */
+    private function validateEntityDocumentTypeMapsToOrganizationType(Validator $validator): void
+    {
+        if ((int) $this->input('type_organization_id') !== 1) {
+            return; // Solo aplica a Persona Jurídica (PJ)
+        }
+
+        $entityDocumentTypeId = $this->input('entity_document_type_id');
+        if (empty($entityDocumentTypeId)) {
+            return; // Ya cubierto por required_if
+        }
+
+        $entityDocType = EntityDocumentType::find($entityDocumentTypeId);
+        if ($entityDocType === null) {
+            return; // Ya cubierto por 'exists'
+        }
+
+        if (!$entityDocType->active) {
+            $validator->errors()->add(
+                'entity_document_type_id',
+                'El tipo de documento constitutivo seleccionado no está activo.'
+            );
+            return;
+        }
+
+        if (OrganizationType::tryFrom($entityDocType->code) === null) {
+            $validator->errors()->add(
+                'entity_document_type_id',
+                "El código '{$entityDocType->code}' del tipo de documento constitutivo no está soportado por Viafirma para perfiles FE-PJ."
+            );
+        }
     }
 
     /**

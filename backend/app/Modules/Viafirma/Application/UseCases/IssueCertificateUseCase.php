@@ -64,8 +64,13 @@ final class IssueCertificateUseCase
     public function handle(IssueCertificateCommand $cmd): ViafirmaCertificateRequest
     {
         $cr = CertificateRequest::query()
-            ->with(['company.country', 'company.city.department', 'identity', 'organization', 'company.identity_document'])
+            ->with(['company.country', 'company.city.department', 'identity', 'organization'])
             ->findOrFail($cmd->certificateRequestId);
+
+        // ── Validar relaciones críticas ───────────────────────────────────────
+        // Todas estas relaciones debieron validarse en CreateCertificateRequestFormRequest.
+        // Si llegamos aquí y alguna falta, es un bug upstream.
+        $this->validateCertificateRequestStructure($cr);
 
         $existing = $this->repository->findByCertificateRequestId($cr->id);
         if ($existing !== null && !$existing->isFailed()) {
@@ -76,8 +81,8 @@ final class IssueCertificateUseCase
 
         // ── 1) Resolver perfil + datos localmente ─────────────────────────
         $profile      = $this->resolveProfile($cr);
-        $identityType = $cmd->identityTypeOverride ?? $this->resolveIdentityType($cr, $profile);
-        $countryCode  = strtoupper((string) ($cr->company?->country?->abbreviation_A2 ?? 'CO'));
+        $identityType = $cmd->identityTypeOverride ?? $this->resolveIdentityType($cr);
+        $countryCode  = strtoupper((string) $cr->company->country->abbreviation_A2);
 
         $this->enforceOrganizationTypeRule($profile, $cmd->organizationType);
 
@@ -135,7 +140,7 @@ final class IssueCertificateUseCase
             $submitInput = new SubmitCsrInputDto(
                 identityType:     $identityType,
                 countryCode:      $countryCode,
-                identity:         $this->resolveSubscriberIdentity($cr, $profile, $cmd),
+                identity:         $this->resolveSubscriberIdentity($cr),
                 raCode:           $raCode,
                 codProfile:       $codProfile,
                 emailCertificate: $cmd->emailCertificate,
@@ -228,6 +233,62 @@ final class IssueCertificateUseCase
 
     // ── Helpers privados ──────────────────────────────────────────────────────
 
+    /**
+     * Valida que CertificateRequest tenga todas las relaciones y campos críticos.
+     * Si alguno falta, es un bug de validación en CreateCertificateRequestFormRequest.
+     */
+    private function validateCertificateRequestStructure(CertificateRequest $cr): void
+    {
+        if ($cr->company === null) {
+            throw new ViafirmaException("CertificateRequest {$cr->id} sin company asociada.");
+        }
+
+        if ($cr->company->country === null) {
+            throw new ViafirmaException("CertificateRequest {$cr->id}: company sin country asociado.");
+        }
+
+        if ($cr->company->city === null) {
+            throw new ViafirmaException("CertificateRequest {$cr->id}: company sin city asociado.");
+        }
+
+        if ($cr->company->city->department === null) {
+            throw new ViafirmaException("CertificateRequest {$cr->id}: company->city sin department asociado.");
+        }
+
+        if ($cr->identity === null) {
+            throw new ViafirmaException("CertificateRequest {$cr->id} sin identity_document asociado.");
+        }
+
+        if ($cr->organization === null) {
+            throw new ViafirmaException("CertificateRequest {$cr->id} sin type_organization asociado.");
+        }
+
+        // Campos escalares requeridos (validados en FormRequest)
+        if (empty($cr->company_name)) {
+            throw new ViafirmaException("CertificateRequest {$cr->id} sin company_name.");
+        }
+
+        if (empty($cr->document_number)) {
+            throw new ViafirmaException("CertificateRequest {$cr->id} sin document_number.");
+        }
+
+        if (empty($cr->legal_rep_email)) {
+            throw new ViafirmaException("CertificateRequest {$cr->id} sin legal_rep_email.");
+        }
+
+        if (empty($cr->legal_rep_first_name) || empty($cr->legal_rep_last_name)) {
+            throw new ViafirmaException("CertificateRequest {$cr->id} sin legal_rep_first_name o legal_rep_last_name.");
+        }
+
+        if (empty($cr->address)) {
+            throw new ViafirmaException("CertificateRequest {$cr->id} sin address.");
+        }
+
+        if (empty($cr->dni)) {
+            throw new ViafirmaException("CertificateRequest {$cr->id} sin dni.");
+        }
+    }
+
     private function resolveProfile(CertificateRequest $cr): CertificateProfile
     {
         $org = $cr->organization;
@@ -237,7 +298,7 @@ final class IssueCertificateUseCase
         return $this->profileTypeMapper->fromTypeOrganization($org);
     }
 
-    private function resolveIdentityType(CertificateRequest $cr, CertificateProfile $profile): IdentityType
+    private function resolveIdentityType(CertificateRequest $cr): IdentityType
     {
         $doc = $cr->identity;
         if ($doc === null) {
@@ -266,71 +327,55 @@ final class IssueCertificateUseCase
         string $countryCode,
         IssueCertificateCommand $cmd,
     ): CsrInputDto {
-        $company = $cr->company;
-        if ($company === null) {
-            throw new ViafirmaException("CertificateRequest {$cr->id} sin company.");
-        }
+        // Todos los datos vienen de CertificateRequest, ya validados en CreateCertificateRequestFormRequest.
+        // No hay fallbacks a company ni lógica defensiva — si algo falta, es un bug upstream.
+        $department = mb_strtoupper((string) $cr->company->city->department->name_department);
+        $cityName   = mb_strtoupper((string) $cr->company->city->name_city);
+        $street     = (string) $cr->address;
 
-        $department = $company->city?->department?->name_department ?? '';
-        $cityName   = $company->city?->name_city ?? ($company->city_name ?? '');
-        $street     = (string) ($company->address ?? $cr->address ?? '');
+        // Ambos perfiles (FE_PJ y FE_PN) requieren nombres y apellidos separados,
+        // ya consolidados en legal_rep_first_name/last_name desde FormRequest.
+        $givenName = (string) $cr->legal_rep_first_name;
+        $surname   = (string) $cr->legal_rep_last_name;
+        $email     = (string) $cr->legal_rep_email;
 
         if ($profile === CertificateProfile::FE_PJ) {
             return new CsrInputDto(
                 profile:          $profile,
                 country:          $countryCode,
-                state:            mb_strtoupper($department),
-                locality:         mb_strtoupper($cityName),
+                state:            $department,
+                locality:         $cityName,
                 street:           $street,
-                serialNumber:     (string) ($company->dni ?? $cr->dni),
-                email:            (string) ($company->email ?? $cmd->emailCertificate),
-                givenName:        (string) ($cr->legal_rep_first_name ?? $this->firstName($cr->legal_representative ?? '')),
-                surname:          (string) ($cr->legal_rep_last_name ?? $this->lastName($cr->legal_representative ?? '')),
-                organization:     (string) ($cr->company_name ?? $company->company_name ?? ''),
-                organizationUnit: (string) ($company->trade_name ?? $cr->company_name ?? $company->company_name ?? 'FACTURACION'),
+                serialNumber:     (string) $cr->dni,
+                email:            $email,
+                givenName:        $givenName,
+                surname:          $surname,
+                organization:     (string) $cr->company_name,
+                organizationUnit: (string) $cr->company_name,
                 organizationType: $cmd->organizationType,
                 emailCertificate: $cmd->emailCertificate,
-                identity:         $cr->document_number,
+                identity:         (string) $cr->document_number,
             );
         }
 
-        // FE_PN — Documentación §3.2: 9 atributos incluyendo ST y L
+        // FE_PN — mismo conjunto de atributos que FE_PJ (nombres ya consolidados)
         return new CsrInputDto(
             profile:          $profile,
             country:          $countryCode,
-            state:            mb_strtoupper($department),
-            locality:         mb_strtoupper($cityName),
+            state:            $department,
+            locality:         $cityName,
             street:           $street,
-            serialNumber:     (string) ($cr->dni),
-            email:            (string) ($cr->email ?? $company->email ?? $cmd->emailCertificate),
-            givenName:        (string) ($cr->legal_rep_first_name ?? $this->firstName($cr->legal_representative ?? '')),
-            surname:          (string) ($cr->legal_rep_last_name ?? $this->lastName($cr->legal_representative ?? '')),
+            serialNumber:     (string) $cr->dni,
+            email:            $email,
+            givenName:        $givenName,
+            surname:          $surname,
             emailCertificate: $cmd->emailCertificate,
-            identity:         $cr->document_number,
+            identity:         (string) $cr->document_number,
         );
     }
 
-    private function resolveSubscriberIdentity(
-        CertificateRequest $cr,
-        CertificateProfile $profile,
-        IssueCertificateCommand $cmd,
-    ): string {
-        return (string) ($cr->document_number ?? '');
-    }
-
-    private function firstName(string $fullName): string
+    private function resolveSubscriberIdentity(CertificateRequest $cr): string
     {
-        $parts = preg_split('/\s+/', trim($fullName)) ?: [];
-        return $parts[0] ?? '';
-    }
-
-    private function lastName(string $fullName): string
-    {
-        $parts = preg_split('/\s+/', trim($fullName)) ?: [];
-        if (count($parts) <= 1) {
-            return '';
-        }
-        array_shift($parts);
-        return implode(' ', $parts);
+        return (string) $cr->document_number;
     }
 }

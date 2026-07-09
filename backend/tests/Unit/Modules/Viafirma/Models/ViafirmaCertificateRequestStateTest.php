@@ -111,28 +111,29 @@ class ViafirmaCertificateRequestStateTest extends TestCase
     }
 
     /**
-     * El scope debe respetar el límite de intentos (max 5).
+     * El scope debe respetar el máximo de intentos configurado.
      */
     public function test_scope_pending_auto_redownload_respects_max_attempts(): void
     {
+        $maxAttempts = config('viafirma.auto_redownload.max_attempts', 5);
         $viafirmaRequest = ViafirmaCertificateRequest::factory()->create();
 
-        // Caso 1: 4 intentos (debe incluirse)
+        // Caso 1: intentos < máximo (debe incluirse)
         $state1 = ViafirmaCertificateRequestState::factory()->create([
             'viafirma_certificate_request_id' => $viafirmaRequest->id,
             'internal_state'                  => InternalState::FAILED_RECOVERABLE->value,
             'remote_status'                   => RemoteStatus::GENERATED_NOT_DOWNLOADED->value,
             'updated_at'                      => now()->subMinutes(5),
-            'auto_redownload_attempts'        => 4,
+            'auto_redownload_attempts'        => $maxAttempts - 1,
         ]);
 
-        // Caso 2: 5 intentos (debe excluirse)
+        // Caso 2: intentos = máximo (debe excluirse)
         $state2 = ViafirmaCertificateRequestState::factory()->create([
             'viafirma_certificate_request_id' => $viafirmaRequest->id,
             'internal_state'                  => InternalState::FAILED_RECOVERABLE->value,
             'remote_status'                   => RemoteStatus::GENERATED_NOT_DOWNLOADED->value,
             'updated_at'                      => now()->subMinutes(5),
-            'auto_redownload_attempts'        => 5,
+            'auto_redownload_attempts'        => $maxAttempts,
         ]);
 
         $results = ViafirmaCertificateRequestState::pendingAutoRedownload()->get();
@@ -141,27 +142,28 @@ class ViafirmaCertificateRequestStateTest extends TestCase
     }
 
     /**
-     * El scope debe respetar el tiempo mínimo (>= 2 min).
+     * El scope debe respetar el tiempo mínimo configurado.
      */
     public function test_scope_pending_auto_redownload_respects_time_gate(): void
     {
+        $minWaitMinutes = config('viafirma.auto_redownload.min_wait_minutes', 2);
         $viafirmaRequest = ViafirmaCertificateRequest::factory()->create();
 
-        // Caso 1: 2 minutos (debe incluirse)
+        // Caso 1: tiempo mínimo (debe incluirse)
         $state1 = ViafirmaCertificateRequestState::factory()->create([
             'viafirma_certificate_request_id' => $viafirmaRequest->id,
             'internal_state'                  => InternalState::FAILED_RECOVERABLE->value,
             'remote_status'                   => RemoteStatus::GENERATED_NOT_DOWNLOADED->value,
-            'updated_at'                      => now()->subMinutes(2),
+            'updated_at'                      => now()->subMinutes($minWaitMinutes),
             'auto_redownload_attempts'        => 0,
         ]);
 
-        // Caso 2: 1 minuto (debe excluirse)
+        // Caso 2: menor que el mínimo (debe excluirse)
         $state2 = ViafirmaCertificateRequestState::factory()->create([
             'viafirma_certificate_request_id' => $viafirmaRequest->id,
             'internal_state'                  => InternalState::FAILED_RECOVERABLE->value,
             'remote_status'                   => RemoteStatus::GENERATED_NOT_DOWNLOADED->value,
-            'updated_at'                      => now()->subMinutes(1),
+            'updated_at'                      => now()->subMinutes(max(1, $minWaitMinutes - 1)),
             'auto_redownload_attempts'        => 0,
         ]);
 
