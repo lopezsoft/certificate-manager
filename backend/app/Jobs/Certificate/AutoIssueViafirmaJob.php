@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs\Certificate;
 
 use App\DTOs\Certificate\IssuanceRequest;
+use App\Exceptions\Certificate\CertificateDataIntegrityException;
 use App\Models\CertificateRequest;
 use App\Modules\Viafirma\Domain\Enums\OrganizationType;
 use App\Services\Certificate\CertificateIssuanceOrchestrator;
@@ -47,27 +48,23 @@ class AutoIssueViafirmaJob implements ShouldQueue
             $cr = CertificateRequest::query()->find($this->certificateRequestId);
 
             if ($cr === null) {
-                Log::warning('AutoIssueViafirmaJob: solicitud no encontrada — se abandona', [
-                    'cr_id' => $this->certificateRequestId,
-                ]);
+                throw new CertificateDataIntegrityException(
+                    "CertificateRequest {$this->certificateRequestId} no encontrada. Esto indica un bug de validación upstream o un caso de datos faltantes."
+                );
                 return; // No reintentar: la solicitud no existe
             }
 
-            // legal_rep_email obligatorio — sin él Viafirma no puede emitir
+            // legal_rep_email obligatorio — sin él Viafirma no puede emitir.
+            // CreateCertificateRequestFormRequest ya lo exige para provider=viafirma;
+            // si llega vacío aquí es un bug de validación upstream, no un caso legítimo.
             $emailCertificate = $cr->legal_rep_email ?? null;
             if (empty($emailCertificate)) {
-                Log::warning('AutoIssueViafirmaJob: sin legal_rep_email — se abandona', [
-                    'cr_id' => $cr->id,
-                ]);
-                return; // No reintentar: falta dato estructural
+                throw new CertificateDataIntegrityException(
+                    "CertificateRequest {$cr->id}: legal_rep_email vacío. Esto debió ser rechazado en CreateCertificateRequestFormRequest al crear la solicitud."
+                );
             }
 
-            // PJ (type_organization_id == 1) → EXTRANJERAS
-            // PN (type_organization_id == 2) → null (no se envía el campo)
-            // Usar == (no ===) porque Eloquent puede retornar string "1" sin cast
-            $organizationType = ((int) $cr->type_organization_id === 1)
-                ? OrganizationType::EXTRANJERAS->value
-                : null;
+            $organizationType = $this->resolveOrganizationType($cr);
 
             $requestDto = new IssuanceRequest(
                 certificateRequestId: $cr->id,
@@ -79,7 +76,7 @@ class AutoIssueViafirmaJob implements ShouldQueue
 
             Log::info('AutoIssueViafirmaJob: llamando al orquestador', [
                 'cr_id'             => $cr->id,
-                'organization_type' => $organizationType ?? 'null (PN)',
+                'organization_type' => $organizationType,
                 'attempt'           => $this->attempts(),
                 'requestDto'        => $requestDto,
             ]);
@@ -93,6 +90,18 @@ class AutoIssueViafirmaJob implements ShouldQueue
                 'elapsed_ms' => round((microtime(true) - $startedAt) * 1000),
             ]);
 
+        } catch (CertificateDataIntegrityException $e) {
+            // Dato estructural inválido: indica un bug de validación upstream
+            // (debió rechazarse en CreateCertificateRequestFormRequest). No es
+            // un error transitorio — reintentar no lo resuelve. Falla de inmediato
+            // y queda visible en failed_jobs, sin consumir los 3 tries.
+            Log::error('AutoIssueViafirmaJob: dato estructural inválido — fallo inmediato sin reintento', [
+                'cr_id'   => $this->certificateRequestId,
+                'attempt' => $this->attempts(),
+                'error'   => $e->getMessage(),
+            ]);
+            $this->fail($e);
+            return;
         } catch (Throwable $e) {
             $elapsed = round((microtime(true) - $startedAt) * 1000);
 
@@ -121,5 +130,49 @@ class AutoIssueViafirmaJob implements ShouldQueue
             'error' => $exception->getMessage(),
             'class' => get_class($exception),
         ]);
+    }
+
+    /**
+     * Resuelve el tipo de organización para Viafirma basado en entity_document_type.
+     *
+     * - Persona Natural → null (sin tipo)
+     * - Persona Jurídica con código mapeado al enum OrganizationType → el valor correspondiente
+     *
+     * IMPORTANTE: CreateCertificateRequestFormRequest ya garantiza que,
+     * para Persona Jurídica, el entity_document_type_id está presente, es activo,
+     * y su código mapea al enum. Si llega un caso que no cumple esto, es un bug
+     * de validación upstream y se lanza CertificateDataIntegrityException
+     * (no se reintenta automáticamente, indicando error de validación, no
+     * error transitorio).
+     *
+     * @return string|null OrganizationType value para PJ, null para PN
+     * @throws CertificateDataIntegrityException si hay datos estructurales inválidos
+     */
+    private function resolveOrganizationType(CertificateRequest $cr): ?string
+    {
+        // PN → null (sin cambios)
+        if ((int) $cr->type_organization_id !== 1) {
+            return null;
+        }
+
+        // PJ: cargar tipo de documento constitutivo
+        $entityDocType = $cr->entityDocumentType ?: $cr->load('entityDocumentType')->entityDocumentType;
+
+        if ($entityDocType === null) {
+            throw new CertificateDataIntegrityException(
+                "CertificateRequest {$cr->id}: Persona Jurídica sin entity_document_type asociado. Esto debió ser rechazado en CreateCertificateRequestFormRequest al crear la solicitud."
+            );
+        }
+
+        // Mapear código a enum OrganizationType
+        $organizationType = OrganizationType::tryFrom($entityDocType->code);
+
+        if ($organizationType === null) {
+            throw new CertificateDataIntegrityException(
+                "CertificateRequest {$cr->id}: entity_document_type_id={$entityDocType->id} (code='{$entityDocType->code}') no mapea a ningún OrganizationType soportado por Viafirma. Esto debió ser rechazado en CreateCertificateRequestFormRequest al crear la solicitud."
+            );
+        }
+
+        return $organizationType->value;
     }
 }
