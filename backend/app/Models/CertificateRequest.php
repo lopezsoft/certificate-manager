@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Core\CoreModel;
 use App\Models\Location\Cities;
+use App\Models\Location\Country;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -31,7 +32,7 @@ class CertificateRequest extends CoreModel
      * @var array
      */
     protected $fillable = [
-        'city_id', 'identity_document_id', 'type_organization_id', 'entity_document_type_id',
+        'country_id', 'city_id', 'identity_document_id', 'type_organization_id', 'entity_document_type_id',
         'company_name', 'dni', 'dv', 'address', 'document_number',
         'phone', 'mobile', 'legal_representative', 'legal_rep_first_name', 'legal_rep_last_name', 'legal_rep_email', 'info', 'request_status',
         'company_id', 'postal_code', 'life', 'base_path', 'document_type',

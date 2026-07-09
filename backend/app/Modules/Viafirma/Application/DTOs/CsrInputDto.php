@@ -24,7 +24,6 @@ use App\Modules\Viafirma\Domain\Enums\OrganizationType;
  *
  *  - organizationType  enum Viafirma — sólo FE_PJ
  *  - emailCertificate  email del payload (puede diferir del E del CSR)
- *  - identity          cédula/pasaporte del solicitante (RL en PJ, titular en PN)
  */
 final class CsrInputDto
 {
@@ -44,7 +43,6 @@ final class CsrInputDto
         public readonly ?string $organizationUnit = null,
         public readonly ?OrganizationType $organizationType = null,
         public readonly ?string $emailCertificate = null,
-        public readonly ?string $identity = null,
     ) {}
 }
 

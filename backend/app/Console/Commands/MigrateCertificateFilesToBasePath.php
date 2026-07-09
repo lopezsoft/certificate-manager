@@ -287,7 +287,8 @@ final class MigrateCertificateFilesToBasePath extends Command
                             'mime_type' => 'application/x-pkcs12-key',
                             'document_type' => 'PRIVATE_KEY',
                             'file_size' => 0,
-                            'status' => 'ACTIVE',
+                            'last_modified' => now(),
+                            'status' => 'COMPLETED',
                         ]
                     );
                 }
