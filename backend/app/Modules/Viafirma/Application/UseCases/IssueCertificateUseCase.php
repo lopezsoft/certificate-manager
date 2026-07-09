@@ -266,6 +266,9 @@ final class IssueCertificateUseCase
         $surname   = (string) $cr->legal_rep_last_name;
         $email     = (string) $cr->legal_rep_email;
 
+        // Organization Unit (OU) para CSR — configurable en VIAFIRMA_ORGANIZATION_UNIT
+        $organizationUnit = (string) config('viafirma.organization_unit');
+
         if ($profile === CertificateProfile::FE_PJ) {
             return new CsrInputDto(
                 profile:          $profile,
@@ -278,7 +281,7 @@ final class IssueCertificateUseCase
                 givenName:        $givenName,
                 surname:          $surname,
                 organization:     (string) $cr->company_name,
-                organizationUnit: 'FACTURACION',
+                organizationUnit: $organizationUnit,
                 organizationType: $organizationType,
                 emailCertificate: $emailCertificate,
                 identity:         (string) $cr->document_number,

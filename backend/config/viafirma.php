@@ -40,6 +40,10 @@ return [
     // Se sobrescribe con el campo `validity` retornado por /ra/available-profiles.
     'certificate_validity_days' => (int) env('VIAFIRMA_CERT_VALIDITY_DAYS', 730),
 
+    // Organization Unit (OU) para CSR de firma electrónica.
+    // Valor por defecto: FACTURACION (departamento/sede del certificado).
+    'organization_unit' => env('VIAFIRMA_ORGANIZATION_UNIT', 'FACTURACION'),
+
     'polling' => [
         'max_attempts'     => (int) env('VIAFIRMA_POLL_MAX_ATTEMPTS', 288), // 288 × 60s = 8h máximo
         'expiration_hours' => (int) env('VIAFIRMA_POLL_EXPIRATION_HOURS', 72),
