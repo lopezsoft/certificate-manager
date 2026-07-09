@@ -67,11 +67,6 @@ final class IssueCertificateUseCase
             ->with(['company.country', 'company.city.department', 'identity', 'organization'])
             ->findOrFail($cmd->certificateRequestId);
 
-        // ── Validar relaciones críticas ───────────────────────────────────────
-        // Todas estas relaciones debieron validarse en CreateCertificateRequestFormRequest.
-        // Si llegamos aquí y alguna falta, es un bug upstream.
-        $this->validateCertificateRequestStructure($cr);
-
         $existing = $this->repository->findByCertificateRequestId($cr->id);
         if ($existing !== null && !$existing->isFailed()) {
             throw new ViafirmaException(
@@ -232,62 +227,6 @@ final class IssueCertificateUseCase
     }
 
     // ── Helpers privados ──────────────────────────────────────────────────────
-
-    /**
-     * Valida que CertificateRequest tenga todas las relaciones y campos críticos.
-     * Si alguno falta, es un bug de validación en CreateCertificateRequestFormRequest.
-     */
-    private function validateCertificateRequestStructure(CertificateRequest $cr): void
-    {
-        if ($cr->company === null) {
-            throw new ViafirmaException("CertificateRequest {$cr->id} sin company asociada.");
-        }
-
-        if ($cr->company->country === null) {
-            throw new ViafirmaException("CertificateRequest {$cr->id}: company sin country asociado.");
-        }
-
-        if ($cr->company->city === null) {
-            throw new ViafirmaException("CertificateRequest {$cr->id}: company sin city asociado.");
-        }
-
-        if ($cr->company->city->department === null) {
-            throw new ViafirmaException("CertificateRequest {$cr->id}: company->city sin department asociado.");
-        }
-
-        if ($cr->identity === null) {
-            throw new ViafirmaException("CertificateRequest {$cr->id} sin identity_document asociado.");
-        }
-
-        if ($cr->organization === null) {
-            throw new ViafirmaException("CertificateRequest {$cr->id} sin type_organization asociado.");
-        }
-
-        // Campos escalares requeridos (validados en FormRequest)
-        if (empty($cr->company_name)) {
-            throw new ViafirmaException("CertificateRequest {$cr->id} sin company_name.");
-        }
-
-        if (empty($cr->document_number)) {
-            throw new ViafirmaException("CertificateRequest {$cr->id} sin document_number.");
-        }
-
-        if (empty($cr->legal_rep_email)) {
-            throw new ViafirmaException("CertificateRequest {$cr->id} sin legal_rep_email.");
-        }
-
-        if (empty($cr->legal_rep_first_name) || empty($cr->legal_rep_last_name)) {
-            throw new ViafirmaException("CertificateRequest {$cr->id} sin legal_rep_first_name o legal_rep_last_name.");
-        }
-
-        if (empty($cr->address)) {
-            throw new ViafirmaException("CertificateRequest {$cr->id} sin address.");
-        }
-
-        if (empty($cr->dni)) {
-            throw new ViafirmaException("CertificateRequest {$cr->id} sin dni.");
-        }
-    }
 
     private function resolveProfile(CertificateRequest $cr): CertificateProfile
     {
