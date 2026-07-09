@@ -7,7 +7,6 @@ use App\Models\Location\Cities;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 
 class CertificateRequest extends CoreModel

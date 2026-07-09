@@ -101,7 +101,7 @@ final class IssueCertificateUseCase
         // ── 3-4) Generar llave + CSR ──────────────────────────────────────
         $this->logger->info('viafirma.issue.generating_key', ['cr_id' => $cr->id]);
         $keyPair   = $this->crypto->generateKeyPair((int) config('viafirma.crypto.key_size', 2048));
-        $csrInput  = $this->buildCsrInput($cr, $profile, $identityType, $countryCode, $cmd);
+        $csrInput  = $this->buildCsrInput($cr, $profile, $countryCode, $cmd->organizationType, $cmd->emailCertificate);
         $csrResult = $this->csrBuilderFactory->for($profile)->build($csrInput, $keyPair->privateKeyPem);
 
         // ── 5) Vault: persistir llave privada cifrada ─────────────────────
@@ -251,14 +251,14 @@ final class IssueCertificateUseCase
     private function buildCsrInput(
         CertificateRequest $cr,
         CertificateProfile $profile,
-        IdentityType $identityType,
         string $countryCode,
-        IssueCertificateCommand $cmd,
+        ?OrganizationType $organizationType,
+        ?string $emailCertificate,
     ): CsrInputDto {
         // Todos los datos vienen de CertificateRequest, ya validados en CreateCertificateRequestFormRequest.
-        // No hay fallbacks a company ni lógica defensiva — si algo falta, es un bug upstream.
-        $department = mb_strtoupper((string) $cr->company->city->department->name_department);
-        $cityName   = mb_strtoupper((string) $cr->company->city->name_city);
+        // Ciudad y departamento vienen de la SOLICITUD (cr->city), no de la empresa.
+        $department = mb_strtoupper((string) $cr->city->department->name_department);
+        $cityName   = mb_strtoupper((string) $cr->city->name_city);
         $street     = (string) $cr->address;
 
         // Ambos perfiles (FE_PJ y FE_PN) requieren nombres y apellidos separados,
@@ -280,8 +280,8 @@ final class IssueCertificateUseCase
                 surname:          $surname,
                 organization:     (string) $cr->company_name,
                 organizationUnit: (string) $cr->company_name,
-                organizationType: $cmd->organizationType,
-                emailCertificate: $cmd->emailCertificate,
+                organizationType: $organizationType,
+                emailCertificate: $emailCertificate,
                 identity:         (string) $cr->document_number,
             );
         }
@@ -297,7 +297,7 @@ final class IssueCertificateUseCase
             email:            $email,
             givenName:        $givenName,
             surname:          $surname,
-            emailCertificate: $cmd->emailCertificate,
+            emailCertificate: $emailCertificate,
             identity:         (string) $cr->document_number,
         );
     }
