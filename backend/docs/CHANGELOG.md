@@ -171,6 +171,77 @@ El versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [1.9.1] - 2026-07-09
+
+### Añadido — Banking Logic Validation + Viafirma KYC Persistence + Refactorización IssueCertificateUseCase
+
+- **Banking logic validation en CreateCertificateRequest**:
+  - Nueva excepción `CertificateDataIntegrityException` para fallos de integridad estructural en jobs (no se reintenta)
+  - `CreateCertificateRequestFormRequest` valida todos los campos requeridos antes de crear la solicitud
+  - Validación condicional: `entity_document_type_id` obligatorio SOLO para Persona Jurídica (`type_organization_id === 1`)
+  - Validación de `entity_document_type_id` mapea a `OrganizationType::tryFrom()` dinámicamente (catalogo real vs seed desincronizado)
+  - `legal_rep_first_name` y `legal_rep_last_name` requeridos SOLO para proveedor Viafirma
+  - Resultado: `AutoIssueViafirmaJob` recibe datos validados, falla fuerte sin reintento si hay inconsistencias
+
+- **Nuevo campo: `country_id` en `certificate_requests`**:
+  - Nueva columna `country_id INT DEFAULT 45 (Colombia)` con FK a `countries`
+  - Agregada validación en FormRequest y relación BelongsTo en modelo
+  - Usado en `IssueCertificateUseCase` en lugar de `company.country` — descentralización de datos
+
+- **Refactorización de `IssueCertificateUseCase`**:
+  - Eliminados todos los fallbacks de datos de empresa (`company.country`, `company.city`, etc.)
+  - Ahora obtiene TODOS los datos de la solicitud: `country`, `city.department` vía `CertificateRequest`
+  - Cambio de eager-load: `with(['company.country', 'company.city.department'])` → `with(['country', 'city.department'])`
+  - `organizationUnit` ahora es configurable vía `config('viafirma.organization_unit')` en lugar de hardcodeado
+  - Impacto: lógica centralizada, sin dependencias circulares de la empresa
+
+- **Correcciones de enums vacíos en `file_managers`** (producción):
+  - Llenar `document_type` vacío para archivos P7B → `P7B_CERTIFICATE`
+  - Llenar `status` vacío para `private_key_reference` → `COMPLETED`
+  - Llenar `status` vacío para archivos ZIP → `COMPLETED`
+  - Llenar `document_type` vacío para ZIP → `CERTIFICATE`
+  - Nuevas migraciones + DDLs manuales para ejecución en producción
+
+- **Ajuste de polling expiration**: `VIAFIRMA_POLL_EXPIRATION_HOURS` de 72 → 96 horas (4 días, no 3)
+  - Configurado en `config/viafirma.php` y `.env`
+  - Permite mayor margen para acreditación KYC y procesos administrativos
+
+- **Eliminación de parámetro no utilizado**:
+  - Removido `identity` de `CsrInputDto` — los builders FE_PJ/FE_PN nunca lo usaban
+  - `identity` persiste en `SubmitCsrInputDto` para el payload API de Viafirma (separación clara de responsabilidades)
+
+- **Persistencia automática del link KYC**:
+  - Nueva columna `kyc_accreditation_link` en `viafirma_certificate_request_states` para cachear el link de acreditación
+  - Nuevo evento de dominio `ViafirmaAccreditationReached` — se dispara al entrar en estado remoto `accreditation`, independientemente de cambios en `internal_state`
+  - Nuevo listener `DispatchKycLinkFetchListener` — despacha job automático para capturar el link
+  - Nuevo job `FetchKycAccreditationLinkJob` (`ShouldQueue`, `ShouldBeUnique`) con reintentos y manejo de errores idempotente
+  - Ventaja: El link persiste en BD incluso si Viafirma avanza el estado más allá de `accreditation`, evitando pérdida del recurso
+
+- **Tests de cobertura** (18 nuevos para KYC link):
+  - `GetKycLinkUseCaseTest` (6 tests): caché, error con estado real, on-demand, persistencia
+  - `FetchKycAccreditationLinkJobTest` (5 tests): persistencia, idempotencia, manejo de errores transitorio/no-transitorio
+  - `KycLinkControllerTest` (4 tests): endpoint 200, 422, 404, on-demand
+  - `StateMachineAccreditationTest` (3 tests): evento dispara en transiciones internas de POLLING
+
+### Corregido
+- **Bug en `GetKycLinkUseCase`** — mensaje de error HTTP 422 siempre mostraba "Estado remoto actual: null":
+  - Ahora usa `$entity->state?->remote_status` en lugar de `$entity->remote_status` (que no existe en el modelo raíz)
+  - Resultado: mensajes de error ahora dicen el estado remoto real (ej. "rues_check", "submitted", etc.)
+
+- Descripción del tag `Viafirma` en Swagger: ahora claramente documenta que el link KYC se captura automáticamente y persiste
+- Schema `RevocationRequest` en Swagger: corregida descripción incorrecta que confundía kyc-link con revocation_code
+
+### Cambiado
+- Versión API actualizada de 1.9.0 → 1.9.1 en `SwaggerDefinitions.php`
+- `CertificateRequest` modelo: agregado `country_id` a fillable y relación BelongsTo
+- `ViafirmaCertificateRequestState` modelo: agregado `kyc_accreditation_link` a `$fillable`
+- `IssueCertificateUseCase`: refactorización de datos (company → CertificateRequest directo)
+- `StateMachine::transition()`: agregada lógica de evento `ViafirmaAccreditationReached` incondicionalmente al entrar en `accreditation`
+- `EventServiceProvider`: registrado nuevo listener para `ViafirmaAccreditationReached`
+- `AutoIssueViafirmaJob`: agregar `use CertificateDataIntegrityException` + catch específico
+
+---
+
 ## [1.9.0] - 2026-02-20
 
 ### Añadido

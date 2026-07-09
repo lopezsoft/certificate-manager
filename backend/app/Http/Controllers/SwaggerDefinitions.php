@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 /**
  * @OA\Info(
- *     version="1.9.0",
+ *     version="1.9.1",
  *     title="MatiCerts",
  *     description="API REST unificada (v1) para la gestión completa de solicitudes de certificados digitales.\n\n**Autenticación:** La API utiliza tokens OAuth 2.0 (Bearer Token). Puede obtener su token de sesión a través del endpoint `POST /api/v1/auth/login`. Para integraciones de sistema a sistema o desarrolladores externos, recomendamos utilizar Personal Access Tokens (PAT) generados desde el endpoint `/api/v1/tokens`.",
  *     @OA\Contact(
@@ -31,7 +31,7 @@ namespace App\Http\Controllers;
  * @OA\Tag(name="Solicitudes de Certificado", description="Gestión CRUD de solicitudes de certificados digitales: creación, listado, actualización de estado, búsqueda por DNI y eliminación lógica.")
  * @OA\Tag(name="Archivos", description="Carga (multipart/form-data) y eliminación de archivos adjuntos a una solicitud de certificado. Soporta PDF y ZIP.")
  * @OA\Tag(name="Emisión de Certificados", description="Emisión agnóstica del proveedor (mail / viafirma / futuros). Cada solicitud puede dispararse (`POST /issue`), consultarse (`GET /issuance`) y descargarse (`GET /issuance/download`). El proveedor activo se resuelve por cascada de configuración.")
- * @OA\Tag(name="Viafirma", description="Operaciones específicas del proveedor Viafirma RA: revocación de certificados emitidos y obtención del link KYC para el proceso de acreditación biométrica. Requiere que el trámite exista en `viafirma_certificate_requests`.")
+ * @OA\Tag(name="Viafirma", description="Operaciones específicas del proveedor Viafirma RA: obtención del link KYC para acreditación biométrica (GET /kyc-link) y revocación de certificados emitidos (POST /revoke). El link KYC se captura automáticamente al entrar en estado 'accreditation' y se persiste en BD para disponibilidad permanente. Requiere que el trámite exista en `viafirma_certificate_requests`.")
  * @OA\Tag(name="Empresa", description="Configuración del perfil de la empresa: datos generales, proveedor de emisión por defecto y configuración de reportes.")
  * @OA\Tag(name="Perfil", description="Gestión del perfil del usuario autenticado: datos personales y tipos de usuario.")
  * @OA\Tag(name="Consumo", description="Estadísticas y reportes de consumo de certificados agrupados por año y mes.")
@@ -437,7 +437,7 @@ namespace App\Http\Controllers;
  *     schema="RevocationRequest",
  *     description="Payload para revocar un certificado Viafirma emitido.",
  *     required={"revoking_code","revocation_reason"},
- *     @OA\Property(property="revoking_code", type="string", example="MOCK-REV-CODE-A1B2C3D4", description="Código de revocación emitido por Viafirma RA. Obtenible con GET /certificate-request/{id}/kyc-link una vez el certificado está activo."),
+ *     @OA\Property(property="revoking_code", type="string", example="MOCK-REV-CODE-A1B2C3D4", description="Código de revocación emitido por Viafirma RA. Obtenible automáticamente cuando el certificado está en estado ASSEMBLED o COMPLETED."),
  *     @OA\Property(
  *         property="revocation_reason",
  *         type="integer",
