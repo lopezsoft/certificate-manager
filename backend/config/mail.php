@@ -96,6 +96,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Support Email Address
+    |--------------------------------------------------------------------------
+    |
+    | Email address used for system notifications and alerts.
+    | Configured via MAIL_SUPPORT_ADDRESS in .env
+    |
+    */
+
+    'support_address' => env('MAIL_SUPPORT_ADDRESS'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Markdown Mail Settings
     |--------------------------------------------------------------------------
     |

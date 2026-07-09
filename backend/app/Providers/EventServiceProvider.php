@@ -72,11 +72,17 @@ class EventServiceProvider extends ServiceProvider
         // Viafirma events (Sprint 3)
         \App\Modules\Viafirma\Domain\Events\ViafirmaStatusChanged::class => [
             \App\Modules\Viafirma\Application\Listeners\NotifyClientOnAccreditationListener::class,
+            \App\Modules\Viafirma\Application\Listeners\ViafirmaRequestStateChangedListener::class,
         ],
 
         // Viafirma events (Sprint 4)
         \App\Modules\Viafirma\Domain\Events\ViafirmaReadyToDownload::class => [
             \App\Modules\Viafirma\Application\Listeners\DispatchDownloadOnReadyListener::class,
+        ],
+
+        // Viafirma events (V-311: Detección y notificación de fallos)
+        \App\Modules\Viafirma\Domain\Events\ViafirmaRequestFailed::class => [
+            \App\Modules\Viafirma\Application\Listeners\ViafirmaRequestFailedListener::class,
         ],
     ];
 
