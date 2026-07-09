@@ -11,6 +11,26 @@ FROM certificate_requests AS a
 GROUP BY YEAR(a.updated_at), a.company_id, a.request_status, a.life
 ORDER BY b.company_name ASC, YEAR(a.updated_at) DESC;
 
+SELECT 
+    CONCAT(UCASE(`b`.`company_name`), ' NIT: ', `b`.`dni`) AS `company_name`,
+    `a`.`life` AS `life`,
+    COUNT(`a`.`id`) AS `total`,
+    `a`.`company_id` AS `company_id`,
+    YEAR(`a`.`updated_at`) AS `nyear`,
+    `a`.`request_status` AS `request_status` 
+FROM 
+    `certificate_requests` `a` 
+JOIN 
+    `companies` `b` ON `b`.`id` = `a`.`company_id`
+GROUP BY 
+    YEAR(`a`.`updated_at`),
+    `a`.`company_id`,
+    `a`.`request_status`,
+    `a`.`life` 
+ORDER BY 
+    `b`.`company_name` ASC,
+    YEAR(`a`.`updated_at`) DESC;
+
 /**
   @description: Certificate for years
   view name: certificate_requests_months_view

@@ -65,7 +65,22 @@ enum CertificateRequestStatusEnum: string
     {
         return [
             self::PROCESSED->value,
+            self::PROCESSING->value
+        ];
+    }
+
+    /**
+     * Estados para los filtros de reportes y paneles de administración.
+     *
+     * @return string[]
+     */
+
+    public static function reportStatuses(): array
+    {
+        return [
             self::PROCESSING->value,
+            self::PROCESSED->value,
+            self::EXPIRED->value,
         ];
     }
 

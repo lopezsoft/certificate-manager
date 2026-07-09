@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class ConsumeService
 {
-    public function readByYear($year): \Illuminate\Http\JsonResponse
+    public function readByYear(mixed $year): \Illuminate\Http\JsonResponse
     {
         try {
             $user           = auth()->user();
@@ -19,7 +19,7 @@ class ConsumeService
             $companyId      = $company->id;
             $query          = DB::table('certificate_requests_years_view')
                                 ->where('nyear', $year)
-                                ->whereIn('request_status', CertificateRequestStatusEnum::issuedStatuses());
+                                ->whereIn('request_status', CertificateRequestStatusEnum::reportStatuses());
             if($user->type_id !== 1){
                 $query->where('company_id', $companyId);
             };
@@ -32,7 +32,7 @@ class ConsumeService
         }
     }
 
-    public function readByMonth($year, $month): \Illuminate\Http\JsonResponse
+    public function readByMonth(mixed $year, mixed $month): \Illuminate\Http\JsonResponse
     {
         try {
             $user           = auth()->user();
@@ -40,7 +40,7 @@ class ConsumeService
             $companyId      = $company->id;
             $query          = DB::table('certificate_requests_months_view')
                                 ->where('nyear', $year)
-                                ->whereIn('request_status', CertificateRequestStatusEnum::issuedStatuses());
+                                ->whereIn('request_status', CertificateRequestStatusEnum::reportStatuses());
             if($month > 0){
                 $query->where('nmonth', $month);
             }
