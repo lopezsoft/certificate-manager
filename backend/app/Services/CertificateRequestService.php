@@ -40,6 +40,7 @@ class CertificateRequestService
         $attachments = $request->attachments ?? [];
         return $this->createHandler->handle(new CreateCertificateRequestCommand(
             companyId:             $company->id,
+            countryId:             (int) $request->country_id,
             cityId:                (int) $request->city_id,
             identityDocumentId:    (int) $request->identity_document_id,
             typeOrganizationId:    (int) $request->type_organization_id,

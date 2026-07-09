@@ -116,6 +116,14 @@ class CertificateRequest extends CoreModel
     }
 
     /**
+     * Get the country for this certificate request.
+     */
+    public function country(): BelongsTo
+    {
+        return $this->belongsTo(Country::class, 'country_id');
+    }
+
+    /**
      * Get the company that owns the certificate request.
      */
     public function company(): BelongsTo

@@ -64,7 +64,7 @@ final class IssueCertificateUseCase
     public function handle(IssueCertificateCommand $cmd): ViafirmaCertificateRequest
     {
         $cr = CertificateRequest::query()
-            ->with(['company.country', 'company.city.department', 'identity', 'organization'])
+            ->with(['country', 'city.department', 'identity', 'organization'])
             ->findOrFail($cmd->certificateRequestId);
 
         $existing = $this->repository->findByCertificateRequestId($cr->id);
@@ -77,7 +77,7 @@ final class IssueCertificateUseCase
         // ── 1) Resolver perfil + datos localmente ─────────────────────────
         $profile      = $this->resolveProfile($cr);
         $identityType = $cmd->identityTypeOverride ?? $this->resolveIdentityType($cr);
-        $countryCode  = strtoupper((string) $cr->company->country->abbreviation_A2);
+        $countryCode  = strtoupper((string) $cr->country->abbreviation_A2);
 
         $this->enforceOrganizationTypeRule($profile, $cmd->organizationType);
 

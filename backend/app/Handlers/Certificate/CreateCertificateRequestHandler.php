@@ -75,6 +75,7 @@ class CreateCertificateRequestHandler
 
             $attributes = [
                 'company_id'               => $command->companyId,
+                'country_id'               => $command->countryId,
                 'city_id'                  => $command->cityId,
                 'identity_document_id'     => $command->identityDocumentId,
                 'type_organization_id'     => $command->typeOrganizationId,

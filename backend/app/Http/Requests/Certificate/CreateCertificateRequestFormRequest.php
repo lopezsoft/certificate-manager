@@ -27,6 +27,7 @@ class CreateCertificateRequestFormRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'country_id'               => ['required', 'integer', 'exists:countries,id'],
             'city_id'                  => ['required', 'integer', 'exists:cities,id'],
             'identity_document_id'     => ['required', 'integer', 'exists:identity_documents,id'],
             'type_organization_id'     => ['required', 'integer', 'exists:type_organization,id'],
@@ -51,6 +52,8 @@ class CreateCertificateRequestFormRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'country_id.required'              => 'El país es requerido',
+            'country_id.exists'                => 'El país no existe',
             'city_id.required'                 => 'La ciudad es requerida',
             'city_id.exists'                   => 'La ciudad no existe',
             'identity_document_id.required'    => 'El tipo de documento es requerido',

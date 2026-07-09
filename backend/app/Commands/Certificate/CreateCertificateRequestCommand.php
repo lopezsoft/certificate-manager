@@ -22,6 +22,7 @@ final class CreateCertificateRequestCommand implements CertificateCommandInterfa
      */
     public function __construct(
         public readonly int     $companyId,
+        public readonly int     $countryId,
         public readonly int     $cityId,
         public readonly int     $identityDocumentId,
         public readonly int     $typeOrganizationId,
