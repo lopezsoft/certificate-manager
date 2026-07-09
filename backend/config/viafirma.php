@@ -48,6 +48,14 @@ return [
         'interval_seconds' => (int) env('VIAFIRMA_POLL_INTERVAL', 60),
     ],
 
+    'auto_redownload' => [
+        // Tiempo mínimo (minutos) antes de reintentar re-descarga automática.
+        // Evita colisión con reintentos activos del ensamblado.
+        'min_wait_minutes' => (int) env('VIAFIRMA_AUTO_REDOWNLOAD_MIN_WAIT_MINUTES', 2),
+        // Máximo número de reintentos automáticos de re-descarga/ensamblado.
+        'max_attempts'     => (int) env('VIAFIRMA_AUTO_REDOWNLOAD_MAX_ATTEMPTS', 5),
+    ],
+
     'crypto' => [
         'key_size'        => (int) env('VIAFIRMA_KEY_SIZE', 2048),
         'signature_algo'  => env('VIAFIRMA_SIG_ALGO', 'sha256WithRSAEncryption'),

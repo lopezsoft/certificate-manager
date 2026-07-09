@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Viafirma\Infrastructure\Persistence\Models;
 
 use App\Modules\Viafirma\Domain\Enums\InternalState;
+use App\Modules\Viafirma\Domain\Enums\RemoteStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -149,25 +150,34 @@ class ViafirmaCertificateRequestState extends Model
      *
      * Criterios:
      * - Estado interno FAILED_RECOVERABLE (el job de ensamblado falló pero es recuperable)
+     * - remote_status DEBE ser uno con P7B disponible (GENERATED_NOT_DOWNLOADED o GENERATED_AND_DOWNLOADED)
      * - La llave privada NO fue purgada (key_vault_ref != 'PURGED' y no es null)
-     * - Llevan al menos 2 minutos en ese estado (evitar colisión con reintentos activos)
-     * - No han superado el máximo de intentos de re-descarga automática (max: 5)
+     * - Llevan al menos N minutos en ese estado (configurable: VIAFIRMA_AUTO_REDOWNLOAD_MIN_WAIT_MINUTES, default 2)
+     * - No han superado el máximo de intentos (configurable: VIAFIRMA_AUTO_REDOWNLOAD_MAX_ATTEMPTS, default 5)
      *
-     * NOTA: También incluye registros en estado FAILED con remote_status = 'Generated_Not_Downloaded'
-     * y p7b_storage_path disponible (el P7B fue descargado pero el ensamblado falló).
-     * Estos son recuperables porque el certificado ya existe en Viafirma.
+     * Casos excluidos (sin P7B, no recuperables):
+     * - remote_status = 'rues_error' (búsqueda RUES falló, requiere intervención manual del operador)
+     * - remote_status = 'accreditation_rejected' (rechazo de acreditación)
+     * - remote_status = 'fail' (fallo terminal)
      *
      * @param Builder $query
      * @return Builder
      */
     public function scopePendingAutoRedownload(Builder $query): Builder
     {
+        $minWaitMinutes = config('viafirma.auto_redownload.min_wait_minutes', 2);
+        $maxAttempts    = config('viafirma.auto_redownload.max_attempts', 5);
+
         return $query
             ->where('internal_state', InternalState::FAILED_RECOVERABLE->value)
-            ->where('updated_at', '<', now()->subMinutes(2))
-            ->where(function (Builder $q) {
+            ->whereIn('remote_status', [
+                RemoteStatus::GENERATED_NOT_DOWNLOADED->value,
+                RemoteStatus::GENERATED_AND_DOWNLOADED->value,
+            ])
+            ->where('updated_at', '<', now()->subMinutes($minWaitMinutes))
+            ->where(function (Builder $q) use ($maxAttempts) {
                 $q->whereNull('auto_redownload_attempts')
-                  ->orWhere('auto_redownload_attempts', '<', 5);
+                  ->orWhere('auto_redownload_attempts', '<', $maxAttempts);
             });
     }
 

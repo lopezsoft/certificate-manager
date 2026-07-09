@@ -46,13 +46,14 @@ Crear un listener `ViafirmaRequestFailedListener` que:
    - Tipo de fallo (remote_status)
    - Timestamp y contexto (empresa, usuario, perfil)
 
-2. **Notificación a canal de soporte** (si aplica):
-   - Slack/Teams a canal de operaciones (`#viafirma-alerts`)
-   - Email a `soporte@maticerts.local` con detalles del caso
+2. **Notificación por email**:
+   - Email al operador RA (configurado en variable `MAIL_SUPPORT_ADDRESS` en .env)
+   - Detalles completos del fallo: empresa, códigos de error, estado interno/remoto
+   - Asunto: `🚨 Viafirma: Fallo en solicitud - [Empresa]`
 
-3. **Registrar en tabla de auditoría** (opcional, nueva tabla):
-   - `viafirma_failure_alerts`: `request_id`, `remote_status`, `internal_state`, `alerted_at`, `notification_channel`
-   - Permite rastrear qué fallos fueron notificados y cuándo
+3. **Auditoría en logs**:
+   - Registra en logs cada notificación enviada
+   - Logs de error si la notificación falla (resiliente, no interrumpe flujo)
 
 ### Archivos Afectados
 
@@ -256,13 +257,18 @@ public function scopePendingAutoRedownload(Builder $query): Builder
 
 1. **Iniciativa 3** (scope) — cambio mínimo, impacto inmediato en reducción de ruido.
    - **Estimado:** 2 horas
-   - **Real:** 1.5 horas
+   - **Real:** 2.5 horas
    - **Estado:** ✅ IMPLEMENTADO
-   - **Archivos modificados:**
+   - **Archivos modificados/creados:**
      - `app/Modules/Viafirma/Infrastructure/Persistence/Models/ViafirmaCertificateRequestState.php`
+     - `config/viafirma.php` (agregar configuración)
    - **Cambios:** 
      - Agregado filtro `whereIn('remote_status', [GENERATED_NOT_DOWNLOADED, GENERATED_AND_DOWNLOADED])`
      - Excluye casos sin P7B (rues_error, accreditation_rejected, fail)
+     - Valores configurables (min_wait_minutes, max_attempts) vía .env
+   - **Variables de entorno:**
+     - `VIAFIRMA_AUTO_REDOWNLOAD_MIN_WAIT_MINUTES` (default: 2)
+     - `VIAFIRMA_AUTO_REDOWNLOAD_MAX_ATTEMPTS` (default: 5)
    - **Impacto inmediato:** Elimina reintentos inútiles (~10-25 min de ruido)
 
 2. **Iniciativa 1** (listener básico) — log + notificación simple.
