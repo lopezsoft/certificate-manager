@@ -46,7 +46,7 @@ return [
 
     'polling' => [
         'max_attempts'     => (int) env('VIAFIRMA_POLL_MAX_ATTEMPTS', 288), // 288 × 60s = 8h máximo
-        'expiration_hours' => (int) env('VIAFIRMA_POLL_EXPIRATION_HOURS', 72),
+        'expiration_hours' => (int) env('VIAFIRMA_POLL_EXPIRATION_HOURS', 96), // 96h = 4 días
         // Intervalo fijo entre polls (segundos). Máximo recomendado: 60.
         // Todos los estados usan este mismo valor; no hay backoff exponencial.
         'interval_seconds' => (int) env('VIAFIRMA_POLL_INTERVAL', 60),

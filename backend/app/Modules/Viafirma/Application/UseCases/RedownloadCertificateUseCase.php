@@ -233,7 +233,7 @@ final class RedownloadCertificateUseCase
                 'file_size'      => $p7bSize,
                 'last_modified'  => $p7bLastModified,
                 'status'         => 'COMPLETED',
-                'document_type'  => 'P7B',
+                'document_type'  => 'P7B_CERTIFICATE',
             ]
         );
 
