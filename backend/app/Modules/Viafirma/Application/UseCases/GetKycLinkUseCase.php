@@ -27,11 +27,18 @@ final class GetKycLinkUseCase
     {
         $entity = ViafirmaCertificateRequest::with('state')->findOrFail($viafirmaCertificateRequestId);
 
+        // Si el link ya está cacheado (capturado automáticamente al entrar a 'accreditation'),
+        // retornarlo directamente sin hacer llamada HTTP — permite funcionamiento incluso si
+        // Viafirma avanzó el remote_status más allá de 'accreditation'.
+        if (!empty($entity->state?->kyc_accreditation_link)) {
+            return $entity->state->kyc_accreditation_link;
+        }
+
         // Validar que la solicitud esté en estado remoto 'accreditation'
         $remoteStatus = RemoteStatus::tryFrom((string) $entity->state?->remote_status);
 
         if ($remoteStatus !== RemoteStatus::ACCREDITATION) {
-            $currentStatus = $entity->remote_status ?? 'null';
+            $currentStatus = $entity->state?->remote_status ?? 'null';
             throw new ViafirmaException(
                 "El link KYC solo está disponible cuando la solicitud está en estado 'accreditation'. " .
                 "Estado remoto actual: {$currentStatus} (id={$entity->id})."
@@ -47,9 +54,16 @@ final class GetKycLinkUseCase
         $this->logger->info('viafirma.kyc_link.requested', [
             'viafirma_cr_id' => $entity->id,
             'cod_request'    => $entity->cod_request,
-            'remote_status'  => $entity->remote_status,
+            'remote_status'  => $entity->state?->remote_status,
         ]);
 
-        return $this->client->getAccreditationLink($entity->cod_request);
+        $link = $this->client->getAccreditationLink($entity->cod_request);
+
+        // Persistir también en el camino on-demand — cubre registros creados antes de
+        // que existiera el listener automático, o si el job aún no corrió.
+        $entity->state->kyc_accreditation_link = $link;
+        $entity->state->save();
+
+        return $link;
     }
 }

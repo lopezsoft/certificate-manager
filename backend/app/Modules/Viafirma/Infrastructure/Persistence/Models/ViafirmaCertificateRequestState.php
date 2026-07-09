@@ -50,6 +50,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $revocation_request_code
  * @property \Illuminate\Support\Carbon|null $revoked_at
  * @property int|null $auto_redownload_attempts
+ * @property string|null $kyc_accreditation_link
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  */
@@ -81,6 +82,7 @@ class ViafirmaCertificateRequestState extends Model
         'revocation_request_code',
         'revoked_at',
         'auto_redownload_attempts',
+        'kyc_accreditation_link',
     ];
 
     protected $casts = [

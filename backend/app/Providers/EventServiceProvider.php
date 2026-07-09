@@ -80,6 +80,11 @@ class EventServiceProvider extends ServiceProvider
             \App\Modules\Viafirma\Application\Listeners\DispatchDownloadOnReadyListener::class,
         ],
 
+        // Viafirma events (V-308: KYC accreditation link persistence)
+        \App\Modules\Viafirma\Domain\Events\ViafirmaAccreditationReached::class => [
+            \App\Modules\Viafirma\Application\Listeners\DispatchKycLinkFetchListener::class,
+        ],
+
         // Viafirma events (V-311: Detección y notificación de fallos)
         \App\Modules\Viafirma\Domain\Events\ViafirmaRequestFailed::class => [
             \App\Modules\Viafirma\Application\Listeners\ViafirmaRequestFailedListener::class,

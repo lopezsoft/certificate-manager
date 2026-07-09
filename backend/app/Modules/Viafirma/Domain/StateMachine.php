@@ -6,6 +6,7 @@ namespace App\Modules\Viafirma\Domain;
 
 use App\Modules\Viafirma\Domain\Enums\InternalState;
 use App\Modules\Viafirma\Domain\Enums\RemoteStatus;
+use App\Modules\Viafirma\Domain\Events\ViafirmaAccreditationReached;
 use App\Modules\Viafirma\Domain\Events\ViafirmaReadyToDownload;
 use App\Modules\Viafirma\Domain\Events\ViafirmaRequestFailed;
 use App\Modules\Viafirma\Domain\Events\ViafirmaStatusChanged;
@@ -91,9 +92,19 @@ final class StateMachine
         // Registrar en historial siempre (incluso si solo cambió remote_status)
         $this->recordHistory($entity, $previousInternal, $newInternal, $remote, $rawResponse);
 
-        // Disparar eventos de dominio si hubo cambio
+        // Disparar eventos de dominio si hubo cambio de internal_state
         if ($stateChanged) {
             $this->dispatchDomainEvents($entity, $previousInternal, $newInternal, $remote);
+        }
+
+        // Disparar evento de accreditation al entrar en ese estado, incluso si internal_state
+        // no cambió (ej. rues_check → accreditation, ambas en POLLING). Esto permite capturar
+        // el link automáticamente sin heredar el defecto de ViafirmaStatusChanged.
+        $enteringAccreditation = $remote === RemoteStatus::ACCREDITATION
+            && $previousRemote !== RemoteStatus::ACCREDITATION->value;
+
+        if ($enteringAccreditation) {
+            event(new ViafirmaAccreditationReached($entity));
         }
 
         return $stateChanged;
