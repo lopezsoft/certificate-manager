@@ -163,7 +163,7 @@ final class IssueCertificateUseCase
                     'request_payload'        => $submitInput->toViafirmaPayload(),
                     'last_status_response'   => $submitResult->raw,
                     'submitted_at'           => now(),
-                    'expires_at'             => Carbon::now()->addHours((int) config('viafirma.polling.expiration_hours', 72)),
+                    'expires_at'             => Carbon::now()->addHours((int) config('viafirma.polling.expiration_hours', 96)),
                 ]);
 
                 ViafirmaStatusHistory::create([
@@ -193,7 +193,8 @@ final class IssueCertificateUseCase
                     'mime_type'              => 'application/x-pkcs12-key',
                     'document_type'          => 'PRIVATE_KEY',
                     'file_size'              => 0,
-                    'status'                 => 'ACTIVE',
+                    'last_modified'          => now(),
+                    'status'                 => 'COMPLETED',
                 ]);
 
                 // Primer poll job — 15 s de delay para dar tiempo a que Viafirma procese
@@ -284,7 +285,6 @@ final class IssueCertificateUseCase
                 organizationUnit: $organizationUnit,
                 organizationType: $organizationType,
                 emailCertificate: $emailCertificate,
-                identity:         (string) $cr->document_number,
             );
         }
 
@@ -300,7 +300,6 @@ final class IssueCertificateUseCase
             givenName:        $givenName,
             surname:          $surname,
             emailCertificate: $emailCertificate,
-            identity:         (string) $cr->document_number,
         );
     }
 
