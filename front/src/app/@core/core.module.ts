@@ -18,6 +18,7 @@ import {
 } from '.';
 import { DataGridComponent } from './components/grid/data-grid.component';
 import { CustomTooltipDirective } from "./directives/custom-tooltip.directive";
+import { CorePipesModule } from '@core/pipes/pipes.module';
 @NgModule({
   exports: [
     SidebarComponent,
@@ -33,7 +34,8 @@ import { CustomTooltipDirective } from "./directives/custom-tooltip.directive";
     NgxLoadingModule,
     ReactiveFormsModule,
     FormsModule,
-    CustomTooltipDirective
+    CustomTooltipDirective,
+    CorePipesModule
   ],
   declarations: [
     FooterFormComponent,
@@ -51,6 +53,7 @@ import { CustomTooltipDirective } from "./directives/custom-tooltip.directive";
     ReactiveFormsModule,
     FormsModule,
     CustomTooltipDirective,
+    CorePipesModule,
     NgxLoadingModule.forRoot({
       animationType: ngxLoadingAnimationTypes.circleSwish,
       backdropBackgroundColour: 'rgba(0,0,0,0.75)',
