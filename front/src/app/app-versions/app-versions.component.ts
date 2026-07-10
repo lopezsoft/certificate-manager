@@ -26,6 +26,25 @@ export class AppVersionsComponent implements OnInit {
     this.versiones = [
       {
         isShow: true,
+        number: '1.9.2',
+        date: '09-JUL-2026',
+        changes: [
+          {
+            type: 'caracteristica',
+            description: 'Pipe fallbackImage: validación de imágenes de banderas con fallback automático'
+          },
+          {
+            type: 'mejora',
+            description: 'Manejo robusto de rutas de flags con normalización de extensiones y valores vacíos'
+          },
+          {
+            type: 'mejora',
+            description: 'Configuración de Prettier y VSCode para preservar case-sensitivity en selectores HTML'
+          }
+        ]
+      },
+      {
+        isShow: true,
         number: '1.9.0',
         date: '07-JUL-2026',
         changes: [

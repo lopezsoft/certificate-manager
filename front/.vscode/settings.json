@@ -2,5 +2,10 @@
     "angular.enable-strict-mode-prompt": false,
     "workbench.tree.indent": 4,
     "bladeFormatter.format.indentSize": 2,
-    "editor.tabSize": 2
+    "editor.tabSize": 2,
+    "[html]": {
+        "editor.formatOnSave": false,
+        "editor.defaultFormatter": null
+    },
+    "prettier.htmlWhitespaceSensitivity": "strict"
 }
