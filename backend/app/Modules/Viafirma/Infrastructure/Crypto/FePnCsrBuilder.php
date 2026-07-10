@@ -32,6 +32,12 @@ final class FePnCsrBuilder extends AbstractOpenSslCsrBuilder
             );
         }
 
+        if ($input->organization !== null) {
+            throw new CsrBuildException(
+                'FE-PN no debe incluir organization (O); ese atributo es solo para FE-PJ.'
+            );
+        }
+
         // ── Campos obligatorios según §3.2 ──────────────────────────────────
         $this->assertNotBlank($input->country,      'C');
         $this->assertNotBlank($input->state,        'ST (departamento)');
@@ -50,6 +56,7 @@ final class FePnCsrBuilder extends AbstractOpenSslCsrBuilder
     protected function dn(CsrInputDto $input): array
     {
         // Documentación oficial Viafirma §3.2: 9 atributos FE-PN
+        // CN debe seguir el patrón: CN={name} {lastName} - {identity}
         return [
             'C'            => $input->country,
             'ST'           => $input->state,
@@ -59,7 +66,7 @@ final class FePnCsrBuilder extends AbstractOpenSslCsrBuilder
             'emailAddress' => $input->email,
             'GN'           => $input->givenName,
             'SN'           => $input->surname,
-            'CN'           => trim($input->givenName . ' ' . $input->surname),
+            'CN'           => trim($input->givenName . ' ' . $input->surname) . ' - ' . $input->serialNumber,
         ];
     }
 }

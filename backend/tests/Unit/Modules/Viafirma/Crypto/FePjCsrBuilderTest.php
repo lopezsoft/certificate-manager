@@ -60,6 +60,7 @@ final class FePjCsrBuilderTest extends TestCase
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $result->fingerprint);
 
         $details = openssl_csr_get_subject($result->pem);
+        $this->assertSame('MI COMPANIA SAS - ANTIOQUIA', $details['CN'], 'CN debe ser {organization} - {state} según patrón Viafirma');
         $this->assertSame('CO', $details['C']);
         $this->assertSame('ANTIOQUIA', $details['ST']);
         $this->assertSame('MEDELLIN', $details['L']);

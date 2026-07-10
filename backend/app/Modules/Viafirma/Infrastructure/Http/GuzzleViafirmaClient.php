@@ -74,16 +74,18 @@ final class GuzzleViafirmaClient implements ViafirmaClient
         $url     = $this->urlFor('/request/fromCSR');
         $payload = $input->toViafirmaPayload();
 
-        // Loggear sin csr/identity ni emails (el SafePemLogger ya redacta PEMs, pero el
+        // Loggear sin csr ni emails (el SafePemLogger ya redacta PEMs, pero el
         // CSR base64 sin cabeceras no matchea el regex; lo omitimos explícitamente).
         $this->logger->info('viafirma.submitCsr.request', [
             'url'              => $url,
             'identityType'     => $payload['identityType'],
+            'identity'         => $payload['identity'],  // ← IMPORTANTE: valor enviado a Viafirma
             'countryCode'      => $payload['countryCode'],
             'ra'               => $payload['ra'],
             'organizationType' => $payload['organizationType'] ?? null,
             'codProfile'       => substr($payload['codProfile'], 0, 12) . '…',
             'csr_len'          => strlen($payload['csr']),
+            'payload_keys'     => implode(', ', array_keys($payload)),
         ]);
 
         $decoded = $this->send('POST', $url, jsonBody: $payload);

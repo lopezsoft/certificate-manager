@@ -124,7 +124,7 @@ final class IssueCertificateUseCase
             $submitInput = new SubmitCsrInputDto(
                 identityType:     $identityType,
                 countryCode:      $countryCode,
-                identity:         $this->resolveSubscriberIdentity($cr),
+                identity:         $this->resolveSubscriberIdentity($cr, $profile),
                 raCode:           $raCode,
                 codProfile:       $codProfile,
                 emailCertificate: $cmd->emailCertificate,
@@ -303,8 +303,13 @@ final class IssueCertificateUseCase
         );
     }
 
-    private function resolveSubscriberIdentity(CertificateRequest $cr): string
+    private function resolveSubscriberIdentity(CertificateRequest $cr, CertificateProfile $profile): string
     {
+        // Para FE-PJ: el identity es el NIT de la empresa (debe coincidir con serialNumber en CSR)
+        // Para FE-PN: el identity es la cédula del representante legal
+        if ($profile === CertificateProfile::FE_PJ) {
+            return (string) $cr->dni;
+        }
         return (string) $cr->document_number;
     }
 }

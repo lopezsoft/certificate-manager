@@ -7,6 +7,39 @@ El versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [Unreleased]
+
+### Corregido — Viafirma: Error de Validación RUES (FE-PJ Identity Mismatch) + Patrón CN de FE-PN
+
+- **Bug principal:** El campo `identity` en el payload enviado a Viafirma no coincidía con `serialNumber` en el CSR para FE-PJ
+  - Causaba rechazo RUES: "Sus datos no coinciden con los encontrados en el Registro Único Empresarial"
+  - Problema: payload enviaba cédula del representante, CSR contenía NIT de la empresa
+
+- **Fix FE-PJ:** Función `resolveSubscriberIdentity()` en `IssueCertificateUseCase`:
+  - **FE-PJ:** devuelve `$cr->dni` (NIT empresa) para coincidir con `serialNumber` en CSR
+  - **FE-PN:** devuelve `$cr->document_number` (cédula representante)
+
+- **Fix FE-PN:** Corregido patrón CN en `FePnCsrBuilder::dn()`
+  - CN ahora sigue el patrón oficial: `{givenName} {surname} - {serialNumber}`
+  - Antes faltaba el sufijo `- {serialNumber}`
+
+- **Patrones DN oficiales de Viafirma** validados:
+  - FE-PJ: `CN={legalNameCorp} - {departament},serialNumber={dnAlternativo1},...`
+  - FE-PN: `CN={name} {lastName} - {identity},serialNumber={identity},...`
+
+- **Consolidación de herramientas de diagnóstico:**
+  - Eliminados comandos redundantes: `show:csr-content`, `dump:csr-raw`, `debug:viafirma-csr`, `debug:viafirma-payload`
+  - Mantenidos: `analyze:csr-complete` (valida CSR con OpenSSL nativo, funciona en Windows), `debug:viafirma-submission` (valida payload JSON persistido)
+
+- **Documentación:** `docs/2026-07-09-fix-rues-validation-error.md`
+
+### Test Coverage
+
+- `FePjCsrBuilderTest::test_builds_a_valid_csr_with_10_attributes` ✅ PASS (CN: `MI COMPANIA SAS - ANTIOQUIA`)
+- `FePnCsrBuilderTest::test_builds_a_valid_csr_without_o_and_ou` ✅ PASS (CN: `Paula Ibarra - 1002000400`)
+
+---
+
 ## [2.3.0] - 2026-05-15
 
 ### Añadido — Viafirma PKCS#10 Sprint 5: Hardening + Go-Live

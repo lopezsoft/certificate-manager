@@ -32,12 +32,12 @@
               <label>
                 <span class="asterisk">{{ 'general.asterisk' | translate
                   }}</span>
-                N.I.T sin digito de verificación
+                {{'companies.nit' | translate}}
               </label>
               <input class="form-control" type="text" formControlName="dni"
                 #dniInput autofocus (blur)="onLookupDni()"
                 (change)="onChangeDni($event)"
-                placeholder="N.I.T sin digito de verificación"
+                placeholder="{{'companies.nit' | translate}}"
                 inputmode="numeric"
                 autocomplete="off" [class.is-invalid]="isInvalid('dni')">
               @if (isInvalid('dni')) {
@@ -60,7 +60,26 @@
           <small class="text-danger">Nombre o razón social muy corto</small>
           }
         </div>
-
+        @if(isViafirma()) {
+        <div class="form-group">
+          <label>
+            <span class="asterisk">{{ 'general.asterisk' | translate
+              }}</span>
+            {{'companies.entity_document_type' | translate}}
+          </label>
+          <ng-select formControlName="entity_document_type_id" required>
+            <ng-option [value]="0">Seleccione una opción</ng-option>
+            @for (type of entityDocumentTypes; track type) {
+            <ng-option [value]="type.id">{{ type.description }}</ng-option>
+            }
+          </ng-select>
+          <small class="text-info">
+            <strong>Importante:</strong> {{'viafirma.small.entity_document_type'
+            |
+            translate}}
+          </small>
+        </div>
+        }
         <div class="form-group">
           <hr>
           <h6>DATOS DEL REPRESENTANTE LEGAL</h6>
@@ -72,7 +91,7 @@
         <div class="form-group">
           <label>
             <span class="asterisk">{{ 'general.asterisk' | translate }}</span>
-            Nombre completo de representante legal
+            {{'companies.legal_representative' | translate}}
           </label>
           <input class="form-control" type="text"
             formControlName="legal_representative"
@@ -93,10 +112,11 @@
               <label>
                 <span class="asterisk">{{ 'general.asterisk' | translate
                   }}</span>
-                Nombres
+                {{'companies.legal_rep_first_name' | translate}}
               </label>
               <input class="form-control" type="text"
-                formControlName="legal_rep_first_name" placeholder="Nombres"
+                formControlName="legal_rep_first_name"
+                placeholder="{{'companies.legal_rep_first_name' | translate}}"
                 autocomplete="on"
                 [class.is-invalid]="isInvalid('legal_rep_first_name')">
               @if (isInvalid('legal_rep_first_name')) {
@@ -109,10 +129,11 @@
               <label>
                 <span class="asterisk">{{ 'general.asterisk' | translate
                   }}</span>
-                Apellidos
+                {{'companies.legal_rep_last_name' | translate}}
               </label>
               <input class="form-control" type="text"
-                formControlName="legal_rep_last_name" placeholder="Apellidos"
+                formControlName="legal_rep_last_name"
+                placeholder="{{'companies.legal_rep_last_name' | translate}}"
                 autocomplete="on"
                 [class.is-invalid]="isInvalid('legal_rep_last_name')">
               @if (isInvalid('legal_rep_last_name')) {
@@ -144,7 +165,7 @@
               <label>
                 <span class="asterisk">{{ 'general.asterisk' | translate
                   }}</span>
-                Número de documento de identidad
+                {{'companies.dni' | translate}}
               </label>
               <input class="form-control" type="text"
                 formControlName="document_number" #documentInput
@@ -159,21 +180,28 @@
           </div>
         </div>
 
-        @if (isViafirma() && !isNaturelPerson()) {
+        @if (isViafirma()) {
         <div class="row">
           <div class="col-md-12">
             <div class="form-group">
-              <label>
-                <span class="asterisk">{{ 'general.asterisk' | translate
-                  }}</span>
-                Tipo de documento constitutivo
-              </label>
-              <ng-select formControlName="entity_document_type_id" required>
-                <ng-option [value]="0">Seleccione una opción</ng-option>
-                @for (type of entityDocumentTypes; track type) {
-                <ng-option [value]="type.id">{{ type.description }}</ng-option>
+              <label><span
+                  class="asterisk">{{ 'general.asterisk' | translate
+                  }}</span>{{'companies.country_emission' | translate}}</label>
+              <ng-select formControlName="country_id" required
+                [class.is-invalid]="isInvalid('invalidCountry')">
+                @for (country of countries; track country) {
+                <ng-option [value]="country.id">
+                  <img height="15" width="15"
+                    [src]="getCountryFlagPath(country.image) | fallbackImage"
+                    (error)="onImageError($event)" /> {{
+                  country.country_name }}
+                </ng-option>
                 }
               </ng-select>
+              <small class="text-info">
+                <strong>Nota:</strong> {{'viafirma.small.country_emission' |
+                translate}}
+              </small>
             </div>
           </div>
         </div>
@@ -193,8 +221,7 @@
                 <span class="asterisk">{{ 'general.asterisk' | translate
                   }}</span>
                 }
-                {{ isNaturelPerson() ? 'Email de contacto' :
-                'Email del representante legal' }}
+                {{ 'companies.legal_rep_email' | translate }}
               </label>
               <input class="form-control" type="email"
                 formControlName="legal_rep_email"
@@ -203,6 +230,12 @@
               @if (isInvalid('legal_rep_email')) {
               <small class="text-danger">Correo electrónico inválido o
                 requerido</small>
+              }
+              @if(isViafirma()) {
+              <small class="text-info">
+                <strong>Nota:</strong> {{'viafirma.small.legal_rep_email' |
+                translate}}
+              </small>
               }
             </div>
           </div>

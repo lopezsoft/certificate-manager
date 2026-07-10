@@ -45,7 +45,7 @@ final class FePjCsrBuilder extends AbstractOpenSslCsrBuilder
 
     protected function dn(CsrInputDto $input): array
     {
-        // CN = {legalNameCorp} - {departament} según dnPattern Viafirma
+        // CN = {legalNameCorp} - {departament} según dnPattern oficial de Viafirma
         $cn = trim($input->organization . ' - ' . ($input->state ?? ''));
 
         return [

@@ -55,6 +55,7 @@ final class FePnCsrBuilderTest extends TestCase
         $subject = openssl_csr_get_subject($result->pem);
         $this->assertArrayNotHasKey('O', $subject);
         $this->assertArrayNotHasKey('OU', $subject);
+        $this->assertSame('Paula Ibarra - 1002000400', $subject['CN'], 'CN debe ser {givenName} {surname} - {serialNumber} según patrón oficial');
         $this->assertSame('1002000400', $subject['serialNumber']);
         $this->assertSame('persona@correo.com', $subject['emailAddress']);
     }

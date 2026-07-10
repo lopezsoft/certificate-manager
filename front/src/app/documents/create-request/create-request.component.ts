@@ -1,10 +1,10 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { Cities, IdentityDocuments, TypeOrganzation, EntityDocumentType } from "../../models/general-model";
+import { AfterViewInit, Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
+import { Cities, IdentityDocuments, TypeOrganzation, EntityDocumentType, Country } from "../../models/general-model";
 import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { HttpResponsesService, MessagesService } from "../../utils";
 import { ActivatedRoute, Router } from "@angular/router";
 import { CompanyService } from "../../services/companies";
-import { CitiesService, DocumentsService } from "../../services/general";
+import { CitiesService, CountriesService, DocumentsService } from "../../services/general";
 import { LoadMaskService } from "../../services/load-mask.service";
 import TokenService from "../../utils/token.service";
 import { FileUploadConfig } from "../../shared/components/file-upload/file-upload-config.interface";
@@ -26,6 +26,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
   entityDocumentTypes: EntityDocumentType[] = [];
   identityDocs: IdentityDocuments[] = [];
   cities: Cities[] = [];
+  countries: Country[] = [];
   issuanceProvider: string | null = 'mail';
   customForm: FormGroup;
   loading: boolean = false;
@@ -145,6 +146,10 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     };
   }
 
+  // inject services
+
+  protected countrySer: CountriesService = inject(CountriesService);
+
   constructor(private fb: FormBuilder,
     private _http: HttpResponsesService,
     private _msg: MessagesService,
@@ -177,6 +182,12 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     this._cities.getData({}).subscribe((resp) => {
       this.cities = resp;
     });
+
+    this.countrySer.getData().subscribe((resp) => {
+      this.countries = resp;
+    });
+
+
     this.documentSer.getTypeOrganization({}).subscribe((resp) => {
       this.organizations = resp;
     });
@@ -196,16 +207,16 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
   onCreateForm(): void {
     const ts = this;
     ts.customForm = ts.fb.group({
-      company_name: ['', [Validators.required, Validators.minLength(5)]],
-      legal_representative: ['', [Validators.required, Validators.minLength(10)]],
+      company_name: ['', [Validators.required, Validators.minLength(2)]],
+      legal_representative: ['', [Validators.required, Validators.minLength(2)]],
       legal_rep_first_name: [''],
       legal_rep_last_name: [''],
-      legal_rep_email: [''],
+      legal_rep_email: ['', [Validators.pattern('^[a-z0-9._%+-ñ]+@[a-z0-9.-]+\.[a-z]{2,4}$')]],
       dni: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(12)]],
       document_number: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(12)]],
       identity_document_id: [1, [Validators.required]],
       type_organization_id: [1, Validators.required],
-      entity_document_type_id: [0, Validators.required],
+      entity_document_type_id: [1, Validators.required],
       mobile: [''],
       phone: [''],
       info: [''],
@@ -213,6 +224,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       city_id: [149, Validators.required],
       dv: [''],
       life: [1, Validators.required],
+      country_id: [45, [Validators.required]],
     });
   }
 
@@ -251,6 +263,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       this.customForm.get('city_id')?.setValue(resp.city_id);
       this.customForm.get('dv')?.setValue(resp.dv);
       this.customForm.get('life')?.setValue(resp.life);
+      this.customForm.get('country_id')?.setValue(resp.country_id);
     });
   }
 
@@ -571,5 +584,26 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     this.customForm.get('city_id')?.setValue(149);
     this.customForm.get('dv')?.setValue('');
     this.customForm.get('life')?.setValue(1);
+    this.customForm.get('country_id')?.setValue(45);
+  }
+
+  onImageError(event: any): void {
+    if (event.target && event.target instanceof HTMLImageElement) {
+      event.target.src = 'assets/flags/empty-flag.png';
+    }
+  }
+
+  getCountryFlagPath(countryImage: string): string {
+    if (!countryImage || countryImage.trim() === '') {
+      return 'assets/flags/empty-flag.png';
+    }
+
+    let imageName = countryImage.trim();
+
+    if (!imageName.match(/\.(png|jpg|jpeg|gif)$/i)) {
+      imageName = imageName.toLowerCase() + '.png';
+    }
+
+    return `assets/flags/${imageName}`;
   }
 }

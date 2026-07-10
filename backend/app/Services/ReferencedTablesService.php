@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Cache;
 class ReferencedTablesService
 {
     /** TTL de caché para datos maestros (raramente cambian) */
-    private const CACHE_TTL_HOURS = 24;
+    private const CACHE_TTL_HOURS = 4;
 
     public function getTypeOrganization(): JsonResponse
     {
@@ -30,7 +30,7 @@ class ReferencedTablesService
     public function getIdentityDocuments(): JsonResponse
     {
         $data = Cache::remember('master.identity_documents', now()->addHours(self::CACHE_TTL_HOURS), fn () =>
-            IdentityDocument::all()
+            IdentityDocument::where('active', true)->get()
         );
 
         return HttpResponseMessages::getResponse([
