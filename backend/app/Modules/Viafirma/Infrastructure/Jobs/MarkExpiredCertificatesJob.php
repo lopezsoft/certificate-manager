@@ -47,13 +47,14 @@ final class MarkExpiredCertificatesJob implements ShouldQueue
 
         foreach ($candidates as $cr) {
             try {
+                $cr->timestamps = false;
                 $cr->update(['request_status' => CertificateRequestStatusEnum::EXPIRED->value]);
 
                 // Registrar en change_histories
                 ChangeHistory::create([
                     'certificate_request_id' => $cr->id,
                     'user_id'                => null,
-                    'user_of_change'         => 'SYSTEM (Auto Expiración)',
+                    'user_of_change'         => 'SYSTEM',
                     'status'                 => CertificateRequestStatusEnum::EXPIRED->value,
                     'comments'               => 'El certificado ha superado su fecha de expiración y ya no es válido comercial o técnicamente.',
                 ]);

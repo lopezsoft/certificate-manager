@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Viafirma\Application\Listeners;
 
 use App\Enums\CertificateRequestStatusEnum;
+use App\Models\ChangeHistory;
 use App\Modules\Viafirma\Domain\Enums\InternalState;
 use App\Modules\Viafirma\Domain\Events\ViafirmaStatusChanged;
 use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
@@ -104,8 +105,17 @@ final class ViafirmaRequestStateChangedListener
 
     private function syncExpiredStatus($certificateRequest, ViafirmaStatusChanged $event): void
     {
+        $certificateRequest->timestamps = false;
         $certificateRequest->update([
             'request_status' => CertificateRequestStatusEnum::EXPIRED->value,
+        ]);
+
+        ChangeHistory::create([
+            'certificate_request_id' => $certificateRequest->id,
+            'user_id'                => null,
+            'user_of_change'         => 'SYSTEM',
+            'status'                 => CertificateRequestStatusEnum::EXPIRED->value,
+            'comments'               => 'El certificado expiró por superar el SLA de acreditación de Viafirma (72h).',
         ]);
 
         $this->logger->info('viafirma.listener.auto_expire', [
