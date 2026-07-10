@@ -137,7 +137,7 @@ final class DebugViafirmaSubmission extends Command
             // Validación especial para identity
             if ($field === 'identity') {
                 $payloadIdentity = $payloadArray['identity'] ?? null;
-                $expectedIdentity = $viafirmaReq->profile_type === 'FE-PJ' ? $cr->dni : $cr->document_number;
+                $expectedIdentity = $profileType === 'FE-PJ' ? $cr->dni : $cr->document_number;
 
                 if ($payloadIdentity === $expectedIdentity) {
                     $this->line("     ✅ CORRECTO - identity coincide con lo esperado");
