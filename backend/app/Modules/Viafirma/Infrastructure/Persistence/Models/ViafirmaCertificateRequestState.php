@@ -210,4 +210,15 @@ class ViafirmaCertificateRequestState extends Model
                   ->orWhere('next_poll_at', '<', $threshold);
             });
     }
+
+    /**
+     * Solicitudes en estado FAILED_RECOVERABLE esperando intervención del operador.
+     * Útil para dashboards/reportes que monitorean qué operadores tienen que intervenir.
+     */
+    public function scopeWaitingForRecovery(Builder $query): Builder
+    {
+        return $query
+            ->where('internal_state', InternalState::FAILED_RECOVERABLE->value)
+            ->whereNotNull('next_poll_at');
+    }
 }

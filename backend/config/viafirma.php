@@ -50,6 +50,10 @@ return [
         // Intervalo fijo entre polls (segundos). Máximo recomendado: 60.
         // Todos los estados usan este mismo valor; no hay backoff exponencial.
         'interval_seconds' => (int) env('VIAFIRMA_POLL_INTERVAL', 60),
+        // Intervalo extendido para errores recuperables (FAILED_RECOVERABLE con rues_error, etc).
+        // Permite que el operador intervenga en Viafirma sin ser molestado constantemente.
+        // Máximo recomendado: 600 (10 minutos).
+        'recovery_interval_seconds' => (int) env('VIAFIRMA_POLL_RECOVERY_INTERVAL', 300), // 300 = 5 min
     ],
 
     'auto_redownload' => [

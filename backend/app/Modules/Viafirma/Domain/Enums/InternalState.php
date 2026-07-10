@@ -52,6 +52,11 @@ enum InternalState: string
         return in_array($this, [self::FAILED, self::FAILED_RECOVERABLE, self::EXPIRED], true);
     }
 
+    public function isRecoverable(): bool
+    {
+        return $this === self::FAILED_RECOVERABLE;
+    }
+
     /**
      * Mapeo único y centralizado del estado técnico de Viafirma al estado unificado de
      * `certificate_requests` (fuente de verdad del ciclo de vida, agnóstica de proveedor).

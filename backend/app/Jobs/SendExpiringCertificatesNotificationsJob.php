@@ -4,7 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\CertificateRequestStatusEnum;
 use App\Models\CertificateRequest;
-use App\Notifications\CertificateExpiringNotification;
+use App\Notifications\CompanyExpiringCertificatesNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -55,7 +55,7 @@ class SendExpiringCertificatesNotificationsJob implements ShouldQueue
         $startTime = microtime(true);
 
         try {
-            Log::info('[CertificateExpiration] Iniciando proceso de notificaciones de certificados próximos a vencer');
+            Log::info('[CertificateExpiration] Iniciando proceso de notificaciones consolidadas de certificados próximos a vencer');
 
             $notificationDays = config('certificate.notification_days', 30);
             $expirationThreshold = now()->addDays($notificationDays);
@@ -76,53 +76,59 @@ class SendExpiringCertificatesNotificationsJob implements ShouldQueue
             $failedCount = 0;
             $skippedCount = 0;
 
-            // Procesar cada certificado
-            foreach ($expiringCertificates as $certificate) {
+            // Agrupar certificados por empresa
+            $certificatesByCompany = $expiringCertificates->groupBy('company_id');
+            $totalCompanies = $certificatesByCompany->count();
+
+            // Procesar cada empresa
+            foreach ($certificatesByCompany as $companyId => $companysCertificates) {
                 try {
-                    // Verificar si ya se notificó hoy
-                    if ($this->wasNotifiedToday($certificate)) {
-                        $skippedCount++;
-                        Log::debug('[CertificateExpiration] Certificado ya notificado hoy', [
-                            'certificate_id' => $certificate->id,
-                            'company' => $certificate->company_name
-                        ]);
-                        continue;
-                    }
+                    // Obtener empresa
+                    $company = $companysCertificates->first()->company;
 
-                    // Validar que la empresa tenga email
-                    if (!$certificate->company || !$certificate->company->email) {
+                    if (!$company || !$company->email) {
                         Log::warning('[CertificateExpiration] Empresa sin email configurado', [
-                            'certificate_id' => $certificate->id,
-                            'company_id' => $certificate->company_id
+                            'company_id' => $companyId
                         ]);
                         $skippedCount++;
                         continue;
                     }
 
-                    // Enviar notificación
-                    $this->sendNotification($certificate);
+                    // Filtrar certificados no notificados hoy
+                    $certificatesToNotify = $companysCertificates->filter(function ($cert) {
+                        return !$this->wasNotifiedToday($cert);
+                    });
 
-                    // Marcar como notificado
-                    $this->markAsNotified($certificate);
+                    if ($certificatesToNotify->isEmpty()) {
+                        $skippedCount++;
+                        Log::debug('[CertificateExpiration] Todos los certificados de empresa ya notificados hoy', [
+                            'company_id' => $companyId,
+                            'company' => $company->name
+                        ]);
+                        continue;
+                    }
+
+                    // Enviar notificación consolidada
+                    $this->sendNotification($company, $certificatesToNotify);
+
+                    // Marcar todos los certificados como notificados
+                    foreach ($certificatesToNotify as $cert) {
+                        $this->markAsNotified($cert);
+                    }
 
                     $successCount++;
 
-                    Log::info('[CertificateExpiration] Notificación enviada exitosamente', [
-                        'certificate_id' => $certificate->id,
-                        'company' => $certificate->company_name,
-                        'email' => $certificate->company->email,
-                        'expiration_date' => $certificate->expiration_date,
-                        'days_remaining' => $this->getDaysRemaining($certificate)
+                    Log::info('[CertificateExpiration] Notificación consolidada enviada exitosamente', [
+                        'company_id' => $company->id,
+                        'company' => $company->name,
+                        'email' => $company->email,
+                        'certificates_count' => $certificatesToNotify->count()
                     ]);
-
-                    // Pequeño delay para no saturar el servidor SMTP
-                    usleep(100000); // 0.1 segundos
 
                 } catch (Exception $e) {
                     $failedCount++;
-                    Log::error('[CertificateExpiration] Error al enviar notificación individual', [
-                        'certificate_id' => $certificate->id,
-                        'company' => $certificate->company_name ?? 'N/A',
+                    Log::error('[CertificateExpiration] Error al enviar notificación consolidada', [
+                        'company_id' => $companyId,
                         'error' => $e->getMessage(),
                         'trace' => $e->getTraceAsString()
                     ]);
@@ -133,7 +139,8 @@ class SendExpiringCertificatesNotificationsJob implements ShouldQueue
 
             // Log del resumen de ejecución
             Log::info('[CertificateExpiration] Proceso completado', [
-                'total_found' => $expiringCertificates->count(),
+                'total_certificates' => $expiringCertificates->count(),
+                'total_companies' => $totalCompanies,
                 'success' => $successCount,
                 'failed' => $failedCount,
                 'skipped' => $skippedCount,
@@ -141,8 +148,8 @@ class SendExpiringCertificatesNotificationsJob implements ShouldQueue
             ]);
 
             // Si hay muchos fallos, notificar al admin
-            if ($failedCount > 5 || ($failedCount > 0 && $failedCount / $expiringCertificates->count() > 0.2)) {
-                $this->notifyAdminAboutFailures($failedCount, $expiringCertificates->count());
+            if ($failedCount > 5 || ($failedCount > 0 && $failedCount / $totalCompanies > 0.2)) {
+                $this->notifyAdminAboutFailures($failedCount, $totalCompanies);
             }
 
         } catch (Exception $e) {
@@ -153,7 +160,7 @@ class SendExpiringCertificatesNotificationsJob implements ShouldQueue
                 'trace' => $e->getTraceAsString()
             ]);
 
-            throw $e; // Re-lanzar para que se registre el fallo del Job
+            throw $e;
         }
     }
 
@@ -203,51 +210,16 @@ class SendExpiringCertificatesNotificationsJob implements ShouldQueue
     }
 
     /**
-     * Enviar notificación a la empresa
+     * Enviar notificación consolidada a la empresa
      *
-     * @param CertificateRequest $certificate
+     * @param \App\Models\Company $company
+     * @param \Illuminate\Database\Eloquent\Collection $certificates
      * @return void
      */
-    private function sendNotification(CertificateRequest $certificate): void
+    private function sendNotification($company, $certificates): void
     {
-        $daysRemaining = $this->getDaysRemaining($certificate);
-        $urgencyLevel = $this->getUrgencyLevel($daysRemaining);
-
-        Notification::route('mail', $certificate->company->email)
-            ->notify(new CertificateExpiringNotification(
-                $certificate,
-                $daysRemaining,
-                $urgencyLevel
-            ));
-    }
-
-    /**
-     * Obtener días restantes hasta el vencimiento
-     *
-     * @param CertificateRequest $certificate
-     * @return int
-     */
-    private function getDaysRemaining(CertificateRequest $certificate): int
-    {
-        return now()->diffInDays(Carbon::parse($certificate->expiration_date), false);
-    }
-
-    /**
-     * Determinar nivel de urgencia
-     *
-     * @param int $daysRemaining
-     * @return string
-     */
-    private function getUrgencyLevel(int $daysRemaining): string
-    {
-        if ($daysRemaining <= 7) {
-            return 'critical';
-        } elseif ($daysRemaining <= 15) {
-            return 'high';
-        } elseif ($daysRemaining <= 30) {
-            return 'medium';
-        }
-        return 'low';
+        Notification::route('mail', $company->email)
+            ->notify(new CompanyExpiringCertificatesNotification($company, $certificates));
     }
 
     /**

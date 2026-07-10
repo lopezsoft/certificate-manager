@@ -165,13 +165,45 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
             return;
         }
 
-        if ($entity->isTerminal() || $entity->isFailed()) {
+        // Estados terminales — detener polling
+        if ($entity->isTerminal()) {
             $state->next_poll_at = null;
             $state->save();
             $logger->info('viafirma.poll.stopped', [
                 'id'     => $entity->id,
                 'state'  => $state->internal_state->value,
                 'remote' => $statusResult->status->value,
+            ]);
+            return;
+        }
+
+        // Errores irrecuperables (FAILED, no FAILED_RECOVERABLE) — detener polling
+        if ($entity->isFailed() && !$state->internal_state->isRecoverable()) {
+            $state->next_poll_at = null;
+            $state->save();
+            $logger->info('viafirma.poll.stopped_failed', [
+                'id'          => $entity->id,
+                'state'       => $state->internal_state->value,
+                'error_code'  => $state->last_error_code,
+                'remote'      => $statusResult->status->value,
+            ]);
+            return;
+        }
+
+        // Errores recuperables (FAILED_RECOVERABLE) — continuar polling en intervalos más largos
+        if ($state->internal_state->isRecoverable()) {
+            $delay = $scheduler->recoveryDelay($entity);
+            $state->next_poll_at = now()->addSeconds($delay);
+            $state->save();
+
+            self::dispatch($this->requestId)->delay(now()->addSeconds($delay));
+
+            $logger->info('viafirma.poll.recoverable_error_continue', [
+                'id'              => $entity->id,
+                'error_code'      => $state->last_error_code,
+                'delay_s'         => $delay,
+                'attempts'        => $state->poll_attempts,
+                'human_awaiting'  => 'esperando intervención del operador en Viafirma',
             ]);
             return;
         }

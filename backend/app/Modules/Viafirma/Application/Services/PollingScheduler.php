@@ -23,12 +23,14 @@ final class PollingScheduler
     private readonly int $intervalSeconds;
     private readonly int $maxAttempts;
     private readonly int $expirationHours;
+    private readonly int $recoveryIntervalSeconds;
 
     public function __construct()
     {
         $this->intervalSeconds  = max(10, (int) config('viafirma.polling.interval_seconds', 60));
         $this->maxAttempts      = (int) config('viafirma.polling.max_attempts', 288);
         $this->expirationHours  = (int) config('viafirma.polling.expiration_hours', 72);
+        $this->recoveryIntervalSeconds = max(60, (int) config('viafirma.polling.recovery_interval_seconds', 300));
     }
 
     /**
@@ -46,6 +48,16 @@ final class PollingScheduler
     public function retryAfter(ViafirmaCertificateRequest $entity): int
     {
         return $this->intervalSeconds;
+    }
+
+    /**
+     * Delay extendido para errores recuperables (FAILED_RECOVERABLE).
+     * Permite que el operador intervenga sin ser molestado constantemente.
+     * Default: 5 minutos (300 segundos).
+     */
+    public function recoveryDelay(ViafirmaCertificateRequest $entity): int
+    {
+        return $this->recoveryIntervalSeconds;
     }
 
     /**
