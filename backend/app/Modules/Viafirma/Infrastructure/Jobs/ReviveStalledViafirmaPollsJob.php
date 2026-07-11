@@ -19,10 +19,13 @@ use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
  * Se ejecuta cada 5 minutos vía Kernel scheduler.
  *
  * Una solicitud se considera "huérfana" si:
- *  - Está en estado SUBMITTED o POLLING (no terminal)
+ *  - Está en estado SUBMITTED, POLLING, o FAILED_RECOVERABLE (esperando
+ *    intervención del operador, pero que debe seguir siendo consultada)
  *  - Tiene cod_request (ya fue enviada a Viafirma)
  *  - next_poll_at es NULL o lleva más de 20 min sin actualizarse
- *    (indica que el PollViafirmaStatusJob no se reprogramó correctamente)
+ *    (indica que el PollViafirmaStatusJob no se reprogramó correctamente,
+ *    o que quedó con next_poll_at=null por versiones previas del job que
+ *    detenían el polling en cualquier estado failure-like)
  *
  * Para cada huérfana: despacha PollViafirmaStatusJob con delay aleatorio
  * (5-30s) para escalonar los polls y evitar ráfagas simultáneas.

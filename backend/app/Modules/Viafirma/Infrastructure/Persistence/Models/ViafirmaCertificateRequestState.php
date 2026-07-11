@@ -195,15 +195,26 @@ class ViafirmaCertificateRequestState extends Model
     }
 
     /**
-     * Solicitudes huérfanas: en polling pero sin next_poll_at programado
-     * o con next_poll_at vencido hace más de N minutos.
+     * Solicitudes huérfanas: deberían seguir siendo consultadas (polling activo
+     * o FAILED_RECOVERABLE esperando intervención del operador) pero se quedaron
+     * sin next_poll_at programado, o con next_poll_at vencido hace más de N minutos.
+     *
+     * FAILED_RECOVERABLE se incluye porque, aunque no es un polling "activo" en el
+     * sentido estricto de SUBMITTED/POLLING, sigue requiriendo consultas periódicas
+     * hasta que el operador corrija el error en Viafirma y el ciclo de vida continúe.
+     * Cubre tanto registros afectados por versiones previas del job (que detenían
+     * el polling en cualquier estado failure-like) como cualquier crash futuro entre
+     * el save() y el dispatch() del siguiente poll.
      */
     public function scopeOrphanedPolling(Builder $query, int $staleMinutes = 20): Builder
     {
         $threshold = now()->subMinutes($staleMinutes);
 
         return $query
-            ->activePolling()
+            ->where(function (Builder $q) {
+                $q->activePolling()
+                  ->orWhere('internal_state', InternalState::FAILED_RECOVERABLE->value);
+            })
             ->whereNotNull('viafirma_certificate_request_id')
             ->where(function (Builder $q) use ($threshold) {
                 $q->whereNull('next_poll_at')
