@@ -108,6 +108,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Reply To Address
+    |--------------------------------------------------------------------------
+    |
+    | Email address used as the reply-to header for outgoing mail messages.
+    | Configured via REPLY_TO_MAIL in .env
+    |
+    */
+
+    'reply_to' => [
+        'address' => env('REPLY_TO_MAIL', env('MAIL_FROM_ADDRESS')),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Markdown Mail Settings
     |--------------------------------------------------------------------------
     |

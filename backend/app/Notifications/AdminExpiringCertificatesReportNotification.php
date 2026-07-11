@@ -65,8 +65,10 @@ class AdminExpiringCertificatesReportNotification extends Notification implement
     {
         $reportType = $this->reportData['report_type'] === 'weekly' ? 'Semanal' : 'Diario';
         $subject = "📊 Reporte {$reportType} - Certificados Próximos a Vencer";
+        $replyTo = config('mail.reply_to.address');
 
         $mail = (new MailMessage)
+            ->replyTo($replyTo)
             ->subject($subject)
             ->greeting("Reporte de Certificados - {$this->reportData['report_date_formatted']}")
             ->line("A continuación se presenta el reporte consolidado de certificados próximos a vencer:")
@@ -223,7 +225,10 @@ class AdminExpiringCertificatesReportNotification extends Notification implement
      */
     private function buildEmptyReport(): MailMessage
     {
+        $replyTo = config('mail.reply_to.address');
+
         return (new MailMessage)
+            ->replyTo($replyTo)
             ->subject("✅ Reporte Semanal - Sin Certificados Próximos a Vencer")
             ->greeting("Reporte de Certificados - {$this->reportData['report_date_formatted']}")
             ->line("✅ **Excelentes noticias:**")

@@ -59,8 +59,10 @@ class CompanyExpiringCertificatesNotification extends Notification implements Sh
         $expiredCount = $this->countByUrgency('expired');
 
         $subject = $this->buildSubject($expiredCount, $criticalCount);
+        $replyTo = config('mail.reply_to.address');
 
         $mail = (new MailMessage)
+            ->replyTo($replyTo)
             ->subject($subject)
             ->greeting("Estimado cliente,")
             ->line("Le informamos que tiene certificados digitales próximos a vencer.")
