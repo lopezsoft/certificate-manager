@@ -116,6 +116,7 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
         // Guard: SLA o máximo de intentos superado → expirar
         if ($entity->hasExpired() || $scheduler->hasExceededSla($entity) || $scheduler->hasExceededMaxAttempts($entity)) {
             $fsm->markExpired($entity);
+            $state = $entity->state;
             $state->save();
             $logger->warning('viafirma.poll.expired', [
                 'id'       => $entity->id,
@@ -131,13 +132,13 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
         }
 
         // ── Consultar estado en Viafirma ──────────────────────────────────
-        $state->poll_attempts++;
-        $state->last_polled_at = now();
-
         try {
             $statusResult = $client->getStatus($entity->cod_request);
+            // Solo incrementar poll_attempts si la consulta fue exitosa
+            $state->poll_attempts++;
+            $state->last_polled_at = now();
         } catch (TransientHttpException $e) {
-            // Error de red o 5xx — reprogramar y continuar
+            // Error de red o 5xx — reprogramar sin incrementar intentos de consulta
             $logger->warning('viafirma.poll.transient_error', [
                 'id'      => $entity->id,
                 'message' => $e->getMessage(),
@@ -152,17 +153,30 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
         // ── FSM: actualizar estado ────────────────────────────────────────
         $fsm->transition($entity, $statusResult->status, $statusResult->raw);
 
+        // ── Recargar state después de la transición FSM ──────────────────────
+        // La FSM mutó $entity->state, pero nuestra variable local $state es stale
+        $state = $entity->state;
+
         // ── Decidir próximo paso ──────────────────────────────────────────
         if ($entity->isReadyToDownload()) {
-            $state->next_poll_at = null;
-            $state->save();
-            $logger->info('viafirma.poll.ready_to_download', [
-                'id'       => $entity->id,
-                'publicId' => $entity->public_id,
-                'remote'   => $statusResult->status->value,
-            ]);
-            DownloadP7bJob::dispatch($entity->id)->delay(now()->addSeconds(5));
-            return;
+            // Validar que remote_status indica P7B disponible
+            if (!in_array($state->remote_status, ['Generated_Not_Downloaded', 'Generated_And_Downloaded'])) {
+                $logger->warning('viafirma.poll.ready_but_no_p7b', [
+                    'id'            => $entity->id,
+                    'remote_status' => $state->remote_status,
+                ]);
+                // No está realmente listo — continuar polling
+            } else {
+                $state->next_poll_at = null;
+                $state->save();
+                $logger->info('viafirma.poll.ready_to_download', [
+                    'id'       => $entity->id,
+                    'publicId' => $entity->public_id,
+                    'remote'   => $statusResult->status->value,
+                ]);
+                DownloadP7bJob::dispatch($entity->id)->delay(now()->addSeconds(5));
+                return;
+            }
         }
 
         // Estados terminales — detener polling
