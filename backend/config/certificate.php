@@ -36,6 +36,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Expired Report Max Age
+    |--------------------------------------------------------------------------
+    |
+    | Antigüedad máxima (días) de un certificado vencido para seguir apareciendo
+    | en el reporte administrativo. Más allá de este umbral es ruido: el operador
+    | ya tuvo tiempo de gestionarlo o el cliente ya renovó/se fue.
+    | Por defecto: 30 días
+    |
+    */
+    'expired_report_max_age_days' => env('CERTIFICATE_EXPIRED_REPORT_MAX_AGE_DAYS', 30),
+
+    /*
+    |--------------------------------------------------------------------------
     | Daily Notifications
     |--------------------------------------------------------------------------
     |

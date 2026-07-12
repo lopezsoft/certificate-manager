@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\CertificateRequestStatusEnum;
 use App\Models\CertificateRequest;
 use App\Notifications\AdminExpiringCertificatesReportNotification;
 use Illuminate\Bus\Queueable;
@@ -181,19 +182,23 @@ class SendAdminExpiringCertificatesReportJob implements ShouldQueue
 
         switch ($range) {
             case 'expired':
-                $query->where('expiration_date', '<', now());
+                // Solo vencidos recientes (máximo N días) — más antiguo que eso es ruido,
+                // el operador ya tuvo tiempo de gestionarlo o el cliente ya se fue.
+                $maxAgeDays = config('certificate.expired_report_max_age_days', 30);
+                $query->where('expiration_date', '<', now())
+                      ->where('expiration_date', '>=', now()->subDays($maxAgeDays));
                 break;
-                
+
             case 'critical':
                 $query->where('expiration_date', '>=', now())
                       ->where('expiration_date', '<=', now()->addDays(7));
                 break;
-                
+
             case 'high':
                 $query->where('expiration_date', '>', now()->addDays(7))
                       ->where('expiration_date', '<=', now()->addDays(15));
                 break;
-                
+
             case 'medium':
                 $query->where('expiration_date', '>', now()->addDays(15))
                       ->where('expiration_date', '<=', now()->addDays(30));
@@ -202,6 +207,9 @@ class SendAdminExpiringCertificatesReportJob implements ShouldQueue
 
         return $query->orderBy('expiration_date', 'asc')
                     ->get()
+                    ->reject(function ($cert) {
+                        return $this->wasAlreadyRenewed($cert);
+                    })
                     ->map(function ($cert) {
                         return [
                             'id' => $cert->id,
@@ -219,6 +227,23 @@ class SendAdminExpiringCertificatesReportJob implements ShouldQueue
                             'created_at' => $cert->created_at,
                         ];
                     });
+    }
+
+    /**
+     * Determina si ya existe un certificado vigente más reciente para el mismo
+     * NIT/empresa, lo que indica que el cliente ya renovó y el vencido es ruido.
+     *
+     * @param CertificateRequest $cert
+     * @return bool
+     */
+    private function wasAlreadyRenewed(CertificateRequest $cert): bool
+    {
+        return CertificateRequest::where('company_id', $cert->company_id)
+            ->where('dni', $cert->dni)
+            ->where('id', '!=', $cert->id)
+            ->where('request_status', CertificateRequestStatusEnum::PROCESSED->value)
+            ->where('expiration_date', '>', now())
+            ->exists();
     }
 
     /**
