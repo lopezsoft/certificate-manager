@@ -165,21 +165,38 @@ class SendExpiringCertificatesNotificationsJob implements ShouldQueue
     }
 
     /**
-     * Obtener certificados próximos a vencer
+     * Obtener certificados próximos a vencer Y vencidos recientes (sin renovar).
+     *
+     * Incluye tanto los que vencerán en el rango de antelación configurado como
+     * los que ya vencieron, acotados a una antigüedad máxima (config
+     * certificate.expired_report_max_age_days) para no generar ruido con
+     * certificados vencidos hace meses/años que el cliente probablemente ya
+     * abandonó. Excluye certificados cuyo cliente ya renovó (existe uno más
+     * reciente PROCESSED para el mismo NIT/empresa).
      *
      * @param Carbon $expirationThreshold
      * @return \Illuminate\Database\Eloquent\Collection
      */
     private function getExpiringCertificates(Carbon $expirationThreshold)
     {
+        $expiredMaxAgeDays = config('certificate.expired_report_max_age_days', 30);
+
         return CertificateRequest::with(['company'])
             ->whereNotNull('expiration_date')
             ->where('request_status', CertificateRequestStatusEnum::PROCESSED->value) // Solo certificados emitidos
-            ->where('expiration_date', '>', now()) // No vencidos aún
-            ->where('expiration_date', '<=', $expirationThreshold) // Dentro del rango
+            ->where('expiration_date', '<=', $expirationThreshold) // Dentro del rango de aviso
+            ->where('expiration_date', '>=', now()->subDays($expiredMaxAgeDays)) // Vencidos recientes, no ruido histórico
             ->whereHas('company', function ($query) {
                 $query->whereNotNull('email')
                       ->where('email', '!=', '');
+            })
+            ->whereNotExists(function ($sub) {
+                $sub->select(\Illuminate\Support\Facades\DB::raw(1))
+                    ->from('certificate_requests as renewed')
+                    ->whereColumn('renewed.company_id', 'certificate_requests.company_id')
+                    ->whereColumn('renewed.dni', 'certificate_requests.dni')
+                    ->whereColumn('renewed.updated_at', '>', 'certificate_requests.updated_at')
+                    ->where('renewed.request_status', CertificateRequestStatusEnum::PROCESSED->value);
             })
             ->orderBy('expiration_date', 'asc')
             ->get();

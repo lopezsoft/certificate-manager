@@ -186,7 +186,15 @@ class SendAdminExpiringCertificatesReportJob implements ShouldQueue
                 // el operador ya tuvo tiempo de gestionarlo o el cliente ya se fue.
                 $maxAgeDays = config('certificate.expired_report_max_age_days', 30);
                 $query->where('expiration_date', '<', now())
-                      ->where('expiration_date', '>=', now()->subDays($maxAgeDays));
+                      ->where('expiration_date', '>=', now()->subDays($maxAgeDays))
+                      ->whereNotExists(function ($sub) {
+                          $sub->select(\Illuminate\Support\Facades\DB::raw(1))
+                              ->from('certificate_requests as renewed')
+                              ->whereColumn('renewed.company_id', 'certificate_requests.company_id')
+                              ->whereColumn('renewed.dni', 'certificate_requests.dni')
+                              ->whereColumn('renewed.updated_at', '>', 'certificate_requests.updated_at')
+                              ->where('renewed.request_status', CertificateRequestStatusEnum::PROCESSED->value);
+                      });
                 break;
 
             case 'critical':
@@ -207,9 +215,6 @@ class SendAdminExpiringCertificatesReportJob implements ShouldQueue
 
         return $query->orderBy('expiration_date', 'asc')
                     ->get()
-                    ->reject(function ($cert) {
-                        return $this->wasAlreadyRenewed($cert);
-                    })
                     ->map(function ($cert) {
                         return [
                             'id' => $cert->id,
@@ -227,23 +232,6 @@ class SendAdminExpiringCertificatesReportJob implements ShouldQueue
                             'created_at' => $cert->created_at,
                         ];
                     });
-    }
-
-    /**
-     * Determina si ya existe un certificado vigente más reciente para el mismo
-     * NIT/empresa, lo que indica que el cliente ya renovó y el vencido es ruido.
-     *
-     * @param CertificateRequest $cert
-     * @return bool
-     */
-    private function wasAlreadyRenewed(CertificateRequest $cert): bool
-    {
-        return CertificateRequest::where('company_id', $cert->company_id)
-            ->where('dni', $cert->dni)
-            ->where('id', '!=', $cert->id)
-            ->where('request_status', CertificateRequestStatusEnum::PROCESSED->value)
-            ->where('expiration_date', '>', now())
-            ->exists();
     }
 
     /**
