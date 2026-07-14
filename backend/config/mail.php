@@ -118,6 +118,7 @@ return [
 
     'reply_to' => [
         'address' => env('REPLY_TO_MAIL', env('MAIL_FROM_ADDRESS')),
+        'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
     /*
