@@ -30,7 +30,14 @@ class UpdateCertificateStatusHandler
             $certificate    = CertificateRequest::query()
                 ->with(['company'])
                 ->where('id', $command->certificateId)
-                ->firstOrFail();
+                ->first();
+
+            if (! $certificate) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Solicitud de certificado con ID {$command->certificateId} no encontrada.",
+                ], 404);
+            }
 
             $previousStatus = $certificate->request_status;
 
@@ -46,9 +53,11 @@ class UpdateCertificateStatusHandler
 
             DB::beginTransaction();
 
-            $certificate->update([
-                'request_status' => $command->requestStatus,
-            ]);
+            DB::table('certificate_requests')
+                ->where('id', $command->certificateId)
+                ->update([
+                    'request_status' => $command->requestStatus,
+                ]);
 
             ChangeHistory::create([
                 'certificate_request_id' => $certificate->id,
@@ -94,7 +103,12 @@ class UpdateCertificateStatusHandler
             return;
         }
 
-        $company = $certificate->company;
+        $company = DB::table('companies')
+            ->where('id', $certificate->company_id)
+            ->first();
+        if (!$company) {
+            throw new Exception("No se encontró la empresa con ID {$certificate->company_id} para la solicitud de certificado {$certificate->id}");
+        }
 
         $comments = $isProcessed
             ? "<p style='font-size: 12px;'>La solicitud <b>({$certificate->uuid})</b> de certificado ha sido procesada exitosamente.</p>
@@ -108,11 +122,12 @@ class UpdateCertificateStatusHandler
             'comments'       => $comments,
             'request_status' => $command->requestStatus,
         ];
+        
+        Notification::route('mail', $company->email)
+            ->notify(new CertificateRequestStatusNotification($messageData));
 
         Notification::route('mail', config('certificate.mail.support_address'))
             ->notify(new CertificateRequestStatusNotification($messageData));
 
-        Notification::route('mail', $company->email)
-            ->notify(new CertificateRequestStatusNotification($messageData));
     }
 }

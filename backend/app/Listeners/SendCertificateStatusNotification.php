@@ -7,6 +7,7 @@ use App\Models\CertificateRequest;
 use App\Notifications\CertificateRequestStatusNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 
 /**
@@ -23,28 +24,31 @@ class SendCertificateStatusNotification implements ShouldQueue
 
     public function handle(CertificateStatusChanged $event): void
     {
-        // Cargar la solicitud de certificado con sus relaciones
-        $certificateRequest = CertificateRequest::with(['company'])
-            ->find($event->certificateRequestId);
+        $certificateRequest = CertificateRequest::find($event->certificateRequestId);
 
         if ($certificateRequest === null) {
             return;
         }
 
-        // Preparar datos para la notificación
+        $company = DB::table('companies')
+            ->where('id', $certificateRequest->company_id)
+            ->first();
+
+        if (!$company) {
+            return;
+        }
+
         $messageData = (object) [
-            'company'        => $certificateRequest->company,
+            'company'        => $company,
             'data'           => $certificateRequest,
             'comments'       => $this->buildComments($event->newStatus, $event->comment),
             'request_status' => $event->newStatus,
         ];
 
-        // Enviar notificación al email de soporte
         Notification::route('mail', config('certificate.mail.support_address'))
             ->notify(new CertificateRequestStatusNotification($messageData));
 
-        // Enviar notificación al email de la empresa
-        Notification::route('mail', $certificateRequest->company->email)
+        Notification::route('mail', $company->email)
             ->notify(new CertificateRequestStatusNotification($messageData));
     }
 
