@@ -83,8 +83,10 @@ class SendExpiringCertificatesNotificationsJob implements ShouldQueue
             // Procesar cada empresa
             foreach ($certificatesByCompany as $companyId => $companysCertificates) {
                 try {
-                    // Obtener empresa
-                    $company = $companysCertificates->first()->company;
+                    // Obtener empresa usando Query Builder (no traversar relación Eloquent)
+                    $company = \Illuminate\Support\Facades\DB::table('companies')
+                        ->where('id', $companyId)
+                        ->first();
 
                     if (!$company || !$company->email) {
                         Log::warning('[CertificateExpiration] Empresa sin email configurado', [

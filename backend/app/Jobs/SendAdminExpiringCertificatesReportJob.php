@@ -177,7 +177,7 @@ class SendAdminExpiringCertificatesReportJob implements ShouldQueue
      */
     private function getCertificatesByRange(string $range)
     {
-        $query = CertificateRequest::with(['company', 'identity', 'city'])
+        $query = CertificateRequest::with(['identity', 'city'])
             ->whereNotNull('expiration_date');
 
         switch ($range) {
@@ -216,12 +216,15 @@ class SendAdminExpiringCertificatesReportJob implements ShouldQueue
         return $query->orderBy('expiration_date', 'asc')
                     ->get()
                     ->map(function ($cert) {
+                        $company = \Illuminate\Support\Facades\DB::table('companies')
+                            ->where('id', $cert->company_id)
+                            ->first();
                         return [
                             'id' => $cert->id,
                             'company_name' => $cert->company_name,
                             'dni' => $cert->dni,
                             'dv' => $cert->dv,
-                            'email' => $cert->company->email ?? 'Sin email',
+                            'email' => $company?->email ?? 'Sin email',
                             'phone' => $cert->phone,
                             'expiration_date' => $cert->expiration_date,
                             'expiration_date_formatted' => Carbon::parse($cert->expiration_date)->format('d/m/Y'),

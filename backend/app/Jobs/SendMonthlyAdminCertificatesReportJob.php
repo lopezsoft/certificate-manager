@@ -136,8 +136,10 @@ class SendMonthlyAdminCertificatesReportJob implements ShouldQueue
         // Agrupar por empresa
         $byCompany = $certificates->groupBy('company_id')
             ->map(function ($companyCerts, $companyId) {
-                $company = $companyCerts->first()->company;
-                
+                $company = \Illuminate\Support\Facades\DB::table('companies')
+                    ->where('id', $companyId)
+                    ->first();
+
                 return [
                     'company_id' => $companyId,
                     'company_name' => $company->company_name ?? 'N/A',

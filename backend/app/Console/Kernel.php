@@ -136,6 +136,26 @@ class Kernel extends ConsoleKernel
             ->appendOutputTo(storage_path('logs/scheduled-quotas-expire.log'));
 
         // ====================================================================
+        // PROMOCIÓN AUTOMÁTICA FLUJO MAIL (SIN INTERVENCIÓN HUMANA)
+        // ====================================================================
+
+        /**
+         * Job: Promover automáticamente solicitudes del flujo "mail"
+         *
+         * Frecuencia: Cada 5 minutos
+         * Función: Busca solicitudes en SENT o ACCEPTED cuya empresa usa el
+         *          proveedor 'mail' explícito y las promueve encadenando
+         *          SENT -> ACCEPTED -> PROCESSING en la misma pasada.
+         */
+        $schedule->job(new \App\Jobs\Certificate\PromoteMailCertificateRequestsJob())
+            ->everyFiveMinutes()
+            ->timezone('America/Bogota')
+            ->name('certificates:auto-promote-mail')
+            ->withoutOverlapping(5)
+            ->onOneServer()
+            ->appendOutputTo(storage_path('logs/scheduled-certificates-auto-promote-mail.log'));
+
+        // ====================================================================
         // VIAFIRMA POLLING WATCHDOG
         // ====================================================================
 

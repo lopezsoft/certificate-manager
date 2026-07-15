@@ -9,6 +9,28 @@ El versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+---
+
+## [1.10.0] - 2026-07-15
+
+### Añadido — Job de promoción automática de certificados (flujo mail)
+
+- **`PromoteMailCertificateRequestsJob`** — Automatiza la transición de solicitudes de certificado en el flujo "mail":
+  - Se ejecuta cada 5 minutos vía scheduler
+  - Busca solicitudes en estado `SENT` o `ACCEPTED` cuya empresa tiene `issuance_provider = 'mail'`
+  - Encadena automáticamente: `SENT` → `ACCEPTED` → `PROCESSING` en la misma ejecución
+  - Reutiliza servicios existentes sin duplicación de código:
+    - `UpdateCertificateStatusHandler::handle()` para cambios de estado
+    - `CertificateRequestMailService::sendMail()` para envío directo sin orquestación innecesaria
+  - Evita intervención manual en el flujo mail, mejorando la experiencia del usuario
+  - Logging detallado por solicitud fallida y resumen de operación
+
+**Registrado en:** `app/Console/Kernel.php` → `certificates:auto-promote-mail` cada 5 minutos
+
+---
+
+## [Unreleased - Previous]
+
 ### Corregido — Viafirma: Error de Validación RUES (FE-PJ Identity Mismatch) + Patrón CN de FE-PN
 
 - **Bug principal:** El campo `identity` en el payload enviado a Viafirma no coincidía con `serialNumber` en el CSR para FE-PJ
