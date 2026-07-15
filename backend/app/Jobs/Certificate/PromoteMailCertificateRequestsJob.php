@@ -8,6 +8,7 @@ use App\Commands\Certificate\UpdateCertificateStatusCommand;
 use App\Enums\CertificateRequestStatusEnum;
 use App\Handlers\Certificate\UpdateCertificateStatusHandler;
 use App\Models\CertificateRequest;
+use App\Models\User;
 use App\Services\CertificateRequestMailService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -15,6 +16,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Http\Request;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -88,6 +90,13 @@ class PromoteMailCertificateRequestsJob implements ShouldQueue
         CertificateRequestMailService $mailService,
         CertificateRequest $certificateRequest
     ): void {
+        $adminUser = User::where('type_id', '1')->first();
+        if (!$adminUser) {
+            throw new \Exception('No se encontró usuario ADMIN para ejecutar la promoción automática');
+        }
+
+        Auth::login($adminUser);
+
         $status = $certificateRequest->request_status;
 
         // SENT → ACCEPTED: usar handler de cambio de estado
@@ -98,7 +107,7 @@ class PromoteMailCertificateRequestsJob implements ShouldQueue
                 requestStatus: CertificateRequestStatusEnum::ACCEPTED->value,
                 comments: 'La solicitud ha sido aceptada para ser procesada.',
                 userOfChange: 'MANAGER',
-                userId: 0,
+                userId: $adminUser->id,
             ));
             $status = CertificateRequestStatusEnum::ACCEPTED->value;
         }
