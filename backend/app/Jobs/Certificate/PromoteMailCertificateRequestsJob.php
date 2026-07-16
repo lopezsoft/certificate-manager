@@ -114,6 +114,8 @@ class PromoteMailCertificateRequestsJob implements ShouldQueue
 
         // ACCEPTED → PROCESSING: usar servicio de mail directamente
         if ($status === CertificateRequestStatusEnum::ACCEPTED->value) {
+            // Esperamos 15 segundos para evitar que el cambio de estado anterior no se haya propagado aún
+            sleep(15);
             $request = new Request();
             $request->merge(['comments' => 'La solicitud está siendo procesada.']);
             $mailService->sendMail($request, $certificateRequest->id);
