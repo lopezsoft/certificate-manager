@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 declare(strict_types=1);
 
@@ -16,7 +16,7 @@ use App\Modules\Viafirma\Domain\Enums\InternalState;
 use App\Modules\Viafirma\Domain\Exceptions\TransientHttpException;
 use App\Modules\Viafirma\Domain\Exceptions\ViafirmaException;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Mockery;
 use Tests\TestCase;
 
@@ -26,11 +26,11 @@ use Tests\TestCase;
  *   POST /api/v1/certificate-request/{id}/issue   (provider-agnostic)
  *
  * Validan la capa HTTP (rutas + middleware + FormRequest + factory de
- * proveedor + serialización) con el UseCase Viafirma mockeado para aislar
- * la presentación del dominio/infraestructura.
+ * proveedor + serializaciÃ³n) con el UseCase Viafirma mockeado para aislar
+ * la presentaciÃ³n del dominio/infraestructura.
  *
- * El default del subsistema en este test se fija a 'viafirma' vía config
- * dinámico para no depender de variables de entorno.
+ * El default del subsistema en este test se fija a 'viafirma' vÃ­a config
+ * dinÃ¡mico para no depender de variables de entorno.
  */
 class CertificateIssuanceViafirmaTest extends TestCase
 {
@@ -50,7 +50,7 @@ class CertificateIssuanceViafirmaTest extends TestCase
         return "/api/v1/certificate-request/{$id}/issue";
     }
 
-    // ── Auth ──────────────────────────────────────────────────────────────
+    // â”€â”€ Auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /** @test */
     public function issue_requires_authentication(): void
@@ -60,7 +60,7 @@ class CertificateIssuanceViafirmaTest extends TestCase
         ])->assertStatus(401);
     }
 
-    // ── Validación ────────────────────────────────────────────────────────
+    // â”€â”€ ValidaciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /** @test */
     public function issue_requires_email_when_provider_resolves_to_viafirma(): void
@@ -68,7 +68,7 @@ class CertificateIssuanceViafirmaTest extends TestCase
         $user = $this->createAuthenticatedUser();
         $crId = $this->ensureCertificateRequestExists();
 
-        // Sin email + hint=viafirma debe fallar la validación required_if.
+        // Sin email + hint=viafirma debe fallar la validaciÃ³n required_if.
         $response = $this->actingAs($user, 'api')
             ->postJson($this->endpoint($crId), [
                 'provider' => 'viafirma',
@@ -122,7 +122,7 @@ class CertificateIssuanceViafirmaTest extends TestCase
             ->assertJsonValidationErrors(['identity_type_override']);
     }
 
-    // ── Errores de dominio (provider Viafirma) ────────────────────────────
+    // â”€â”€ Errores de dominio (provider Viafirma) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /** @test */
     public function issue_returns_409_for_duplicate_request(): void
@@ -131,7 +131,7 @@ class CertificateIssuanceViafirmaTest extends TestCase
         $crId = $this->ensureCertificateRequestExists();
 
         $this->mockUseCaseThrows(new ViafirmaException(
-            "La solicitud {$crId} ya tiene un trámite Viafirma en curso (id=1, state=SUBMITTED)."
+            "La solicitud {$crId} ya tiene un trÃ¡mite Viafirma en curso (id=1, state=SUBMITTED)."
         ));
 
         $this->actingAs($user, 'api')
@@ -149,7 +149,7 @@ class CertificateIssuanceViafirmaTest extends TestCase
         $user = $this->createAuthenticatedUser();
         $crId = $this->ensureCertificateRequestExists();
 
-        $this->mockUseCaseThrows(new TransientHttpException('Viafirma respondió 500'));
+        $this->mockUseCaseThrows(new TransientHttpException('Viafirma respondiÃ³ 500'));
 
         $this->actingAs($user, 'api')
             ->postJson($this->endpoint($crId), [
@@ -159,11 +159,11 @@ class CertificateIssuanceViafirmaTest extends TestCase
             ->assertStatus(502)
             ->assertJson([
                 'success' => false,
-                'message' => 'Error de comunicación con Viafirma RA. Intente nuevamente.',
+                'message' => 'Error de comunicaciÃ³n con Viafirma RA. Intente nuevamente.',
             ]);
     }
 
-    // ── Éxito ─────────────────────────────────────────────────────────────
+    // â”€â”€ Ã‰xito â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /** @test */
     public function issue_returns_201_on_success(): void
@@ -209,7 +209,7 @@ class CertificateIssuanceViafirmaTest extends TestCase
             ->assertJsonPath('data.data.internal_state', 'SUBMITTED');
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────
+    // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private function createAuthenticatedUser(): User
     {
@@ -220,11 +220,11 @@ class CertificateIssuanceViafirmaTest extends TestCase
     {
         IdentityDocument::firstOrCreate(
             ['code' => '13'],
-            ['document_name' => 'Cédula de Ciudadanía', 'abbreviation' => 'CC']
+            ['document_name' => 'CÃ©dula de CiudadanÃ­a', 'abbreviation' => 'CC']
         );
         TypeOrganization::firstOrCreate(
             ['code' => 1],
-            ['description' => 'Persona Jurídica']
+            ['description' => 'Persona JurÃ­dica']
         );
 
         $company = Company::factory()->create();

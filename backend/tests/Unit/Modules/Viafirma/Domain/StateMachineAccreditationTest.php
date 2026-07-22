@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace Tests\Unit\Modules\Viafirma\Domain;
 
@@ -9,14 +9,14 @@ use App\Modules\Viafirma\Domain\StateMachine;
 use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequestState;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 final class StateMachineAccreditationTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     #[Test]
     public function dispara_accreditation_reached_al_entrar_en_accreditation(): void
@@ -36,16 +36,16 @@ final class StateMachineAccreditationTest extends TestCase
 
         $fsm = new StateMachine(app(SafePemLogger::class));
 
-        // Act — transición rues_check → accreditation (ambas en POLLING)
+        // Act â€” transiciÃ³n rues_check â†’ accreditation (ambas en POLLING)
         $stateChanged = $fsm->transition($entity, RemoteStatus::ACCREDITATION, [
             'code' => 'accreditation',
         ]);
 
         // Assert
-        // El internal_state no cambió (sigue POLLING), pero el evento debe dispararse
+        // El internal_state no cambiÃ³ (sigue POLLING), pero el evento debe dispararse
         $this->assertFalse($stateChanged);
 
-        // Verificar que se disparó el evento ViafirmaAccreditationReached
+        // Verificar que se disparÃ³ el evento ViafirmaAccreditationReached
         Event::assertDispatched(ViafirmaAccreditationReached::class, function ($event) use ($entity) {
             return $event->entity->id === $entity->id;
         });
@@ -69,7 +69,7 @@ final class StateMachineAccreditationTest extends TestCase
 
         $fsm = new StateMachine(app(SafePemLogger::class));
 
-        // Act — transición accreditation → accreditation (sin cambio)
+        // Act â€” transiciÃ³n accreditation â†’ accreditation (sin cambio)
         $fsm->transition($entity, RemoteStatus::ACCREDITATION, [
             'code' => 'accreditation',
         ]);
@@ -84,7 +84,7 @@ final class StateMachineAccreditationTest extends TestCase
         // Arrange
         Event::fake();
 
-        // Múltiples progresiones dentro de POLLING que no cambian internal_state
+        // MÃºltiples progresiones dentro de POLLING que no cambian internal_state
         $state = ViafirmaCertificateRequestState::factory()->create([
             'internal_state' => InternalState::POLLING,
             'remote_status' => RemoteStatus::PROPOSED_TO_ACCEPTANCE->value,
@@ -97,7 +97,7 @@ final class StateMachineAccreditationTest extends TestCase
 
         $fsm = new StateMachine(app(SafePemLogger::class));
 
-        // Act — transición proposed_to_acceptance → accreditation (ambas en POLLING)
+        // Act â€” transiciÃ³n proposed_to_acceptance â†’ accreditation (ambas en POLLING)
         $fsm->transition($entity, RemoteStatus::ACCREDITATION, [
             'code' => 'accreditation',
         ]);

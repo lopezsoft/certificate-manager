@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace Tests\Unit\Modules\Viafirma\Application;
 
@@ -10,13 +10,13 @@ use App\Modules\Viafirma\Domain\Exceptions\ViafirmaException;
 use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequestState;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 final class GetKycLinkUseCaseTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     #[Test]
     public function retorna_link_cacheado_sin_llamar_cliente(): void
@@ -134,7 +134,7 @@ final class GetKycLinkUseCaseTest extends TestCase
         // Assert
         $this->assertEquals($expectedLink, $link);
 
-        // Verificar que se persistió
+        // Verificar que se persistiÃ³
         $state->refresh();
         $this->assertEquals($expectedLink, $state->kyc_accreditation_link);
     }

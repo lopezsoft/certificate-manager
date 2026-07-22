@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace Tests\Feature\Modules\Viafirma;
 
@@ -8,13 +8,13 @@ use App\Modules\Viafirma\Domain\Enums\InternalState;
 use App\Modules\Viafirma\Domain\Enums\RemoteStatus;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequestState;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 final class KycLinkControllerTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     #[Test]
     public function obtiene_link_cacheado_exitosamente(): void
@@ -98,7 +98,7 @@ final class KycLinkControllerTest extends TestCase
     public function obtiene_link_en_vivo_cuando_no_esta_cacheado_y_estado_es_accreditation(): void
     {
         // Arrange
-        // Usar MockViafirmaClient que está registrado en tests
+        // Usar MockViafirmaClient que estÃ¡ registrado en tests
         $company = Company::factory()->create();
         $certificateRequest = CertificateRequest::factory()->create([
             'company_id' => $company->id,
@@ -119,13 +119,13 @@ final class KycLinkControllerTest extends TestCase
         // Act
         $response = $this->getJson("/api/v1/certificate-request/{$certificateRequest->id}/kyc-link");
 
-        // Assert — MockViafirmaClient retorna https://sandbox.viafirma.com/accreditation/success?req={codRequest}
+        // Assert â€” MockViafirmaClient retorna https://sandbox.viafirma.com/accreditation/success?req={codRequest}
         $response->assertStatus(200);
         $response->assertJsonPath('data.link', function ($link) {
             return str_contains($link, 'sandbox.viafirma.com/accreditation') && str_contains($link, 'TEST-LIVE-COD');
         });
 
-        // Verificar que el link se persistió
+        // Verificar que el link se persistiÃ³
         $state->refresh();
         $this->assertNotNull($state->kyc_accreditation_link);
     }

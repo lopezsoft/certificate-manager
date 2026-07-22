@@ -80,6 +80,14 @@ final class MailIssuanceProvider implements CertificateIssuanceProvider
             );
         }
 
+        // === SANDBOX ONLY: simular respuesta de la CA ===
+        if (app()->environment('sandbox')) {
+            \App\Jobs\Certificate\MockMailCaResponseJob::dispatch(
+                $request->certificateRequestId
+            )->delay(now()->addSeconds(30));
+        }
+        // === FIN SANDBOX ONLY ===
+
         return new IssuanceResult(
             providerName: self::NAME,
             status:       IssuanceResult::STATUS_SENT,

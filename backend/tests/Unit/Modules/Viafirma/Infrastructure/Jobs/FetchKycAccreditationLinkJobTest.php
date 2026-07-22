@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace Tests\Unit\Modules\Viafirma\Infrastructure\Jobs;
 
@@ -11,13 +11,13 @@ use App\Modules\Viafirma\Infrastructure\Jobs\FetchKycAccreditationLinkJob;
 use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequestState;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 final class FetchKycAccreditationLinkJobTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     #[Test]
     public function persiste_link_en_exito(): void
@@ -101,11 +101,11 @@ final class FetchKycAccreditationLinkJobTest extends TestCase
             ->with('TEST-COD-003')
             ->willThrowException(new ViafirmaClientException('400 Bad Request: link_not_generated'));
 
-        // Act — no debe relanzar excepción
+        // Act â€” no debe relanzar excepciÃ³n
         $job = new FetchKycAccreditationLinkJob($entity->id);
         $job->handle($mockClient, app(SafePemLogger::class));
 
-        // Assert — link no fue persistido pero el job completa sin error
+        // Assert â€” link no fue persistido pero el job completa sin error
         $state->refresh();
         $this->assertNull($state->kyc_accreditation_link);
     }
@@ -145,7 +145,7 @@ final class FetchKycAccreditationLinkJobTest extends TestCase
         $mockClient = $this->createMock(ViafirmaClient::class);
         $mockClient->expects($this->never())->method('getAccreditationLink');
 
-        // Act — no debe relanzar excepción
+        // Act â€” no debe relanzar excepciÃ³n
         $job = new FetchKycAccreditationLinkJob(99999);
         $job->handle($mockClient, app(SafePemLogger::class));
 
