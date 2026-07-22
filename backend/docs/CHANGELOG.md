@@ -11,6 +11,34 @@ El versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [1.11.0] - 2026-07-22
+
+### Corregido — Cálculo de tier de precio: considerar certificados vigentes del año anterior/actual
+
+- **Bug principal:** El endpoint `GET /api/v1/pricing?quantity=1&vigencia=1` no contaba correctamente los certificados vigentes para determinar el tier de precio de empresas con `user_type_id` 3 o 4 (Arrendamiento en Servidor / Partner)
+  - Usaba `whereYear('updated_at', ...)` en lugar de `created_at` — los certificados se "movían" de año al ser modificados por scripts o jobs
+  - No filtraba por `expiration_date` — certificados ya vencidos se contaban como vigentes hasta que el job diario `MarkExpiredCertificatesJob` los marcara como `EXPIRED`
+  - Mezclaba dos fuentes de datos (`CertificateRequest` + `CertificateOrder`) con lógica compleja de MAX
+
+- **Fix:** En `PricingService::resolveEffectiveQuantity()`:
+  - **Vigencia ajustada por vida útil:**
+    - `life=1`: vigente si `expiration_date IS NULL OR expiration_date > NOW()`
+    - `life=2`: vigente si `expiration_date IS NULL OR expiration_date > NOW() + 1 año` (resta 1 año para reflejar cobertura anual efectiva)
+  - **Ventana de año:** solo cuenta certificados solicitados en el año anterior o actual (`created_at`)
+  - **Fórmula simple:** `effective_quantity = COUNT(certificados vigentes) + cantidad a comprar`
+  - Query única con QueryBuilder optimizado para ambos tipos de vida útil
+
+- **Tests agregados:** `tests/Unit/Services/PricingServiceTest.php` (17 casos):
+  - Vigencia por estado (`PROCESSED`, `PROCESSING`, `EXPIRED`)
+  - Vigencia ajustada por `life` (1 año vs 2 años)
+  - Ventana de año anterior/actual
+  - Empresas diferentes no interfieren
+  - `user_type_id` no volumen-based ignora historial
+
+- **Factories agregados:** `CertificateRequestFactory` y `CompanyFactory` para tests
+
+---
+
 ## [1.10.0] - 2026-07-15
 
 ### Añadido — Job de promoción automática de certificados (flujo mail)

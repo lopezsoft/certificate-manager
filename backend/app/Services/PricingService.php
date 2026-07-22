@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\CertificateRequestStatusEnum;
-use App\Models\CertificateOrder;
 use App\Models\CertificateRequest;
 use App\Models\PricingTier;
 use Illuminate\Support\Facades\Log;
@@ -14,9 +13,11 @@ use Illuminate\Support\Facades\Log;
  * Calcula el precio de certificados según el volumen basándose en la tabla pricing_tiers.
  *
  * Para user_type_id IN (3, 4) — "Arrendamiento en Servidor" y "Partner" —
- * el rango se determina usando el mayor entre:
- *   - Total de emisiones del año anterior
- *   - Total de compras del año en curso + compra actual
+ * el rango se determina como:
+ *   effective_quantity = COUNT(certificados vigentes, solicitados en año anterior/actual) + compra actual
+ *
+ *   Vigente = request_status IN (PROCESSED, PROCESSING) AND (expiration_date IS NULL OR expiration_date > NOW())
+ *   Ventana = created_at en año anterior O año actual
  *
  * Para otros user_type_id, se usa la cantidad de la compra actual directamente.
  */
@@ -99,10 +100,14 @@ class PricingService
      * Determina la cantidad efectiva para buscar el tier correcto.
      *
      * Para user_type_id 3 y 4:
-     *   - Si el cliente emitió certificados el año anterior:
-     *     MAX(total_año_pasado, compras_año_curso + compra_actual)
-     *   - Si NO emitió el año anterior:
-     *     compras_año_curso + compra_actual
+     *   Cuenta certificados VIGENTES solicitados en el año anterior o actual:
+     *   - request_status IN (PROCESSED, PROCESSING)
+     *   - Vigencia ajustada por life:
+     *     * life=1: expiration_date IS NULL OR expiration_date > NOW()
+     *     * life=2: expiration_date IS NULL OR expiration_date > NOW() + 1 año
+     *   - created_at en el año anterior o actual
+     *
+     *   effective_quantity = COUNT(certificados vigentes) + cantidad actual a comprar
      *
      * Para otros user_type_id: retorna la cantidad de compra actual.
      */
@@ -114,45 +119,46 @@ class PricingService
 
         $currentYear  = (int) now()->format('Y');
         $previousYear = $currentYear - 1;
+        $now          = now();
+        $oneYearFromNow = $now->copy()->addYear();
 
-        // Emisiones del año anterior (certificados realmente emitidos)
-        $lastYearEmissions = CertificateRequest::where('company_id', $companyId)
+        $activeCertificates = CertificateRequest::where('company_id', $companyId)
             ->whereIn('request_status', CertificateRequestStatusEnum::issuedStatuses())
-            ->whereYear('updated_at', $previousYear)
+            ->where(function ($query) use ($now, $oneYearFromNow) {
+                // life=1: vigente si expiration_date IS NULL OR expiration_date > NOW()
+                $query->where(function ($q) use ($now) {
+                    $q->where('life', 1)
+                      ->where(function ($inner) use ($now) {
+                          $inner->whereNull('expiration_date')
+                                ->orWhere('expiration_date', '>', $now);
+                      });
+                })
+                // life=2: vigente si expiration_date IS NULL OR expiration_date > NOW() + 1 año
+                ->orWhere(function ($q) use ($oneYearFromNow) {
+                    $q->where('life', 2)
+                      ->where(function ($inner) use ($oneYearFromNow) {
+                          $inner->whereNull('expiration_date')
+                                ->orWhere('expiration_date', '>', $oneYearFromNow);
+                      });
+                });
+            })
+            ->where(function ($query) use ($previousYear, $currentYear) {
+                $query->whereYear('created_at', $previousYear)
+                      ->orWhereYear('created_at', $currentYear);
+            })
             ->count();
 
-        // Año en curso: MAX(emisiones, compras) para cubrir legacy + nuevo flujo
-        $currentYearEmissions = CertificateRequest::where('company_id', $companyId)
-            ->whereIn('request_status', CertificateRequestStatusEnum::issuedStatuses())
-            ->whereYear('updated_at', $currentYear)
-            ->count();
-
-        $currentYearPurchases = (int) CertificateOrder::where('company_id', $companyId)
-            ->where('status', 'PAID')
-            ->whereYear('created_at', $currentYear)
-            ->sum('quantity');
-
-        $currentYearVolume = max($currentYearEmissions, $currentYearPurchases);
-        $currentTotal      = $currentYearVolume + $currentPurchase;
-
-        if ($lastYearEmissions > 0) {
-            $effectiveQty = max($lastYearEmissions, $currentTotal);
-        } else {
-            $effectiveQty = $currentTotal;
-        }
+        $effectiveQty = $activeCertificates + $currentPurchase;
 
         Log::info('[PRICING] Cantidad efectiva calculada.', [
-            'company_id'             => $companyId,
-            'user_type_id'           => $userTypeId,
-            'current_purchase'       => $currentPurchase,
-            'last_year_emissions'    => $lastYearEmissions,
-            'current_year_emissions' => $currentYearEmissions,
-            'current_year_purchases' => $currentYearPurchases,
-            'current_year_volume'    => $currentYearVolume,
-            'effective_quantity'      => $effectiveQty,
+            'company_id'          => $companyId,
+            'user_type_id'        => $userTypeId,
+            'current_purchase'    => $currentPurchase,
+            'active_certificates' => $activeCertificates,
+            'effective_quantity'  => $effectiveQty,
         ]);
 
-        return max($effectiveQty, 1); // Mínimo 1 para evitar tier vacío
+        return max($effectiveQty, 1);
     }
 
     /**
