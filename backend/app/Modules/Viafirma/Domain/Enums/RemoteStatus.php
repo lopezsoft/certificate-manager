@@ -36,6 +36,7 @@ enum RemoteStatus: string
 
     // ── Ready — certificado listo para descarga ──────────────────────────
     case GENERATED_NOT_DOWNLOADED = 'Generated_Not_Downloaded';
+    case SIGNED_CONTRACT           = 'signedContract';
 
     // ── Terminal OK — flujo completado ────────────────────────────────────
     case GENERATED_AND_DOWNLOADED = 'Generated_And_Downloaded';
@@ -75,10 +76,16 @@ enum RemoteStatus: string
 
     /**
      * El certificado está listo para descarga del P7B.
+     * Cubre dos casos:
+     * - GENERATED_NOT_DOWNLOADED: flujo normal, P7B generado pero no descargado
+     * - SIGNED_CONTRACT: estado final de Viafirma, P7B disponible para descarga tardía
      */
     public function isReadyToDownload(): bool
     {
-        return $this === self::GENERATED_NOT_DOWNLOADED;
+        return in_array($this, [
+            self::GENERATED_NOT_DOWNLOADED,
+            self::SIGNED_CONTRACT,
+        ], true);
     }
 
     /**

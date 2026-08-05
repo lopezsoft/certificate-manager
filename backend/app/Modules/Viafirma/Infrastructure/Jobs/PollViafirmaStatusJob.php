@@ -160,7 +160,7 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
         // ── Decidir próximo paso ──────────────────────────────────────────
         if ($entity->isReadyToDownload()) {
             // Validar que remote_status indica P7B disponible
-            if (!in_array($state->remote_status, ['Generated_Not_Downloaded', 'Generated_And_Downloaded'])) {
+            if (!in_array($state->remote_status, ['Generated_Not_Downloaded', 'Generated_And_Downloaded', 'signedContract'])) {
                 $logger->warning('viafirma.poll.ready_but_no_p7b', [
                     'id'            => $entity->id,
                     'remote_status' => $state->remote_status,

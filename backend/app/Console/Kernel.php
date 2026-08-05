@@ -170,7 +170,7 @@ class Kernel extends ConsoleKernel
             ->everyFiveMinutes()
             ->timezone('America/Bogota')
             ->name('viafirma:revive-stalled-polls')
-            ->withoutOverlapping(10)
+            ->withoutOverlapping(5)
             ->onOneServer()
             ->appendOutputTo(storage_path('logs/scheduled-viafirma-watchdog.log'));
 

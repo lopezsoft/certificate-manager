@@ -175,6 +175,7 @@ class ViafirmaCertificateRequestState extends Model
             ->whereIn('remote_status', [
                 RemoteStatus::GENERATED_NOT_DOWNLOADED->value,
                 RemoteStatus::GENERATED_AND_DOWNLOADED->value,
+                RemoteStatus::SIGNED_CONTRACT->value,
             ])
             ->where('updated_at', '<', now()->subMinutes($minWaitMinutes))
             ->where(function (Builder $q) use ($maxAttempts) {
@@ -206,7 +207,7 @@ class ViafirmaCertificateRequestState extends Model
      * el polling en cualquier estado failure-like) como cualquier crash futuro entre
      * el save() y el dispatch() del siguiente poll.
      */
-    public function scopeOrphanedPolling(Builder $query, int $staleMinutes = 20): Builder
+    public function scopeOrphanedPolling(Builder $query, int $staleMinutes = 5): Builder
     {
         $threshold = now()->subMinutes($staleMinutes);
 
