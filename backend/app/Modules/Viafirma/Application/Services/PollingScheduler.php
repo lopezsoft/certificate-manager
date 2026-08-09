@@ -29,7 +29,7 @@ final class PollingScheduler
     {
         $this->intervalSeconds  = max(10, (int) config('viafirma.polling.interval_seconds', 60));
         $this->maxAttempts      = (int) config('viafirma.polling.max_attempts', 288);
-        $this->expirationHours  = (int) config('viafirma.polling.expiration_hours', 72);
+        $this->expirationHours  = (int) config('viafirma.polling.expiration_hours', 96);
         $this->recoveryIntervalSeconds = max(60, (int) config('viafirma.polling.recovery_interval_seconds', 300));
     }
 

@@ -159,7 +159,8 @@ final class StateMachine
 
         $state->internal_state     = InternalState::EXPIRED;
         $state->last_error_code    = 'POLL_EXPIRED';
-        $state->last_error_message = 'SLA de acreditación superado (72h).';
+        $hoursExceeded = config('viafirma.polling.expiration_hours', 96);
+        $state->last_error_message = "SLA de acreditación superado ({$hoursExceeded}h).";
 
         $this->recordHistory(
             $entity,
