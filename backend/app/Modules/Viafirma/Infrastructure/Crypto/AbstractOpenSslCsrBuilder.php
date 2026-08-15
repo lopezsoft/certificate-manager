@@ -49,7 +49,24 @@ abstract class AbstractOpenSslCsrBuilder implements CsrBuilderStrategy
 
         $this->validate($input);
 
+        // Obtenemos el DN desde la subclase (FE-PJ o FE-PN)
         $dn = $this->dn($input);
+
+        // --- INICIO DEL PARCHE: Truncar estrictamente para ASN.1 / OpenSSL ---
+        // OpenSSL falla con 'asn1 encoding routines::string too long' si estos campos superan los 64 caracteres.
+        // Se trunca con mb_substr para soportar caracteres UTF-8 correctamente sin corromper la cadena.
+        $strictLimits = [
+            'commonName'             => 64, // Límite estricto ASN.1
+            'organizationName'       => 64, // Límite estricto ASN.1
+            'organizationalUnitName' => 64, // Límite estricto ASN.1
+        ];
+
+        foreach ($strictLimits as $field => $maxLength) {
+            if (isset($dn[$field])) {
+                $dn[$field] = mb_substr($dn[$field], 0, $maxLength, 'UTF-8');
+            }
+        }
+        // --- FIN DEL PARCHE ---
 
         if (count($dn) !== $this->expectedAttributeCount()) {
             throw new CsrBuildException(sprintf(
@@ -75,6 +92,7 @@ abstract class AbstractOpenSslCsrBuilder implements CsrBuilderStrategy
             $opensslOpts['config'] = $this->opensslConf;
         }
 
+        // Aquí ya llega protegido contra desbordamientos
         $csr = @openssl_csr_new($dn, $privateKey, $opensslOpts);
         if ($csr === false) {
             throw new CsrBuildException(
