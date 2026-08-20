@@ -20,7 +20,7 @@ import { DebugService } from "../../utils/debug.service";
 import TokenService from "../../utils/token.service";
 import { Subject, interval, Subscription } from "rxjs";
 import { takeUntil, switchMap } from "rxjs/operators";
-import { ViafirmaInternalStateEnum, ViafirmaInternalStateDescription } from "../../common/enums/ViafirmaInternalState";
+import { ViafirmaInternalStateEnum, ViafirmaInternalStateDescription, ViafirmaRemoteStatusDescription } from "../../common/enums/ViafirmaInternalState";
 import { IssuanceProviderService } from 'app/services/issuance-provider.service';
 
 @Component({
@@ -72,6 +72,8 @@ export class DocumentViewComponent implements OnDestroy {
 	protected redownloadResult: RedownloadResult | null = null;
 	protected showRedownloadPinModal = false;
 	protected pinCopied = false;
+	protected showAdminActions = false;
+	protected kycLinkCopied = false;
 
 	/** Revocación */
 	protected showRevokeModal = false;
@@ -96,6 +98,42 @@ export class DocumentViewComponent implements OnDestroy {
 		ViafirmaInternalStateEnum.FAILED,
 		ViafirmaInternalStateEnum.FAILED_RECOVERABLE,
 		ViafirmaInternalStateEnum.EXPIRED
+	];
+
+	/** Estados de fallo (excluye ASSEMBLED/COMPLETED, que son terminales pero exitosos) */
+	private readonly viafirmaFailureStates = [
+		ViafirmaInternalStateEnum.FAILED,
+		ViafirmaInternalStateEnum.FAILED_RECOVERABLE,
+		ViafirmaInternalStateEnum.EXPIRED
+	];
+
+	/**
+	 * Pasos visibles del trámite, en el orden real de la FSM del backend
+	 * (StateMachine::InternalState). DRAFT/CSR_GENERATED no aplican aquí
+	 * porque el card solo se muestra desde SUBMITTED en adelante.
+	 * Las etiquetas se toman de `viafirmaInternalStateDescription` (misma
+	 * fuente que el resto de la vista) para no tener dos vocabularios
+	 * distintos describiendo el mismo estado.
+	 */
+	protected readonly issuanceSteps: ViafirmaInternalStateEnum[] = [
+		ViafirmaInternalStateEnum.SUBMITTED,
+		ViafirmaInternalStateEnum.POLLING,
+		ViafirmaInternalStateEnum.READY_TO_DOWNLOAD,
+		ViafirmaInternalStateEnum.DOWNLOADED,
+		ViafirmaInternalStateEnum.ASSEMBLED,
+		ViafirmaInternalStateEnum.COMPLETED,
+	];
+
+	/**
+	 * Familia de estados remotos de acreditación KYC (misma regla que
+	 * StateMachine::ACCREDITATION_FAMILY en el backend). El link de MetaMap
+	 * está disponible durante toda esta familia, no solo en el valor "accreditation".
+	 */
+	private readonly accreditationRemoteStatuses = [
+		'accreditation',
+		'accreditation_check',
+		'accreditation_completed',
+		'accreditation_verified',
 	];
 	private viafirmaPolling$: Subscription | null = null;
 	private destroy$ = new Subject<void>();
@@ -502,6 +540,114 @@ export class DocumentViewComponent implements OnDestroy {
 			&& !(this.currentShipping.request_status === DocumentStatusEnum.PROCESSED);
 	}
 	/**
+	 * Índice del paso actual dentro de `issuanceSteps` (-1 si el estado no
+	 * pertenece a la línea de progreso, ej. estados de fallo).
+	 */
+	protected get issuanceStepIndex(): number {
+		const state = this.viafirmaStatus?.internal_state?.toUpperCase();
+		return this.issuanceSteps.findIndex(step => step === state);
+	}
+
+	/**
+	 * Determina si el trámite está en un estado de fallo (FAILED, FAILED_RECOVERABLE, EXPIRED).
+	 */
+	protected get isIssuanceFailed(): boolean {
+		return this.viafirmaFailureStates.includes(this.viafirmaStatus?.internal_state?.toUpperCase() as ViafirmaInternalStateEnum);
+	}
+
+	/**
+	 * Clase de badge según el internal_state actual, siguiendo la misma
+	 * convención de `getUrgencyClass` en dashboard.component.ts.
+	 */
+	protected get issuanceStatusBadgeClass(): string {
+		const state = this.viafirmaStatus?.internal_state?.toUpperCase();
+		const map: Record<string, string> = {
+			[ViafirmaInternalStateEnum.FAILED]: 'bg-danger',
+			[ViafirmaInternalStateEnum.EXPIRED]: 'bg-danger',
+			[ViafirmaInternalStateEnum.FAILED_RECOVERABLE]: 'bg-warning text-dark',
+			[ViafirmaInternalStateEnum.READY_TO_DOWNLOAD]: 'badge-light-success',
+			[ViafirmaInternalStateEnum.DOWNLOADED]: 'badge-light-success',
+			[ViafirmaInternalStateEnum.ASSEMBLED]: 'badge-light-success',
+			[ViafirmaInternalStateEnum.COMPLETED]: 'bg-success',
+		};
+		return map[state] || 'badge-light-info';
+	}
+
+	/**
+	 * Indica si debe mostrarse el CTA de verificación de identidad (KYC).
+	 * Visible mientras el remote_status esté dentro de la familia de acreditación
+	 * y el backend haya devuelto el link de MetaMap.
+	 */
+	protected get showKycAccreditation(): boolean {
+		return !!this.viafirmaStatus?.kyc_accreditation_link && this.isInAccreditationFamily;
+	}
+
+	private get isInAccreditationFamily(): boolean {
+		const remoteStatus = this.viafirmaStatus?.remote_status?.toLowerCase();
+		return this.accreditationRemoteStatuses.includes(remoteStatus);
+	}
+
+	/**
+	 * Descripción legible del sub-estado remoto actual (ver ViafirmaRemoteStatusDescription).
+	 * Varios remote_status distintos colapsan al mismo internal_state POLLING; esta
+	 * etiqueta es la única forma de explicar qué está pasando realmente durante la espera.
+	 * Se oculta durante la familia de acreditación porque el CTA de KYC ya lo explica.
+	 */
+	protected get remoteStatusLabel(): string | null {
+		const remoteStatus = this.viafirmaStatus?.remote_status;
+		if (!remoteStatus || this.isInAccreditationFamily) {
+			return null;
+		}
+		return ViafirmaRemoteStatusDescription[remoteStatus] || null;
+	}
+
+	/**
+	 * Link para reenviar el enlace de acreditación KYC por WhatsApp.
+	 * Si la solicitud tiene un celular/teléfono registrado, abre el chat directo
+	 * con el mensaje precargado; si no, abre el selector de contacto de WhatsApp.
+	 */
+	protected get kycWhatsappLink(): string {
+		const link = this.viafirmaStatus?.kyc_accreditation_link;
+		if (!link) return '';
+		const message = `Hola, para continuar con la emisión de su certificado digital debe completar su verificación de identidad en el siguiente enlace: ${link}`;
+		const phone = this.normalizePhoneForWhatsapp(this.currentShipping?.mobile || this.currentShipping?.phone);
+		const base = phone ? `https://wa.me/${phone}` : 'https://wa.me/';
+		return `${base}?text=${encodeURIComponent(message)}`;
+	}
+
+	/**
+	 * Normaliza un número local a formato E.164 sin '+' para wa.me.
+	 * Asume indicativo de Colombia (57) cuando el número tiene 10 dígitos sin indicativo.
+	 */
+	private normalizePhoneForWhatsapp(raw: string | null | undefined): string {
+		const digits = (raw || '').replace(/\D/g, '');
+		if (!digits) return '';
+		return digits.length === 10 ? `57${digits}` : digits;
+	}
+
+	/**
+	 * Información de expiración del trámite (tiempo restante y nivel de urgencia).
+	 * Null cuando no aplica: sin fecha de expiración, o el trámite ya llegó a un estado terminal.
+	 */
+	protected get expirationInfo(): { label: string; badgeClass: string } | null {
+		const expiresAt = this.viafirmaStatus?.expires_at;
+		const state = this.viafirmaStatus?.internal_state?.toUpperCase() as ViafirmaInternalStateEnum;
+		if (!expiresAt || this.viafirmaTerminalStates.includes(state)) {
+			return null;
+		}
+		const diffMs = new Date(expiresAt).getTime() - Date.now();
+		if (diffMs <= 0) {
+			return { label: 'Vencido', badgeClass: 'bg-danger' };
+		}
+		const totalHours = Math.floor(diffMs / 3_600_000);
+		const days = Math.floor(totalHours / 24);
+		const hours = totalHours % 24;
+		const label = days > 0 ? `Vence en ${days}d ${hours}h` : `Vence en ${totalHours}h`;
+		const badgeClass = totalHours < 24 ? 'bg-danger' : totalHours < 48 ? 'bg-warning text-dark' : 'badge-light-secondary';
+		return { label, badgeClass };
+	}
+
+	/**
 	 * Determina si el polling está activo (estado no terminal).
 	 */
 	protected get isPolling(): boolean {
@@ -587,30 +733,46 @@ export class DocumentViewComponent implements OnDestroy {
 	 */
 	protected copyPin(): void {
 		if (!this.redownloadResult?.pin) return;
-
-		// Intentar usar Clipboard API (HTTPS requerido)
-		if (navigator?.clipboard?.writeText) {
-			navigator.clipboard.writeText(this.redownloadResult.pin).then(() => {
-				this.pinCopied = true;
-				this.msg.toastMessage('Éxito', 'PIN copiado al portapapeles');
-				setTimeout(() => this.pinCopied = false, 3000);
-			}).catch((err) => {
-				this.debug.error('DocumentViewComponent', 'Error al copiar PIN con Clipboard API', err);
-				this.copyPinFallback();
-			});
-		} else {
-			// Fallback para navegadores sin soporte o contexto no seguro
-			this.copyPinFallback();
-		}
+		this.copyToClipboard(this.redownloadResult.pin, 'PIN copiado al portapapeles', () => {
+			this.pinCopied = true;
+			setTimeout(() => this.pinCopied = false, 3000);
+		});
 	}
 
 	/**
-	 * Fallback para copiar PIN usando textarea (compatible con todos los navegadores).
+	 * Copia el enlace de acreditación KYC al portapapeles.
 	 */
-	private copyPinFallback(): void {
+	protected copyKycLink(): void {
+		const link = this.viafirmaStatus?.kyc_accreditation_link;
+		if (!link) return;
+		this.copyToClipboard(link, 'Enlace copiado al portapapeles', () => {
+			this.kycLinkCopied = true;
+			setTimeout(() => this.kycLinkCopied = false, 3000);
+		});
+	}
+
+	/**
+	 * Copia un texto al portapapeles usando la Clipboard API, con fallback a
+	 * textarea para navegadores/contextos sin soporte.
+	 */
+	private copyToClipboard(text: string, successMessage: string, onCopied: () => void): void {
+		if (navigator?.clipboard?.writeText) {
+			navigator.clipboard.writeText(text).then(() => {
+				onCopied();
+				this.msg.toastMessage('Éxito', successMessage);
+			}).catch((err) => {
+				this.debug.error('DocumentViewComponent', 'Error al copiar con Clipboard API', err);
+				this.copyToClipboardFallback(text, successMessage, onCopied);
+			});
+		} else {
+			this.copyToClipboardFallback(text, successMessage, onCopied);
+		}
+	}
+
+	private copyToClipboardFallback(text: string, successMessage: string, onCopied: () => void): void {
 		try {
 			const textarea = document.createElement('textarea');
-			textarea.value = this.redownloadResult.pin;
+			textarea.value = text;
 			textarea.style.position = 'fixed';
 			textarea.style.opacity = '0';
 			document.body.appendChild(textarea);
@@ -619,15 +781,14 @@ export class DocumentViewComponent implements OnDestroy {
 			document.body.removeChild(textarea);
 
 			if (success) {
-				this.pinCopied = true;
-				this.msg.toastMessage('Éxito', 'PIN copiado al portapapeles');
-				setTimeout(() => this.pinCopied = false, 3000);
+				onCopied();
+				this.msg.toastMessage('Éxito', successMessage);
 			} else {
-				this.msg.errorMessage('Error', 'No se pudo copiar el PIN. Intente copiar manualmente.');
+				this.msg.errorMessage('Error', 'No se pudo copiar. Intente copiar manualmente.');
 			}
 		} catch (err) {
 			this.debug.error('DocumentViewComponent', 'Error en fallback de copia', err);
-			this.msg.errorMessage('Error', 'No se pudo copiar el PIN. Intente copiar manualmente.');
+			this.msg.errorMessage('Error', 'No se pudo copiar. Intente copiar manualmente.');
 		}
 	}
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Viafirma\Infrastructure\Jobs;
 
+use App\Modules\Viafirma\Application\Notifications\ViafirmaAccreditationPendingNotification;
 use App\Modules\Viafirma\Domain\Contracts\ViafirmaClient;
 use App\Modules\Viafirma\Domain\Exceptions\TransientHttpException;
 use App\Modules\Viafirma\Domain\Exceptions\ViafirmaClientException;
@@ -14,6 +15,7 @@ use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Facades\Notification;
 
 /**
  * Obtiene y persiste el link KYC cuando la solicitud entra en estado `accreditation`.
@@ -55,7 +57,7 @@ final class FetchKycAccreditationLinkJob implements ShouldQueue, ShouldBeUnique
         ViafirmaClient $client,
         SafePemLogger $logger,
     ): void {
-        $entity = ViafirmaCertificateRequest::with('state')->find($this->requestId);
+        $entity = ViafirmaCertificateRequest::with(['state', 'certificateRequest.company'])->find($this->requestId);
 
         if (!$entity) {
             $logger->warning('viafirma.kyc_link_job.entity_not_found', [
@@ -95,6 +97,8 @@ final class FetchKycAccreditationLinkJob implements ShouldQueue, ShouldBeUnique
                 'id'   => $entity->id,
                 'link' => $link,
             ]);
+
+            $this->notifyMasterCompany($entity, $link, $logger);
         } catch (TransientHttpException $e) {
             // Reintentable — dejar que Laravel lo reintente
             $logger->warning('viafirma.kyc_link_job.transient_error', [
@@ -107,6 +111,44 @@ final class FetchKycAccreditationLinkJob implements ShouldQueue, ShouldBeUnique
             // No transitoria (ej. 400) — loguear como warning pero NO relanzar
             // El link aún estará disponible on-demand mientras remote_status = accreditation
             $logger->warning('viafirma.kyc_link_job.client_error', [
+                'id'    => $entity->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Avisa por correo a la empresa dueña de la solicitud (no al suscriptor
+     * final, que ya recibe el link directamente de Viafirma) para que pueda
+     * compartirlo con su cliente. Errores de envío no deben marcar el job
+     * como fallido — el link ya quedó persistido correctamente.
+     */
+    private function notifyMasterCompany(ViafirmaCertificateRequest $entity, string $link, SafePemLogger $logger): void
+    {
+        $company = $entity->certificateRequest?->company;
+
+        if ($company === null || empty($company->email)) {
+            $logger->warning('viafirma.kyc_link_job.no_company_email', [
+                'id' => $entity->id,
+            ]);
+            return;
+        }
+
+        try {
+            Notification::route('mail', $company->email)->notify(
+                new ViafirmaAccreditationPendingNotification(
+                    viafirmaRequestId: $entity->id,
+                    companyName:       $company->company_name ?? 'Empresa',
+                    kycUrl:            $link,
+                )
+            );
+
+            $logger->info('viafirma.kyc_link_job.company_notified', [
+                'id'    => $entity->id,
+                'email' => $company->email,
+            ]);
+        } catch (\Throwable $e) {
+            $logger->warning('viafirma.kyc_link_job.notify_failed', [
                 'id'    => $entity->id,
                 'error' => $e->getMessage(),
             ]);

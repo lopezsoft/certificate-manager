@@ -9,6 +9,67 @@ El versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Corregido — Viafirma: polling se detenía solo (expiración) y perdía certificados ya generados
+
+- **Bug principal:** `PollViafirmaStatusJob` marcaba la solicitud como `EXPIRED` (estado terminal) al superar SLA/intentos/`expires_at`, deteniendo el polling **para siempre** — incluso si Viafirma ya tenía el certificado listo (`Generated_Not_Downloaded`). Caso real: solicitud 1138 (LCCH SERVICIOS SAS), certificado generado pero nunca descargado porque el sistema dejó de consultar.
+  - Reasignar manualmente `internal_state` a `POLLING` no servía: `hasExceededSla()`/`hasExceededMaxAttempts()` se recalculan en vivo en cada poll y volvían a expirarla.
+- **Fix:** `PollViafirmaStatusJob::executePolling()` — eliminado el bloque que llamaba a `StateMachine::markExpired()` por tiempo/intentos. El polling ahora solo se detiene cuando Viafirma reporta un estado remoto realmente terminal.
+
+### Corregido — Viafirma: cadena de polling moría silenciosamente ante fallos o colisión de mutex
+
+- **Bug:** `tries = 1` + auto-reprogramación solo dentro de una ejecución exitosa → cualquier excepción no controlada cortaba la cadena de polling sin dejar rastro, dependiendo del watchdog (`ReviveStalledViafirmaPollsJob`, cada 5 min, huecos de hasta 20 min) como única red de seguridad.
+- **Fix** en `PollViafirmaStatusJob`:
+  - Mutex ocupado (`Cache::lock` fallido) → reprograma en 10s en vez de retornar sin más.
+  - Nuevo hook `failed(Throwable $exception)` → reprograma el siguiente poll en 30s ante cualquier fallo no controlado.
+
+### Corregido — Viafirma: link KYC (`kyc_accreditation_link`) se perdía en algunas solicitudes
+
+- **Bug:** `StateMachine::transition()` solo capturaba el link al detectar el valor remoto bruto `accreditation`, ignorando los sub-estados documentados por el proveedor (`accreditation_check`, `accreditation_completed`, `accreditation_verified`). Si el primer poll observado ya reportaba un sub-estado, el evento `ViafirmaAccreditationReached` nunca se disparaba y el link quedaba `null` de forma permanente (no recuperable ni siquiera on-demand, ya visto en solicitudes 39 y 40).
+- **Fix:** detección ampliada a toda `StateMachine::ACCREDITATION_FAMILY` (bruto + 3 sub-estados).
+
+### Añadido — Viafirma: `viafirma_status_history` — evitar crecimiento sin control + trazabilidad de salud del polling
+
+- **Contexto:** al eliminar la expiración automática, una solicitud puede quedar días en el mismo estado remoto; antes se insertaba una fila idéntica en cada poll (60s).
+- **`StateMachine::transition()`:** nueva fila solo si `internal_state` o `remote_status` cambian; si no, se actualiza la fila vigente (`touchCurrentHistoryRow()`).
+- **Columnas nuevas** en `viafirma_status_history` (migración creada, **pendiente de ejecución manual** — ver `database/migrations/viafirma/README.md`):
+  - `created_at`: fijo, momento en que inicia el episodio de estado (no se actualiza tras el INSERT).
+  - `poll_count_in_state`: se incrementa en cada poll que confirma el mismo estado sin cambios — permite detectar polling degradado (`occurred_at - created_at` grande con `poll_count_in_state` bajo).
+
+### Añadido — Endpoint `GET /api/v1/certificate-request/{id}/issuance`: campos faltantes para Viafirma
+
+- `ViafirmaIssuanceProvider::status()` ahora incluye en `data`: `kyc_accreditation_link`, `poll_attempts`, `last_error_code`, `last_error_message`.
+- `mapInternalStateToStatus()` reescrito como `match` exhaustivo (sin `default`): `READY_TO_DOWNLOAD` ya no caía incorrectamente en `STATUS_PROCESSING`; `FAILED_RECOVERABLE` y `REVOKED` ahora mapean explícitamente.
+- Documentación OpenAPI (`SwaggerDefinitions.php`, schema `IssuanceViafirmaData`) actualizada con los 4 campos nuevos.
+
+### Añadido — Viafirma: correo automático a la empresa con el link KYC
+
+- Al capturar exitosamente `kyc_accreditation_link` (`FetchKycAccreditationLinkJob`), se envía un correo a `companies.email` de la empresa dueña de la solicitud (no al suscriptor final, que ya lo recibe directo de Viafirma) — para que puedan reenviarlo a su cliente.
+- El link se incluye como **texto plano copiable** además del botón de acción, ya que el propósito explícito es que la empresa lo reenvíe.
+- `ViafirmaAccreditationPendingNotification` — agregado el canal `mail` (tenía un TODO pendiente desde Sprint 5). `via()` detecta `AnonymousNotifiable` (envío directo por email sin `User`) para no intentar el canal `database`.
+- Fallos de envío se loguean (`viafirma.kyc_link_job.notify_failed`) pero no marcan el job como fallido — el link ya quedó persistido correctamente.
+
+### Eliminado — Listener muerto `NotifyClientOnAccreditationListener`
+
+- Reaccionaba a `ViafirmaStatusChanged` con `remoteStatus === ACCREDITATION` exacto — evento que casi nunca se dispara en ese punto exacto (solo se emite cuando cambia `internal_state`, no cuando solo cambia `remote_status` dentro de la familia de acreditación).
+- Aunque el evento hubiera disparado, `$company->users` habría lanzado `BadMethodCallException` — `Company` no tiene esa relación definida.
+- Redundante con el nuevo envío de correo (arriba): mantenerlo habría generado dos correos por el mismo motivo. Eliminado el archivo y su registro en `EventServiceProvider`.
+
+### Añadido — Sandbox: `MockViafirmaClient` ahora simula el paso `accreditation`
+
+- **Gap encontrado:** la progresión simulada (`rues_check → inProcess → Generated_Not_Downloaded`) nunca pasaba por ningún estado de la familia `accreditation` — por lo tanto, en sandbox, `ViafirmaAccreditationReached` nunca se disparaba y el flujo completo de captura de link KYC + correo a la empresa (ambos de esta sesión) era invisible para integradores probando en ese entorno.
+- **Fix:** nueva progresión: Poll 1 → `rues_check`, Poll 2 → `accreditation`, Poll 3 → `inProcess`, Poll 4+ → `Generated_Not_Downloaded`. Requiere `CACHE_DRIVER` distinto de `array` para que el contador de polls persista entre requests.
+
+### Documentación actualizada
+
+- `docs/runbooks/viafirma-incidents.md` — corregida sección 2.2 (rol invertido operador↔cliente, URL KYC obsoleta reemplazada por `kyc_accreditation_link`), sección 2.3 (auto-reparación del polling), sección 5 (ya no hay expiración automática; documentado el flujo de correo a la empresa).
+- `docs/2026-06-24-SANDBOX-ANALISIS-FLUJOS-MOCK.md` — diagrama y tabla de comportamiento del mock actualizados (paso `accreditation`, referencia al listener eliminado quitada, ya no menciona límite de "288 intentos / 8h").
+- `docs/2026-07-09-implementacion-kyc-link-persistence.md` — nota aclarando que la cobertura de sub-estados descrita originalmente no estaba realmente implementada hasta el fix de hoy.
+
+### Añadido — Tests: aislamiento forzado de base de datos
+
+- `phpunit.xml`: `DB_CONNECTION=sqlite` / `DB_DATABASE=:memory:` activado (antes comentado). Garantiza que ninguna corrida de tests pueda tocar `maticerts` (o cualquier BD real vía `.env`).
+- **Hallazgo (sin corregir, pendiente de decisión):** varios tests de Viafirma (`StateMachineTest`, `PollingSchedulerTest`, `ViafirmaRequestFailedListenerTest`, etc.) no usan `RefreshDatabase` y dependían implícitamente de que `maticerts` ya tuviera las tablas creadas manualmente — contra SQLite en memoria fallan con `no such table` al no existir bootstrap de esquema para tests. Además, 5 archivos de test tienen BOM UTF-8 antes de `<?php` que rompe su carga (`GetKycLinkUseCaseTest.php`, `StateMachineAccreditationTest.php`, `FetchKycAccreditationLinkJobTest.php`, `KycLinkControllerTest.php`, `CertificateIssuanceViafirmaTest.php`).
+
 ---
 
 ## [1.11.0] - 2026-07-22

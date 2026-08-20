@@ -74,8 +74,9 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
         if (!$lock->get()) {
             $logger->info('viafirma.poll.mutex_busy', [
                 'id'   => $this->requestId,
-                'hint' => 'Otro worker ya está procesando este poll — se omite.',
+                'hint' => 'Otro worker ya está procesando este poll — se reprograma en 10s.',
             ]);
+            self::dispatch($this->requestId)->delay(now()->addSeconds(10));
             return;
         }
 
@@ -84,6 +85,23 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
         } finally {
             $lock->release();
         }
+    }
+
+    /**
+     * Si el job falla (excepción no controlada, timeout, etc.) tras agotar $tries,
+     * la cadena de auto-reprogramación (que solo ocurre dentro de executePolling)
+     * se corta. Sin este hook, la única red de seguridad sería el watchdog de
+     * ReviveStalledViafirmaPollsJob, que solo revive huérfanas tras 20 min —
+     * tiempo suficiente para perder la ventana de captura del link KYC.
+     */
+    public function failed(\Throwable $exception): void
+    {
+        app(SafePemLogger::class)->warning('viafirma.poll.job_failed_rescheduling', [
+            'id'    => $this->requestId,
+            'error' => $exception->getMessage(),
+        ]);
+
+        self::dispatch($this->requestId)->delay(now()->addSeconds(30));
     }
 
     /**
@@ -109,18 +127,6 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
             $logger->info('viafirma.poll.skip_terminal', [
                 'id'    => $entity->id,
                 'state' => $state->internal_state->value,
-            ]);
-            return;
-        }
-
-        // Guard: SLA o máximo de intentos superado → expirar
-        if ($entity->hasExpired() || $scheduler->hasExceededSla($entity) || $scheduler->hasExceededMaxAttempts($entity)) {
-            $fsm->markExpired($entity);
-            $state = $entity->state;
-            $state->save();
-            $logger->warning('viafirma.poll.expired', [
-                'id'       => $entity->id,
-                'attempts' => $state->poll_attempts,
             ]);
             return;
         }

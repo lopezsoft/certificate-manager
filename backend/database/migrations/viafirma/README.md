@@ -27,3 +27,22 @@
 >
 > Tras cada ejecución registrar en `CHANGELOG.md` con fecha, entorno y autor.
 
+## Pendientes de ejecución manual
+
+- **`2026_08_19_190000_add_created_at_and_poll_count_to_viafirma_status_history.php`**
+  Agrega `created_at` (fijo, inicio del episodio de estado) y `poll_count_in_state`
+  (confirmaciones sin cambio) a `viafirma_status_history`. Incluye backfill
+  (`created_at = occurred_at` para filas existentes).
+  **Producción corre MariaDB 10.3** — usar el DDL manual equivalente en
+  `2026_08_19_190000_add_created_at_and_poll_count_to_viafirma_status_history.sql`
+  (mismo directorio) en vez de este archivo si se aplica directo por consola SQL.
+  ⚠️ El código de la app (`StateMachine::touchCurrentHistoryRow()`) ya asume que
+  estas columnas existen — aplicar la migración **antes** de desplegar ese código.
+
+## Cambios de código relacionados (sin migración nueva)
+
+Sesión 2026-08-19 también corrigió, sin requerir cambios de esquema adicionales:
+eliminación de expiración automática del polling, auto-reparación ante mutex/fallos,
+ampliación de la captura del link KYC a toda la familia `accreditation*`, correo
+automático a la empresa dueña de la solicitud, y el paso `accreditation` agregado
+a `MockViafirmaClient` para sandbox. Detalle completo en `docs/CHANGELOG.md`.

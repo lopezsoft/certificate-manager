@@ -46,3 +46,4 @@
 backend/tmpclaude-94f2-cwd
 /docs/site/build  
 /docs/site/.docusaurus 
+backend/storage/framework/*

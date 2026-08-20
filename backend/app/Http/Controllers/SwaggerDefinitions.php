@@ -327,7 +327,11 @@ namespace App\Http\Controllers;
  *     @OA\Property(property="remote_status", type="string", nullable=true, example="accreditation", description="Estado reportado por Viafirma RA. Valores posibles: accreditation, Generated_Not_Downloaded, error, etc."),
  *     @OA\Property(property="submitted_at", type="string", format="date-time", nullable=true, example="2026-06-08T00:00:00Z"),
  *     @OA\Property(property="expires_at", type="string", format="date-time", nullable=true, example="2026-06-11T00:00:00Z", description="Expiración del trámite en Certificate Manager (72h por defecto). Pasada esta fecha el job de purga elimina las llaves."),
- *     @OA\Property(property="history_count", type="integer", nullable=true, example=3, description="Número de entradas en viafirma_status_history. Solo presente en GET /issuance.")
+ *     @OA\Property(property="history_count", type="integer", nullable=true, example=3, description="Número de entradas en viafirma_status_history. Solo presente en GET /issuance."),
+ *     @OA\Property(property="kyc_accreditation_link", type="string", nullable=true, example="https://signup.metamap.com?merchantToken=...", description="Link de onboarding KYC remitido por Viafirma. Disponible mientras remote_status esté en la familia de acreditación."),
+ *     @OA\Property(property="poll_attempts", type="integer", nullable=true, example=12, description="Cantidad de veces que se ha consultado el estado remoto en Viafirma."),
+ *     @OA\Property(property="last_error_code", type="string", nullable=true, example="accreditation_rejected", description="Código del último error reportado (remoto o interno). Null si no ha habido errores."),
+ *     @OA\Property(property="last_error_message", type="string", nullable=true, example="Acreditación KYC rechazada por el operador RA.", description="Mensaje descriptivo del último error. Null si no ha habido errores.")
  * )
  *
  * @OA\Schema(

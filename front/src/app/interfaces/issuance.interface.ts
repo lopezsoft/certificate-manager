@@ -20,6 +20,8 @@ export interface IssuanceStatus {
   provider: string;
   created_at?: string;
   updated_at?: string;
+  /** Código de la solicitud asignado por el proveedor (ej. Viafirma) */
+  external_id?: string;
   data?: ViafirmaStatus | any;
 }
 
@@ -50,6 +52,9 @@ export interface ViafirmaStatus {
   poll_attempts: number;
   last_error_code: string | null;
   last_error_message: string | null;
+  /** Link de acreditación KYC (MetaMap), disponible durante la familia de estados de acreditación */
+  kyc_accreditation_link?: string | null;
+  history_count?: number;
 }
 
 /** Resultado de la re-descarga (solo admin) */

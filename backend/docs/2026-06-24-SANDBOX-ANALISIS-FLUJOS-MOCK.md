@@ -92,12 +92,19 @@ ViafirmaIssuanceProvider::issue()
         ├── 6. DB: crea viafirma_certificate_requests + state (SUBMITTED)
         └── 7. Despacha PollViafirmaStatusJob →
                     │
-                    ▼ (cada ~60s, máx 288 intentos / 8h)
+                    ▼ (cada ~60s, indefinido — sin expiración automática por
+                    │  tiempo/intentos desde el fix 2026-08-19; auto-repara
+                    │  ante mutex ocupado o fallos vía hook `failed()`)
               GET /request/{codRequest}/status
                     │
                     ├── PROGRESSING (rues_check, inProcess, ...) → repoll
-                    ├── ACCREDITATION → NotifyClientOnAccreditationListener
-                    │       └── Email con link KYC al cliente
+                    ├── ACCREDITATION* (bruto o sub-estados accreditation_check/
+                    │   completed/verified) → ViafirmaAccreditationReached
+                    │       └── FetchKycAccreditationLinkJob (delay 5s)
+                    │             ├── Persiste kyc_accreditation_link
+                    │             └── Email automático a companies.email de la
+                    │                 empresa dueña de la solicitud (no al
+                    │                 suscriptor final, que ya lo recibe de Viafirma)
                     ├── GENERATED_NOT_DOWNLOADED → DownloadP7bJob
                     │       └── downloadP7b(publicId) → guarda .p7b en Storage
                     │       └── Despacha AssembleP12Job →
@@ -191,7 +198,7 @@ $this->app->bind(ViafirmaClient::class, function ($app) {
 |--------|--------------------------|
 | `getProfiles()` | Retorna 2 perfiles estáticos (FE-PJ y FE-PN) usando los `cod_profile` del config |
 | `submitCsr()` | Genera `codRequest` y `publicId` aleatorios (`MOCK-REQ-*`, `MOCK-PUB-*`). Guarda contador de polls en Cache |
-| `getStatus()` | Simula demora realista: Poll 1 → `rues_check`, Poll 2 → `inProcess`, Poll 3+ → `Generated_Not_Downloaded` |
+| `getStatus()` | Simula demora realista: Poll 1 → `rues_check`, Poll 2 → `accreditation`, Poll 3 → `inProcess`, Poll 4+ → `Generated_Not_Downloaded`. El paso `accreditation` (agregado 2026-08-19) permite probar en sandbox la captura automática del link KYC y el correo a la empresa. Requiere `CACHE_DRIVER` distinto de `array` para que el contador de polls persista entre requests HTTP — con `array` se salta directo a `Generated_Not_Downloaded` y el paso `accreditation` nunca se ejercita |
 | `downloadP7b()` | Retorna un binario dummy en Base64 (no un P7B real) |
 | `revokeCertificate()` | Retorna código de revocación ficticio con éxito inmediato |
 | `getAccreditationLink()` | Retorna URL ficticia de KYC |

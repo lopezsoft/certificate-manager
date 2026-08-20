@@ -1,6 +1,8 @@
-# Vuexy - Angular Admin Template
+# MATICERTS — Frontend
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli).
+**Versión:** 2.0.0 · Ver [CHANGELOG.md](./CHANGELOG.md) para el historial completo de cambios.
+
+Aplicación Angular (PWA) para la gestión de solicitudes de certificados de firma digital. Basada en la plantilla [Vuexy - Angular Admin Template](https://github.com/angular/angular-cli), generada con [Angular CLI](https://github.com/angular/angular-cli).
 
 ## Development server
 

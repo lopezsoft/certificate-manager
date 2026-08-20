@@ -240,6 +240,144 @@
         </div>
       </div>
     </div>
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- SECCIÓN: Emisión de certificado (Viafirma)                     -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    @if (isViafirma() && issuanceStatus) {
+    <div class="content-div">
+      <hr>
+    </div>
+    <div class="card">
+      <div class="card-header d-flex flex-wrap align-items-center justify-content-between">
+        <span class="card-title mb-0">
+          <i class="fas fa-certificate me-1"></i> Emisión del Certificado
+        </span>
+        <div class="d-flex align-items-center gap-2">
+          @if (issuanceStatus.external_id) {
+          <small class="text-muted" appCustomTooltip="Código de la solicitud en Viafirma">
+            <i class="fas fa-hashtag me-1"></i>{{ issuanceStatus.external_id }}
+          </small>
+          }
+          @if (issuanceStatus.provider) {
+          <small class="text-muted">{{ issuanceStatus.provider | uppercase }}</small>
+          }
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="issuance-status">
+          <!-- Stepper del trámite -->
+          @if (!isIssuanceFailed) {
+          <div class="issuance-stepper mb-1">
+            @for (step of issuanceSteps; track step; let i = $index) {
+            <div class="issuance-step" [class.is-last]="i === issuanceSteps.length - 1">
+              <span class="issuance-step-dot badge" [ngClass]="{
+                  'bg-success': i < issuanceStepIndex,
+                  'bg-primary': i === issuanceStepIndex,
+                  'badge-light-secondary': i > issuanceStepIndex
+                }">
+                @if (i < issuanceStepIndex) {
+                <i class="fas fa-check"></i>
+                } @else {
+                {{ i + 1 }}
+                }
+              </span>
+              <span class="issuance-step-label"
+                [class.fw-bold]="i === issuanceStepIndex"
+                [class.text-muted]="i > issuanceStepIndex">
+                {{ viafirmaInternalStateDescription[step] || step }}
+              </span>
+            </div>
+            }
+          </div>
+          @if (remoteStatusLabel) {
+          <p class="text-muted small mb-2">
+            <i class="fas fa-info-circle me-1"></i>{{ remoteStatusLabel }}
+          </p>
+          }
+          }
+
+          <!-- Chip de expiración -->
+          @if (expirationInfo) {
+          <span class="badge mb-2" [class]="expirationInfo.badgeClass">
+            <i class="fas fa-hourglass-half me-1"></i> {{ expirationInfo.label
+            }}
+          </span>
+          }
+
+          <!-- Bloque de error -->
+          @if (isIssuanceFailed) {
+          <div class="alert alert-danger d-flex align-items-center py-2 px-3 mb-2">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <div>
+              <strong>{{
+                viafirmaInternalStateDescription[viafirmaStatus.internal_state]
+                || viafirmaStatus.internal_state }}</strong>
+              @if (viafirmaStatus?.last_error_message) {
+              <span class="small d-block">{{ viafirmaStatus.last_error_message }}</span>
+              }
+            </div>
+          </div>
+          }
+
+          <!-- CTA de verificación de identidad (KYC) -->
+          @if (showKycAccreditation) {
+          <div class="kyc-callout mb-2">
+            <span class="kyc-callout-icon"><i class="fas fa-id-card"></i></span>
+            <div class="kyc-callout-body">
+              <strong>Verificación de identidad pendiente</strong>
+              <span class="text-muted d-block">El cliente debe completar su acreditación KYC.</span>
+            </div>
+            <div class="kyc-callout-actions">
+              <a class="btn btn-sm btn-primary" [href]="viafirmaStatus.kyc_accreditation_link"
+                target="_blank" rel="noopener noreferrer">
+                <i class="fas fa-external-link-alt me-1"></i> Abrir enlace
+              </a>
+              <button type="button" class="btn btn-sm btn-outline-secondary"
+                appCustomTooltip="Copiar enlace" (click)="copyKycLink()">
+                <i class="fas" [class.fa-copy]="!kycLinkCopied" [class.fa-check]="kycLinkCopied"></i>
+              </button>
+              <a class="btn btn-sm whatsapp-share-btn" [href]="kycWhatsappLink"
+                target="_blank" rel="noopener noreferrer"
+                appCustomTooltip="Enviar por WhatsApp">
+                <i class="fab fa-whatsapp"></i>
+              </a>
+            </div>
+          </div>
+          }
+
+          <!-- Acciones: sin gating de admin, esta vista ya requiere rol admin -->
+          <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+            <button class="btn btn-outline-primary btn-sm issuance-refresh-btn"
+              (click)="onCheckIssuanceStatus()" [disabled]="issuanceLoading">
+              @if (issuanceLoading) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+              } @else {
+              <i class="fas fa-sync-alt me-1"></i>
+              }
+              Actualizar estado
+            </button>
+            @if (canShowRedownload) {
+            <button class="btn btn-warning btn-sm" (click)="onRedownload()"
+              [disabled]="!canRedownload || isRedownloading">
+              @if (isRedownloading) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+              } @else {
+              <i class="fas fa-redo me-1"></i>
+              }
+              {{ isRedownloading ? 'Re-descargando...' :
+              'Re-descargar Certificado' }}
+            </button>
+            }
+          </div>
+          @if (canShowRedownload) {
+          <span class="text-muted small d-block mt-1">
+            Re-descarga el P7B y genera un nuevo PIN. El PIN anterior quedará inválido.
+          </span>
+          }
+        </div>
+      </div>
+    </div>
+    }
     @if (existFileZip() && currentShipping.request_status ===
     DocumentStatusEnum.PROCESSED) {
     <div class="card">
@@ -362,7 +500,7 @@
               </p>
             </div>
           </div>
-          <div class="col-sm-6">
+          <div class="col-sm-4">
             <div class="form-group">
               <label>Ciudad</label>
               <p class="card-text">
@@ -370,11 +508,19 @@
               </p>
             </div>
           </div>
-          <div class="col-sm-6">
+          <div class="col-sm-5">
             <div class="form-group">
               <label>Dirección</label>
               <p class="card-text">
                 <strong>{{currentShipping.address }}</strong>
+              </p>
+            </div>
+          </div>
+          <div class="col-sm-3">
+            <div class="form-group">
+              <label>Teléfono</label>
+              <p class="card-text">
+                <strong>{{currentShipping.mobile ?? '' }}{{ currentShipping.phone ? ' - ' + currentShipping.phone : '' }}</strong>
               </p>
             </div>
           </div>
@@ -387,11 +533,19 @@
     <div class="card">
       <div class="card-body">
         <div class="row">
-          <div class="col-sm-12">
+          <div class="col-sm-7">
             <div class="form-group">
               <label><b>Nombre completo de representante legal</b></label>
               <p class="card-text">
                 {{ currentShipping.legal_representative | uppercase }}
+              </p>
+            </div>
+          </div>
+          <div class="col-sm-5">
+            <div class="form-group">
+              <label>Correo electrónico</label>
+              <p class="card-text">
+               <b>{{ currentShipping.legal_rep_email }}</b>
               </p>
             </div>
           </div>
@@ -603,6 +757,53 @@
   </div>
 </app-modal-card>
 }
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: PIN de Re-descarga                                         -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<app-modal-card
+  [visible]="showRedownloadPinModal"
+  [title]="'Certificado Re-descargado Exitosamente'"
+  [showFooter]="false"
+  size="md"
+  (onClose)="closePinModal()">
+
+  <div class="px-2 py-1">
+    <p class="text-muted mb-3">El certificado fue re-descargado y se generó un
+      nuevo PIN de acceso:</p>
+    <div class="d-flex align-items-center justify-content-between p-3 mb-3"
+      style="background-color:#f8f9fa; border:2px dashed #28a745; border-radius:8px;">
+      <span class="fs-4 fw-bold text-success font-monospace text-break"
+        style="letter-spacing:2px;">
+        {{ redownloadResult?.pin }}
+      </span>
+      <button class="btn btn-outline-success ms-3 text-nowrap"
+        (click)="copyPin()" [disabled]="pinCopied">
+        @if (pinCopied) {
+        <i class="fas fa-check"></i> ¡Copiado!
+        } @else {
+        <i class="fas fa-copy"></i> Copiar PIN
+        }
+      </button>
+    </div>
+    <div class="alert alert-warning py-2 mb-4">
+      <i class="fas fa-exclamation-triangle me-1"></i>
+      <strong>Guarde este PIN. No se mostrará nuevamente.</strong><br>
+      El PIN anterior ha quedado inválido.
+    </div>
+    <div class="d-flex justify-content-between align-items-center mt-4">
+      <button class="btn border custom-button fas-fa-save"
+        (click)="onGetDownloadMeta()">
+        <i class="fas fa-download me-1"></i> Descargar certificado
+      </button>
+      <button class="btn custom-button border fas-fa-close"
+        (click)="closePinModal()" [disabled]="pinCopied"
+        [title]="pinCopied ? 'Cerrar' : 'Debe copiar el PIN antes de cerrar'">
+        <i class="fas fa-times me-1"></i>
+        {{ pinCopied ? 'Cerrar' : 'Copie el PIN para cerrar' }}
+      </button>
+    </div>
+  </div>
+</app-modal-card>
 @if (canAddFile) {
 <app-notification-card
   (onCloseCard)="canAddFile = false">

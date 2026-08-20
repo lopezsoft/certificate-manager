@@ -26,6 +26,65 @@ export class AppVersionsComponent implements OnInit {
     this.versiones = [
       {
         isShow: true,
+        number: '2.0.0',
+        date: '19-AGO-2026',
+        changes: [
+          {
+            type: 'caracteristica',
+            description: 'Nuevo diseño de la tarjeta "Emisión del Certificado": stepper visual con los 6 pasos reales del trámite Viafirma (Enviado, Consultando, Listo para descargar, Descargado, Ensamblado, Completado)'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Aviso de verificación de identidad (KYC) con acciones para copiar el enlace o enviarlo directo por WhatsApp al solicitante'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Descripción en tiempo real del sub-estado remoto de Viafirma (validación RUES, revisión de operador RA, firma en la CA, etc.)'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Indicador de expiración del trámite con niveles de urgencia visual'
+          },
+          {
+            type: 'caracteristica',
+            description: 'La vista de administrador de solicitudes en proceso ahora muestra el estado de emisión Viafirma y permite re-descargar el certificado con su modal de PIN'
+          },
+          {
+            type: 'mejora',
+            description: 'Rediseño mobile-first de la sección de emisión de certificados, eliminando bloques de información redundante'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Validaciones específicas de Viafirma para Persona Jurídica y Persona Natural (nombre, apellidos, correo, N.I.T, dirección e identificación) según los perfiles oficiales del proveedor'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Checkbox obligatorio de aceptación de la Política de Servicios de Certificación de Viafirma, con enlace al documento PDF'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Carga de 1 a 3 documentos de soporte para Persona Jurídica cuando el tipo de documento constitutivo es "Sin RUES"'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Campos de confirmación (re-escritura) para N.I.T, número de documento y correo del representante legal, para detectar errores de tipeo antes de enviar la solicitud'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Número de celular obligatorio en el flujo Viafirma, con aviso de que debe tener WhatsApp para el envío de enlaces de verificación'
+          },
+          {
+            type: 'mejora',
+            description: 'Formulario de solicitud más compacto para Viafirma: se ocultó el teléfono fijo (redundante con el celular obligatorio), la información adicional y avisos redundantes; se acortó la nota del correo del representante legal'
+          },
+          {
+            type: 'bug',
+            description: 'Corregido: al enviar la solicitud se sobrescribía el tipo de documento constitutivo a "Con RUES" aunque el usuario hubiera seleccionado "Sin RUES"'
+          }
+        ]
+      },
+      {
+        isShow: true,
         number: '1.9.2',
         date: '09-JUL-2026',
         changes: [

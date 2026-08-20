@@ -42,6 +42,9 @@ export interface CertificateRequest {
     phone?: string;
     image: string;
     legal_representative: string;
+    legal_rep_email: string;
+    legal_rep_first_name: string;
+    legal_rep_last_name: string;
     info: string;
     life: number;
     request_status: string;

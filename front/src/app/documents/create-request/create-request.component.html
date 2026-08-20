@@ -11,7 +11,7 @@
           <hr>
         </div>
         <div class="row">
-          <div class="col-md-6">
+          <div class="col-md-3">
             <div class="form-group">
               <label>
                 <span class="asterisk">{{ 'general.asterisk' | translate
@@ -27,7 +27,7 @@
               </ng-select>
             </div>
           </div>
-          <div class="col-md-6">
+          <div class="col-md-4">
             <div class="form-group">
               <label>
                 <span class="asterisk">{{ 'general.asterisk' | translate
@@ -42,6 +42,23 @@
                 autocomplete="off" [class.is-invalid]="isInvalid('dni')">
               @if (isInvalid('dni')) {
               <small class="text-danger">N.I.T incorrecto</small>
+              }
+            </div>
+          </div>
+          <div class="col-md-5">
+            <div class="form-group">
+              <label>
+                <span class="asterisk">{{ 'general.asterisk' | translate
+                  }}</span>
+                Confirmar N.I.T sin dígito de verificación
+              </label>
+              <input class="form-control" type="text"
+                formControlName="dni_confirm"
+                placeholder="Repita el N.I.T"
+                inputmode="numeric" autocomplete="off"
+                [class.is-invalid]="isInvalid('dni_confirm')">
+              @if (isInvalid('dni_confirm')) {
+              <small class="text-danger">El N.I.T no coincide</small>
               }
             </div>
           </div>
@@ -178,6 +195,25 @@
               }
             </div>
           </div>
+          @if (isViafirma()) {
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>
+                <span class="asterisk">{{ 'general.asterisk' | translate
+                  }}</span>
+                Confirmar número de documento de identidad
+              </label>
+              <input class="form-control" type="text"
+                formControlName="document_number_confirm"
+                placeholder="Repita el número de documento"
+                inputmode="numeric" autocomplete="off"
+                [class.is-invalid]="isInvalid('document_number_confirm')">
+              @if (isInvalid('document_number_confirm')) {
+              <small class="text-danger">El número de documento no coincide</small>
+              }
+            </div>
+          </div>
+          }
         </div>
 
         @if (isViafirma()) {
@@ -233,25 +269,57 @@
               }
               @if(isViafirma()) {
               <small class="text-info">
-                <strong>Nota:</strong> {{'viafirma.small.legal_rep_email' |
-                translate}}
+                {{'viafirma.small.legal_rep_email' | translate}}
               </small>
               }
             </div>
           </div>
+          @if (isViafirma()) {
+          <div class="col-md-12">
+            <div class="form-group">
+              <label>
+                <span class="asterisk">{{ 'general.asterisk' | translate
+                  }}</span>
+                Confirmar correo electrónico del representante legal
+              </label>
+              <input class="form-control" type="email"
+                formControlName="legal_rep_email_confirm"
+                placeholder="Repita el correo electrónico" autocomplete="off"
+                [class.is-invalid]="isInvalid('legal_rep_email_confirm')">
+              @if (isInvalid('legal_rep_email_confirm')) {
+              <small class="text-danger">El correo electrónico no coincide</small>
+              }
+            </div>
+          </div>
+          }
         </div>
 
         <div class="row">
-          <div class="col-md-6">
+          <div [class.col-md-6]="!isViafirma()" [class.col-md-12]="isViafirma()">
             <div class="form-group">
               <label>
+                @if (isViafirma()) {
+                <span class="asterisk">{{ 'general.asterisk' | translate
+                  }}</span>
+                }
                 Número teléfono móvil
               </label>
               <input class="form-control" type="text" formControlName="mobile"
                 placeholder="Número teléfono móvil"
-                autocomplete="on" inputmode="tel">
+                autocomplete="on" inputmode="tel"
+                [class.is-invalid]="isInvalid('mobile')">
+              @if (isInvalid('mobile')) {
+              <small class="text-danger">Número de celular requerido</small>
+              }
+              @if (isViafirma()) {
+              <small class="text-info">
+                Debe ser un número con WhatsApp: se usará para enviar enlaces
+                de verificación.
+              </small>
+              }
             </div>
           </div>
+          @if (!isViafirma()) {
           <div class="col-md-6">
             <div class="form-group">
               <label>
@@ -262,6 +330,7 @@
                 autocomplete="on" inputmode="tel">
             </div>
           </div>
+          }
         </div>
 
         <div class="row">
@@ -306,24 +375,32 @@
         @if (isViafirma()) {
         <div class="row">
           <div class="col-md-12">
-            <div class="alert alert-info p-50 mb-50">
-              <i class="fas fa-info-circle me-50"></i>
-              @if (!isNaturelPerson() && f['entity_document_type_id']?.value ===
-              1) {
-              Se enviará un enlace de verificación biométrica al correo del
-              representante legal una vez procesada la
-              solicitud.
-              } @else {
-              Un asesor de la entidad certificadora le contactará por correo
-              electrónico para
-              continuar con el proceso.
+            <div class="form-group">
+              <div class="form-check">
+                <input class="form-check-input" id="acceptTerms" type="checkbox"
+                  formControlName="accept_terms"
+                  [class.is-invalid]="isInvalid('accept_terms')">
+                <label class="form-check-label" for="acceptTerms">
+                  <span class="asterisk">{{ 'general.asterisk' | translate
+                    }}</span>
+                  He leído y acepto la
+                  <a [href]="termsUrl" target="_blank" rel="noopener noreferrer">
+                    Política de Servicios de Certificación de Viafirma
+                  </a>
+                </label>
+              </div>
+              @if (isInvalid('accept_terms')) {
+              <small class="text-danger d-block">
+                Debe aceptar la política de servicios de certificación para
+                continuar
+              </small>
               }
             </div>
           </div>
         </div>
         }
 
-        @if (_token.isAdmin()) {
+        @if (_token.isAdmin() && !isViafirma()) {
         <div class="row">
           <div class="col-md-12">
             <div class="form-group">
@@ -357,7 +434,7 @@
             }
           </ng-select>
         </div>
-        @if (!canEdit && !isViafirma()) {
+        @if (!canEdit && (!isViafirma() || requiresRuesDocuments())) {
         <div class="form-group">
           <hr>
           <h6>SUBIDA DE ARCHIVOS</h6>

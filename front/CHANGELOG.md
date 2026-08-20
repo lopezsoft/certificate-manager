@@ -5,6 +5,31 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [2.0.0] - 2026-08-19
+
+### Añadido
+
+- **Rediseño de la tarjeta "Emisión del Certificado"** (`document-view`, `request-in-process-view`):
+  - Stepper visual con los 6 pasos reales de la FSM de Viafirma (Enviado → Consultando → Listo para descargar → Descargado → Ensamblado → Completado)
+  - Badge de estado con color semántico según `internal_state`
+  - Chip de expiración del trámite con niveles de urgencia progresivos
+  - Descripción legible del sub-estado remoto de Viafirma (`ViafirmaRemoteStatusDescription`): validación RUES, revisión de operador RA, firma en la CA, etc.
+  - Aviso de verificación de identidad (KYC) con acciones para **copiar el enlace** y **enviarlo por WhatsApp** (`wa.me`, usando el celular/teléfono del solicitante cuando está disponible)
+
+- **`request-in-process-view`**: se agregó la tarjeta de estado de emisión Viafirma y el modal de PIN de re-descarga — la vista de administrador tenía la lógica implementada pero nunca se había construido la interfaz
+
+- **`ViafirmaStatus`** (interfaz): nuevos campos `kyc_accreditation_link` y `history_count`
+
+### Cambiado
+
+- **Copiado al portapapeles**: unificado en un helper `copyToClipboard`/`copyToClipboardFallback` reutilizado por el PIN de re-descarga y el enlace KYC (antes duplicado en cada componente)
+- **Vocabulario de estados**: las etiquetas del stepper ahora se derivan de `ViafirmaInternalStateDescription`, eliminando el doble vocabulario que existía entre el stepper y el texto de estado
+
+### Técnico
+
+- **Angular**: 20.0.0
+- **Archivos modificados**: `document-view.component.*`, `request-in-process-view.component.*`, `issuance.interface.ts`, `ViafirmaInternalState.ts`
+
 ## [1.9.0] - 2026-07-07
 
 ### Añadido

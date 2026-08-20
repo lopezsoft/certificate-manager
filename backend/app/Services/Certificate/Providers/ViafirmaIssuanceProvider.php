@@ -12,6 +12,7 @@ use App\Modules\Viafirma\Application\Commands\IssueCertificateCommand;
 use App\Modules\Viafirma\Application\UseCases\IssueCertificateUseCase;
 use App\Modules\Viafirma\Domain\Contracts\ViafirmaCertificateRequestRepositoryContract;
 use App\Modules\Viafirma\Domain\Enums\IdentityType;
+use App\Modules\Viafirma\Domain\Enums\InternalState;
 use App\Modules\Viafirma\Domain\Enums\OrganizationType;
 use App\Modules\Viafirma\Domain\Exceptions\TransientHttpException;
 use App\Modules\Viafirma\Domain\Exceptions\ViafirmaClientException;
@@ -163,32 +164,50 @@ final class ViafirmaIssuanceProvider implements CertificateIssuanceProvider
             externalId:   $entity->cod_request,
             resourceId:   $entity->id,
             data:         [
-                'public_id'      => $entity->public_id,
-                'profile_type'   => $entity->profile_type,
-                'identity_type'  => $entity->identity_type,
-                'internal_state' => $entity->state?->internal_state?->value,
-                'remote_status'  => $entity->state?->remote_status,
-                'revocation_code'=> $entity->state?->revocation_request_code,
-                'revoked_at'     => $entity->state?->revoked_at,
-                'submitted_at'   => optional($entity->state?->submitted_at)?->toISOString(),
-                'expires_at'     => optional($entity->state?->expires_at)?->toISOString(),
-                'history_count'  => $entity->statusHistory?->count() ?? 0,
+                'public_id'              => $entity->public_id,
+                'profile_type'           => $entity->profile_type,
+                'identity_type'          => $entity->identity_type,
+                'internal_state'         => $entity->state?->internal_state?->value,
+                'remote_status'          => $entity->state?->remote_status,
+                'revocation_code'        => $entity->state?->revocation_request_code,
+                'revoked_at'             => $entity->state?->revoked_at,
+                'submitted_at'           => optional($entity->state?->submitted_at)?->toISOString(),
+                'expires_at'             => optional($entity->state?->expires_at)?->toISOString(),
+                'history_count'          => $entity->statusHistory?->count() ?? 0,
+                'kyc_accreditation_link' => $entity->state?->kyc_accreditation_link,
+                'poll_attempts'          => $entity->state?->poll_attempts,
+                'last_error_code'        => $entity->state?->last_error_code,
+                'last_error_message'     => $entity->state?->last_error_message,
             ],
         );
     }
 
     /**
      * Mapea estados internos Viafirma a los estados normalizados del DTO.
+     *
+     * Match exhaustivo (sin `default`): si se agrega un InternalState nuevo,
+     * PHP lanza UnhandledMatchError en vez de caer silenciosamente en
+     * STATUS_PROCESSING como pasaba antes (así se detectó que READY_TO_DOWNLOAD
+     * nunca llegaba a STATUS_READY).
      */
     private function mapInternalStateToStatus(ViafirmaCertificateRequest $entity): string
     {
-        $state = $entity->state?->internal_state?->value;
+        $state = $entity->state?->internal_state;
 
         return match ($state) {
-            'COMPLETED', 'ASSEMBLED' => IssuanceResult::STATUS_READY,
-            'FAILED', 'EXPIRED'      => IssuanceResult::STATUS_FAILED,
-            'DRAFT'                  => IssuanceResult::STATUS_PROCESSING,
-            default                  => IssuanceResult::STATUS_PROCESSING,
+            null,
+            InternalState::DRAFT,
+            InternalState::CSR_GENERATED,
+            InternalState::POLLING,
+            InternalState::DOWNLOADED,
+            InternalState::FAILED_RECOVERABLE => IssuanceResult::STATUS_PROCESSING,
+            InternalState::SUBMITTED          => IssuanceResult::STATUS_SUBMITTED,
+            InternalState::READY_TO_DOWNLOAD,
+            InternalState::ASSEMBLED,
+            InternalState::COMPLETED          => IssuanceResult::STATUS_READY,
+            InternalState::REVOKED,
+            InternalState::FAILED,
+            InternalState::EXPIRED            => IssuanceResult::STATUS_FAILED,
         };
     }
 }

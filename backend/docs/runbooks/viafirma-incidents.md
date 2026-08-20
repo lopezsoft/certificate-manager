@@ -1,6 +1,6 @@
 # 📋 Runbook: Viafirma PKCS#10 — Respuesta a Incidentes
 
-> Última actualización: 2026-05-15
+> Última actualización: 2026-08-19
 > Módulo: `App\Modules\Viafirma`
 > Autor: Equipo Backend LOPEZSOFT
 
@@ -48,13 +48,16 @@ tail -n 50 storage/logs/scheduled-viafirma-purge.log
 
 **Síntomas:** Alerta en health check `⚠️ Solicitudes en accreditation > 24h`.
 
-**Causa:** El cliente no ha completado el KYC (foto documento, selfie).
+**Causa:** El suscriptor final (cliente de la empresa) no ha completado el KYC (foto documento, selfie) en el link que Viafirma le envió directamente por email.
+
+> ⚠️ Nosotros consultamos a Viafirma (RA), no al revés. "Contactar" aquí significa que
+> el operador RA (nuestro equipo) contacta a **la empresa dueña de la solicitud**, no a Viafirma.
 
 **Acciones:**
-1. Verificar que la notificación se envió (tabla `notifications`, tipo `viafirma_accreditation_pending`)
-2. Contactar al cliente vía email/teléfono
-3. Si hay problemas con la URL KYC, verificar `public_id` en la entidad
-4. URL KYC: `{VIAFIRMA_RA_DOWNLOAD_URL}/public/{public_id}`
+1. Verificar el link real capturado: `viafirma_certificate_request_states.kyc_accreditation_link` (columna, no construir URL manualmente).
+2. Confirmar que el correo automático a la empresa se envió: buscar en logs `viafirma.kyc_link_job.company_notified` (éxito) o `viafirma.kyc_link_job.no_company_email` / `viafirma.kyc_link_job.notify_failed` (fallos — revisar `companies.email` de la solicitud).
+3. Si el correo falló o la empresa lo perdió, reenviar manualmente el valor de `kyc_accreditation_link` — **no reconstruir la URL** con `{VIAFIRMA_RA_DOWNLOAD_URL}/public/{public_id}` (patrón obsoleto, no es el link real de onboarding).
+4. **Ya no hay expiración automática por tiempo** — desde el fix de 2026-08-19, una solicitud puede permanecer días en `accreditation` sin que el sistema la marque `EXPIRED` ni deje de consultarla. Esta alerta es informativa, no indica que el polling vaya a detenerse solo.
 
 ---
 
@@ -64,10 +67,16 @@ tail -n 50 storage/logs/scheduled-viafirma-purge.log
 
 **Causa:** El `PollViafirmaStatusJob` no se reagendó (crash del worker, despliegue, etc.).
 
+> Desde el fix de 2026-08-19, el propio job se auto-repara en la mayoría de los
+> casos: mutex ocupado → reintenta en 10s; excepción no controlada → hook
+> `failed()` reprograma en 30s. El watchdog ahora es una red de seguridad
+> secundaria, no la única vía de recuperación.
+
 **Acciones:**
-1. El watchdog (`ReviveStalledViafirmaPollsJob`) las re-arma automáticamente cada 15 min
+1. El watchdog (`ReviveStalledViafirmaPollsJob`) las re-arma automáticamente cada 5 min (ver `orphanedPolling(20)` — huecos de más de 20 min sin actualizarse)
 2. Para forzar inmediato: `php artisan tinker --execute="App\Modules\Viafirma\Infrastructure\Jobs\ReviveStalledViafirmaPollsJob::dispatch();"`
 3. Verificar que el queue worker está activo: `php artisan queue:work --status`
+4. Si el volumen de huérfanas es alto y persistente (no baja tras el watchdog), sospechar de una caída sostenida del queue worker, no de un caso aislado.
 
 ---
 
@@ -158,3 +167,16 @@ DRAFT → CSR_GENERATED → SUBMITTED → POLLING → READY_TO_DOWNLOAD → DOWN
 ```
 
 **Estados remotos Viafirma:** `rues_check → accreditation → accreditation_check → accreditation_completed → accreditation_verified → proposeFor → proposedToAcceptance → inProcess → All_Ok → Generated_Not_Downloaded`
+
+> **`EXPIRED` ya no se dispara automáticamente por tiempo/intentos** (fix
+> 2026-08-19). Solo llega a ese estado si Viafirma reporta explícitamente un
+> fallo remoto terminal, o si un operador lo fuerza manualmente vía
+> `StateMachine::markExpired()`. El polling continúa indefinidamente mientras
+> el estado remoto siga en la familia `PROGRESSING`.
+>
+> **Captura del link KYC + notificación:** al entrar en cualquier estado de la
+> familia `accreditation*` (bruto o sub-estados), se dispara
+> `ViafirmaAccreditationReached` → `FetchKycAccreditationLinkJob` captura
+> `kyc_accreditation_link` y envía un correo automático a `companies.email` de
+> la empresa dueña de la solicitud (no al suscriptor final — ese ya lo recibe
+> directo de Viafirma). Ver logs `viafirma.kyc_link_job.*`.

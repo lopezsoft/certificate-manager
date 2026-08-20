@@ -1,4 +1,116 @@
+@import "scss/variables";
+
 $black: #000000;
+$step-divider-color: rgba(0, 0, 0, .1);
+
+.issuance-refresh-btn {
+  width: 100%;
+}
+@media (min-width: 576px) {
+  .issuance-refresh-btn {
+    width: auto;
+  }
+}
+
+.issuance-stepper {
+  display: flex;
+  overflow-x: auto;
+  padding-bottom: .25rem;
+
+  .issuance-step {
+    flex: 1 0 auto;
+    min-width: 84px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    padding: 0 .25rem;
+
+    &:not(.is-last)::after {
+      content: '';
+      position: absolute;
+      top: 14px;
+      left: 58%;
+      width: 100%;
+      height: 2px;
+      background-color: $step-divider-color;
+      z-index: 0;
+    }
+  }
+
+  .issuance-step-dot {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .75rem;
+    margin-bottom: .35rem;
+    z-index: 1;
+  }
+
+  .issuance-step-label {
+    font-size: .7rem;
+    line-height: 1.1;
+  }
+}
+
+.kyc-callout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem .75rem;
+  padding: .5rem .75rem;
+  border-radius: .375rem;
+  border-left: 3px solid var(--bs-warning);
+  background-color: rgba(var(--bs-warning-rgb), .08);
+
+  .kyc-callout-icon {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    border-radius: 50%;
+    background-color: rgba(var(--bs-warning-rgb), .15);
+    color: var(--bs-warning);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .kyc-callout-body {
+    flex: 1 1 200px;
+    min-width: 0;
+    line-height: 1.3;
+
+    strong {
+      font-size: .85rem;
+    }
+
+    span {
+      font-size: .75rem;
+    }
+  }
+
+  .kyc-callout-actions {
+    display: flex;
+    gap: .35rem;
+    flex-wrap: wrap;
+  }
+}
+
+.whatsapp-share-btn {
+  background-color: $whatsapp-green;
+  border-color: $whatsapp-green;
+  color: $white;
+
+  &:hover {
+    background-color: darken($whatsapp-green, 8%);
+    color: $white;
+  }
+}
 
 .bg-card-container {
   border-radius: .25rem;

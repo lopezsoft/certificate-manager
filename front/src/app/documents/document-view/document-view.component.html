@@ -254,7 +254,7 @@
               </p>
             </div>
           </div>
-          <div class="col-sm-6">
+          <div class="col-sm-4">
             <div class="form-group">
               <label>Ciudad</label>
               <p class="card-text">
@@ -262,11 +262,19 @@
               </p>
             </div>
           </div>
-          <div class="col-sm-6">
+          <div class="col-sm-5">
             <div class="form-group">
               <label>Dirección</label>
               <p class="card-text">
                 <strong>{{currentShipping.address }}</strong>
+              </p>
+            </div>
+          </div>
+          <div class="col-sm-3">
+            <div class="form-group">
+              <label>Teléfono</label>
+              <p class="card-text">
+                <strong>{{currentShipping.mobile ?? '' }}{{ currentShipping.phone ? ' - ' + currentShipping.phone : '' }}</strong>
               </p>
             </div>
           </div>
@@ -279,11 +287,19 @@
     <div class="card">
       <div class="card-body">
         <div class="row">
-          <div class="col-sm-12">
+          <div class="col-sm-7">
             <div class="form-group">
-              <label><b>Nombre completo de representante legal</b></label>
+              <label>Nombre completo de representante legal</label>
               <p class="card-text">
-                {{ currentShipping.legal_representative | uppercase }}
+               <b>{{ currentShipping.legal_representative | uppercase }}</b>
+              </p>
+            </div>
+          </div>
+          <div class="col-sm-5">
+            <div class="form-group">
+              <label>Correo electrónico</label>
+              <p class="card-text">
+               <b>{{ currentShipping.legal_rep_email }}</b>
               </p>
             </div>
           </div>
@@ -331,6 +347,7 @@
         </div>
       </div>
     </div>
+    @if(currentShipping.info) {
     <div class="content-div">
       <hr>
     </div>
@@ -348,6 +365,7 @@
         </div>
       </div>
     </div>
+    } 
     @if (currentShipping.files.length > 0) {
     <div class="content-div">
       <hr>
@@ -434,10 +452,13 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     @if (canIssue() || issuanceStatus) {
     <div class="card">
-      <div class="card-header">
-        <span class="card-title">
+      <div class="card-header d-flex flex-wrap align-items-center justify-content-between">
+        <span class="card-title mb-0">
           <i class="fas fa-certificate me-1"></i> Emisión del Certificado
         </span>
+        @if (issuanceStatus?.provider) {
+        <small class="text-muted">{{ issuanceStatus.provider | uppercase }}</small>
+        }
       </div>
       <div class="card-body">
         <!-- Botón para emitir -->
@@ -493,35 +514,114 @@
         }
         <!-- Estado del trámite -->
         @if (issuanceStatus) {
-        <div class="mt-2">
-          <div class="alert alert-info d-flex align-items-center">
-            <i class="fas fa-info-circle me-2"></i>
+        <div class="mt-1 issuance-status">
+          <!-- Stepper del trámite -->
+          @if (!isIssuanceFailed) {
+          <div class="issuance-stepper mb-1">
+            @for (step of issuanceSteps; track step; let i = $index) {
+            <div class="issuance-step" [class.is-last]="i === issuanceSteps.length - 1">
+              <span class="issuance-step-dot badge" [ngClass]="{
+                  'bg-success': i < issuanceStepIndex,
+                  'bg-primary': i === issuanceStepIndex,
+                  'badge-light-secondary': i > issuanceStepIndex
+                }">
+                @if (i < issuanceStepIndex) {
+                <i class="fas fa-check"></i>
+                } @else {
+                {{ i + 1 }}
+                }
+              </span>
+              <span class="issuance-step-label"
+                [class.fw-bold]="i === issuanceStepIndex"
+                [class.text-muted]="i > issuanceStepIndex">
+                {{ viafirmaInternalStateDescription[step] || step }}
+              </span>
+            </div>
+            }
+          </div>
+          @if (remoteStatusLabel) {
+          <p class="text-muted small mb-2">
+            <i class="fas fa-info-circle me-1"></i>{{ remoteStatusLabel }}
+          </p>
+          }
+          }
+
+          <!-- Chip de expiración -->
+          @if (expirationInfo) {
+          <span class="badge mb-2" [class]="expirationInfo.badgeClass">
+            <i class="fas fa-hourglass-half me-1"></i> {{ expirationInfo.label
+            }}
+          </span>
+          }
+
+          <!-- Bloque de error -->
+          @if (isIssuanceFailed) {
+          <div class="alert alert-danger d-flex align-items-center py-2 px-3 mb-1">
+            <i class="fas fa-exclamation-triangle me-2"></i>
             <div>
-              <strong>Estado:</strong> {{
-              (documentStatusDescription[issuanceStatus.status.toUpperCase()] ||
-              issuanceStatus.status) | uppercase }}
-              @if (issuanceStatus.provider) {
-              <span> | Proveedor: {{ issuanceStatus.provider | uppercase
-                }}</span>
-              }
-              @if (viafirmaStatus?.internal_state) {
-              <span> | Trámite Viafirma: {{
-                (viafirmaInternalStateDescription[viafirmaStatus.internal_state]
-                || viafirmaStatus.internal_state) | uppercase }}</span>
+              <strong>{{
+                viafirmaInternalStateDescription[viafirmaStatus.internal_state]
+                || viafirmaStatus.internal_state }}</strong>
+              @if (viafirmaStatus?.last_error_message) {
+              <span class="small d-block">{{ viafirmaStatus.last_error_message }}</span>
               }
             </div>
           </div>
-          <div class="d-flex gap-2">
-            <button class="btn btn-outline-primary btn-sm"
-              (click)="onCheckIssuanceStatus()"
-              [disabled]="issuanceLoading">
-              <i class="fas fa-sync-alt me-1"></i> Actualizar estado
+          }
+
+          <!-- CTA de verificación de identidad (KYC) -->
+          @if (showKycAccreditation) {
+          <div class="kyc-callout mb-1">
+            <span class="kyc-callout-icon"><i class="fas fa-id-card"></i></span>
+            <div class="kyc-callout-body">
+              <strong>Verificación de identidad pendiente</strong>
+              <span class="text-muted d-block">El cliente debe completar su acreditación KYC.</span>
+            </div>
+            <div class="kyc-callout-actions">
+              <a class="btn btn-sm btn-primary" [href]="viafirmaStatus.kyc_accreditation_link"
+                target="_blank" rel="noopener noreferrer">
+                <i class="fas fa-external-link-alt me-1"></i> Abrir enlace
+              </a>
+              <button type="button" class="btn btn-sm btn-outline-secondary"
+                appCustomTooltip="Copiar enlace" (click)="copyKycLink()">
+                <i class="fas" [class.fa-copy]="!kycLinkCopied" [class.fa-check]="kycLinkCopied"></i>
+              </button>
+              <a class="btn btn-sm whatsapp-share-btn" [href]="kycWhatsappLink"
+                target="_blank" rel="noopener noreferrer"
+                appCustomTooltip="Enviar por WhatsApp">
+                <i class="fab fa-whatsapp"></i>
+              </a>
+            </div>
+          </div>
+          }
+
+          <!-- Acciones -->
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-1">
+            <button class="btn btn-outline-primary btn-sm issuance-refresh-btn"
+              (click)="onCheckIssuanceStatus()" [disabled]="issuanceLoading">
+              @if (issuanceLoading) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+              } @else {
+              <i class="fas fa-sync-alt me-1"></i>
+              }
+              Actualizar estado
             </button>
-            <!-- Botón Re-descargar: Solo Admin y cuando internal_state lo permite -->
+
             @if (isAdmin && canShowRedownload) {
+            <button type="button" class="btn btn-link btn-sm text-muted"
+              appCustomTooltip="Acciones de administrador"
+              (click)="showAdminActions = !showAdminActions">
+              <i class="fas fa-chevron-{{ showAdminActions ? 'up' : 'down' }} me-1"></i>
+              Admin
+            </button>
+            }
+          </div>
+
+          <!-- Acciones de administrador -->
+          @if (isAdmin && canShowRedownload && showAdminActions) {
+          <div class="admin-actions mt-1 pt-2 border-top">
             <button class="btn btn-warning btn-sm" (click)="onRedownload()"
-              [disabled]="!canRedownload || isRedownloading"
-              appCustomTooltip="Re-descarga el P7B y genera un nuevo PIN. El PIN anterior quedará inválido.">
+              [disabled]="!canRedownload || isRedownloading">
               @if (isRedownloading) {
               <span class="spinner-border spinner-border-sm me-1"></span>
               } @else {
@@ -530,8 +630,11 @@
               {{ isRedownloading ? 'Re-descargando...' :
               'Re-descargar Certificado' }}
             </button>
-            }
+            <span class="text-muted small ms-2">
+              Genera un nuevo PIN; el anterior queda inválido.
+            </span>
           </div>
+          }
         </div>
         }
       </div>

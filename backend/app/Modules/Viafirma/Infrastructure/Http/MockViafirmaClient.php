@@ -24,7 +24,9 @@ use Illuminate\Support\Facades\Cache;
  * con persistencia real (file, redis, database) en el entorno de sandbox.
  * Si el driver es 'array', el estado se pierde en cada request y `getStatus()`
  * siempre devolverá GENERATED_NOT_DOWNLOADED (como si ya estuviera listo),
- * lo que es correcto funcionalmente pero no simula la demora realista de 3 polls.
+ * lo que es correcto funcionalmente pero no simula la demora realista de 4 polls
+ * — y tampoco ejercita el paso `accreditation` (captura automática del link KYC
+ * + correo a la empresa maestra), que requiere que el estado persista entre polls.
  *
  * Activación: VIAFIRMA_SANDBOX_MODE=true en el .env
  */
@@ -104,12 +106,16 @@ class MockViafirmaClient implements ViafirmaClient
         Cache::put($cacheKey, $state, now()->addHours(2));
 
         // Simulamos demora realista usando estados válidos del enum RemoteStatus:
-        // Poll 1 -> rues_check  (progressing)
-        // Poll 2 -> inProcess   (progressing)
-        // Poll 3+ -> Generated_Not_Downloaded (listo!)
+        // Poll 1 -> rues_check    (progressing)
+        // Poll 2 -> accreditation (progressing — dispara ViafirmaAccreditationReached
+        //           y permite probar en sandbox la captura automática del link KYC
+        //           + el correo a la empresa maestra, igual que en producción)
+        // Poll 3 -> inProcess     (progressing)
+        // Poll 4+ -> Generated_Not_Downloaded (listo!)
         $status = match (true) {
             $state['polls'] === 1 => RemoteStatus::RUES_CHECK,
-            $state['polls'] === 2 => RemoteStatus::IN_PROCESS,
+            $state['polls'] === 2 => RemoteStatus::ACCREDITATION,
+            $state['polls'] === 3 => RemoteStatus::IN_PROCESS,
             default              => RemoteStatus::GENERATED_NOT_DOWNLOADED,
         };
 

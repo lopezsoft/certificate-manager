@@ -40,6 +40,17 @@ ALTER TABLE viafirma_certificate_request_states
 
 Se dispara **incondicionalmente** cuando `remote_status` cambia a `ACCREDITATION`, independientemente de si el `internal_state` cambió. Esto es crítico porque múltiples valores de `remote_status` (`rues_check`, `accreditation`, `accreditation_check`, etc.) mapean al mismo `InternalState::POLLING`, por lo que una transición como `rues_check → accreditation` no cambiaría el `internal_state` y se perdería con el patrón anterior (que solo disparaba eventos en `$stateChanged`).
 
+> **Corrección 2026-08-19:** esta sección describía la intención original, pero
+> la implementación de esa fecha **solo comparaba el valor bruto `accreditation`**
+> (`StateMachine.php`), sin incluir `accreditation_check`/`accreditation_completed`/
+> `accreditation_verified`. Si Viafirma reportaba directamente un sub-estado sin
+> pasar por el valor bruto en el poll observado, el evento nunca se disparaba y
+> el link quedaba `null` de forma permanente (casos reales: solicitudes 39 y 40).
+> Corregido ampliando la detección a `StateMachine::ACCREDITATION_FAMILY`
+> (bruto + los 3 sub-estados). Además, ahora la captura exitosa del link
+> también envía un correo automático a `companies.email` de la empresa dueña
+> de la solicitud — ver `FetchKycAccreditationLinkJob::notifyMasterCompany()`.
+
 ### 4. Listener Automático
 
 **Nuevo archivo:** `app/Modules/Viafirma/Application/Listeners/DispatchKycLinkFetchListener.php`

@@ -161,7 +161,7 @@
     "small": {
       "country_emission": "País de emisión del documento de identidad del representante legal. Si no se tiene, elija la opción 'Colombia'.",
       "entity_document_type": "Se usará para la verificación del NIT en el RUES (Cámaras de Comercio). Si no se tiene, elija la opción 'Sin RUES'.",
-      "legal_rep_email": "Se usará para comunicarnos con el solicitante y con el que se aplicarán las medidas de verificación de identidad. Este correo electrónico debe ser válido y de uso frecuente, ya que se enviará un enlace para la verificación de identidad del representante legal."
+      "legal_rep_email": "Correo válido y de uso frecuente: se enviará el enlace de verificación de identidad."
     }
   },
   "taxes": {
