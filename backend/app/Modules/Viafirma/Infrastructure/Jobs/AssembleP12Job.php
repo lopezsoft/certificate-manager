@@ -47,7 +47,9 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
 
     public function __construct(
         public readonly int $requestId,
-    ) {}
+    ) {
+        $this->onQueue('viafirma-poll');
+    }
 
     public function uniqueId(): string
     {

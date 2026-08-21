@@ -59,6 +59,12 @@ El versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 - **Gap encontrado:** la progresión simulada (`rues_check → inProcess → Generated_Not_Downloaded`) nunca pasaba por ningún estado de la familia `accreditation` — por lo tanto, en sandbox, `ViafirmaAccreditationReached` nunca se disparaba y el flujo completo de captura de link KYC + correo a la empresa (ambos de esta sesión) era invisible para integradores probando en ese entorno.
 - **Fix:** nueva progresión: Poll 1 → `rues_check`, Poll 2 → `accreditation`, Poll 3 → `inProcess`, Poll 4+ → `Generated_Not_Downloaded`. Requiere `CACHE_DRIVER` distinto de `array` para que el contador de polls persista entre requests.
 
+### Corregido — Viafirma: contención de cola causaba huecos de polling de hasta 5 min
+
+- **Causa raíz confirmada:** Supervisor de producción (`matricerts-prod-worker`) usa solo `numprocs=2` para `--queue=default,webhooks,redownload,reports,notifications`. `PollViafirmaStatusJob` cae en `default` sin cola dedicada, compartiendo pool con `ProcessCertificateJob` (`timeout=300`, OCR/IA sobre documentos). Si ambos workers quedan ocupados con jobs pesados simultáneamente, el polling de Viafirma se detiene por completo hasta 5 minutos — repetido durante horas, esto reproduce huecos promedio de ~24 min/poll. Empeora con el tiempo porque la población de solicitudes en `POLLING` ya no tiene techo (fix de expiración de esta misma sesión).
+- **Fix de código:** `PollViafirmaStatusJob`, `FetchKycAccreditationLinkJob`, `DownloadP7bJob` y `AssembleP12Job` ahora usan `onQueue('viafirma-poll')` — aísla la cadena time-critical del pool compartido.
+- **Pendiente en servidor (no aplicado por el asistente):** crear programa Supervisor dedicado `matricerts-prod-worker-viafirma` con `--queue=viafirma-poll --timeout=30`, `numprocs` propio. Sin este paso, el código enruta a una cola que nadie consume — **debe aplicarse antes o junto con el deploy de este código**.
+
 ### Documentación actualizada
 
 - `docs/runbooks/viafirma-incidents.md` — corregida sección 2.2 (rol invertido operador↔cliente, URL KYC obsoleta reemplazada por `kyc_accreditation_link`), sección 2.3 (auto-reparación del polling), sección 5 (ya no hay expiración automática; documentado el flujo de correo a la empresa).

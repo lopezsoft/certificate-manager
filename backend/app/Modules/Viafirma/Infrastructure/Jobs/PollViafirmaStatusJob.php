@@ -43,7 +43,12 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
 
     public function __construct(
         public readonly int $requestId,
-    ) {}
+    ) {
+        // Cola dedicada: aísla el polling (time-critical, cada ~60s) del pool
+        // compartido `default`, donde jobs pesados (ej. ProcessCertificateJob,
+        // hasta 5 min) pueden bloquear el worker y generar huecos de polling.
+        $this->onQueue('viafirma-poll');
+    }
 
     public function uniqueId(): string
     {

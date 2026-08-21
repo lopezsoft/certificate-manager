@@ -75,8 +75,8 @@ tail -n 50 storage/logs/scheduled-viafirma-purge.log
 **Acciones:**
 1. El watchdog (`ReviveStalledViafirmaPollsJob`) las re-arma automáticamente cada 5 min (ver `orphanedPolling(20)` — huecos de más de 20 min sin actualizarse)
 2. Para forzar inmediato: `php artisan tinker --execute="App\Modules\Viafirma\Infrastructure\Jobs\ReviveStalledViafirmaPollsJob::dispatch();"`
-3. Verificar que el queue worker está activo: `php artisan queue:work --status`
-4. Si el volumen de huérfanas es alto y persistente (no baja tras el watchdog), sospechar de una caída sostenida del queue worker, no de un caso aislado.
+3. Verificar que el worker de la cola **`viafirma-poll`** está activo: `sudo supervisorctl status matricerts-prod-worker-viafirma:*` (desde el fix de 2026-08-19, el polling ya NO corre en `default` — si el programa Supervisor dedicado no existe/está caído, los jobs se acumulan sin nadie que los procese)
+4. Si el volumen de huérfanas es alto y persistente (no baja tras el watchdog), sospechar de contención de cola (ver `jobs` table: `SELECT queue, COUNT(*) FROM jobs GROUP BY queue;`) o caída sostenida del worker dedicado, no de un caso aislado.
 
 ---
 
