@@ -458,25 +458,34 @@ export class RequestInProcessViewComponent {
 
 	// ─── Re-descarga Viafirma ────────────────────────────────────────────────
 
+	/**
+	 * Determina si el estado de Viafirma permite mostrar el botón de re-descarga.
+	 * Visible: ASSEMBLED, COMPLETED, DOWNLOADED
+	 * (FAILED/FAILED_RECOVERABLE excluidos: el backend ya no soporta re-descarga
+	 * en esos estados, intentarlo genera error)
+	 */
 	protected get canShowRedownload(): boolean {
 		const visibleStates = [
 			ViafirmaInternalStateEnum.ASSEMBLED,
 			ViafirmaInternalStateEnum.COMPLETED,
-			// ViafirmaInternalStateEnum.FAILED,
-			// ViafirmaInternalStateEnum.FAILED_RECOVERABLE,
 			ViafirmaInternalStateEnum.DOWNLOADED
 		];
-		return visibleStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum);
+		return visibleStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum)
+			&& !(this.currentShipping.request_status === DocumentStatusEnum.PROCESSED);
 	}
 
+	/**
+	 * Determina si el botón de re-descarga está habilitado (no disabled).
+	 * Habilitado: ASSEMBLED, COMPLETED, DOWNLOADED
+	 */
 	protected get canRedownload(): boolean {
 		const allowedStates = [
 			ViafirmaInternalStateEnum.ASSEMBLED,
 			ViafirmaInternalStateEnum.COMPLETED,
-			ViafirmaInternalStateEnum.DOWNLOADED,
-			// ViafirmaInternalStateEnum.FAILED_RECOVERABLE
+			ViafirmaInternalStateEnum.DOWNLOADED
 		];
-		return allowedStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum);
+		return allowedStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum)
+			&& !(this.currentShipping.request_status === DocumentStatusEnum.PROCESSED);
 	}
 
 	/**
@@ -606,7 +615,16 @@ export class RequestInProcessViewComponent {
 				error: (err) => {
 					this.mask.hideBlockUI();
 					this.isRedownloading = false;
-					this.msg.errorMessage('Error', 'No se pudo re-descargar el certificado.');
+					const status = err?.status;
+					const messages: Record<number, string> = {
+						403: 'No tiene permisos para realizar esta operación.',
+						404: 'No se encontró el trámite de certificado.',
+						409: `El certificado aún no está disponible para descarga. Estado: ${err?.error?.remote_status ?? 'desconocido'}`,
+						422: 'La llave privada fue purgada. Contacte al soporte para una nueva emisión.',
+						502: 'Error de comunicación con Viafirma. Intente nuevamente en unos minutos.',
+					};
+					this.msg.errorMessage('Error en re-descarga', messages[status] ?? 'Error inesperado. Contacte al soporte técnico.');
+					this.debug.error('RequestInProcessViewComponent', 'Error en re-descarga Viafirma', err);
 				}
 			});
 		});
@@ -614,7 +632,7 @@ export class RequestInProcessViewComponent {
 
 	protected copyPin(): void {
 		if (!this.redownloadResult?.pin) return;
-		this.copyToClipboard(this.redownloadResult.pin, 'PIN copiado', () => {
+		this.copyToClipboard(this.redownloadResult.pin, 'PIN copiado al portapapeles', () => {
 			this.pinCopied = true;
 			setTimeout(() => this.pinCopied = false, 3000);
 		});

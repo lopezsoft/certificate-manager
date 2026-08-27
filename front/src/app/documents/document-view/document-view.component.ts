@@ -135,6 +135,7 @@ export class DocumentViewComponent implements OnDestroy {
 		'accreditation_check',
 		'accreditation_completed',
 		'accreditation_verified',
+		'accreditation_rejected'
 	];
 	private viafirmaPolling$: Subscription | null = null;
 	private destroy$ = new Subject<void>();
@@ -512,14 +513,14 @@ export class DocumentViewComponent implements OnDestroy {
 
 	/**
 	 * Determina si el estado de Viafirma permite mostrar el botón de re-descarga.
-	 * Visible: ASSEMBLED, COMPLETED, FAILED, DOWNLOADED
+	 * Visible: ASSEMBLED, COMPLETED, DOWNLOADED
+	 * (FAILED/FAILED_RECOVERABLE excluidos: el backend ya no soporta re-descarga
+	 * en esos estados, intentarlo genera error)
 	 */
 	protected get canShowRedownload(): boolean {
 		const visibleStates = [
 			ViafirmaInternalStateEnum.ASSEMBLED,
 			ViafirmaInternalStateEnum.COMPLETED,
-			ViafirmaInternalStateEnum.FAILED,
-			ViafirmaInternalStateEnum.FAILED_RECOVERABLE,
 			ViafirmaInternalStateEnum.DOWNLOADED
 		];
 		return visibleStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum)
@@ -534,8 +535,7 @@ export class DocumentViewComponent implements OnDestroy {
 		const allowedStates = [
 			ViafirmaInternalStateEnum.ASSEMBLED,
 			ViafirmaInternalStateEnum.COMPLETED,
-			ViafirmaInternalStateEnum.DOWNLOADED,
-			ViafirmaInternalStateEnum.FAILED_RECOVERABLE
+			ViafirmaInternalStateEnum.DOWNLOADED
 		];
 		return allowedStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum)
 			&& !(this.currentShipping.request_status === DocumentStatusEnum.PROCESSED);
