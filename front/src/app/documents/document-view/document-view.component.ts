@@ -599,11 +599,10 @@ export class DocumentViewComponent implements OnDestroy {
 	 * Descripción legible del sub-estado remoto actual (ver ViafirmaRemoteStatusDescription).
 	 * Varios remote_status distintos colapsan al mismo internal_state POLLING; esta
 	 * etiqueta es la única forma de explicar qué está pasando realmente durante la espera.
-	 * Se oculta durante la familia de acreditación porque el CTA de KYC ya lo explica.
 	 */
 	protected get remoteStatusLabel(): string | null {
 		const remoteStatus = this.viafirmaStatus?.remote_status;
-		if (!remoteStatus || this.isInAccreditationFamily) {
+		if (!remoteStatus) {
 			return null;
 		}
 		return ViafirmaRemoteStatusDescription[remoteStatus] || null;

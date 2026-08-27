@@ -462,8 +462,8 @@ export class RequestInProcessViewComponent {
 		const visibleStates = [
 			ViafirmaInternalStateEnum.ASSEMBLED,
 			ViafirmaInternalStateEnum.COMPLETED,
-			ViafirmaInternalStateEnum.FAILED,
-			ViafirmaInternalStateEnum.FAILED_RECOVERABLE,
+			// ViafirmaInternalStateEnum.FAILED,
+			// ViafirmaInternalStateEnum.FAILED_RECOVERABLE,
 			ViafirmaInternalStateEnum.DOWNLOADED
 		];
 		return visibleStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum);
@@ -474,7 +474,7 @@ export class RequestInProcessViewComponent {
 			ViafirmaInternalStateEnum.ASSEMBLED,
 			ViafirmaInternalStateEnum.COMPLETED,
 			ViafirmaInternalStateEnum.DOWNLOADED,
-			ViafirmaInternalStateEnum.FAILED_RECOVERABLE
+			// ViafirmaInternalStateEnum.FAILED_RECOVERABLE
 		];
 		return allowedStates.includes(this.viafirmaStatus?.internal_state.toUpperCase() as ViafirmaInternalStateEnum);
 	}
@@ -532,12 +532,11 @@ export class RequestInProcessViewComponent {
 	}
 
 	/**
-	 * Descripción legible del sub-estado remoto actual. Se oculta durante la
-	 * familia de acreditación porque el CTA de KYC ya lo explica.
+	 * Descripción legible del sub-estado remoto actual.
 	 */
 	protected get remoteStatusLabel(): string | null {
 		const remoteStatus = this.viafirmaStatus?.remote_status;
-		if (!remoteStatus || this.isInAccreditationFamily) {
+		if (!remoteStatus) {
 			return null;
 		}
 		return ViafirmaRemoteStatusDescription[remoteStatus] || null;

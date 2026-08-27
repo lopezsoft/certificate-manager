@@ -259,7 +259,7 @@
           </small>
           }
           @if (issuanceStatus.provider) {
-          <small class="text-muted">{{ issuanceStatus.provider | uppercase }}</small>
+          <small class="text-muted">{{ issuanceStatus.data.remote_status | uppercase }}</small>
           }
         </div>
       </div>
@@ -306,7 +306,7 @@
 
           <!-- Bloque de error -->
           @if (isIssuanceFailed) {
-          <div class="alert alert-danger d-flex align-items-center py-2 px-3 mb-2">
+          <div class="alert alert-danger d-flex align-items-center py-2 px-3 mb-1">
             <i class="fas fa-exclamation-triangle me-2"></i>
             <div>
               <strong>{{
@@ -322,13 +322,13 @@
 
           <!-- CTA de verificación de identidad (KYC) -->
           @if (showKycAccreditation) {
-          <div class="kyc-callout mb-2">
+          <div class="kyc-callout mb-1">
             <span class="kyc-callout-icon"><i class="fas fa-id-card"></i></span>
             <div class="kyc-callout-body">
               @if (isAccreditationRejected) {
               <strong>Verificación de identidad rechazada</strong>
               <span class="text-muted d-block small mt-1">
-                La verificación no superó la validación. Requiere intervención de los operadores RA.
+                La verificación no superó la validación. El cliente debe volver a intentar la acreditación KYC.
               </span>
               } @else {
               <strong>Verificación de identidad pendiente</strong>
@@ -354,7 +354,7 @@
           }
 
           <!-- Acciones: sin gating de admin, esta vista ya requiere rol admin -->
-          <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+          <div class="d-flex flex-wrap align-items-center gap-2 mt-1">
             <button class="btn btn-outline-primary btn-sm issuance-refresh-btn"
               (click)="onCheckIssuanceStatus()" [disabled]="issuanceLoading">
               @if (issuanceLoading) {
