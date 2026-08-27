@@ -290,7 +290,7 @@
             }
           </div>
           @if (remoteStatusLabel) {
-          <p class="text-muted small mb-2">
+          <p class="text-muted small mb-50">
             <i class="fas fa-info-circle me-1"></i>{{ remoteStatusLabel }}
           </p>
           }
@@ -298,7 +298,7 @@
 
           <!-- Chip de expiración -->
           @if (expirationInfo) {
-          <span class="badge mb-2" [class]="expirationInfo.badgeClass">
+          <span class="badge mb-50" [class]="expirationInfo.badgeClass">
             <i class="fas fa-hourglass-half me-1"></i> {{ expirationInfo.label
             }}
           </span>
@@ -328,7 +328,7 @@
               @if (isAccreditationRejected) {
               <strong>Verificación de identidad rechazada</strong>
               <span class="text-muted d-block small mt-1">
-                La verificación no superó la validación. El cliente debe volver a intentar la acreditación KYC.
+                La verificación no superó la validación. Requiere intervención de los operadores RA.
               </span>
               } @else {
               <strong>Verificación de identidad pendiente</strong>
