@@ -32,6 +32,7 @@ export const ViafirmaInternalStateDescription: Record<string, string> = {
  * Claves tal como las envía la API de Viafirma (ver RemoteStatus.php del backend).
  */
 export const ViafirmaRemoteStatusDescription: Record<string, string> = {
+  // Progressing (manual RA §2.3.4)
   rues_check: 'Validando datos en el RUES',
   accreditation: 'Esperando verificación de identidad (KYC)',
   accreditation_check: 'Validando su verificación de identidad',
@@ -41,10 +42,19 @@ export const ViafirmaRemoteStatusDescription: Record<string, string> = {
   proposedToAcceptance: 'Esperando aceptación de un operador de decisión',
   All_Ok: 'Aprobado, en cola para inscripción en la CA',
   inProcess: 'Firmando el certificado en la CA (máx. 5 min)',
-  rues_error: 'Error en validación RUES: requiere intervención del operador',
-  accreditation_rejected: 'Verificación de identidad rechazada',
+  // Listo para descargar
   Generated_Not_Downloaded: 'Certificado generado, listo para descargar',
   signedContract: 'Contrato firmado; el certificado puede descargarse',
+  Cite_To_Finish: 'Contrato en trámite; el certificado ya puede descargarse',
+  processingContract: 'Contrato en trámite; el certificado ya puede descargarse',
+  // Bloqueante — requiere intervención de un operador RA
+  rues_error: 'Error en validación RUES: requiere intervención del operador',
+  accreditation_rejected: 'Verificación de identidad rechazada',
+  collate_data: 'Los datos del suscriptor no coinciden: requiere revisión de un operador RA',
+  checking: 'En revisión manual por un operador RA',
+  docRequired: 'El operador RA solicitó documentación adicional al suscriptor',
+  docUploaded: 'Documentación recibida; en espera de revisión del operador RA',
+  // Terminal
   Generated_And_Downloaded: 'Certificado descargado',
   fail: 'El trámite falló de forma irrecuperable',
 };

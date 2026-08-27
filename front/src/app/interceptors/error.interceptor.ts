@@ -19,15 +19,18 @@ export class ErrorInterceptor implements HttpInterceptor {
       catchError((error: HttpErrorResponse) => {
         const _auth = this.accessToken;
 
-        // Solo limpiar sesión y redirigir al login si el usuario TENÍA una sesión activa
-        // (había un token) pero el servidor la rechazó. NO aplica en rutas públicas
-        // como /register o /login donde no hay token.
-        if ([401, 403].indexOf(error.status) !== -1) {
+        // HTTP 401: Unauthorized — siempre redirigir a not-authorized para que el usuario
+        // pueda restablecer acceso (limpiar sesión local y reintentar login).
+        if (error.status === 401) {
+          this._router.navigate(['/auth/not-authorized']);
+          return throwError(() => error);
+        }
+
+        // HTTP 403: Forbidden — usuario autenticado pero sin permisos suficientes
+        if (error.status === 403) {
           if (_auth?.isAuthenticated()) {
-            // Sesión expirada o sin permisos — limpiar y redirigir
             this.clearSessionData();
           } else {
-            // Ruta pública con credenciales inválidas — solo mostrar error
             this._router.navigate(['/auth/not-authorized']);
           }
         }

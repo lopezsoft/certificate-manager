@@ -51,6 +51,7 @@ export class DocumentViewComponent implements OnDestroy {
 	protected readonly DocumentStatusComments = DocumentStatusComments;
 	protected readonly ViafirmaInternalStateEnum = ViafirmaInternalStateEnum;
 	protected readonly viafirmaInternalStateDescription = ViafirmaInternalStateDescription;
+	protected readonly viafirmaRemoteStatusDescription = ViafirmaRemoteStatusDescription;
 	protected canAddFile: boolean;
 	protected files = [];
 	protected formData: FormData;

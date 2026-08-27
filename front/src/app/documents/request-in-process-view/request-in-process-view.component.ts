@@ -51,6 +51,7 @@ export class RequestInProcessViewComponent {
 	protected readonly DocumentStatusEnum = DocumentStatusEnum;
 	protected readonly ViafirmaInternalStateEnum = ViafirmaInternalStateEnum;
 	protected readonly viafirmaInternalStateDescription = ViafirmaInternalStateDescription;
+	protected readonly viafirmaRemoteStatusDescription = ViafirmaRemoteStatusDescription;
 	protected canRejectRequest: boolean = false;
 	protected canAddFile: boolean;
 	protected files = [];

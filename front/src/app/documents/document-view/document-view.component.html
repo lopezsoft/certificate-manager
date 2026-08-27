@@ -562,8 +562,9 @@
               <strong>{{
                 viafirmaInternalStateDescription[viafirmaStatus.internal_state]
                 || viafirmaStatus.internal_state }}</strong>
-              @if (viafirmaStatus?.last_error_message) {
-              <span class="small d-block">{{ viafirmaStatus.last_error_message }}</span>
+              @if (viafirmaStatus?.last_error_message || viafirmaRemoteStatusDescription[viafirmaStatus?.remote_status]) {
+              <span class="small d-block">{{ viafirmaStatus.last_error_message ||
+                viafirmaRemoteStatusDescription[viafirmaStatus.remote_status] }}</span>
               }
             </div>
           </div>
