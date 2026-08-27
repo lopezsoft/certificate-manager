@@ -5,6 +5,32 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [2.1.0] - 2026-08-26
+
+### Añadido
+
+- **Validaciones específicas de Viafirma** en `create-request` para Persona Jurídica y Persona Natural (nombre, apellidos, correo, N.I.T, dirección e identificación) según los perfiles oficiales del proveedor
+- **Checkbox obligatorio de aceptación** de la Política de Servicios de Certificación de Viafirma, con enlace al documento PDS
+- **Carga de 1 a 3 documentos de soporte** para Persona Jurídica cuando el tipo de documento constitutivo es "Sin RUES"
+- **Campos de confirmación** (re-escritura) para N.I.T, número de documento y correo del representante legal, para detectar errores de tipeo antes de enviar la solicitud
+- **Número de celular obligatorio** en el flujo Viafirma, con aviso de que debe tener WhatsApp
+- **Tabla completa de `remote_status`** (`ViafirmaRemoteStatusDescription`): se agregaron los códigos `Cite_To_Finish`, `processingContract`, `collate_data`, `checking`, `docRequired` y `docUploaded`
+- **Manejo diferenciado del estado `accreditation_rejected`**: el bloque de verificación de identidad (KYC) ahora distingue entre "pendiente" y "rechazada" (esta última requiere intervención de los operadores RA), en `document-view` y `request-in-process-view`
+
+### Cambiado
+
+- **`remoteStatusLabel`** ahora se muestra siempre, incluyendo durante la familia de estados de acreditación (antes se ocultaba)
+- **Bloque de error de emisión**: usa `ViafirmaRemoteStatusDescription` como *fallback* cuando el backend no envía un `last_error_message` específico
+- **HTTP 401 (Unauthorized)**: ahora siempre redirige a `/auth/not-authorized` para que el usuario pueda restablecer acceso
+- Formulario de solicitud más compacto para Viafirma: se ocultó el teléfono fijo (redundante con el celular obligatorio), la información adicional y avisos redundantes; se acortó la nota del correo del representante legal
+
+### Corregido
+
+- **`create-request`**: al enviar la solicitud se sobrescribía el tipo de documento constitutivo a "Con RUES" aunque el usuario hubiera seleccionado "Sin RUES"
+- **Re-descarga de certificado**: `document-view` permitía re-descargar en estados `FAILED`/`FAILED_RECOVERABLE`, que el backend ya no soporta (genera error); se alineó con `request-in-process-view`
+- **`request-in-process-view`**: faltaba el guard que oculta la re-descarga cuando `request_status === PROCESSED`, y el manejo de errores era genérico en vez de mensajes específicos por código HTTP (403/404/409/422/502)
+- **`document-view`**: faltaba `accreditation_rejected` en la familia de estados de acreditación, por lo que el bloque KYC nunca se mostraba en ese estado
+
 ## [2.0.0] - 2026-08-19
 
 ### Añadido

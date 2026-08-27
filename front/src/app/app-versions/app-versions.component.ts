@@ -26,6 +26,41 @@ export class AppVersionsComponent implements OnInit {
     this.versiones = [
       {
         isShow: true,
+        number: '2.1.0',
+        date: '26-AGO-2026',
+        changes: [
+          {
+            type: 'caracteristica',
+            description: 'Tabla completa de sub-estados remotos de Viafirma: se agregaron los códigos Cite_To_Finish, processingContract, collate_data, checking, docRequired y docUploaded'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Manejo diferenciado del estado "Verificación de identidad rechazada" (accreditation_rejected): mensaje claro de que requiere intervención de los operadores RA'
+          },
+          {
+            type: 'mejora',
+            description: 'La descripción del sub-estado remoto ahora se muestra siempre, incluso durante la verificación de identidad (antes se ocultaba)'
+          },
+          {
+            type: 'mejora',
+            description: 'El bloque de error de emisión ahora muestra una descripción automática del estado remoto cuando el backend no envía un mensaje específico'
+          },
+          {
+            type: 'bug',
+            description: 'Corregido: HTTP 401 (sesión no autorizada) ahora redirige siempre a la página de restablecer acceso'
+          },
+          {
+            type: 'bug',
+            description: 'Corregido: la re-descarga de certificado permitía reintentarse en estados que el backend ya no soporta, generando error'
+          },
+          {
+            type: 'bug',
+            description: 'Corregido: la vista de administrador de solicitudes en proceso no ocultaba la re-descarga cuando la solicitud ya estaba procesada, y mostraba mensajes de error genéricos'
+          }
+        ]
+      },
+      {
+        isShow: true,
         number: '2.0.0',
         date: '19-AGO-2026',
         changes: [
