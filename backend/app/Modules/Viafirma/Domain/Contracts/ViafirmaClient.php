@@ -97,5 +97,32 @@ interface ViafirmaClient
      * @throws \App\Modules\Viafirma\Domain\Exceptions\ViafirmaClientException
      */
     public function getRevocationCode(string $codRequest): string;
+
+    /**
+     * POST /files/upload/
+     *
+     * Anexa documentos de soporte a una solicitud en curso (manual RA §2.3.7).
+     * Requerido para organizaciones sin RUES, donde la verificación automática
+     * no puede completarse y se requiere revisión manual del operador RA.
+     *
+     * @param array<int, array{name: string, base64: string}> $files
+     * @return array<int, array{id: string, name: string, uploadedByUser: bool, size: int, dateAdded: int}>
+     *
+     * @throws \App\Modules\Viafirma\Domain\Exceptions\ViafirmaClientException
+     * @throws \App\Modules\Viafirma\Domain\Exceptions\TransientHttpException
+     */
+    public function uploadFiles(string $codRequest, array $files): array;
+
+    /**
+     * GET /files/list/{codRequest}
+     *
+     * Lista los documentos ya adjuntos a una solicitud (subidos vía API o
+     * desde el panel del operador RA — ver campo `uploadedByUser`).
+     *
+     * @return array<int, array{id: string, name: string, uploadedByUser: bool, size: int, dateAdded: int}>
+     *
+     * @throws \App\Modules\Viafirma\Domain\Exceptions\ViafirmaClientException
+     */
+    public function listFiles(string $codRequest): array;
 }
 

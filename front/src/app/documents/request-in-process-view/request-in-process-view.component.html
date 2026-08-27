@@ -321,12 +321,36 @@
           }
 
           <!-- CTA de verificación de identidad (KYC) -->
-          @if (showKycAccreditation) {
+          <!-- Estado: Acreditación rechazada — requiere intervención de RA -->
+          @if (isAccreditationRejected && viafirmaStatus) {
+          <div class="alert alert-danger mb-2">
+            <span class="me-2"><i class="fas fa-exclamation-triangle"></i></span>
+            <strong>Verificación de identidad rechazada</strong>
+            <div class="mt-2 small">
+              <p class="mb-2">
+                La verificación de identidad del suscriptor no superó la validación. Los operadores de la RA deben revisar el caso.
+              </p>
+              <p class="mb-0 text-muted">
+                <strong>Nota:</strong> En caso de rechazo, se requiere la participación de los operadores RA para revisar y resolver el caso antes de continuar con el trámite.
+              </p>
+            </div>
+          </div>
+          }
+
+          <!-- Estado: Acreditación en progreso — cliente debe completar verificación -->
+          @if (showKycAccreditation && !isAccreditationRejected) {
           <div class="kyc-callout mb-2">
             <span class="kyc-callout-icon"><i class="fas fa-id-card"></i></span>
             <div class="kyc-callout-body">
               <strong>Verificación de identidad pendiente</strong>
-              <span class="text-muted d-block">El cliente debe completar su acreditación KYC.</span>
+              <div class="text-muted small mt-1">
+                <p class="mb-1">
+                  La RA ha remitido al correo informado en la solicitud un enlace con el que el suscriptor iniciará el proceso desatendido de verificación de identidad.
+                </p>
+                <p class="mb-0">
+                  <strong>Importante:</strong> El suscriptor debe tener a mano su cédula o pasaporte informado en la solicitud.
+                </p>
+              </div>
             </div>
             <div class="kyc-callout-actions">
               <a class="btn btn-sm btn-primary" [href]="viafirmaStatus.kyc_accreditation_link"

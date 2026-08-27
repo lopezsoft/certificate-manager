@@ -129,6 +129,7 @@ export class RequestInProcessViewComponent {
 		'accreditation_check',
 		'accreditation_completed',
 		'accreditation_verified',
+		'accreditation_rejected'
 	];
 	private viafirmaPolling$: Subscription | null = null;
 	private destroy$ = new Subject<void>();
@@ -521,6 +522,13 @@ export class RequestInProcessViewComponent {
 	private get isInAccreditationFamily(): boolean {
 		const remoteStatus = this.viafirmaStatus?.remote_status?.toLowerCase();
 		return this.accreditationRemoteStatuses.includes(remoteStatus);
+	}
+
+	/**
+	 * Detecta si la acreditación KYC fue rechazada (verificación fallida).
+	 */
+	protected get isAccreditationRejected(): boolean {
+		return this.viafirmaStatus?.remote_status?.toLowerCase() === 'accreditation_rejected';
 	}
 
 	/**

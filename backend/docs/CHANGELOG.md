@@ -9,6 +9,34 @@ El versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Añadido — Viafirma: anexar documentos de soporte para organizaciones sin RUES (manual RA §2.3.7)
+
+- **Contexto:** organizaciones con `entity_document_type_id = 99` (sin Registro Mercantil — consorcios, propiedad horizontal sin RUES, etc.) no pueden completar la verificación automática de Viafirma. El manual RA requiere adjuntar documentación de soporte (acta de constitución, nombramiento de administrador) para revisión manual — confirmado directamente con soporte de Viafirma.
+- **`ViafirmaClient`:** nuevos métodos `uploadFiles()` (`POST /files/upload/`) y `listFiles()` (`GET /files/list/{codRequest}`), implementados en `GuzzleViafirmaClient` y `MockViafirmaClient` (sandbox).
+- **`UploadSupportingDocumentsJob`** (nuevo, cola `viafirma-poll`): reutiliza los archivos ya adjuntos a la solicitud vía `POST /certificate-request/{id}/files` (`document_type=ATTACHED`, flujo existente — no se creó un endpoint de carga nuevo), los codifica en base64 y los sube a Viafirma. Idempotente: consulta `listFiles()` primero para no volver a subir archivos con el mismo nombre.
+- **Trigger:** `IssueCertificateUseCase` lo despacha automáticamente (20s de delay) justo después de someter el CSR, cuando `certificate_requests.entity_document_type_id === 99` — no se espera a un estado de error (`docRequired`/`rues_error`), ya que estas solicitudes fallarán la verificación automática por diseño.
+
+### Añadido — Viafirma: certificado emitido a nombre de titular distinto (validación de identidad post-emisión)
+
+- **Incidente real:** Viafirma aprobó una biometría de acreditación equivocada (esposa en vez del titular del CSR) y emitió el certificado a nombre de la persona incorrecta (solicitud A152B9Q7L). Error del lado del proveedor, no de nuestro código — pero nosotros entregamos el P12 sin detectarlo.
+- **`OpenSslCryptoService`:** nuevos métodos `extractSubjectIdentity()` (serialNumber del certificado emitido) y `extractCsrSubjectIdentity()` (serialNumber de la CSR original). `assembleP12()` refactorizado para compartir la lógica de localización del certificado de entidad final (`findEndEntityCertificate()`) sin cambiar su comportamiento.
+- **`IdentityMismatchException`** — nueva excepción de dominio, terminal y no reintentable.
+- **`AssembleP12Job`** y **`RedownloadCertificateUseCase`**: antes de generar/regenerar el P12, comparan el `serialNumber` de la CSR real almacenada contra el del certificado emitido. Si no coinciden: `FAILED`/`IDENTITY_MISMATCH`, log `critical`, **no se genera el P12** ni se reintenta automáticamente (evita que `AutoRedownloadPendingViafirmaJob` lo reintente sin sentido — el resultado nunca cambiaría).
+- **Corrección durante la verificación:** la primera versión comparaba contra `request_payload['identity']` (`$cr->document_number`), pero el `serialNumber` de la CSR se construye con `$cr->dni` — campos distintos para FE-PJ (NIT vs. cédula del representante). Habría bloqueado certificados FE-PJ legítimos. Corregido comparando contra la CSR real (`csr_pem`), no contra un campo de negocio. Verificado end-to-end con OpenSSL real (CSR + certificado autofirmado sintéticos, sin tocar BD): caso "mismo titular" → match correcto; caso "titular distinto" → mismatch detectado.
+
+### Añadido — Nombre de archivo de certificados legible por titular
+
+- **Problema:** `{id}_{cod_request}.p12` (ej. `1184_A152B9Q7L.p12`) dificultaba identificar a quién pertenece un archivo descargado.
+- **Fix:** `{slug(company_name)}_{id}` (ej. `edward-geovanny-vasco-gallego_1184.p12`) en `AssembleP12Job` (P12+ZIP), `DownloadP7bJob` (P7B) y `RedownloadCertificateUseCase` (P12+ZIP). `Str::slug()` quita acentos/ñ/puntos automáticamente. Fallback al formato anterior si `company_name` viene vacío. Los archivos ya existentes no se renombran (evita romper referencias en BD).
+
+### Añadido — Viafirma: mapeo de estados remotos faltantes (manual RA actualizado 2026-08-21)
+
+- **Riesgo encontrado:** un código remoto no reconocido por `RemoteStatus` hace que `GuzzleViafirmaClient::getStatus()` lance excepción — el job cae en el hook `failed()` y reintenta cada 30s **indefinidamente sin avanzar**, porque el estado real nunca se reconoce. El manual actualizado documenta varios códigos que no estaban mapeados.
+- **Nuevos casos en `RemoteStatus`:** `collate_data`, `checking`, `docRequired`, `docUploaded` → `isStopRecoverable()` (igual que `rues_error`/`accreditation_rejected`, requieren operador RA, polling continúa cada 5 min). `Cite_To_Finish`, `processingContract` → `isReadyToDownload()` (sub-estados de `signedContract`, no bloquean la descarga del P7B).
+- Mensajes descriptivos agregados en `StateMachine::buildErrorMessage()` para los 4 estados bloqueantes nuevos.
+- Verificado exhaustivamente: los 20 casos de `RemoteStatus::cases()` mapean a un `InternalState` sin excepción (`toInternalState()` es un `match` sin `default`, así que cualquier caso sin categorizar habría lanzado `UnhandledMatchError` — confirmado que no ocurre).
+- Documentación: tabla completa de estados agregada a `docs/runbooks/viafirma-incidents.md` §5.1.
+
 ### Corregido — Viafirma: polling se detenía solo (expiración) y perdía certificados ya generados
 
 - **Bug principal:** `PollViafirmaStatusJob` marcaba la solicitud como `EXPIRED` (estado terminal) al superar SLA/intentos/`expires_at`, deteniendo el polling **para siempre** — incluso si Viafirma ya tenía el certificado listo (`Generated_Not_Downloaded`). Caso real: solicitud 1138 (LCCH SERVICIOS SAS), certificado generado pero nunca descargado porque el sistema dejó de consultar.

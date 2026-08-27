@@ -33,10 +33,19 @@ enum RemoteStatus: string
     // ── Stop — requiere intervención de operador RA ──────────────────────
     case RUES_ERROR              = 'rues_error';
     case ACCREDITATION_REJECTED  = 'accreditation_rejected';
+    case COLLATE_DATA            = 'collate_data';
+    case CHECKING                = 'checking';
+    case DOC_REQUIRED            = 'docRequired';
+    case DOC_UPLOADED            = 'docUploaded';
 
     // ── Ready — certificado listo para descarga ──────────────────────────
     case GENERATED_NOT_DOWNLOADED = 'Generated_Not_Downloaded';
     case SIGNED_CONTRACT           = 'signedContract';
+    // Sub-estados de signedContract (manual RA §2.3.4.1): procesan el contrato
+    // ONAC en paralelo, no interfieren con la tramitación del certificado y
+    // permiten (re)descargar el P7B igual que signedContract.
+    case CITE_TO_FINISH            = 'Cite_To_Finish';
+    case PROCESSING_CONTRACT       = 'processingContract';
 
     // ── Terminal OK — flujo completado ────────────────────────────────────
     case GENERATED_AND_DOWNLOADED = 'Generated_And_Downloaded';
@@ -71,20 +80,26 @@ enum RemoteStatus: string
         return in_array($this, [
             self::RUES_ERROR,
             self::ACCREDITATION_REJECTED,
+            self::COLLATE_DATA,
+            self::CHECKING,
+            self::DOC_REQUIRED,
+            self::DOC_UPLOADED,
         ], true);
     }
 
     /**
      * El certificado está listo para descarga del P7B.
-     * Cubre dos casos:
-     * - GENERATED_NOT_DOWNLOADED: flujo normal, P7B generado pero no descargado
-     * - SIGNED_CONTRACT: estado final de Viafirma, P7B disponible para descarga tardía
+     * Cubre: GENERATED_NOT_DOWNLOADED (flujo normal), SIGNED_CONTRACT y sus
+     * sub-estados CITE_TO_FINISH/PROCESSING_CONTRACT (contrato ONAC en
+     * paralelo, no bloquea la descarga del P7B).
      */
     public function isReadyToDownload(): bool
     {
         return in_array($this, [
             self::GENERATED_NOT_DOWNLOADED,
             self::SIGNED_CONTRACT,
+            self::CITE_TO_FINISH,
+            self::PROCESSING_CONTRACT,
         ], true);
     }
 

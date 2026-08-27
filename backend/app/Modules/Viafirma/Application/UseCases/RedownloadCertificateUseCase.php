@@ -128,6 +128,44 @@ final class RedownloadCertificateUseCase
         // ── 7. Recuperar llave privada del KeyVault ──────────────────────────
         $privateKeyPem = $this->vault->retrieve($state->key_vault_ref);
 
+        // ── 7.bis Verificar que el certificado corresponda al titular solicitado ──
+        // Misma protección que AssembleP12Job — evita reentregar un certificado
+        // mal emitido (ej. error de validación de identidad del proveedor).
+        // Se compara contra la CSR real almacenada, no contra dni/document_number
+        // (campos distintos entre sí para FE-PJ — ver nota en AssembleP12Job).
+        $expectedIdentity = $state->csr_pem ? $this->crypto->extractCsrSubjectIdentity($state->csr_pem) : null;
+        if ($expectedIdentity !== null) {
+            $actualIdentity = $this->crypto->extractSubjectIdentity($privateKeyPem, $p7bBinary);
+            if ($actualIdentity !== $expectedIdentity) {
+                $this->logger->critical('viafirma.redownload.identity_mismatch', [
+                    'viafirma_id'       => $entity->id,
+                    'cod_request'       => $entity->cod_request,
+                    'expected_identity' => $expectedIdentity,
+                    'actual_identity'   => $actualIdentity,
+                ]);
+
+                $state->internal_state     = InternalState::FAILED;
+                $state->last_error_code    = 'IDENTITY_MISMATCH';
+                $state->last_error_message = "El certificado emitido no coincide con el titular solicitado. Esperado: {$expectedIdentity}, recibido: " . ($actualIdentity ?? '(no disponible)') . '.';
+                $state->save();
+
+                ChangeHistory::create([
+                    'certificate_request_id' => $entity->certificate_request_id,
+                    'status'                 => CertificateRequestStatusEnum::REJECTED->value,
+                    'comments'               => $state->last_error_message . ' Requiere revocación y nueva solicitud.',
+                    'user_of_change'         => 'SYSTEM',
+                    'user_id'                => null,
+                ]);
+
+                throw new \App\Modules\Viafirma\Domain\Exceptions\IdentityMismatchException(
+                    expectedIdentity: (string) $expectedIdentity,
+                    actualIdentity:   $actualIdentity,
+                );
+            }
+        } else {
+            $this->logger->warning('viafirma.redownload.no_expected_identity', ['viafirma_id' => $entity->id]);
+        }
+
         // ── 8. Ensamblar nuevo P12 ───────────────────────────────────────────
         $friendlyName = $entity->cod_request ?? 'viafirma-cert';
         $p12Binary = $this->crypto->assembleP12(
@@ -154,8 +192,15 @@ final class RedownloadCertificateUseCase
         }
         
         $basePath = $cr->base_path;
-        $p12Filename = "{$entity->certificate_request_id}_{$entity->cod_request}.p12";
-        $zipFilename = $basePath . '/' . "{$entity->certificate_request_id}_{$entity->cod_request}.zip";
+
+        // Nombre legible por titular: {slug(company_name)}_{id} — consistente con
+        // AssembleP12Job/DownloadP7bJob. Fallback si no hay company_name.
+        $nameSlug    = Str::slug((string) ($cr->company_name ?? ''));
+        $baseName    = $nameSlug !== ''
+            ? "{$nameSlug}_{$entity->certificate_request_id}"
+            : "{$entity->certificate_request_id}_{$entity->cod_request}";
+        $p12Filename = "{$baseName}.p12";
+        $zipFilename = $basePath . '/' . "{$baseName}.zip";
 
         // Delete the old file if the path has changed (e.g. migration to new naming convention)
         if ($state->p12_storage_path && $state->p12_storage_path !== $zipFilename) {

@@ -262,6 +262,10 @@ final class StateMachine
         return match ($remote) {
             RemoteStatus::RUES_ERROR             => 'Error en validación RUES. Requiere intervención del operador RA.',
             RemoteStatus::ACCREDITATION_REJECTED  => 'Acreditación KYC rechazada por el operador RA.',
+            RemoteStatus::COLLATE_DATA            => 'Los datos del suscriptor no coinciden entre el formulario de RA y el software de acreditación. Requiere intervención del operador RA.',
+            RemoteStatus::CHECKING                => 'La solicitud está siendo revisada manualmente por un operador RA.',
+            RemoteStatus::DOC_REQUIRED             => 'Los operadores de RA solicitaron documentación adicional al suscriptor. Pendiente de que el suscriptor la suba.',
+            RemoteStatus::DOC_UPLOADED             => 'El suscriptor subió la documentación solicitada. Pendiente de revisión y avance manual por un operador RA.',
             RemoteStatus::FAIL                    => 'Viafirma reportó fallo terminal en el trámite.',
             default                               => 'Estado remoto: ' . $remote->value,
         };

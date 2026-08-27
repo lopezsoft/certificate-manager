@@ -24,6 +24,7 @@ use App\Modules\Viafirma\Domain\Mappers\IdentityTypeMapper;
 use App\Modules\Viafirma\Domain\Mappers\ProfileTypeMapper;
 use App\Modules\Viafirma\Infrastructure\Crypto\CsrBuilderFactory;
 use App\Modules\Viafirma\Infrastructure\Jobs\PollViafirmaStatusJob;
+use App\Modules\Viafirma\Infrastructure\Jobs\UploadSupportingDocumentsJob;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaStatusHistory;
 use Carbon\Carbon;
@@ -50,6 +51,14 @@ use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
  */
 final class IssueCertificateUseCase
 {
+    /**
+     * entity_document_types.id para organizaciones "sin RUES" (ej. consorcios,
+     * propiedad horizontal sin registro mercantil) — requieren adjuntar
+     * documentación de soporte para revisión manual del operador RA
+     * (manual RA §2.3.7).
+     */
+    private const SIN_RUES_ENTITY_DOCUMENT_TYPE_ID = 99;
+
     public function __construct(
         private readonly CryptoServiceContract $crypto,
         private readonly CsrBuilderFactory $csrBuilderFactory,
@@ -200,6 +209,16 @@ final class IssueCertificateUseCase
                 // Primer poll job — 15 s de delay para dar tiempo a que Viafirma procese
                 PollViafirmaStatusJob::dispatch($entity->id)
                     ->delay(now()->addSeconds(15));
+
+                // Organizaciones sin RUES (entity_document_type_id = 99): la verificación
+                // automática de Viafirma no puede completarse (no hay registro contra el
+                // cual validar), así que se adjunta de inmediato la documentación de
+                // soporte ya cargada en la solicitud (manual RA §2.3.7) para que el
+                // operador RA pueda revisarla manualmente sin esperar a un estado de error.
+                if ((int) $cr->entity_document_type_id === self::SIN_RUES_ENTITY_DOCUMENT_TYPE_ID) {
+                    UploadSupportingDocumentsJob::dispatch($entity->id)
+                        ->delay(now()->addSeconds(20));
+                }
 
                 $this->logger->info('viafirma.issue.success', [
                     'viafirma_id' => $entity->id,

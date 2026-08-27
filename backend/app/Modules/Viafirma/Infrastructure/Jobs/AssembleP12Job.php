@@ -105,6 +105,26 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
                 throw new \RuntimeException("P7B no encontrado en {$state->p7b_storage_path}");
             }
 
+            // 2.bis Verificar que el certificado emitido corresponda al titular solicitado.
+            // Protege contra errores de validación de identidad del lado del proveedor
+            // (ej. Viafirma aprueba la biometría de una persona distinta al CSR).
+            // Se compara contra la CSR real almacenada (csr_pem), no contra un campo de
+            // negocio (dni/document_number) — evita falsos positivos si esos campos no
+            // coinciden exactamente con lo que se puso en la CSR (ver FE-PJ: dni=NIT
+            // empresa vs. document_number=cédula del representante, campos distintos).
+            $expectedIdentity = $state->csr_pem ? $crypto->extractCsrSubjectIdentity($state->csr_pem) : null;
+            if ($expectedIdentity !== null) {
+                $actualIdentity = $crypto->extractSubjectIdentity($privateKeyPem, $p7bBinary);
+                if ($actualIdentity !== $expectedIdentity) {
+                    throw new \App\Modules\Viafirma\Domain\Exceptions\IdentityMismatchException(
+                        expectedIdentity: (string) $expectedIdentity,
+                        actualIdentity:   $actualIdentity,
+                    );
+                }
+            } else {
+                $logger->warning('viafirma.assemble.no_expected_identity', ['id' => $entity->id]);
+            }
+
             // 3. Generar PIN CSPRNG
             $exportPin = Str::random(32);
 
@@ -131,8 +151,15 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
             }
 
             // Crear ZIP con el P12
-             $p12Filename = "{$entity->certificate_request_id}_{$entity->cod_request}.p12";
-             $zipFilename = $basePath . '/' . "{$entity->certificate_request_id}_{$entity->cod_request}.zip";
+             // Nombre legible por titular: {slug(company_name)}_{id} — antes era
+             // {id}_{cod_request}, difícil de identificar a simple vista al descargar.
+             // Fallback al formato anterior si no hay company_name (no debería ocurrir).
+             $nameSlug    = Str::slug((string) ($entity->certificateRequest->company_name ?? ''));
+             $baseName    = $nameSlug !== ''
+                 ? "{$nameSlug}_{$entity->certificate_request_id}"
+                 : "{$entity->certificate_request_id}_{$entity->cod_request}";
+             $p12Filename = "{$baseName}.p12";
+             $zipFilename = $basePath . '/' . "{$baseName}.zip";
 
              // ── Guardar ZIP en local (como estaba originalmente) ────────────────────────────
              $zip = new \ZipArchive();
@@ -305,7 +332,32 @@ final class AssembleP12Job implements ShouldQueue, ShouldBeUnique
                  ));
              }
 
-         } catch (\Throwable $e) {
+         } catch (\App\Modules\Viafirma\Domain\Exceptions\IdentityMismatchException $e) {
+            // Fallo TERMINAL y no recuperable por reintento: revocar + nueva solicitud.
+            $logger->critical('viafirma.assemble.identity_mismatch', [
+                'id'                 => $entity->id,
+                'cod_request'        => $entity->cod_request,
+                'expected_identity'  => $e->expectedIdentity,
+                'actual_identity'    => $e->actualIdentity,
+            ]);
+
+            $state->internal_state     = InternalState::FAILED;
+            $state->last_error_code    = 'IDENTITY_MISMATCH';
+            $state->last_error_message = substr($e->getMessage(), 0, 500);
+            $state->save();
+
+            ChangeHistory::create([
+                'certificate_request_id' => $entity->certificate_request_id,
+                'status'                 => CertificateRequestStatusEnum::REJECTED->value,
+                'comments'               => "El certificado emitido no coincide con el titular solicitado (esperado: {$e->expectedIdentity}, recibido: " . ($e->actualIdentity ?? 'N/D') . '). Requiere revocación y nueva solicitud — NO se generó el P12.',
+                'user_of_change'         => 'SYSTEM',
+                'user_id'                => null,
+            ]);
+
+            // No relanzar: el job "tuvo éxito" al detectar y bloquear un certificado mal emitido.
+            // Relanzar activaría reintentos de cola sin sentido (el P7B nunca va a cambiar).
+            return;
+        } catch (\Throwable $e) {
             $logger->error('viafirma.assemble.failed', [
                 'id'    => $entity->id,
                 'error' => $e->getMessage(),

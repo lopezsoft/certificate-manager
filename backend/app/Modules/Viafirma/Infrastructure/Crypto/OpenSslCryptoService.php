@@ -102,14 +102,97 @@ final class OpenSslCryptoService implements CryptoServiceContract
             throw new CryptoException('El PIN de exportación del P12 no puede ser vacío.');
         }
 
-        // Extraer certificados del P7B (PKCS#7 / CMS bundle)
+        [$endEntityCert, $caChain, $privateKey] = $this->findEndEntityCertificate($privateKeyPem, $p7bDer);
+
+        // Ensamblar PKCS#12
+        $p12Binary = '';
+        $args = [
+            'friendly_name' => $friendlyName,
+        ];
+
+        $result = openssl_pkcs12_export(
+            certificate: $endEntityCert,
+            output:      $p12Binary,
+            private_key: $privateKey,
+            passphrase:  $exportPassword,
+            options:     empty($caChain) ? $args : array_merge($args, ['extracerts' => $caChain]),
+        );
+
+        if (!$result || $p12Binary === '') {
+            throw new CryptoException(
+                'openssl_pkcs12_export falló: ' . $this->collectOpenSslErrors()
+            );
+        }
+
+        return $p12Binary;
+    }
+
+    /**
+     * Extrae el `serialNumber` del subject del certificado de entidad final
+     * emitido por la CA — el número de documento del titular real del
+     * certificado, según lo que Viafirma efectivamente aprobó.
+     *
+     * Usado para detectar discrepancias entre el titular solicitado (CSR) y
+     * el titular al que la CA terminó emitiendo el certificado (ej. error de
+     * validación biométrica del lado del proveedor).
+     *
+     * @return string|null El `serialNumber` del subject, o null si el
+     *                      certificado no expone ese campo.
+     *
+     * @throws \App\Modules\Viafirma\Domain\Exceptions\CryptoException
+     */
+    public function extractSubjectIdentity(string $privateKeyPem, string $p7bDer): ?string
+    {
+        [$endEntityCert] = $this->findEndEntityCertificate($privateKeyPem, $p7bDer);
+
+        $parsed = @openssl_x509_parse($endEntityCert);
+        if ($parsed === false) {
+            throw new CryptoException(
+                'No se pudo parsear el certificado de entidad final: ' . $this->collectOpenSslErrors()
+            );
+        }
+
+        return $parsed['subject']['serialNumber'] ?? null;
+    }
+
+    /**
+     * Extrae el `serialNumber` del subject de la CSR original (lo que
+     * nosotros solicitamos), para compararlo contra {@see extractSubjectIdentity()}
+     * (lo que la CA efectivamente emitió). Comparar contra la CSR real evita
+     * depender de qué campo de negocio (`dni`, `document_number`, etc.) se usó
+     * al construirla — la CSR es la fuente de verdad exacta de lo enviado.
+     *
+     * @throws \App\Modules\Viafirma\Domain\Exceptions\CryptoException
+     */
+    public function extractCsrSubjectIdentity(string $csrPem): ?string
+    {
+        $csr = @openssl_csr_get_subject($csrPem);
+        if ($csr === false) {
+            throw new CryptoException(
+                'No se pudo parsear el subject de la CSR: ' . $this->collectOpenSslErrors()
+            );
+        }
+
+        return $csr['serialNumber'] ?? null;
+    }
+
+    /**
+     * Extrae del P7B el certificado cuya llave pública corresponde a
+     * $privateKeyPem (el titular real del certificado) y separa el resto
+     * como cadena CA.
+     *
+     * @return array{0: \OpenSSLCertificate, 1: \OpenSSLCertificate[], 2: \OpenSSLAsymmetricKey}
+     *
+     * @throws \App\Modules\Viafirma\Domain\Exceptions\CryptoException
+     */
+    private function findEndEntityCertificate(string $privateKeyPem, string $p7bDer): array
+    {
         $certs = $this->extractCertsFromP7b($p7bDer);
 
         if (empty($certs)) {
             throw new CryptoException('No se encontraron certificados en el bundle P7B.');
         }
 
-        // Separar certificado de entidad final (EE) de la cadena CA
         $privateKey = openssl_pkey_get_private($privateKeyPem);
         if ($privateKey === false) {
             throw new CryptoException(
@@ -140,27 +223,7 @@ final class OpenSslCryptoService implements CryptoServiceContract
             );
         }
 
-        // Ensamblar PKCS#12
-        $p12Binary = '';
-        $args = [
-            'friendly_name' => $friendlyName,
-        ];
-
-        $result = openssl_pkcs12_export(
-            certificate: $endEntityCert,
-            output:      $p12Binary,
-            private_key: $privateKey,
-            passphrase:  $exportPassword,
-            options:     empty($caChain) ? $args : array_merge($args, ['extracerts' => $caChain]),
-        );
-
-        if (!$result || $p12Binary === '') {
-            throw new CryptoException(
-                'openssl_pkcs12_export falló: ' . $this->collectOpenSslErrors()
-            );
-        }
-
-        return $p12Binary;
+        return [$endEntityCert, $caChain, $privateKey];
     }
 
     /**

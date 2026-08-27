@@ -589,6 +589,13 @@ export class DocumentViewComponent implements OnDestroy {
 	}
 
 	/**
+	 * Detecta si la acreditación KYC fue rechazada (verificación fallida).
+	 */
+	protected get isAccreditationRejected(): boolean {
+		return this.viafirmaStatus?.remote_status?.toLowerCase() === 'accreditation_rejected';
+	}
+
+	/**
 	 * Descripción legible del sub-estado remoto actual (ver ViafirmaRemoteStatusDescription).
 	 * Varios remote_status distintos colapsan al mismo internal_state POLLING; esta
 	 * etiqueta es la única forma de explicar qué está pasando realmente durante la espera.

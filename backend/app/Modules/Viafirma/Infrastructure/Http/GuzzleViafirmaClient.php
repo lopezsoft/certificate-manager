@@ -338,6 +338,59 @@ final class GuzzleViafirmaClient implements ViafirmaClient
         return $revocationCode;
     }
 
+    public function uploadFiles(string $codRequest, array $files): array
+    {
+        if ($codRequest === '') {
+            throw new ViafirmaClientException('codRequest no puede ser vacío.');
+        }
+        if (empty($files)) {
+            throw new ViafirmaClientException('Debe proveer al menos un archivo para adjuntar.');
+        }
+
+        $url = $this->urlFor('/files/upload/');
+
+        // API v3.4.53: la clave del payload es "codeRequest" (no "codRequest").
+        $payload = [
+            'codeRequest' => $codRequest,
+            'files'       => $files,
+        ];
+
+        $this->logger->info('viafirma.files.upload.request', [
+            'codRequest' => $codRequest,
+            'fileNames'  => array_column($files, 'name'),
+            'fileCount'  => count($files),
+        ]);
+
+        $decoded = $this->send('POST', $url, jsonBody: $payload);
+
+        $this->logger->info('viafirma.files.upload.response', [
+            'codRequest' => $codRequest,
+            'uploaded'   => array_column($decoded, 'name'),
+        ]);
+
+        return $decoded;
+    }
+
+    public function listFiles(string $codRequest): array
+    {
+        if ($codRequest === '') {
+            throw new ViafirmaClientException('codRequest no puede ser vacío.');
+        }
+
+        $url = $this->urlFor('/files/list/' . rawurlencode($codRequest));
+
+        $this->logger->info('viafirma.files.list.request', ['codRequest' => $codRequest, 'url' => $url]);
+
+        $decoded = $this->send('GET', $url);
+
+        $this->logger->info('viafirma.files.list.response', [
+            'codRequest' => $codRequest,
+            'count'      => count($decoded),
+        ]);
+
+        return $decoded;
+    }
+
     // ── Internals ────────────────────────────────────────────────────────────
 
     /**

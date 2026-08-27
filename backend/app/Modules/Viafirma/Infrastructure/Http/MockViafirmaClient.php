@@ -149,4 +149,32 @@ class MockViafirmaClient implements ViafirmaClient
     {
         return 'MOCK-REV-CODE-' . strtoupper(substr(md5($codRequest), 0, 8));
     }
+
+    public function uploadFiles(string $codRequest, array $files): array
+    {
+        $cacheKey = "mock_viafirma_files_{$codRequest}";
+        $existing = Cache::get($cacheKey, []);
+
+        $uploaded = [];
+        foreach ($files as $file) {
+            $record = [
+                'id'             => 'MOCK-FILE-' . strtoupper(uniqid()),
+                'name'           => $file['name'],
+                'uploadedByUser' => false,
+                'size'           => strlen((string) base64_decode($file['base64'], true)),
+                'dateAdded'      => (int) (microtime(true) * 1000),
+            ];
+            $existing[] = $record;
+            $uploaded[] = $record;
+        }
+
+        Cache::put($cacheKey, $existing, now()->addHours(2));
+
+        return $uploaded;
+    }
+
+    public function listFiles(string $codRequest): array
+    {
+        return Cache::get("mock_viafirma_files_{$codRequest}", []);
+    }
 }

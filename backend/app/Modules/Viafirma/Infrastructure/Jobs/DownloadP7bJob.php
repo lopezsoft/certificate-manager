@@ -111,7 +111,13 @@ final class DownloadP7bJob implements ShouldQueue, ShouldBeUnique
             );
         }
 
-        $filename = $basePath . '/' . "{$entity->certificate_request_id}_{$entity->cod_request}.p7b";
+        // Nombre legible por titular: {slug(company_name)}_{id} — consistente con
+        // el P12/ZIP generados por AssembleP12Job. Fallback si no hay company_name.
+        $nameSlug = \Illuminate\Support\Str::slug((string) ($entity->certificateRequest->company_name ?? ''));
+        $baseName = $nameSlug !== ''
+            ? "{$nameSlug}_{$entity->certificate_request_id}"
+            : "{$entity->certificate_request_id}_{$entity->cod_request}";
+        $filename = $basePath . '/' . "{$baseName}.p7b";
 
         Storage::disk($disk)->put($filename, $p7bBinary);
 

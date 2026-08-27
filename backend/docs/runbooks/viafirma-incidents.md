@@ -180,3 +180,49 @@ DRAFT → CSR_GENERATED → SUBMITTED → POLLING → READY_TO_DOWNLOAD → DOWN
 > `kyc_accreditation_link` y envía un correo automático a `companies.email` de
 > la empresa dueña de la solicitud (no al suscriptor final — ese ya lo recibe
 > directo de Viafirma). Ver logs `viafirma.kyc_link_job.*`.
+
+### 5.1 Tabla completa de estados remotos (manual RA §2.3.4, actualizado 2026-08-21)
+
+**Happy path — el polling continúa (`isProgressing()` → `POLLING`):**
+
+| Código | Descripción |
+|---|---|
+| `rues_check` | Solo FE-PJ. Verificación automática del NIT contra el RUES. |
+| `accreditation` / `accreditation_check` / `accreditation_completed` / `accreditation_verified` | Proceso de acreditación KYC del suscriptor (familia completa). |
+| `proposeFor` | Esperando revisión de un operador RA (propuesta de aceptación/rechazo). |
+| `proposedToAcceptance` | Esperando que un operador de decisión acepte/rechace la propuesta. |
+| `All_Ok` | Propuesta admitida, lista para inscribirse en la CA. |
+| `inProcess` | CA firmando el CSR (automático, máx. ~5 min). |
+
+⚠️ Si `accreditation_check` **no desaparece** tras varias confirmaciones (ver `poll_count_in_state`/`created_at` en `viafirma_status_history`), requiere revisión de un operador RA aunque siga siendo técnicamente "progressing" para nuestro sistema.
+
+**Listo para descargar (`isReadyToDownload()` → `READY_TO_DOWNLOAD`):**
+
+| Código | Descripción |
+|---|---|
+| `Generated_Not_Downloaded` | P7B listo, aún no descargado. |
+| `signedContract` / `Cite_To_Finish` / `processingContract` | Contrato ONAC procesándose en paralelo — no bloquea, permite (re)descargar el P7B igual que `Generated_Not_Downloaded`. |
+
+**Bloqueante — requiere operador RA (`isStopRecoverable()` → `FAILED_RECOVERABLE`, polling continúa cada 5 min vía `recoveryDelay()`):**
+
+| Código | Descripción | ¿Quién debe actuar? |
+|---|---|---|
+| `rues_error` | NIT no encontrado en RUES, o cédula del representante no coincide. | Operador RA |
+| `accreditation_rejected` | Verificación de identidad no superada. | Operador RA (puede reenviar link o rechazar) |
+| `collate_data` | Datos del suscriptor no coinciden entre formulario RA y software de acreditación. | Operador RA |
+| `checking` | Operadores RA revisando la solicitud manualmente. | Operador RA |
+| `docRequired` | RA solicitó documentación adicional. | Suscriptor (debe subirla) |
+| `docUploaded` | Suscriptor ya subió la documentación. | Operador RA (debe avanzar manualmente) |
+
+**Terminal (`isTerminalOk()`/`isTerminalFail()`):**
+
+| Código | Resultado |
+|---|---|
+| `Generated_And_Downloaded` | `COMPLETED` — flujo exitoso. |
+| `fail` | `FAILED` — error de firma en la CA, requiere análisis del operador RA. |
+
+> Si Viafirma reporta un código **no listado aquí**, `GuzzleViafirmaClient::getStatus()`
+> lanza `ViafirmaClientException` (log `viafirma.getStatus.unknown_status`) — el job
+> reintenta cada 30s indefinidamente sin avanzar, porque nunca reconoce el estado
+> real. Si ves ese log repetido para una solicitud, es un código nuevo de Viafirma
+> que falta agregar a `RemoteStatus` — no un problema de conectividad.

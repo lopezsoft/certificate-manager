@@ -45,5 +45,24 @@ interface CryptoServiceContract
         string $friendlyName,
         string $exportPassword
     ): string;
+
+    /**
+     * Extrae el `serialNumber` del subject del certificado de entidad final
+     * dentro del P7B — el número de documento del titular real al que la CA
+     * emitió el certificado. Permite validar que coincida con el titular
+     * originalmente solicitado antes de entregar el P12.
+     *
+     * @throws \App\Modules\Viafirma\Domain\Exceptions\CryptoException
+     */
+    public function extractSubjectIdentity(string $privateKeyPem, string $p7bDer): ?string;
+
+    /**
+     * Extrae el `serialNumber` del subject de la CSR original — para comparar
+     * contra {@see extractSubjectIdentity()} y detectar si la CA emitió el
+     * certificado para un titular distinto al solicitado.
+     *
+     * @throws \App\Modules\Viafirma\Domain\Exceptions\CryptoException
+     */
+    public function extractCsrSubjectIdentity(string $csrPem): ?string;
 }
 
