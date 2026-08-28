@@ -52,4 +52,12 @@ export class VerificacionCompletadaComponent implements OnInit, OnDestroy {
     this._unsubscribeAll.next(true);
     this._unsubscribeAll.complete();
   }
+
+  closeWindow(): void {
+    window.close();
+    setTimeout(() => {
+      // Si aún podemos ejecutar código, significa que close() falló — abre Google
+      window.open('https://www.google.com', '_self');
+    }, 500);
+  }
 }
