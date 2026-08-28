@@ -56,6 +56,19 @@ return [
         'recovery_interval_seconds' => (int) env('VIAFIRMA_POLL_RECOVERY_INTERVAL', 300), // 300 = 5 min
     ],
 
+    // Redirección post-verificación KYC (MetaMap): al completar la
+    // acreditación, MetaMap redirige el navegador del cliente a nuestro
+    // propio callback (ViafirmaKycCallbackController), que registra la
+    // finalización del flujo (señal de UX, NO de aprobación real — esa la
+    // sigue confirmando el polling vía /status) y reenvía al destino final.
+    'kyc' => [
+        'callback_enabled' => (bool) env('VIAFIRMA_KYC_CALLBACK_ENABLED', true),
+        'redirect_target'  => env('VIAFIRMA_KYC_REDIRECT_TARGET', '_self'),
+        // Ruta final tras pasar por nuestro callback (página propia de
+        // "verificación completada"). Se concatena a FRONTEND_URL.
+        'completed_path'   => env('VIAFIRMA_KYC_COMPLETED_PATH', '/#/viafirma/verificacion-completada'),
+    ],
+
     'auto_redownload' => [
         // Tiempo mínimo (minutos) antes de reintentar re-descarga automática.
         // Evita colisión con reintentos activos del ensamblado.

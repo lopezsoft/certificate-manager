@@ -39,6 +39,16 @@
   ⚠️ El código de la app (`StateMachine::touchCurrentHistoryRow()`) ya asume que
   estas columnas existen — aplicar la migración **antes** de desplegar ese código.
 
+- **`2026_08_21_190000_add_kyc_flow_completed_fields_to_viafirma_certificate_request_states.php`**
+  Agrega `kyc_flow_completed_at`, `kyc_flow_completed_ip`, `kyc_flow_completed_user_agent`
+  a `viafirma_certificate_request_states` — registran cuándo el navegador del
+  cliente llegó al nuevo callback público tras completar MetaMap (señal de UX,
+  NO de aprobación real de Viafirma).
+  **Producción corre MariaDB 10.3** — usar el DDL manual equivalente en
+  `2026_08_21_190000_add_kyc_flow_completed_fields_to_viafirma_certificate_request_states.sql`.
+  ⚠️ `RecordKycFlowCompletedUseCase` ya asume que estas columnas existen —
+  aplicar la migración **antes** de desplegar ese código.
+
 ## Cambios de código relacionados (sin migración nueva)
 
 Sesión 2026-08-19 también corrigió, sin requerir cambios de esquema adicionales:

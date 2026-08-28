@@ -148,6 +148,23 @@ final class PollViafirmaStatusJob implements ShouldQueue, ShouldBeUnique
             // Solo incrementar poll_attempts si la consulta fue exitosa
             $state->poll_attempts++;
             $state->last_polled_at = now();
+        } catch (\App\Modules\Viafirma\Domain\Exceptions\ViafirmaRequestNotFoundException $e) {
+            // Terminal: el codRequest ya no existe del lado de Viafirma (típico en su
+            // sandbox, que purga solicitudes de prueba). Reintentar nunca cambiará el
+            // resultado — sin este catch, el hook failed() reintentaría cada 30s para
+            // siempre contra un recurso que nunca va a volver a existir.
+            $logger->critical('viafirma.poll.request_not_found', [
+                'id'          => $entity->id,
+                'cod_request' => $entity->cod_request,
+                'error'       => $e->getMessage(),
+            ]);
+
+            $state->internal_state     = \App\Modules\Viafirma\Domain\Enums\InternalState::FAILED;
+            $state->last_error_code    = 'REQUEST_NOT_FOUND';
+            $state->last_error_message = substr($e->getMessage(), 0, 500);
+            $state->next_poll_at       = null;
+            $state->save();
+            return;
         } catch (TransientHttpException $e) {
             // Error de red o 5xx — reprogramar sin incrementar intentos de consulta
             $logger->warning('viafirma.poll.transient_error', [

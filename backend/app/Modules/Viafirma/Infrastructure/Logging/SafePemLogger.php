@@ -21,7 +21,7 @@ use Stringable;
  *  Se registra como `SafePemLogger::class` en el container y se entrega vía
  *  inyección a todos los servicios del módulo Viafirma (V-110).
  */
-final class SafePemLogger implements LoggerInterface
+class SafePemLogger implements LoggerInterface
 {
     /** @var array<array{pattern:string,label:string}> */
     private const REDACTORS = [

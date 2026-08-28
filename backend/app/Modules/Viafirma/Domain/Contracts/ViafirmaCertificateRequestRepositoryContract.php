@@ -19,6 +19,8 @@ interface ViafirmaCertificateRequestRepositoryContract
 
     public function findByCertificateRequestId(int $certificateRequestId): ?ViafirmaCertificateRequest;
 
+    public function findByPublicId(string $publicId): ?ViafirmaCertificateRequest;
+
     /**
      * @param array<string,mixed> $attributes
      */

@@ -57,7 +57,7 @@ final class GetKycLinkUseCase
             'remote_status'  => $entity->state?->remote_status,
         ]);
 
-        $link = $this->client->getAccreditationLink($entity->cod_request);
+        $link = $this->client->getAccreditationLink($entity->cod_request, (string) $entity->public_id);
 
         // Persistir también en el camino on-demand — cubre registros creados antes de
         // que existiera el listener automático, o si el job aún no corrió.

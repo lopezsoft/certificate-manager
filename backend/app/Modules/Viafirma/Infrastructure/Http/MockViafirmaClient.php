@@ -10,6 +10,7 @@ use App\Modules\Viafirma\Application\DTOs\SubmitCsrInputDto;
 use App\Modules\Viafirma\Application\DTOs\SubmitCsrResultDto;
 use App\Modules\Viafirma\Domain\Contracts\ViafirmaClient;
 use App\Modules\Viafirma\Domain\Enums\RemoteStatus;
+use App\Modules\Viafirma\Infrastructure\Http\Concerns\AppendsKycRedirectParams;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -32,6 +33,8 @@ use Illuminate\Support\Facades\Cache;
  */
 class MockViafirmaClient implements ViafirmaClient
 {
+    use AppendsKycRedirectParams;
+
     public function getProfiles(string $raCode): array
     {
         return [
@@ -140,9 +143,12 @@ class MockViafirmaClient implements ViafirmaClient
         return 'MOCK-REVOKED-REQ-' . strtoupper(uniqid());
     }
 
-    public function getAccreditationLink(string $codRequest): string
+    public function getAccreditationLink(string $codRequest, string $publicId): string
     {
-        return 'https://sandbox.viafirma.com/accreditation/success?req=' . $codRequest;
+        return $this->appendKycRedirectParams(
+            'https://sandbox.viafirma.com/accreditation/success?req=' . $codRequest,
+            $publicId,
+        );
     }
 
     public function getRevocationCode(string $codRequest): string

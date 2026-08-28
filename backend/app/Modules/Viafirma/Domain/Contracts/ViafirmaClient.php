@@ -82,9 +82,12 @@ interface ViafirmaClient
      *
      * Respuesta 200: { "link": "https://..." }
      *
+     * @param string $publicId Usado para construir el callback de redirección
+     *                         post-verificación (ver AppendsKycRedirectParams).
+     *
      * @throws \App\Modules\Viafirma\Domain\Exceptions\ViafirmaClientException
      */
-    public function getAccreditationLink(string $codRequest): string;
+    public function getAccreditationLink(string $codRequest, string $publicId): string;
 
     /**
      * GET /request/{codRequest}/revocationCode

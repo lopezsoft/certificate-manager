@@ -175,6 +175,7 @@ final class ViafirmaIssuanceProvider implements CertificateIssuanceProvider
                 'expires_at'             => optional($entity->state?->expires_at)?->toISOString(),
                 'history_count'          => $entity->statusHistory?->count() ?? 0,
                 'kyc_accreditation_link' => $entity->state?->kyc_accreditation_link,
+                'kyc_flow_completed_at'  => optional($entity->state?->kyc_flow_completed_at)?->toISOString(),
                 'poll_attempts'          => $entity->state?->poll_attempts,
                 'last_error_code'        => $entity->state?->last_error_code,
                 'last_error_message'     => $entity->state?->last_error_message,

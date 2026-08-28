@@ -9,6 +9,7 @@ use App\Modules\Viafirma\Application\DTOs\SubmitCsrResultDto;
 use App\Modules\Viafirma\Domain\Contracts\ViafirmaClient;
 use App\Modules\Viafirma\Domain\Exceptions\TransientHttpException;
 use App\Modules\Viafirma\Domain\Exceptions\ViafirmaClientException;
+use App\Modules\Viafirma\Infrastructure\Http\Concerns\AppendsKycRedirectParams;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
@@ -23,6 +24,8 @@ use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
  */
 final class GuzzleViafirmaClient implements ViafirmaClient
 {
+    use AppendsKycRedirectParams;
+
     public function __construct(
         private readonly ClientInterface $http,
         private readonly OAuth1Signer $signer,
@@ -278,7 +281,7 @@ final class GuzzleViafirmaClient implements ViafirmaClient
         return $newCode;
     }
 
-    public function getAccreditationLink(string $codRequest): string
+    public function getAccreditationLink(string $codRequest, string $publicId): string
     {
         if ($codRequest === '') {
             throw new ViafirmaClientException('codRequest no puede ser vacío.');
@@ -299,6 +302,8 @@ final class GuzzleViafirmaClient implements ViafirmaClient
                 "Respuesta de getAccreditationLink sin campo `link` para codRequest={$codRequest}: " . json_encode($decoded)
             );
         }
+
+        $link = $this->appendKycRedirectParams($link, $publicId);
 
         $this->logger->info('viafirma.kyc_link.response', [
             'codRequest' => $codRequest,
@@ -444,6 +449,21 @@ final class GuzzleViafirmaClient implements ViafirmaClient
                     $e,
                 );
             }
+
+            // 404 con errorCode=request_not_found → el codRequest ya no existe del
+            // lado de Viafirma (común en su sandbox, que purga solicitudes de prueba
+            // periódicamente). Es terminal: reintentar nunca cambiará el resultado.
+            if ($status === 404) {
+                $decodedBody = json_decode($bodySnippet, true);
+                if (is_array($decodedBody) && ($decodedBody['errorCode'] ?? null) === 'request_not_found') {
+                    throw new \App\Modules\Viafirma\Domain\Exceptions\ViafirmaRequestNotFoundException(
+                        "Viafirma no encuentra la solicitud (codRequest ya no existe) en {$method} {$url}: {$bodySnippet}",
+                        $status,
+                        $e,
+                    );
+                }
+            }
+
             throw new ViafirmaClientException(
                 "Viafirma respondió {$status} en {$method} {$url}: {$bodySnippet}",
                 $status,

@@ -25,6 +25,14 @@ Route::group(['prefix' => 'v1'], function () {
     require_once __DIR__ . "/authentication.php";
     require_once __DIR__ . "/auth-api.php";
 
+    // Callback público de MetaMap/Viafirma — lo invoca el navegador del
+    // suscriptor final tras completar el KYC, nunca tiene sesión propia.
+    Route::get('/viafirma/kyc-callback/{publicId}', [
+        \App\Modules\Viafirma\Presentation\Http\Controllers\ViafirmaKycCallbackController::class, '__invoke',
+    ])
+        ->middleware('throttle:30,1')
+        ->name('viafirma.kyc-callback');
+
     Route::group(['middleware' => 'auth:api'], function () {
 
         // ── Pricing ───────────────────────────────────────────────

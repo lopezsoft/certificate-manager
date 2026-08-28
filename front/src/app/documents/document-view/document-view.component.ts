@@ -596,6 +596,28 @@ export class DocumentViewComponent implements OnDestroy {
 	}
 
 	/**
+	 * Detecta si el cliente completó la verificación de identidad en MetaMap.
+	 */
+	protected get isKycFlowCompleted(): boolean {
+		return !!this.viafirmaStatus?.kyc_flow_completed_at;
+	}
+
+	/**
+	 * Formatea la fecha/hora en que se completó el flujo KYC.
+	 */
+	protected get kycFlowCompletedLabel(): string {
+		if (!this.viafirmaStatus?.kyc_flow_completed_at) return '';
+		const date = new Date(this.viafirmaStatus.kyc_flow_completed_at);
+		return date.toLocaleString('es-CO', {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit'
+		});
+	}
+
+	/**
 	 * Descripción legible del sub-estado remoto actual (ver ViafirmaRemoteStatusDescription).
 	 * Varios remote_status distintos colapsan al mismo internal_state POLLING; esta
 	 * etiqueta es la única forma de explicar qué está pasando realmente durante la espera.

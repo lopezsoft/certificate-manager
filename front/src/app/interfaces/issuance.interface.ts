@@ -54,6 +54,8 @@ export interface ViafirmaStatus {
   last_error_message: string | null;
   /** Link de acreditación KYC (MetaMap), disponible durante la familia de estados de acreditación */
   kyc_accreditation_link?: string | null;
+  /** Marca de tiempo: cuándo el cliente completó la verificación de identidad en MetaMap */
+  kyc_flow_completed_at?: string | null;
   history_count?: number;
 }
 

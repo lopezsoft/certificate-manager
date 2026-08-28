@@ -32,6 +32,14 @@ final class ViafirmaCertificateRequestRepository implements ViafirmaCertificateR
             ->first();
     }
 
+    public function findByPublicId(string $publicId): ?ViafirmaCertificateRequest
+    {
+        return ViafirmaCertificateRequest::query()
+            ->with('state')
+            ->where('public_id', $publicId)
+            ->first();
+    }
+
     public function create(array $attributes): ViafirmaCertificateRequest
     {
         // Separar atributos de identidad y de estado

@@ -90,7 +90,7 @@ final class FetchKycAccreditationLinkJob implements ShouldQueue, ShouldBeUnique
                 'cod' => $entity->cod_request,
             ]);
 
-            $link = $client->getAccreditationLink($entity->cod_request);
+            $link = $client->getAccreditationLink($entity->cod_request, (string) $entity->public_id);
 
             $entity->state->kyc_accreditation_link = $link;
             $entity->state->save();

@@ -51,6 +51,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Illuminate\Support\Carbon|null $revoked_at
  * @property int|null $auto_redownload_attempts
  * @property string|null $kyc_accreditation_link
+ * @property \Illuminate\Support\Carbon|null $kyc_flow_completed_at
+ * @property string|null $kyc_flow_completed_ip
+ * @property string|null $kyc_flow_completed_user_agent
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  */
@@ -83,20 +86,24 @@ class ViafirmaCertificateRequestState extends Model
         'revoked_at',
         'auto_redownload_attempts',
         'kyc_accreditation_link',
+        'kyc_flow_completed_at',
+        'kyc_flow_completed_ip',
+        'kyc_flow_completed_user_agent',
     ];
 
     protected $casts = [
-        'internal_state'       => InternalState::class,
-        'poll_attempts'        => 'integer',
-        'request_payload'      => 'array',
-        'last_status_response' => 'array',
-        'next_poll_at'         => 'datetime',
-        'last_polled_at'       => 'datetime',
-        'submitted_at'         => 'datetime',
-        'downloaded_at'        => 'datetime',
-        'assembled_at'         => 'datetime',
-        'expires_at'           => 'datetime',
-        'revoked_at'           => 'datetime',
+        'internal_state'         => InternalState::class,
+        'poll_attempts'          => 'integer',
+        'request_payload'        => 'array',
+        'last_status_response'   => 'array',
+        'next_poll_at'           => 'datetime',
+        'last_polled_at'         => 'datetime',
+        'submitted_at'           => 'datetime',
+        'downloaded_at'          => 'datetime',
+        'assembled_at'           => 'datetime',
+        'expires_at'             => 'datetime',
+        'revoked_at'             => 'datetime',
+        'kyc_flow_completed_at'  => 'datetime',
     ];
 
     /**
