@@ -450,7 +450,7 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- SECCIÓN: Emisión de certificado                                -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    @if (canIssue() || issuanceStatus) {
+    @if ((canIssue() && issuanceProvider.isViafirma()) || issuanceStatus) {
     <div class="card">
       <div class="card-header d-flex flex-wrap align-items-center justify-content-between">
         <span class="card-title mb-0">
