@@ -26,6 +26,29 @@ export class AppVersionsComponent implements OnInit {
     this.versiones = [
       {
         isShow: true,
+        number: '2.2.0',
+        date: '28-AGO-2026',
+        changes: [
+          {
+            type: 'caracteristica',
+            description: 'Nueva ruta pública /#/viafirma/verificacion-completada para confirmación de verificación KYC completada'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Campo kyc_flow_completed_at ahora se muestra en el bloque de acreditación KYC cuando el cliente ha completado la verificación'
+          },
+          {
+            type: 'mejora',
+            description: 'Bloque KYC-callout ahora diferencia 3 estados: pendiente, completada, y rechazada — con fecha/hora de completación'
+          },
+          {
+            type: 'mejora',
+            description: 'Botones de acción KYC (abrir, copiar, WhatsApp) se ocultan automáticamente cuando la verificación ya está completada'
+          }
+        ]
+      },
+      {
+        isShow: true,
         number: '2.1.0',
         date: '26-AGO-2026',
         changes: [

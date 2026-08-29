@@ -11,7 +11,7 @@ export const environment = {
   APPURL: 'http://cm-api.test',
   APIURL: 'http://cm-api.test/api/v1',
   WOMPI_PUBLIC_KEY: 'pub_test_q4gEVnZWpzfEROZMScHdZgH4ChcGHW2E',
-  VERSION: '2.1.0',
+  VERSION: '2.2.0',
   config: {
     name: 'MATICERTS',
     title: 'MATICERTS - Aplicación para la gestión de solicitudes de certificados de firma digital',

@@ -5,6 +5,23 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [2.2.0] - 2026-08-28
+
+### Añadido
+
+- **Nueva ruta pública `/#/viafirma/verificacion-completada`**: página de confirmación de verificación KYC completada, sin autenticación, redirigida por el backend tras completar MetaMap
+- **Campo `kyc_flow_completed_at`** en respuesta de `GET /certificate-request/{id}/issuance`: timestamp de cuándo el cliente completó la verificación de identidad en MetaMap
+- **Módulo Viafirma (`ViafirmaModule`)**: nuevo módulo lazy-loaded registrado en `app-routing.module.ts`, contiene la ruta de confirmación KYC
+
+### Cambiado
+
+- **Bloque `kyc-callout`** ahora diferencia 3 estados del flujo de acreditación:
+  1. **Pendiente** (sin `kyc_flow_completed_at`): "El cliente debe completar su acreditación KYC" — botones de acción visibles
+  2. **Completada** (con `kyc_flow_completed_at`): "Completada el [fecha/hora]" — botones de acción ocultos
+  3. **Rechazada** (`accreditation_rejected`): "La verificación no superó la validación..." — botones de acción visibles
+- **Botones de acción KYC** (abrir, copiar, WhatsApp) se ocultan automáticamente cuando la verificación ya está completada
+- Aplicado en ambos componentes: `document-view` y `request-in-process-view`
+
 ## [2.1.0] - 2026-08-26
 
 ### Añadido

@@ -7,7 +7,7 @@ export const environment = {
   APPURL: 'https://sandbox-api.maticerts.com',
   APIURL: 'https://sandbox-api.maticerts.com/api/v1',
   WOMPI_PUBLIC_KEY: 'pub_test_q4gEVnZWpzfEROZMScHdZgH4ChcGHW2E',
-  VERSION: '2.1.0',
+  VERSION: '2.2.0',
   config: {
     name: 'MATICERTS',
     title: 'MATICERTS SANDBOX - Testing Environment',
