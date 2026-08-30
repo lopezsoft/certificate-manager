@@ -55,10 +55,19 @@ abstract class AbstractOpenSslCsrBuilder implements CsrBuilderStrategy
         // --- INICIO DEL PARCHE: Truncar estrictamente para ASN.1 / OpenSSL ---
         // OpenSSL falla con 'asn1 encoding routines::string too long' si estos campos superan los 64 caracteres.
         // Se trunca con mb_substr para soportar caracteres UTF-8 correctamente sin corromper la cadena.
+        //
+        // IMPORTANTE: las claves deben coincidir EXACTAMENTE con las que usan
+        // FePjCsrBuilder::dn()/FePnCsrBuilder::dn() ('CN', 'O', 'OU' — forma
+        // corta que espera openssl_csr_new()). Antes de este fix el mapa usaba
+        // los nombres largos ('commonName', 'organizationName', ...), que
+        // nunca existían en $dn — el truncado nunca se ejecutaba y nombres de
+        // empresa largos (ej. "JUNTA ADMINISTRADORA DEL ACUEDUCTO Y
+        // ALCANTARILLADO DE LA VEREDA SAN FRANCISCO") rompían openssl_csr_new
+        // con "asn1 encoding routines::string too long".
         $strictLimits = [
-            'commonName'             => 64, // Límite estricto ASN.1
-            'organizationName'       => 64, // Límite estricto ASN.1
-            'organizationalUnitName' => 64, // Límite estricto ASN.1
+            'CN' => 64, // Límite estricto ASN.1
+            'O'  => 64, // Límite estricto ASN.1
+            'OU' => 64, // Límite estricto ASN.1
         ];
 
         foreach ($strictLimits as $field => $maxLength) {

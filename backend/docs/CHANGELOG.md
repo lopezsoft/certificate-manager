@@ -9,6 +9,13 @@ El versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Corregido — Viafirma: nombres de empresa largos rompían la generación de CSR (`asn1 ... string too long`)
+
+- **Bug real en producción:** `openssl_csr_new falló: error:06800097:asn1 encoding routines::string too long` al emitir para "JUNTA ADMINISTRADORA DEL ACUEDUCTO Y ALCANTARILLADO DE LA VEREDA SAN FRANCISCO" (78 caracteres, solicitud 1213).
+- **Causa raíz:** `AbstractOpenSslCsrBuilder::build()` ya tenía un parche que truncaba `CN`/`O`/`OU` a 64 caracteres (límite ASN.1), pero comparaba contra las claves largas (`commonName`, `organizationName`, `organizationalUnitName`) que **nunca existen** en el array `$dn` — `FePjCsrBuilder`/`FePnCsrBuilder` usan las claves cortas que espera `openssl_csr_new()` (`CN`, `O`, `OU`). El truncado nunca se ejecutaba; era código muerto.
+- **Fix:** corregidas las claves del mapa de límites a `CN`/`O`/`OU`.
+- Verificado reproduciendo el caso exacto (mismo nombre de 78 caracteres) con `FePjCsrBuilder` real + `openssl.cnf` empaquetado: antes fallaba, ahora genera el CSR correctamente con `CN`/`O` truncados a 64 caracteres.
+
 ### Corregido — Viafirma: 404 `request_not_found` reintentaba cada 30s para siempre
 
 - **Bug real observado:** en sandbox de Viafirma, `GET /request/{codRequest}/status` devolvió `404 {"errorCode":"request_not_found"}` (el `codRequest` ya no existe del lado de Viafirma — su sandbox purga solicitudes de prueba periódicamente). Al no ser 5xx/429, no calificaba como `TransientHttpException`; caía como `ViafirmaClientException` genérica sin catch específico en `PollViafirmaStatusJob`, disparando el hook `failed()` (fix de esta misma sesión) que reprogramaba en 30s — **reintentando indefinidamente contra un recurso que nunca volverá a existir**.
