@@ -10,6 +10,7 @@ use App\Events\CertificateStatusChanged;
 use App\Listeners\HandleCertificateAIProcessing;
 use App\Listeners\LogVerifiedUser;
 use App\Listeners\SendPasswordResetEmail;
+use App\Listeners\SendWelcomeEmailListener;
 use App\Listeners\SendPaymentApprovedNotification;
 use App\Listeners\SendPaymentFailedNotification;
 use App\Payments\Events\PaymentApproved;
@@ -32,6 +33,7 @@ class EventServiceProvider extends ServiceProvider
         // Auth events
         Verified::class => [
             LogVerifiedUser::class,
+            SendWelcomeEmailListener::class,
         ],
         Registered::class => [
             SendEmailVerificationNotification::class,
