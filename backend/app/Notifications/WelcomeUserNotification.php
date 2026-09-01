@@ -44,11 +44,11 @@ class WelcomeUserNotification extends Notification implements ShouldQueue
                     ->action('Ver documentación', 'https://docs.maticerts.com/')
                     ->line('Encontrarás el manual completo de usuario adjunto a este correo.')
                     ->line('Si tienes alguna duda, no dudes en contactar a nuestro equipo de soporte.')
-                    ->attachments([
+                    ->attach(
                         Attachment::fromPath(public_path('assets/Manual Completo de Usuario Maticerts.pdf'))
                             ->as('Manual_Maticerts.pdf')
-                            ->withMime('application/pdf'),
-                    ]);
+                            ->withMime('application/pdf')
+                    );
     }
 
     /**

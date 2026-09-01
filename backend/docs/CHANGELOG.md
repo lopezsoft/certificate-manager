@@ -9,6 +9,17 @@ El versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Corregido — `WelcomeUserNotification` fallaba al adjuntar el manual de usuario
+
+- **Bug real en producción:** `Call to undefined method MailMessage::attachments()` — el método correcto en esta versión de Laravel es `attach()` (singular), que acepta una única instancia de `Attachment` (o se llama varias veces para múltiples adjuntos), no `attachments()` con un array.
+- **Fix:** cambiado a `->attach(Attachment::fromPath(...)->as(...)->withMime(...))`.
+- Verificado invocando `toMail()` directamente (sin BD, sin enviar correo real): ya no lanza excepción y el adjunto queda registrado correctamente.
+
+### Corregido — `SendExpiringCertificatesNotificationsJob` fallaba con TypeError al notificar empresas
+
+- **Bug real en producción:** `CompanyExpiringCertificatesNotification::__construct()` exige `App\Models\Company`, pero el job obtenía la empresa vía `DB::table('companies')->first()` (Query Builder crudo, deliberado para "no traversar relación Eloquent"), que retorna `stdClass` — `TypeError: Argument #1 ($company) must be of type App\Models\Company, stdClass given`.
+- **Fix:** `App\Models\Company::find($companyId)` — mismo costo (un SELECT por PK), pero retorna el tipo correcto. El guard existente (`if (!$company || !$company->email)`) ya maneja `null` igual que antes.
+
 ### Corregido — Viafirma: nombres de empresa largos rompían la generación de CSR (`asn1 ... string too long`)
 
 - **Bug real en producción:** `openssl_csr_new falló: error:06800097:asn1 encoding routines::string too long` al emitir para "JUNTA ADMINISTRADORA DEL ACUEDUCTO Y ALCANTARILLADO DE LA VEREDA SAN FRANCISCO" (78 caracteres, solicitud 1213).
