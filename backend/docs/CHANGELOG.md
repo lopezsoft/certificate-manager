@@ -9,6 +9,16 @@ El versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Añadido — Viafirma: redirección KYC configurable por empresa
+
+- **Requisito:** cada empresa debe poder definir su propia página de redirección tras completar la verificación KYC (MetaMap), editable desde el front, en vez de usar siempre la página global por defecto.
+- **Sin tabla/UI nueva** — se reutilizó el mecanismo existente de configuración por empresa: `general_settings` (catálogo global) + `general_setting_companies` (override por empresa), el mismo patrón que ya usa `NOTIFICATIONEMAIL` (ver `CheckSuppressedEmail::handle()`).
+- **DDL** (no ejecutado): `database/migrations/viafirma/2026_08_30_120000_add_kyc_redirect_url_general_setting.sql` — inserta el nuevo setting global `VIAFIRMA_KYC_REDIRECT_URL` con `value = NULL` (la columna `value` de `general_settings` no alcanza para una URL completa — confirmado con error `Data too long`; no se alteró la tabla). El default real sigue viviendo en `config/viafirma.php` + `.env`; el override por empresa se guarda en `general_setting_companies.value` (VARCHAR(250), sí alcanza). ⚠️ Requiere confirmar el `tag` (categoría) antes de ejecutar.
+- **`ViafirmaCertificateRequestRepository::findByPublicId()`**: ahora hace eager-load de `company.settings.setting` para poder resolver el override sin N+1.
+- **`ViafirmaKycCallbackController`**: antes de calcular el destino global, busca si la empresa dueña de la solicitud tiene un override activo de `VIAFIRMA_KYC_REDIRECT_URL` (valor no vacío) y lo usa directamente como URL completa; si no, cae al comportamiento anterior (`FRONTEND_URL` + `VIAFIRMA_KYC_COMPLETED_PATH`).
+- Tests nuevos (mockeados, sin BD): override presente → se usa; override con valor vacío → se ignora y cae al default. Los 4 tests del controlador pasan.
+- **Pendiente:** confirmar el `tag` correcto en el DDL, ejecutarlo en producción, y que el equipo de frontend exponga este campo en la UI de configuración de empresa que ya gestiona `general_setting_companies`.
+
 ### Corregido — `WelcomeUserNotification` fallaba al adjuntar el manual de usuario
 
 - **Bug real en producción:** `Call to undefined method MailMessage::attachments()` — el método correcto en esta versión de Laravel es `attach()` (singular), que acepta una única instancia de `Attachment` (o se llama varias veces para múltiples adjuntos), no `attachments()` con un array.

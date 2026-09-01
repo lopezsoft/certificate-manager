@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Viafirma\Presentation;
 
+use App\Models\Company;
+use App\Models\Settings\GeneralSetting;
+use App\Models\Settings\GeneralSettingCompany;
 use App\Modules\Viafirma\Application\UseCases\RecordKycFlowCompletedUseCase;
+use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
 use App\Modules\Viafirma\Presentation\Http\Controllers\ViafirmaKycCallbackController;
 use Illuminate\Http\Request;
 use Mockery;
@@ -65,6 +69,67 @@ final class ViafirmaKycCallbackControllerTest extends TestCase
 
         $this->assertSame(
             'https://app.example.com/viafirma/verificacion-completada',
+            $response->getTargetUrl()
+        );
+    }
+
+    #[Test]
+    public function usa_el_override_de_la_empresa_cuando_esta_configurado(): void
+    {
+        config(['app.frontend_url' => 'https://app.example.com']);
+        config(['viafirma.kyc.completed_path' => '/#/viafirma/verificacion-completada']);
+
+        $setting = new GeneralSetting();
+        $setting->key_value = 'VIAFIRMA_KYC_REDIRECT_URL';
+
+        $companySetting = new GeneralSettingCompany();
+        $companySetting->value = 'https://miempresa.com/gracias';
+        $companySetting->setRelation('setting', $setting);
+
+        $company = new Company();
+        $company->setRelation('settings', collect([$companySetting]));
+
+        $entity = new ViafirmaCertificateRequest();
+        $entity->setRelation('company', $company);
+
+        $useCase = Mockery::mock(RecordKycFlowCompletedUseCase::class);
+        $useCase->shouldReceive('handle')->once()->andReturn($entity);
+
+        $request    = Request::create('/api/v1/viafirma/kyc-callback/PUB123', 'GET');
+        $controller = new ViafirmaKycCallbackController($useCase);
+        $response   = $controller($request, 'PUB123');
+
+        $this->assertSame('https://miempresa.com/gracias', $response->getTargetUrl());
+    }
+
+    #[Test]
+    public function ignora_el_override_si_el_valor_esta_vacio(): void
+    {
+        config(['app.frontend_url' => 'https://app.example.com']);
+        config(['viafirma.kyc.completed_path' => '/#/viafirma/verificacion-completada']);
+
+        $setting = new GeneralSetting();
+        $setting->key_value = 'VIAFIRMA_KYC_REDIRECT_URL';
+
+        $companySetting = new GeneralSettingCompany();
+        $companySetting->value = null;
+        $companySetting->setRelation('setting', $setting);
+
+        $company = new Company();
+        $company->setRelation('settings', collect([$companySetting]));
+
+        $entity = new ViafirmaCertificateRequest();
+        $entity->setRelation('company', $company);
+
+        $useCase = Mockery::mock(RecordKycFlowCompletedUseCase::class);
+        $useCase->shouldReceive('handle')->once()->andReturn($entity);
+
+        $request    = Request::create('/api/v1/viafirma/kyc-callback/PUB123', 'GET');
+        $controller = new ViafirmaKycCallbackController($useCase);
+        $response   = $controller($request, 'PUB123');
+
+        $this->assertSame(
+            'https://app.example.com/#/viafirma/verificacion-completada',
             $response->getTargetUrl()
         );
     }

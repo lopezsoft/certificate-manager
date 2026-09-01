@@ -35,7 +35,7 @@ final class ViafirmaCertificateRequestRepository implements ViafirmaCertificateR
     public function findByPublicId(string $publicId): ?ViafirmaCertificateRequest
     {
         return ViafirmaCertificateRequest::query()
-            ->with('state')
+            ->with(['state', 'company.settings.setting'])
             ->where('public_id', $publicId)
             ->first();
     }
