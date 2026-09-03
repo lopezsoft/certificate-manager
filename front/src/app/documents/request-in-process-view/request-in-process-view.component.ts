@@ -123,13 +123,28 @@ export class RequestInProcessViewComponent {
 	/**
 	 * Familia de estados remotos de acreditación KYC (misma regla que
 	 * StateMachine::ACCREDITATION_FAMILY en el backend).
+	 * Incluye 'collate_data': cuando los datos no coinciden, el operador RA suele
+	 * pedir que el suscriptor repita la verificación con el mismo enlace.
 	 */
 	private readonly accreditationRemoteStatuses = [
 		'accreditation',
 		'accreditation_check',
 		'accreditation_completed',
 		'accreditation_verified',
-		'accreditation_rejected'
+		'accreditation_rejected',
+		'collate_data'
+	];
+
+	/**
+	 * Remote_status de revisión manual RA que son parte normal del proceso,
+	 * no fallos que requieran alarmar al cliente final (ver runbook Viafirma).
+	 */
+	private readonly manualReviewRemoteStatuses = [
+		'collate_data',
+		'checking',
+		'docrequired',
+		'docuploaded',
+		'rues_error'
 	];
 	private viafirmaPolling$: Subscription | null = null;
 	private destroy$ = new Subject<void>();
@@ -505,6 +520,17 @@ export class RequestInProcessViewComponent {
 	}
 
 	/**
+	 * Detecta si el fallo actual es en realidad un paso normal de revisión manual RA
+	 * (collate_data, checking, docRequired, docUploaded, rues_error), no un fallo terminal.
+	 * Se usa para no alarmar al cliente final con un bloque rojo cuando el trámite
+	 * simplemente sigue su curso y no requiere ninguna acción de su parte.
+	 */
+	protected get isInManualReview(): boolean {
+		const remoteStatus = this.viafirmaStatus?.remote_status?.toLowerCase();
+		return this.isIssuanceFailed && this.manualReviewRemoteStatuses.includes(remoteStatus);
+	}
+
+	/**
 	 * Clase de badge según el internal_state actual.
 	 */
 	protected get issuanceStatusBadgeClass(): string {
@@ -538,6 +564,15 @@ export class RequestInProcessViewComponent {
 	 */
 	protected get isAccreditationRejected(): boolean {
 		return this.viafirmaStatus?.remote_status?.toLowerCase() === 'accreditation_rejected';
+	}
+
+	/**
+	 * Detecta si los datos del suscriptor no coincidieron con el software de
+	 * acreditación (collate_data): el operador RA suele requerir que el suscriptor
+	 * repita la verificación de identidad con el mismo enlace de MetaMap.
+	 */
+	protected get requiresKycRetry(): boolean {
+		return this.viafirmaStatus?.remote_status?.toLowerCase() === 'collate_data';
 	}
 
 	/**

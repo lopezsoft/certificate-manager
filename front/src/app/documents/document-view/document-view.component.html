@@ -556,15 +556,25 @@
 
           <!-- Bloque de error -->
           @if (isIssuanceFailed) {
-          <div class="alert alert-danger d-flex align-items-center py-2 px-3 mb-1">
-            <i class="fas fa-exclamation-triangle me-2"></i>
+          <div class="alert d-flex align-items-center py-2 px-3 mb-1"
+            [class.alert-danger]="!isInManualReview" [class.alert-warning]="isInManualReview">
+            <i class="fas me-2" [class.fa-exclamation-triangle]="!isInManualReview" [class.fa-info-circle]="isInManualReview"></i>
             <div>
-              <strong>{{
-                viafirmaInternalStateDescription[viafirmaStatus.internal_state]
-                || viafirmaStatus.internal_state }}</strong>
+              <strong>{{ isInManualReview ? 'En revisión manual' :
+                (viafirmaInternalStateDescription[viafirmaStatus.internal_state]
+                || viafirmaStatus.internal_state) }}</strong>
               @if (viafirmaStatus?.last_error_message || viafirmaRemoteStatusDescription[viafirmaStatus?.remote_status]) {
               <span class="small d-block">{{ viafirmaStatus.last_error_message ||
                 viafirmaRemoteStatusDescription[viafirmaStatus.remote_status] }}</span>
+              }
+              @if (requiresKycRetry) {
+              <span class="small d-block mt-1">
+                El cliente debe repetir la verificación de identidad usando el enlace de abajo.
+              </span>
+              } @else if (isInManualReview) {
+              <span class="small d-block mt-1">
+                Tu solicitud sigue en trámite y no requiere ninguna acción de tu parte por ahora. Te notificaremos por correo ante cualquier actualización.
+              </span>
               }
             </div>
           </div>
@@ -580,6 +590,11 @@
               <span class="text-muted d-block small mt-1">
                 La verificación no superó la validación. Requiere intervención de los operadores RA.
               </span>
+              } @else if (requiresKycRetry) {
+              <strong>Se requiere repetir la verificación de identidad</strong>
+              <span class="text-muted d-block small mt-1">
+                Los datos del suscriptor no coincidieron con el software de acreditación. Pide al cliente repetir la verificación con el enlace de abajo.
+              </span>
               } @else if (isKycFlowCompleted) {
               <strong>Verificación de identidad completada</strong>
               <span class="text-muted d-block small mt-1">
@@ -590,7 +605,7 @@
               <span class="text-muted d-block">El cliente debe completar su acreditación KYC.</span>
               }
             </div>
-            @if (!isKycFlowCompleted) {
+            @if (!isKycFlowCompleted || requiresKycRetry) {
             <div class="kyc-callout-actions">
               <a class="btn btn-sm btn-primary" [href]="viafirmaStatus.kyc_accreditation_link"
                 target="_blank" rel="noopener noreferrer">
