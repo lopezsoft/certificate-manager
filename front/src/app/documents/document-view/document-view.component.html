@@ -567,13 +567,9 @@
               <span class="small d-block">{{ viafirmaStatus.last_error_message ||
                 viafirmaRemoteStatusDescription[viafirmaStatus.remote_status] }}</span>
               }
-              @if (requiresKycRetry) {
+              @if (isInManualReview) {
               <span class="small d-block mt-1">
-                El cliente debe repetir la verificación de identidad usando el enlace de abajo.
-              </span>
-              } @else if (isInManualReview) {
-              <span class="small d-block mt-1">
-                Tu solicitud sigue en trámite y no requiere ninguna acción de tu parte por ahora. Te notificaremos por correo ante cualquier actualización.
+                Tu solicitud sigue en trámite. Te notificaremos si se requiere alguna acción adicional.
               </span>
               }
             </div>
@@ -591,9 +587,9 @@
                 La verificación no superó la validación. Requiere intervención de los operadores RA.
               </span>
               } @else if (requiresKycRetry) {
-              <strong>Se requiere repetir la verificación de identidad</strong>
+              <strong>Enlace de verificación disponible</strong>
               <span class="text-muted d-block small mt-1">
-                Los datos del suscriptor no coincidieron con el software de acreditación. Pide al cliente repetir la verificación con el enlace de abajo.
+                Si el operador RA determina que es necesario, puedes reenviarle este enlace al cliente para que repita su verificación de identidad.
               </span>
               } @else if (isKycFlowCompleted) {
               <strong>Verificación de identidad completada</strong>

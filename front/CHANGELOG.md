@@ -5,6 +5,13 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [2.2.2] - 2026-09-03
+
+### Corregido
+
+- **Bloque de error de emisión**: el mensaje para `collate_data` afirmaba que "el cliente debe repetir la verificación de identidad" como un hecho — corregido para no prescribir esa acción, ya que repetir la verificación es una decisión del operador RA caso por caso, no automática
+- **`kyc-callout` para `collate_data`**: eliminada la duplicación con el bloque de error (ambos repetían "los datos no coincidieron"); el texto ahora deja claro que el enlace queda disponible para reenviar *si* el operador RA lo determina necesario, no como instrucción obligatoria
+
 ## [2.2.1] - 2026-09-03
 
 ### Cambiado

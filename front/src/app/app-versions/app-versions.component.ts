@@ -26,6 +26,21 @@ export class AppVersionsComponent implements OnInit {
     this.versiones = [
       {
         isShow: true,
+        number: '2.2.2',
+        date: '03-SEP-2026',
+        changes: [
+          {
+            type: 'bug',
+            description: 'Corregido el mensaje del estado "En revisión manual" (collate_data): ya no afirma que el cliente debe repetir la verificación de identidad como un hecho automático — esa decisión la toma el operador RA caso por caso'
+          },
+          {
+            type: 'mejora',
+            description: 'Eliminada la duplicación de texto entre el bloque de error y el aviso de verificación KYC cuando el estado es collate_data'
+          }
+        ]
+      },
+      {
+        isShow: true,
         number: '2.2.1',
         date: '03-SEP-2026',
         changes: [
