@@ -26,6 +26,21 @@ export class AppVersionsComponent implements OnInit {
     this.versiones = [
       {
         isShow: true,
+        number: '2.2.1',
+        date: '03-SEP-2026',
+        changes: [
+          {
+            type: 'mejora',
+            description: 'El bloque de error de emisión ya no muestra "Fallo recuperable" en rojo para estados de revisión manual RA normales (datos no coinciden, en revisión, documentación requerida/recibida) — ahora un aviso tranquilizador en amarillo, reduciendo tickets de soporte innecesarios'
+          },
+          {
+            type: 'bug',
+            description: 'Corregido: el enlace de verificación KYC no se mostraba cuando los datos del suscriptor no coincidían con el software de acreditación (collate_data), aunque el cliente debía repetir la verificación'
+          }
+        ]
+      },
+      {
+        isShow: true,
         number: '2.2.0',
         date: '28-AGO-2026',
         changes: [

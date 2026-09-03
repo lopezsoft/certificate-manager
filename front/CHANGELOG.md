@@ -5,6 +5,14 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [2.2.1] - 2026-09-03
+
+### Cambiado
+
+- **Bloque de error de emisión** (`document-view`, `request-in-process-view`): los remote_status de revisión manual RA que son parte normal del proceso (`collate_data`, `checking`, `docRequired`, `docUploaded`, `rues_error`) ya no se muestran como "Fallo recuperable" en rojo alarmante — cambian a un estilo `alert-warning` con título "En revisión manual" y un mensaje tranquilizador, para reducir tickets de soporte innecesarios generados por clientes que no entendían el mensaje técnico
+- **`accreditationRemoteStatuses`**: se agregó `collate_data` — el bloque `kyc-callout` con el enlace de MetaMap vuelve a mostrarse en este estado, porque el operador RA suele requerir que el suscriptor repita la verificación de identidad cuando los datos no coinciden
+- **`kyc-callout`**: nueva rama específica para `collate_data` ("Se requiere repetir la verificación de identidad"); los botones de acción (abrir enlace, copiar, WhatsApp) se muestran aunque ya exista un `kyc_flow_completed_at` previo
+
 ## [2.2.0] - 2026-08-28
 
 ### Añadido
