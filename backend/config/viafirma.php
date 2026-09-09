@@ -67,6 +67,18 @@ return [
         // Ruta final tras pasar por nuestro callback (página propia de
         // "verificación completada"). Se concatena a FRONTEND_URL.
         'completed_path'   => env('VIAFIRMA_KYC_COMPLETED_PATH', '/#/viafirma/verificacion-completada'),
+
+        // Ventana de agrupación (segundos) para el aviso inmediato de WhatsApp
+        // (n8n): si varias solicitudes de la misma empresa capturan su link
+        // KYC casi al mismo tiempo, se combinan en un solo mensaje en vez de
+        // disparar uno por solicitud.
+        'webhook_batch_window_seconds' => (int) env('KYC_WEBHOOK_BATCH_WINDOW_SECONDS', 20),
+
+        // Máximo de días desde el envío a Viafirma (submitted_at) durante los
+        // que se sigue reenviando el recordatorio diario de verificación KYC.
+        // Pasado este plazo, se deja de insistir aunque la solicitud siga
+        // pendiente (evita spamear casos ya efectivamente abandonados).
+        'reminder_max_days' => (int) env('KYC_REMINDER_MAX_DAYS', 14),
     ],
 
     'auto_redownload' => [

@@ -6,9 +6,11 @@ namespace App\Providers;
 
 use App\Modules\Viafirma\Domain\Contracts\CryptoServiceContract;
 use App\Modules\Viafirma\Domain\Contracts\KeyVault;
+use App\Modules\Viafirma\Domain\Contracts\KycWebhookNotifierContract;
 use App\Modules\Viafirma\Domain\Contracts\ViafirmaClient;
 use App\Modules\Viafirma\Infrastructure\Crypto\OpenSslCryptoService;
 use App\Modules\Viafirma\Infrastructure\Http\GuzzleViafirmaClient;
+use App\Modules\Viafirma\Infrastructure\Http\N8nKycWebhookClient;
 use App\Modules\Viafirma\Infrastructure\Http\OAuth1Signer;
 use App\Modules\Viafirma\Infrastructure\Http\ProfileResponseParser;
 use App\Modules\Viafirma\Infrastructure\KeyVault\EncryptedLocalKeyVault;
@@ -65,6 +67,9 @@ final class ViafirmaServiceProvider extends ServiceProvider
             );
         });
         $this->app->bind(CryptoServiceContract::class, OpenSslCryptoService::class);
+
+        // ---- Webhook n8n (WhatsApp KYC) ------------------------------------------
+        $this->app->bind(KycWebhookNotifierContract::class, N8nKycWebhookClient::class);
 
         // ---- KeyVault (driver) --------------------------------------------------
         $this->app->singleton(KeyVault::class, function ($app): KeyVault {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Viafirma\Infrastructure\Jobs;
 
 use App\Modules\Viafirma\Application\Notifications\ViafirmaAccreditationPendingNotification;
+use App\Modules\Viafirma\Application\Services\KycImmediateWebhookBatcher;
 use App\Modules\Viafirma\Domain\Contracts\ViafirmaClient;
 use App\Modules\Viafirma\Domain\Exceptions\TransientHttpException;
 use App\Modules\Viafirma\Domain\Exceptions\ViafirmaClientException;
@@ -58,6 +59,7 @@ final class FetchKycAccreditationLinkJob implements ShouldQueue, ShouldBeUnique
     public function handle(
         ViafirmaClient $client,
         SafePemLogger $logger,
+        KycImmediateWebhookBatcher $webhookBatcher,
     ): void {
         $entity = ViafirmaCertificateRequest::with(['state', 'certificateRequest.company'])->find($this->requestId);
 
@@ -100,7 +102,7 @@ final class FetchKycAccreditationLinkJob implements ShouldQueue, ShouldBeUnique
                 'link' => $link,
             ]);
 
-            $this->notifyMasterCompany($entity, $link, $logger);
+            $this->notifyMasterCompany($entity, $link, $logger, $webhookBatcher);
         } catch (TransientHttpException $e) {
             // Reintentable — dejar que Laravel lo reintente
             $logger->warning('viafirma.kyc_link_job.transient_error', [
@@ -125,8 +127,12 @@ final class FetchKycAccreditationLinkJob implements ShouldQueue, ShouldBeUnique
      * compartirlo con su cliente. Errores de envío no deben marcar el job
      * como fallido — el link ya quedó persistido correctamente.
      */
-    private function notifyMasterCompany(ViafirmaCertificateRequest $entity, string $link, SafePemLogger $logger): void
-    {
+    private function notifyMasterCompany(
+        ViafirmaCertificateRequest $entity,
+        string $link,
+        SafePemLogger $logger,
+        KycImmediateWebhookBatcher $webhookBatcher,
+    ): void {
         $company = $entity->certificateRequest?->company;
 
         if ($company === null || empty($company->email)) {
@@ -155,5 +161,16 @@ final class FetchKycAccreditationLinkJob implements ShouldQueue, ShouldBeUnique
                 'error' => $e->getMessage(),
             ]);
         }
+
+        // Aviso por WhatsApp (n8n) — agrupado por ventana corta, no instantáneo
+        // por solicitud. Si varias solicitudes de la misma empresa capturan su
+        // link casi al mismo tiempo, se combinan en un solo mensaje.
+        $webhookBatcher->enqueue(
+            companyId: $company->id,
+            casaSoftware: $company->company_name ?? 'Empresa',
+            whatsapp: $company->phone,
+            codigo: (string) $entity->cod_request,
+            enlace: $link,
+        );
     }
 }

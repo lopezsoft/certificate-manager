@@ -175,6 +175,26 @@ class Kernel extends ConsoleKernel
             ->appendOutputTo(storage_path('logs/scheduled-viafirma-watchdog.log'));
 
         /**
+         * Job 7.6: Recordatorio diario de verificación KYC pendiente
+         *
+         * Frecuencia: Diario a las 8:30 AM (hora de Colombia)
+         * Función: Reenvía el correo de verificación KYC pendiente a empresas
+         *          cuyas solicitudes siguen esperando (usuario aún no completa
+         *          el flujo), hasta un máximo de `viafirma.kyc.reminder_max_days`
+         *          desde el envío. Dispara además el aviso de WhatsApp (n8n)
+         *          agrupado por empresa (tipo: recordatorio).
+         * Queue: notifications
+         */
+        $schedule->job(new \App\Modules\Viafirma\Infrastructure\Jobs\ResendPendingKycAccreditationNotificationsJob())
+            ->dailyAt('08:30')
+            ->timezone('America/Bogota')
+            ->name('viafirma:kyc-daily-reminder')
+            ->withoutOverlapping(30)
+            ->onOneServer()
+            ->emailOutputOnFailure(env('MAIL_SUPPORT_ADDRESS', config('mail.from.address')))
+            ->appendOutputTo(storage_path('logs/scheduled-viafirma-kyc-reminder.log'));
+
+        /**
          * Job 7.5: Reintentar emisiones estancadas
          *
          * Frecuencia: Cada minuto

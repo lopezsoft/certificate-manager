@@ -52,4 +52,18 @@ return [
         'allowed_ips' => array_filter(explode(',', env('SYNC_ALLOWED_IPS', ''))),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | n8n — Webhook de notificación WhatsApp (KYC Viafirma)
+    |--------------------------------------------------------------------------
+    |
+    | URL del nodo "Webhook desde Laravel" en n8n. Sin configurar, el aviso
+    | por WhatsApp queda desactivado silenciosamente (el correo se sigue
+    | enviando normalmente).
+    |
+    */
+    'n8n' => [
+        'kyc_webhook_url' => env('N8N_KYC_WEBHOOK_URL'),
+    ],
+
 ];

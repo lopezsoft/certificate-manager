@@ -9,6 +9,21 @@ El versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-09-09
+
+### Añadido — Viafirma: recordatorio diario KYC + webhook WhatsApp (n8n)
+
+- **Requisito:** además del correo único que ya se enviaba a la empresa al capturar el link KYC, se necesita (1) un recordatorio diario mientras la verificación siga pendiente, y (2) un aviso por WhatsApp (vía n8n/Evolution API) cada vez que se envíe ese correo.
+- **`KycWebhookNotifierContract` + `N8nKycWebhookClient`** — cliente fire-and-forget del webhook de n8n. Cualquier fallo (red, timeout, 4xx/5xx) se registra como `warning` y nunca interrumpe el flujo que lo invoca. Sin `N8N_KYC_WEBHOOK_URL` configurada, la integración queda apagada silenciosamente.
+- **Normalización de `companies.phone`:** el campo se captura manualmente y llega con formatos inconsistentes (`300-782.48.44`, `(300) 782-4844`, etc.) — se normaliza eliminando cualquier carácter no numérico y anteponiendo el indicativo `57` si quedan 10 dígitos.
+- **Envío inmediato agrupado por ventana de espera** (`KycImmediateWebhookBatcher` + `FlushKycImmediateWebhookJob`, `KYC_WEBHOOK_BATCH_WINDOW_SECONDS`, default 20s): si varias solicitudes de la misma empresa capturan su link KYC casi al mismo tiempo, se combinan en un solo aviso de WhatsApp en vez de disparar uno por solicitud. Patrón: buffer en caché + job con delay, deduplicado por empresa (`Cache::add` como lock). Requiere `CACHE_DRIVER` persistente (no `array`).
+- **`ResendPendingKycAccreditationNotificationsJob`** (nuevo, programado diario a las 8:30 AM `America/Bogota`): reenvía el correo de verificación pendiente y dispara un webhook agrupado por empresa (`tipo: recordatorio`) a las solicitudes donde el usuario **aún no ha completado** el flujo (`kyc_flow_completed_at IS NULL`), acotado a un máximo de `KYC_REMINDER_MAX_DAYS` (default 14) desde `submitted_at` — pasado ese plazo se deja de insistir.
+- **`FetchKycAccreditationLinkJob`** ya no llama al webhook directamente — encola en el batcher tras el envío del correo inmediato.
+- Payload del webhook: `{casa_software, whatsapp, solicitudes: [{codigo, enlace}], count, tipo}` — `solicitudes` reemplaza el diseño inicial de `codigos` (array plano) para incluir el link de acreditación de cada código, requerido por el mensaje de WhatsApp.
+- Verificado end-to-end contra un webhook real de n8n (sin BD): normalización de teléfono, agrupamiento de 3 solicitudes casi simultáneas en un solo flush, y payload final recibido exitosamente por n8n (`n8n.kyc_webhook.sent`).
+- 13 tests unitarios nuevos (100% mockeados, sin BD): `N8nKycWebhookClientTest`, `KycImmediateWebhookBatcherTest`, `FlushKycImmediateWebhookJobTest`.
+- Diseño completo documentado en `docs/2026-09-09-10-00-implementacion-recordatorio-kyc-webhook-n8n.md`.
+
 ### Añadido — Viafirma: redirección KYC configurable por empresa
 
 - **Requisito:** cada empresa debe poder definir su propia página de redirección tras completar la verificación KYC (MetaMap), editable desde el front, en vez de usar siempre la página global por defecto.
