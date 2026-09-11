@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# La version en desarrollo duplica cada endpoint de la version estable.
+Disallow: /docs/next/
+
+# Pagina de plantilla sin contenido propio.
+Disallow: /markdown-page
+
+Sitemap: https://docs.maticerts.com/sitemap.xml

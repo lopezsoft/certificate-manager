@@ -141,11 +141,10 @@ function QuickStart() {
 
 
 export default function Home(): JSX.Element {
-  const { siteConfig } = useDocusaurusContext();
   return (
     <Layout
-      title={`Inicio | ${siteConfig.title}`}
-      description="MATICERTS API - Emisión y gestión de certificados digitales.">
+      title="Documentación de la API"
+      description="Documentación oficial de la API REST de MATICERTS: emite, consulta y descarga certificados digitales desde tu backend con OAuth 2.0 y tokens de acceso personal.">
       <HomepageHeader />
       <main className={styles.mainContent}>
         <Features />

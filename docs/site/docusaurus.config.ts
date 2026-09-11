@@ -5,9 +5,10 @@ import type * as OpenApiPlugin from 'docusaurus-plugin-openapi-docs';
 
 const config: Config = {
   title: 'MATICERTS.COM',
-  tagline: 'Documentación oficial y unificada v1',
+  tagline:
+    'Documentación de la API REST para emitir, consultar y descargar certificados digitales',
   favicon: 'img/logo-circle-blue.ico',
-  url: 'https://docs.certificatemanager.local',
+  url: 'https://docs.maticerts.com',
   baseUrl: '/',
   organizationName: 'lopezsoft',
   projectName: 'certificate-manager-docs',
@@ -44,6 +45,14 @@ const config: Config = {
         },
         theme: {
           customCss: './src/css/custom.scss',
+        },
+        sitemap: {
+          changefreq: 'weekly',
+          priority: 0.5,
+          filename: 'sitemap.xml',
+          // La version en desarrollo duplica cada endpoint de la version
+          // estable: se excluye para no competir consigo misma en buscadores.
+          ignorePatterns: ['/docs/next/**', '/markdown-page'],
         },
       } satisfies Preset.Options,
     ],
@@ -101,7 +110,20 @@ const config: Config = {
   themes: ['docusaurus-theme-openapi-docs'],
 
   themeConfig: {
-    image: 'img/docusaurus-social-card.jpg',
+    // Imagen usada al compartir en redes y mensajeria
+    image: 'img/logo-horizontal-blue.png',
+    metadata: [
+      {
+        name: 'keywords',
+        content:
+          'certificados digitales, API REST, firma electrónica, PKCS#10, ' +
+          'P12, OAuth 2.0, MATICERTS, Colombia',
+      },
+      { name: 'author', content: 'LOPEZSOFT S.A.S.' },
+      { name: 'robots', content: 'index, follow' },
+      { property: 'og:type', content: 'website' },
+      { property: 'og:site_name', content: 'MATICERTS' },
+    ],
     colorMode: {
       respectPrefersColorScheme: true,
     },
