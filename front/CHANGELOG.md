@@ -5,6 +5,22 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [2.3.0] - 2026-09-11
+
+### Añadido
+
+- **Pestaña "Pagos y cupos" en el dashboard** (solo administradores, `type_id = 1`): consume los nuevos endpoints `GET /admin/stats/payments-by-month` y `GET /admin/stats/unused-quotas`
+  - **Pagos por mes de cada cliente**: matriz empresa × mes con órdenes, certificados y montos (subtotal, IVA, total); KPIs del año, búsqueda por empresa/NIT/email y exportación CSV/Excel/JSON
+  - **Filtro por mes**: por defecto se muestran los 12 meses; al elegir uno la matriz, los KPIs, el pie de tabla y la exportación se limitan a ese mes y a las empresas con pagos en él
+  - **Cupos sin consumir por empresa**: saldo POSPAGO disponible y, en PREPAGO, certificados comprados vs. solicitados vs. sin solicitar (ej. compran 10, solicitan 8, quedan 2); detalle expandible por cupo y por orden, opción "Incluir vencidos" y exportación
+- **`AdminStatsService`** y **`admin-stats.interface.ts`**: servicio e interfaces tipadas para las estadísticas de administrador
+- **Aceptación versionada de Términos y Condiciones** al crear solicitudes: `TermsService` consulta `GET /terms/current` y envía `terms_version_id` en el POST; sin versión vigente el envío del formulario queda bloqueado con mensaje explicativo
+- **Modal de pago WOMPI**: aviso informativo con enlace a los Términos y Condiciones (la aceptación se registra al crear la solicitud, no en el pago)
+
+### Corregido
+
+- **Scroll vertical en los grids del dashboard**: `.table-responsive` tenía `overflow: hidden`, por lo que las tablas altas no desplazaban; ahora usan `overflow: auto` con alto máximo (`$table-max-height`) y encabezado fijo
+
 ## [2.2.2] - 2026-09-03
 
 ### Corregido

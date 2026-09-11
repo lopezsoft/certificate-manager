@@ -6,7 +6,7 @@
   "display": "standalone",
   "scope": "./",
   "start_url": "./",
-  "version": "2.2.2",
+  "version": "2.3.0",
   "icons": [
     {
       "src": "assets/icons/logo-empresa-72.png",
