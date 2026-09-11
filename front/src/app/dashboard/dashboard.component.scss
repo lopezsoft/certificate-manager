@@ -7,6 +7,7 @@ $tab-accent: #1a8cd8;
 $tab-bg: #f8f9fa;
 $tab-radius: 12px;
 $tab-transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+$table-max-height: 65vh;
 
 .dashboard-tabs {
   position: relative;
@@ -465,10 +466,19 @@ $table-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
   // ── Table responsive container ──
   .table-responsive {
     border-radius: 0 0 $table-radius $table-radius;
-    overflow: hidden;
+    overflow: auto;
+    max-height: $table-max-height;
+
+    // Encabezado fijo al hacer scroll vertical
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
 
     &::-webkit-scrollbar {
       height: 6px;
+      width: 6px;
     }
 
     &::-webkit-scrollbar-track {
@@ -508,4 +518,72 @@ $table-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
       }
     }
   }
+}
+
+// ── Tab Pagos y cupos (admin) ──────────────────────────────────
+$billing-kpi-bg: $tab-bg;
+$billing-kpi-border: rgba($tab-primary, 0.12);
+$billing-kpi-label: #6e6b7b;
+$billing-kpi-value: #5e5873;
+$billing-detail-bg: rgba($tab-primary, 0.04);
+$billing-sticky-bg: #ffffff;
+
+.billing-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  background: $billing-kpi-bg;
+  border: 1px solid $billing-kpi-border;
+  border-radius: 8px;
+  height: 100%;
+
+  &__label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: $billing-kpi-label;
+  }
+
+  &__value {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: $billing-kpi-value;
+    line-height: 1.2;
+  }
+}
+
+.billing-matrix {
+  max-height: 520px;
+
+  th, td {
+    white-space: nowrap;
+    font-size: 0.78rem;
+  }
+
+  &__sticky {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+
+    // Esquina (encabezado + primera columna) por encima de ambos ejes
+    thead & {
+      z-index: 3;
+    }
+    background: $billing-sticky-bg;
+    box-shadow: 1px 0 0 $billing-kpi-border;
+  }
+}
+
+.billing-detail {
+  background: $billing-detail-bg !important;
+
+  &__table {
+    font-size: 0.78rem;
+    background: transparent;
+  }
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }

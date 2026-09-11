@@ -9,3 +9,5 @@ export * from './pricing.interface';
 export * from './order.interface';
 export * from './issuance.interface';
 export * from './expiring-certificate.interface';
+export * from './terms.interface';
+export * from './admin-stats.interface';

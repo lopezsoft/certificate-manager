@@ -26,6 +26,37 @@ export class AppVersionsComponent implements OnInit {
     this.versiones = [
       {
         isShow: true,
+        number: '2.3.0',
+        date: '11-SEP-2026',
+        changes: [
+          {
+            type: 'caracteristica',
+            description: 'Nueva pestaña "Pagos y cupos" en el dashboard (solo administradores): pagos por mes de cada cliente con matriz empresa × mes, totales, búsqueda y exportación CSV/Excel/JSON'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Filtro por mes en los pagos por cliente: por defecto se muestran los 12 meses y al elegir uno la matriz, los KPIs y la exportación se ajustan a ese mes'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Listado de cupos sin consumir por empresa: saldo POSPAGO y, en PREPAGO, certificados comprados vs. solicitados vs. sin solicitar, con detalle por cupo y por orden'
+          },
+          {
+            type: 'caracteristica',
+            description: 'Aceptación versionada de Términos y Condiciones al crear solicitudes: se consulta la versión vigente y se envía su id al backend; sin versión vigente el envío queda bloqueado'
+          },
+          {
+            type: 'mejora',
+            description: 'El modal de pago WOMPI muestra el aviso informativo con enlace a los Términos y Condiciones'
+          },
+          {
+            type: 'bug',
+            description: 'Corregido: los grids del dashboard no tenían scroll vertical cuando el contenido era muy alto; ahora desplazan con encabezado fijo'
+          }
+        ]
+      },
+      {
+        isShow: true,
         number: '2.2.2',
         date: '03-SEP-2026',
         changes: [

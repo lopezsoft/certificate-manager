@@ -15,7 +15,8 @@ import {ConsumeByYear} from "../models/dashboard-model";
 import {CertificateRequestStats, YearlyStats} from "../models/certificate-stats.model";
 import {CustomerService} from "../services/companies/customers.service";
 import {CertificateNotificationService} from "../services/certificate-notification.service";
-import {ExpiringCertificate, ExpiringByCompany, UrgencyLevel} from "../interfaces";
+import {ExpiringCertificate, ExpiringByCompany, UrgencyLevel, PaymentsByMonth, PaymentAmounts, CompanyPayments, UnusedQuotas, CompanyUnusedQuota} from "../interfaces";
+import {AdminStatsService} from "../services/admin-stats.service";
 import {Subject} from "rxjs";
 import {takeUntil} from "rxjs/operators";
 import {ApexOptions} from "ng-apexcharts";
@@ -33,7 +34,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   protected selectedMonth = new Date().getMonth() + 1;
   protected readonly documentStatusDescription = DocumentStatusDescription;
   protected readonly documentStatusEnum = DocumentStatusEnum;
-  protected activeTab: 'overview' | 'expiring' | 'expired' | 'analytics' = 'overview';
+  protected activeTab: 'overview' | 'expiring' | 'expired' | 'analytics' | 'billing' = 'overview';
 
   // Propiedades v1.4.0
   private destroy$ = new Subject<void>();
@@ -79,6 +80,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
   protected expiredByCompanyTotal = 0;
   protected expiredByCompanyLoading = false;
 
+  // ── Pagos por mes de cada cliente (solo admin) ──
+  protected paymentsByMonth: PaymentsByMonth | null = null;
+  protected paymentsLoading = false;
+  protected paymentsError = false;
+  protected paymentsYear = new Date().getFullYear();
+  protected paymentsYears: number[] = [];
+  /** 0 = todos los meses */
+  protected paymentsMonth = 0;
+  protected paymentsSearch = '';
+  protected readonly monthNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  protected readonly monthShortNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+  // ── Cupos no consumidos (solo admin) ──
+  protected unusedQuotas: UnusedQuotas | null = null;
+  protected unusedLoading = false;
+  protected unusedError = false;
+  protected unusedIncludeExpired = false;
+  protected unusedSearch = '';
+  protected unusedExpanded = new Set<number>();
+
   protected months = [
     { name: 'todos', value: 0 },
     { name: 'Enero', value: 1 },
@@ -109,6 +130,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private autoRefresh: AutoRefreshService,
     private customerService: CustomerService,
     private certNotification: CertificateNotificationService,
+    private adminStats: AdminStatsService,
   ) { }
 
   ngOnInit(): void {
@@ -129,6 +151,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       if (this._token.isAdmin()) {
         this.loadExpiringByCompany();
         this.loadExpiredByCompany();
+        this.loadPaymentsByMonth();
+        this.loadUnusedQuotas();
       }
     }
 
@@ -637,6 +661,208 @@ export class DashboardComponent implements OnInit, OnDestroy {
       { key: 'most_urgent_days', label: 'Días más urgente' },
       { key: 'urgency_level', label: 'Urgencia' },
     ];
+    switch (format) {
+      case 'csv': this.exportService.exportToCSV(data, columns, { filename }); break;
+      case 'json': this.exportService.exportToJSON(data, filename); break;
+      case 'excel': this.exportService.exportToExcel(data, columns, { filename }); break;
+    }
+  }
+
+  // ── Pagos por mes de cada cliente (admin) ───────────────────
+
+  protected loadPaymentsByMonth(year?: number): void {
+    if (year !== undefined) {
+      this.paymentsYear = Number(year);
+    }
+    this.paymentsLoading = true;
+    this.paymentsError = false;
+    this.adminStats.getPaymentsByMonth(this.paymentsYear)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          this.paymentsByMonth = data;
+          this.paymentsYears = data.available_years.includes(this.paymentsYear)
+            ? data.available_years
+            : [this.paymentsYear, ...data.available_years];
+          this.paymentsLoading = false;
+        },
+        error: () => {
+          this.paymentsByMonth = null;
+          this.paymentsLoading = false;
+          this.paymentsError = true;
+        },
+      });
+  }
+
+  /** Meses visibles en la matriz: todos, o solo el seleccionado. */
+  protected getVisibleMonths(): number[] {
+    return this.paymentsMonth > 0 ? [this.paymentsMonth] : this.monthNumbers;
+  }
+
+  protected getFilteredPayments(): CompanyPayments[] {
+    let list = this.paymentsByMonth?.companies ?? [];
+    if (this.paymentsMonth > 0) {
+      list = list.filter(c => !!c.months?.[this.paymentsMonth]);
+    }
+    const term = this.paymentsSearch.trim().toLowerCase();
+    if (!term) { return list; }
+    return list.filter(c =>
+      c.company_name?.toLowerCase().includes(term) ||
+      c.dni?.toLowerCase().includes(term) ||
+      c.email?.toLowerCase().includes(term));
+  }
+
+  protected getCompanyMonthAmount(company: CompanyPayments, month: number): number {
+    return company.months?.[month]?.total_amount ?? 0;
+  }
+
+  /** Totales de una empresa restringidos a los meses visibles. */
+  protected getCompanyTotals(company: CompanyPayments): PaymentAmounts {
+    return this.sumAmounts(this.getVisibleMonths().map(m => company.months?.[m]));
+  }
+
+  /** Total de un mes considerando solo las empresas filtradas. */
+  protected getMonthTotal(month: number): number {
+    return this.getFilteredPayments().reduce((acc, c) => acc + this.getCompanyMonthAmount(c, month), 0);
+  }
+
+  /** Resumen (KPIs y pie de tabla) según filtros de mes y búsqueda. */
+  protected getPaymentsSummary(): PaymentAmounts & { companies: number } {
+    const companies = this.getFilteredPayments();
+    const months = this.getVisibleMonths();
+    const cells: (PaymentAmounts | undefined)[] = [];
+    companies.forEach(c => months.forEach(m => cells.push(c.months?.[m])));
+    return { ...this.sumAmounts(cells), companies: companies.length };
+  }
+
+  private sumAmounts(cells: (PaymentAmounts | undefined)[]): PaymentAmounts {
+    return cells.reduce<PaymentAmounts>((acc, cell) => ({
+      orders: acc.orders + (cell?.orders ?? 0),
+      certificates: acc.certificates + (cell?.certificates ?? 0),
+      subtotal: acc.subtotal + (cell?.subtotal ?? 0),
+      tax_amount: acc.tax_amount + (cell?.tax_amount ?? 0),
+      total_amount: acc.total_amount + (cell?.total_amount ?? 0),
+    }), { orders: 0, certificates: 0, subtotal: 0, tax_amount: 0, total_amount: 0 });
+  }
+
+  protected formatCurrency(value: number, currency: string = 'COP'): string {
+    return this.ft.getCurrencyFormat('es-CO', currency, value ?? 0);
+  }
+
+  protected exportPaymentsData(format: 'csv' | 'json' | 'excel'): void {
+    const months = this.getVisibleMonths();
+    const data = this.getFilteredPayments().map(c => {
+      const totals = this.getCompanyTotals(c);
+      const row: any = {
+        company_name: c.company_name,
+        dni: c.dni,
+        email: c.email,
+        billing: c.has_agreement ? 'POSPAGO' : 'PREPAGO',
+        orders: totals.orders,
+        certificates: totals.certificates,
+      };
+      months.forEach(m => { row['m' + m] = this.getCompanyMonthAmount(c, m); });
+      row.subtotal = totals.subtotal;
+      row.tax_amount = totals.tax_amount;
+      row.total_amount = totals.total_amount;
+      return row;
+    });
+    const columns = [
+      { key: 'company_name', label: 'Empresa' },
+      { key: 'dni', label: 'NIT' },
+      { key: 'email', label: 'Email' },
+      { key: 'billing', label: 'Modalidad' },
+      { key: 'orders', label: 'Órdenes' },
+      { key: 'certificates', label: 'Certificados' },
+      ...months.map(m => ({ key: 'm' + m, label: this.monthShortNames[m - 1] })),
+      { key: 'subtotal', label: 'Subtotal' },
+      { key: 'tax_amount', label: 'IVA' },
+      { key: 'total_amount', label: 'Total' },
+    ];
+    const monthSuffix = this.paymentsMonth > 0 ? '-' + this.monthShortNames[this.paymentsMonth - 1].toLowerCase() : '';
+    const filename = 'pagos-por-mes-' + this.paymentsYear + monthSuffix;
+    switch (format) {
+      case 'csv': this.exportService.exportToCSV(data, columns, { filename }); break;
+      case 'json': this.exportService.exportToJSON(data, filename); break;
+      case 'excel': this.exportService.exportToExcel(data, columns, { filename }); break;
+    }
+  }
+
+  // ── Cupos no consumidos (admin) ─────────────────────────────
+
+  protected loadUnusedQuotas(): void {
+    this.unusedLoading = true;
+    this.unusedError = false;
+    this.adminStats.getUnusedQuotas(this.unusedIncludeExpired)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          this.unusedQuotas = data;
+          this.unusedLoading = false;
+        },
+        error: () => {
+          this.unusedQuotas = null;
+          this.unusedLoading = false;
+          this.unusedError = true;
+        },
+      });
+  }
+
+  protected toggleUnusedExpired(): void {
+    this.unusedIncludeExpired = !this.unusedIncludeExpired;
+    this.loadUnusedQuotas();
+  }
+
+  protected getFilteredUnused(): CompanyUnusedQuota[] {
+    const list = this.unusedQuotas?.companies ?? [];
+    const term = this.unusedSearch.trim().toLowerCase();
+    if (!term) { return list; }
+    return list.filter(c =>
+      c.company_name?.toLowerCase().includes(term) ||
+      c.dni?.toLowerCase().includes(term) ||
+      c.email?.toLowerCase().includes(term));
+  }
+
+  protected toggleUnusedDetail(companyId: number): void {
+    if (this.unusedExpanded.has(companyId)) {
+      this.unusedExpanded.delete(companyId);
+    } else {
+      this.unusedExpanded.add(companyId);
+    }
+  }
+
+  protected isUnusedExpanded(companyId: number): boolean {
+    return this.unusedExpanded.has(companyId);
+  }
+
+  protected exportUnusedData(format: 'csv' | 'json' | 'excel'): void {
+    const data = this.getFilteredUnused().map(c => ({
+      company_name: c.company_name,
+      dni: c.dni,
+      email: c.email,
+      billing: c.has_agreement ? 'POSPAGO' : 'PREPAGO',
+      postpaid_remaining: c.postpaid_remaining,
+      prepaid_purchased: c.prepaid_purchased,
+      prepaid_requested: c.prepaid_requested,
+      prepaid_1_year: c.prepaid_1_year,
+      prepaid_2_year: c.prepaid_2_year,
+      prepaid_pending: c.prepaid_pending,
+      total_unused: c.total_unused,
+    }));
+    const columns = [
+      { key: 'company_name', label: 'Empresa' },
+      { key: 'dni', label: 'NIT' },
+      { key: 'email', label: 'Email' },
+      { key: 'billing', label: 'Modalidad' },
+      { key: 'postpaid_remaining', label: 'Pospago disponible' },
+      { key: 'prepaid_purchased', label: 'Prepago comprados' },
+      { key: 'prepaid_requested', label: 'Prepago solicitados' },
+      { key: 'prepaid_pending', label: 'Prepago sin solicitar' },
+      { key: 'prepaid_1_year', label: 'Sin solicitar 1 año' },
+      { key: 'prepaid_2_year', label: 'Sin solicitar 2 años' },
+      { key: 'total_unused', label: 'Total sin consumir' },
+    ];
+    const filename = 'cupos-sin-consumir';
     switch (format) {
       case 'csv': this.exportService.exportToCSV(data, columns, { filename }); break;
       case 'json': this.exportService.exportToJSON(data, filename); break;

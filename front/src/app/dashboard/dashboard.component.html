@@ -43,6 +43,19 @@
             </span>
             <span class="dashboard-tabs__label">Consumo</span>
           </button>
+          @if (_token.isAdmin()) {
+            <button class="dashboard-tabs__tab"
+              [class.dashboard-tabs__tab--active]="activeTab === 'billing'"
+              (click)="activeTab = 'billing'">
+              <span class="dashboard-tabs__icon">
+                <i class="fas fa-file-invoice-dollar"></i>
+              </span>
+              <span class="dashboard-tabs__label">Pagos y cupos</span>
+              @if (unusedQuotas && unusedQuotas.totals.companies > 0) {
+                <span class="dashboard-tabs__badge">{{ unusedQuotas.totals.companies }}</span>
+              }
+            </button>
+          }
         </nav>
 
         <div class="dashboard-tabs__content">
@@ -984,6 +997,361 @@
           </section>
 
           </div><!-- /TAB 3: CONSUMO -->
+
+          <!-- ═══ TAB 4: PAGOS Y CUPOS (solo admin) ═══ -->
+          @if (_token.isAdmin()) {
+          <div class="dashboard-tabs__panel"
+            [class.dashboard-tabs__panel--active]="activeTab === 'billing'">
+
+      <!-- ── Pagos por mes de cada cliente ── -->
+      <div class="card w-100 mb-2">
+        <div class="card-header py-1 d-flex align-items-center justify-content-between flex-wrap gap-50">
+          <h6 class="card-title mb-0">
+            <i class="fas fa-file-invoice-dollar me-50 text-success"></i>Pagos por mes de cada cliente
+            @if (paymentsByMonth) {
+              <span class="badge bg-success ms-50">{{ paymentsByMonth.totals.companies }}</span>
+            }
+          </h6>
+          <div class="d-flex align-items-center gap-50 flex-wrap">
+            <select class="form-select form-select-sm w-auto" [ngModel]="paymentsYear" (ngModelChange)="loadPaymentsByMonth($event)" title="Año">
+              @for (year of paymentsYears; track year) {
+                <option [value]="year">{{ year }}</option>
+              }
+            </select>
+            <select class="form-select form-select-sm w-auto" [(ngModel)]="paymentsMonth" title="Mes">
+              <option [ngValue]="0">Todos los meses</option>
+              @for (m of monthNumbers; track m) {
+                <option [ngValue]="m">{{ months[m].name }}</option>
+              }
+            </select>
+            <input type="text" class="form-control form-control-sm w-auto" placeholder="Buscar empresa / NIT / email"
+              [(ngModel)]="paymentsSearch">
+            @if (paymentsByMonth && paymentsByMonth.companies.length > 0) {
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary btn-sm" (click)="exportPaymentsData('csv')" title="Exportar CSV">
+                  <i class="fa fa-download"></i>
+                </button>
+                <button class="btn btn-outline-success btn-sm" (click)="exportPaymentsData('excel')" title="Exportar Excel">
+                  <i class="fa fa-file-excel"></i>
+                </button>
+                <button class="btn btn-outline-info btn-sm" (click)="exportPaymentsData('json')" title="Exportar JSON">
+                  <i class="fa fa-code"></i>
+                </button>
+              </div>
+            }
+            <button class="btn btn-outline-secondary btn-sm" (click)="loadPaymentsByMonth()" title="Actualizar">
+              <i class="fa fa-sync-alt"></i>
+            </button>
+          </div>
+        </div>
+        <div class="card-body pt-50">
+          @if (paymentsLoading) {
+            <div class="text-center py-2">
+              <div class="spinner-border spinner-border-sm text-success" role="status"></div>
+              <small class="ms-50 text-muted">Cargando pagos...</small>
+            </div>
+          } @else if (paymentsError) {
+            <div class="alert alert-danger py-75 px-1 mb-0">
+              <small><i class="fas fa-exclamation-triangle me-50"></i>No fue posible cargar los pagos por mes.</small>
+            </div>
+          } @else if (!paymentsByMonth || paymentsByMonth.companies.length === 0) {
+            <div class="alert alert-info py-75 px-1 mb-0">
+              <small><i class="fas fa-info-circle me-50"></i>No hay pagos registrados en {{ paymentsYear }}.</small>
+            </div>
+          } @else if (getFilteredPayments().length === 0) {
+            <div class="alert alert-info py-75 px-1 mb-0">
+              <small><i class="fas fa-info-circle me-50"></i>No hay pagos que coincidan con el mes o la búsqueda seleccionados.</small>
+            </div>
+          } @else {
+            <!-- KPIs del año -->
+            <div class="row g-1 mb-1">
+              <div class="col-6 col-md-3">
+                <div class="billing-kpi">
+                  <span class="billing-kpi__label">Recaudo {{ paymentsMonth > 0 ? months[paymentsMonth].name : 'total' }}</span>
+                  <span class="billing-kpi__value text-success">{{ formatCurrency(getPaymentsSummary().total_amount) }}</span>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="billing-kpi">
+                  <span class="billing-kpi__label">Subtotal / IVA</span>
+                  <span class="billing-kpi__value">{{ formatCurrency(getPaymentsSummary().subtotal) }}</span>
+                  <small class="text-muted">IVA {{ formatCurrency(getPaymentsSummary().tax_amount) }}</small>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="billing-kpi">
+                  <span class="billing-kpi__label">Órdenes pagadas</span>
+                  <span class="billing-kpi__value">{{ getPaymentsSummary().orders }}</span>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="billing-kpi">
+                  <span class="billing-kpi__label">Certificados vendidos</span>
+                  <span class="billing-kpi__value">{{ getPaymentsSummary().certificates }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Matriz empresa × mes -->
+            <div class="table-responsive billing-matrix">
+              <table class="table table-striped table-bordered table-sm mb-0">
+                <thead>
+                  <tr>
+                    <th class="billing-matrix__sticky">Empresa</th>
+                    <th class="text-center">Modalidad</th>
+                    @for (m of getVisibleMonths(); track m) {
+                      <th class="text-end">{{ paymentsMonth > 0 ? months[m].name : monthShortNames[m - 1] }}</th>
+                    }
+                    <th class="text-center">Órdenes</th>
+                    <th class="text-center">Certif.</th>
+                    <th class="text-end">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (c of getFilteredPayments(); track c.company_id) {
+                    <tr>
+                      <td class="billing-matrix__sticky">
+                        <strong>{{ c.company_name }}</strong>
+                        @if (c.dni) { <br><small class="text-muted">NIT {{ c.dni }}</small> }
+                      </td>
+                      <td class="text-center">
+                        @if (c.has_agreement) {
+                          <span class="badge badge-light-primary">POSPAGO</span>
+                        } @else {
+                          <span class="badge badge-light-secondary">PREPAGO</span>
+                        }
+                      </td>
+                      @for (m of getVisibleMonths(); track m) {
+                        <td class="text-end" [class.text-muted]="!c.months[m]">
+                          @if (c.months[m]) {
+                            {{ formatCurrency(c.months[m].total_amount) }}
+                            <br><small class="text-muted">{{ c.months[m].orders }} ord.</small>
+                          } @else { — }
+                        </td>
+                      }
+                      <td class="text-center">{{ getCompanyTotals(c).orders }}</td>
+                      <td class="text-center">{{ getCompanyTotals(c).certificates }}</td>
+                      <td class="text-end"><strong>{{ formatCurrency(getCompanyTotals(c).total_amount) }}</strong></td>
+                    </tr>
+                  }
+                </tbody>
+                <tfoot>
+                  <tr class="fw-bold">
+                    <td class="billing-matrix__sticky">Total mes</td>
+                    <td></td>
+                    @for (m of getVisibleMonths(); track m) {
+                      <td class="text-end">{{ getMonthTotal(m) > 0 ? formatCurrency(getMonthTotal(m)) : '—' }}</td>
+                    }
+                    <td class="text-center">{{ getPaymentsSummary().orders }}</td>
+                    <td class="text-center">{{ getPaymentsSummary().certificates }}</td>
+                    <td class="text-end">{{ formatCurrency(getPaymentsSummary().total_amount) }}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            <small class="text-muted d-block mt-50">
+              <i class="fas fa-info-circle me-25"></i>
+              Solo órdenes pagadas (WOMPI). Las empresas con convenio pospago no generan pagos en línea; su consumo se ve en el cupo asignado.
+            </small>
+          }
+        </div>
+      </div>
+
+      <!-- ── Cupos no consumidos ── -->
+      <div class="card w-100 mb-2">
+        <div class="card-header py-1 d-flex align-items-center justify-content-between flex-wrap gap-50">
+          <h6 class="card-title mb-0">
+            <i class="fas fa-layer-group me-50 text-warning"></i>Cupos sin consumir por empresa
+            @if (unusedQuotas) {
+              <span class="badge bg-warning text-dark ms-50">{{ unusedQuotas.totals.total_unused }}</span>
+            }
+          </h6>
+          <div class="d-flex align-items-center gap-50 flex-wrap">
+            <input type="text" class="form-control form-control-sm w-auto" placeholder="Buscar empresa / NIT / email"
+              [(ngModel)]="unusedSearch">
+            <div class="form-check form-check-inline mb-0">
+              <input class="form-check-input" type="checkbox" id="unusedIncludeExpired"
+                [checked]="unusedIncludeExpired" (change)="toggleUnusedExpired()">
+              <label class="form-check-label small" for="unusedIncludeExpired">Incluir vencidos</label>
+            </div>
+            @if (unusedQuotas && unusedQuotas.companies.length > 0) {
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary btn-sm" (click)="exportUnusedData('csv')" title="Exportar CSV">
+                  <i class="fa fa-download"></i>
+                </button>
+                <button class="btn btn-outline-success btn-sm" (click)="exportUnusedData('excel')" title="Exportar Excel">
+                  <i class="fa fa-file-excel"></i>
+                </button>
+                <button class="btn btn-outline-info btn-sm" (click)="exportUnusedData('json')" title="Exportar JSON">
+                  <i class="fa fa-code"></i>
+                </button>
+              </div>
+            }
+            <button class="btn btn-outline-secondary btn-sm" (click)="loadUnusedQuotas()" title="Actualizar">
+              <i class="fa fa-sync-alt"></i>
+            </button>
+          </div>
+        </div>
+        <div class="card-body pt-50">
+          @if (unusedLoading) {
+            <div class="text-center py-2">
+              <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+              <small class="ms-50 text-muted">Cargando cupos...</small>
+            </div>
+          } @else if (unusedError) {
+            <div class="alert alert-danger py-75 px-1 mb-0">
+              <small><i class="fas fa-exclamation-triangle me-50"></i>No fue posible cargar los cupos sin consumir.</small>
+            </div>
+          } @else if (!unusedQuotas || unusedQuotas.companies.length === 0) {
+            <div class="alert alert-success py-75 px-1 mb-0">
+              <small><i class="fas fa-check-circle me-50"></i>Ninguna empresa tiene cupos pendientes de consumir.</small>
+            </div>
+          } @else {
+            <div class="row g-1 mb-1">
+              <div class="col-6 col-md-3">
+                <div class="billing-kpi">
+                  <span class="billing-kpi__label">Empresas con cupo</span>
+                  <span class="billing-kpi__value">{{ unusedQuotas.totals.companies }}</span>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="billing-kpi">
+                  <span class="billing-kpi__label">Pospago disponible</span>
+                  <span class="billing-kpi__value text-primary">{{ unusedQuotas.totals.postpaid_remaining }}</span>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="billing-kpi">
+                  <span class="billing-kpi__label">Prepago sin solicitar</span>
+                  <span class="billing-kpi__value text-info">{{ unusedQuotas.totals.prepaid_pending }}</span>
+                  <small class="text-muted">Comprados {{ unusedQuotas.totals.prepaid_purchased }} · Solicitados {{ unusedQuotas.totals.prepaid_requested }}</small>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="billing-kpi">
+                  <span class="billing-kpi__label">Total sin consumir</span>
+                  <span class="billing-kpi__value text-warning">{{ unusedQuotas.totals.total_unused }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-striped table-bordered table-sm mb-0">
+                <thead>
+                  <tr>
+                    <th style="width: 32px"></th>
+                    <th>Empresa</th>
+                    <th>Email</th>
+                    <th class="text-center">Modalidad</th>
+                    <th class="text-center">Pospago disp.</th>
+                    <th class="text-center">Comprados</th>
+                    <th class="text-center">Solicitados</th>
+                    <th class="text-center">Sin solicitar</th>
+                    <th class="text-center">1 año / 2 años</th>
+                    <th class="text-center">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (c of getFilteredUnused(); track c.company_id) {
+                    <tr class="cursor-pointer" (click)="toggleUnusedDetail(c.company_id)">
+                      <td class="text-center">
+                        <i class="fas" [class.fa-chevron-down]="isUnusedExpanded(c.company_id)"
+                          [class.fa-chevron-right]="!isUnusedExpanded(c.company_id)"></i>
+                      </td>
+                      <td>
+                        <strong>{{ c.company_name }}</strong>
+                        @if (c.dni) { <br><small class="text-muted">NIT {{ c.dni }}</small> }
+                      </td>
+                      <td>
+                        @if (c.email) { <a [href]="'mailto:' + c.email" (click)="$event.stopPropagation()">{{ c.email }}</a> }
+                      </td>
+                      <td class="text-center">
+                        @if (c.has_agreement) {
+                          <span class="badge badge-light-primary">POSPAGO</span>
+                        } @else {
+                          <span class="badge badge-light-secondary">PREPAGO</span>
+                        }
+                      </td>
+                      <td class="text-center">{{ c.postpaid_remaining }}</td>
+                      <td class="text-center">{{ c.prepaid_purchased }}</td>
+                      <td class="text-center">{{ c.prepaid_requested }}</td>
+                      <td class="text-center">
+                        <strong [class.text-warning]="c.prepaid_pending > 0">{{ c.prepaid_pending }}</strong>
+                      </td>
+                      <td class="text-center"><small>{{ c.prepaid_1_year }} / {{ c.prepaid_2_year }}</small></td>
+                      <td class="text-center"><strong>{{ c.total_unused }}</strong></td>
+                    </tr>
+                    @if (isUnusedExpanded(c.company_id)) {
+                      <tr class="billing-detail">
+                        <td></td>
+                        <td colspan="9">
+                          @if (c.postpaid.length > 0) {
+                            <div class="mb-50"><small class="fw-bold text-primary">Cupos POSPAGO</small></div>
+                            <table class="table table-sm table-borderless mb-1 billing-detail__table">
+                              <thead>
+                                <tr class="text-muted small">
+                                  <th>#</th><th>Tarifa</th><th class="text-center">Asignado</th><th class="text-center">Usado</th>
+                                  <th class="text-center">Disponible</th><th>Periodo</th><th class="text-center">Estado</th><th>Notas</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                @for (q of c.postpaid; track q.quota_id) {
+                                  <tr [class.text-danger]="q.is_expired">
+                                    <td>{{ q.quota_id }}</td>
+                                    <td>{{ q.pricing_tier || '—' }}</td>
+                                    <td class="text-center">{{ q.allocated }}</td>
+                                    <td class="text-center">{{ q.used }}</td>
+                                    <td class="text-center"><strong>{{ q.remaining }}</strong></td>
+                                    <td>{{ q.period_start }} → {{ q.period_end }}</td>
+                                    <td class="text-center">
+                                      <span class="badge" [class.badge-light-success]="!q.is_expired" [class.badge-light-danger]="q.is_expired">
+                                        {{ q.is_expired ? 'VENCIDO' : q.status }}
+                                      </span>
+                                    </td>
+                                    <td><small>{{ q.notes || '' }}</small></td>
+                                  </tr>
+                                }
+                              </tbody>
+                            </table>
+                          }
+                          @if (c.prepaid.length > 0) {
+                            <div class="mb-50"><small class="fw-bold text-info">Órdenes PREPAGO con certificados sin solicitar</small></div>
+                            <table class="table table-sm table-borderless mb-0 billing-detail__table">
+                              <thead>
+                                <tr class="text-muted small">
+                                  <th>Orden</th><th>Fecha compra</th><th class="text-center">Vigencia</th>
+                                  <th class="text-center">Comprados</th><th class="text-center">Solicitados</th><th class="text-center">Sin solicitar</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                @for (i of c.prepaid; track i.order_uuid) {
+                                  <tr>
+                                    <td><small class="font-monospace">{{ i.order_uuid }}</small></td>
+                                    <td>{{ i.purchased_at | date:'yyyy-MM-dd HH:mm' }}</td>
+                                    <td class="text-center">{{ i.vigencia }} año(s)</td>
+                                    <td class="text-center">{{ i.purchased }}</td>
+                                    <td class="text-center">{{ i.requested }}</td>
+                                    <td class="text-center"><strong class="text-warning">{{ i.pending }}</strong></td>
+                                  </tr>
+                                }
+                              </tbody>
+                            </table>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  } @empty {
+                    <tr><td colspan="10" class="text-center text-muted py-1">Sin coincidencias para la búsqueda.</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+
+          </div><!-- /TAB 4: PAGOS Y CUPOS -->
+          }
 
         </div><!-- /tabs content -->
       </div><!-- /dashboard-tabs -->

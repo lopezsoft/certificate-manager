@@ -11,6 +11,8 @@ import { FileUploadConfig } from "../../shared/components/file-upload/file-uploa
 import { FileUploadData } from "../../shared/components/file-upload/file-upload.component";
 import { HttpErrorResponse } from "@angular/common/http";
 import { DebugService } from "../../utils/debug.service";
+import { TermsService } from "../../services/terms.service";
+import { TermsVersion } from "../../interfaces/terms.interface";
 
 @Component({
   selector: 'app-create-request',
@@ -64,11 +66,27 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
   };
 
   /**
-   * URL de la Política de Servicios de Certificación aplicable según el tipo
-   * de persona seleccionado (usada en el checkbox obligatorio de aceptación).
+   * URL de la Política de Servicios de Certificación de Viafirma aplicable
+   * según el tipo de persona (frase adicional dentro del label de T&C).
    */
-  get termsUrl(): string {
+  get viafirmaTermsUrl(): string {
     return this.isNaturelPerson() ? this.VIAFIRMA_TERMS_URL.NATURAL : this.VIAFIRMA_TERMS_URL.JURIDICA;
+  }
+
+  /**
+   * Versión vigente de los Términos y Condiciones de MATICERTS. Su `id` se
+   * envía como `terms_version_id` al crear la solicitud. Si es `null`, el
+   * envío del formulario queda bloqueado.
+   */
+  termsVersion: TermsVersion | null = null;
+  /** `true` cuando GET /terms/current falló o respondió 404 */
+  termsLoadError: boolean = false;
+  /** Mensaje devuelto por el backend en la clave `accept_terms` (HTTP 400) */
+  termsBackendError: string | null = null;
+
+  /** URL de los T&C de MATICERTS (source_url del backend o URL de respaldo) */
+  get termsUrl(): string {
+    return this.termsService.resolveUrl(this.termsVersion);
   }
 
   // Límite total de archivos: 10MB
@@ -80,6 +98,9 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
   get canSaveForm(): boolean {
     // Si está editando, siempre puede guardar
     if (this.canEdit) return true;
+
+    // Sin versión vigente de T&C no se puede crear la solicitud
+    if (!this.termsVersion) return false;
 
     if (this.isViafirma()) {
       // PJ con documento constitutivo "Sin RUES": requiere de 1 a 3 soportes
@@ -106,6 +127,12 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
    * Obtiene el mensaje de validación según el tipo de persona
    */
   get documentValidationMessage(): string {
+    if (!this.canEdit && !this.termsVersion) {
+      return this.termsLoadError
+        ? 'No se pudo cargar la versión vigente de los Términos y Condiciones. Recargue la página.'
+        : 'Cargando la versión vigente de los Términos y Condiciones...';
+    }
+
     if (this.isViafirma()) {
       if (!this.requiresRuesDocuments()) return 'No se requieren archivos para crear la solicitud.';
 
@@ -237,6 +264,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     private mask: LoadMaskService,
     protected _token: TokenService,
     private debug: DebugService,
+    private termsService: TermsService,
   ) {
 
   }
@@ -246,6 +274,9 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.issuanceProvider = this._token.getToken()?.company?.issuance_provider || 'mail';
+    // Se determina antes de construir el formulario: la aceptación de T&C solo
+    // aplica a la creación (el PUT de edición no la envía).
+    this.canEdit = !!this._activatedRoute.snapshot.paramMap.get('id');
 
     this.documentSer.getIdentityDocuments({}).subscribe((resp) => {
       this.identityDocs = resp;
@@ -268,6 +299,11 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       this.organizations = resp;
     });
     this.onCreateForm();
+    if (!this.canEdit) {
+      this.loadTermsVersion();
+      // Al volver a marcar el checkbox se limpia el error devuelto por el backend
+      this.customForm.get('accept_terms')?.valueChanges.subscribe(() => this.termsBackendError = null);
+    }
 
     // Revalida los campos de confirmación en vivo cuando cambia su original,
     // para que el error de "no coincide" aparezca/desaparezca sin esperar
@@ -312,7 +348,31 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       dv: [''],
       life: [1, Validators.required],
       country_id: [45, [Validators.required]],
-      accept_terms: [false],
+      // Aceptación de T&C de MATICERTS: obligatoria para todos los proveedores
+      // al crear. terms_version_id no es editable: lo rellena loadTermsVersion().
+      accept_terms: [false, ts.canEdit ? [] : [Validators.requiredTrue]],
+      terms_version_id: [null, ts.canEdit ? [] : [Validators.required]],
+    });
+  }
+
+  /**
+   * Consulta la versión vigente de los Términos y Condiciones y la asigna al
+   * control oculto `terms_version_id`. Ante 404 o fallo de red se bloquea el
+   * envío del formulario y se pide recargar la página.
+   */
+  private loadTermsVersion(): void {
+    this.termsLoadError = false;
+    this.termsService.getCurrent().subscribe({
+      next: (terms) => {
+        this.termsVersion = terms;
+        this.customForm.get('terms_version_id')?.setValue(terms.id);
+      },
+      error: (err) => {
+        this.termsVersion = null;
+        this.termsLoadError = true;
+        this.customForm.get('terms_version_id')?.setValue(null);
+        this.debug.error('CreateRequestComponent', 'No se pudo cargar la versión vigente de T&C', err?.status);
+      },
     });
   }
 
@@ -387,6 +447,10 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
         frm.get('entity_document_type_id')?.setValue(1);
       }
 
+      if (!ts.canEdit && !ts.termsVersion) {
+        throw new Error('No fue posible cargar la versión vigente de los Términos y Condiciones. Recargue la página e intente nuevamente.');
+      }
+
       ts.onValidateForm(frm);
       if (frm.invalid) {
         let invalidFields = [];
@@ -432,6 +496,11 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       delete params.dni_confirm;
       delete params.document_number_confirm;
       delete params.legal_rep_email_confirm;
+      // Evidencia de aceptación de T&C (solo creación). IP y User-Agent los
+      // captura el backend; nunca se envían desde el front.
+      params.accept_terms = params.accept_terms === true;
+      params.terms_version_id = Number(params.terms_version_id);
+      ts.termsBackendError = null;
       ts.loading = true;
 
       if (!ts.canEdit && (!ts.isViafirma() || ts.requiresRuesDocuments())) {
@@ -446,6 +515,9 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       this.mask.showBlockUI('Procesando solicitud...');
       if (ts.canEdit) {
         const data = ts.customForm.getRawValue();
+        // El flujo de edición no registra aceptación de T&C
+        delete data.accept_terms;
+        delete data.terms_version_id;
         const id = ts._activatedRoute.snapshot.paramMap.get('id');
         this._http.put(`/certificate-request/${id}`, data)
           .subscribe({
@@ -457,7 +529,7 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
             }
           });
       } else {
-        const payload = ts.isViafirma() ? params : params;
+        const payload = params;
         this._http.post('/certificate-request', payload)
           .subscribe({
             next: (resp) => {
@@ -509,7 +581,6 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
 
     if (this.isViafirma()) {
       frm.get('legal_representative')?.clearValidators();
-      frm.get('accept_terms')?.setValidators([Validators.requiredTrue]);
       // El celular se usa para enviar enlaces de verificación (KYC/re-descarga) por WhatsApp
       frm.get('mobile')?.setValidators([Validators.required]);
       frm.get('dni_confirm')?.setValidators([Validators.required, this.matchValidator('dni')]);
@@ -545,7 +616,6 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
       frm.get('dni')?.setValidators([Validators.required, Validators.minLength(5), Validators.maxLength(12)]);
       frm.get('document_number')?.setValidators([Validators.required, Validators.minLength(5), Validators.maxLength(12)]);
       frm.get('address')?.setValidators([Validators.required, Validators.minLength(10)]);
-      frm.get('accept_terms')?.clearValidators();
       frm.get('mobile')?.clearValidators();
       frm.get('dni_confirm')?.clearValidators();
       frm.get('document_number_confirm')?.clearValidators();
@@ -560,7 +630,6 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
     frm.get('dni')?.updateValueAndValidity();
     frm.get('document_number')?.updateValueAndValidity();
     frm.get('address')?.updateValueAndValidity();
-    frm.get('accept_terms')?.updateValueAndValidity();
     frm.get('mobile')?.updateValueAndValidity();
     frm.get('dni_confirm')?.updateValueAndValidity();
     frm.get('document_number_confirm')?.updateValueAndValidity();
@@ -684,10 +753,39 @@ export class CreateRequestComponent implements OnInit, AfterViewInit {
 
   /**
    * Maneja errores HTTP específicos al crear/editar solicitud.
-   * HTTP 402 indica que el cupo se agotó: redirige al flujo de compra.
+   * HTTP 400 con error en `terms_version_id`: los T&C se republicaron mientras
+   * el formulario estaba abierto; se recarga la versión vigente y se exige
+   * aceptar de nuevo. HTTP 400 con error en `accept_terms`: se muestra bajo el
+   * checkbox. HTTP 402 indica que el cupo se agotó: redirige al flujo de compra.
    */
   private handleHttpError(err: any): void {
-    if (err instanceof HttpErrorResponse && err.status === 402) {
+    if (!(err instanceof HttpErrorResponse)) return;
+
+    if (err.status === 400 && err.error?.errors) {
+      const errors = err.error.errors as Record<string, string[] | string>;
+      const firstMessage = (key: string): string | null => {
+        const value = errors[key];
+        if (!value) return null;
+        return Array.isArray(value) ? value[0] ?? null : String(value);
+      };
+
+      const versionError = firstMessage('terms_version_id');
+      if (versionError) {
+        this._msg.errorMessage('Términos y Condiciones actualizados', versionError);
+        this.customForm.get('accept_terms')?.setValue(false);
+        this.customForm.get('accept_terms')?.markAsUntouched();
+        this.loadTermsVersion();
+      }
+
+      const acceptError = firstMessage('accept_terms');
+      if (acceptError) {
+        this.termsBackendError = acceptError;
+        this.customForm.get('accept_terms')?.markAsTouched();
+      }
+      return;
+    }
+
+    if (err.status === 402) {
       this._msg.toastMessage(
         'Sin cupos disponibles',
         'No tiene certificados disponibles. Será redirigido al módulo de compra para adquirir un paquete.',

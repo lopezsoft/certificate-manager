@@ -113,6 +113,19 @@ $wompi-bg-light: #f8f9fc;
     color: $wompi-success;
     margin-right: 4px;
   }
+
+  &--terms {
+    margin-top: 6px;
+
+    i {
+      color: $wompi-text-muted;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: underline;
+    }
+  }
 }
 
 // ─── Status (Polling / Result) ───────────────────────────────────────────

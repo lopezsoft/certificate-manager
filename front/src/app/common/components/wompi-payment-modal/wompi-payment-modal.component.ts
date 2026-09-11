@@ -3,6 +3,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { WompiPaymentService, WompiPaymentState } from '../../../services/wompi-payment.service';
 import { FormatsService } from '../../../services/formats.service';
+import { TermsService } from '../../../services/terms.service';
 
 /**
  * WompiPaymentModalComponent — Modal reutilizable de pago con Wompi.
@@ -33,6 +34,12 @@ export class WompiPaymentModalComponent implements OnInit, OnDestroy {
   };
 
   private readonly destroy$ = new Subject<void>();
+
+  /**
+   * URL pública de los Términos y Condiciones (solo aviso informativo: la
+   * aceptación se registra al crear la solicitud, no en el pago).
+   */
+  readonly termsUrl: string = TermsService.FALLBACK_TERMS_URL;
 
   constructor(
     public wompiService: WompiPaymentService,

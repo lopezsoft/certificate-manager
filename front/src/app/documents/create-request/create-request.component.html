@@ -372,27 +372,49 @@
           </div>
         </div>
 
-        @if (isViafirma()) {
+        @if (!canEdit) {
         <div class="row">
           <div class="col-md-12">
             <div class="form-group">
+              @if (termsLoadError) {
+              <div class="alert alert-danger py-2 mb-2" role="alert">
+                <i class="fas fa-exclamation-triangle me-1"></i>
+                No fue posible cargar la versión vigente de los Términos y
+                Condiciones. Por favor recargue la página para continuar.
+              </div>
+              }
               <div class="form-check">
                 <input class="form-check-input" id="acceptTerms" type="checkbox"
                   formControlName="accept_terms"
-                  [class.is-invalid]="isInvalid('accept_terms')">
+                  [attr.disabled]="termsVersion ? null : true"
+                  [class.is-invalid]="isInvalid('accept_terms') || !!termsBackendError">
                 <label class="form-check-label" for="acceptTerms">
                   <span class="asterisk">{{ 'general.asterisk' | translate
                     }}</span>
-                  He leído y acepto la
+                  He leído y acepto los
                   <a [href]="termsUrl" target="_blank" rel="noopener noreferrer">
-                    Política de Servicios de Certificación de Viafirma
+                    Términos y Condiciones de MATICERTS
                   </a>
+                  @if (termsVersion) {
+                  <span class="badge bg-light text-dark border ms-1">v{{ termsVersion.version }}</span>
+                  }
+                  y autorizo que la validación de identidad y la emisión del
+                  certificado inicien de inmediato, aceptando que, una vez
+                  emitido, el servicio no admite retracto ni reembolso
+                  (cláusula 5).
+                  @if (isViafirma()) {
+                  Asimismo, declaro haber leído y aceptado la
+                  <a [href]="viafirmaTermsUrl" target="_blank" rel="noopener noreferrer">
+                    Política de Servicios de Certificación de Viafirma
+                  </a>.
+                  }
                 </label>
               </div>
-              @if (isInvalid('accept_terms')) {
+              @if (termsBackendError) {
+              <small class="text-danger d-block">{{ termsBackendError }}</small>
+              } @else if (isInvalid('accept_terms')) {
               <small class="text-danger d-block">
-                Debe aceptar la política de servicios de certificación para
-                continuar
+                Debe aceptar los Términos y Condiciones para continuar
               </small>
               }
             </div>
