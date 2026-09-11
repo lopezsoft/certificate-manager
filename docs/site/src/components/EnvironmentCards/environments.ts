@@ -4,6 +4,7 @@
  */
 export type Environment = {
   key: string;
+  icon: string;
   title: string;
   badge: string;
   description: string;
@@ -17,6 +18,7 @@ export type Environment = {
 export const ENVIRONMENTS: Environment[] = [
   {
     key: 'production',
+    icon: '🚀',
     title: 'Producción',
     badge: 'Validez legal',
     description:
@@ -29,6 +31,7 @@ export const ENVIRONMENTS: Environment[] = [
   },
   {
     key: 'sandbox',
+    icon: '🧪',
     title: 'Sandbox',
     badge: 'Gratuito',
     description:

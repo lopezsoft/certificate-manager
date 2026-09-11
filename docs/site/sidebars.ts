@@ -12,7 +12,7 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Guías',
+      label: '📚 Guías',
       items: [
         {
           type: 'doc',

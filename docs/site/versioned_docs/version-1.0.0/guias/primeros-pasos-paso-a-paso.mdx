@@ -7,13 +7,13 @@ sidebar_position: 2
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# Guía Paso a Paso: Tu Primera Emisión de Certificado
+# 📖 Guía Paso a Paso: Tu Primera Emisión de Certificado
 
 En esta guía aprenderás a emitir tu primer certificado digital usando MATICERTS. Seguiremos un flujo completo desde la autenticación hasta la validación del certificado.
 
 ---
 
-## Requisitos Previos
+## 📋 Requisitos Previos
 
 Antes de comenzar, asegúrate de tener:
 
@@ -24,7 +24,7 @@ Antes de comenzar, asegúrate de tener:
 
 ---
 
-## Paso 1: Obtén tu Token de Acceso
+## Paso 1️⃣: Obtén tu Token de Acceso
 
 ### Opción A: Usando Personal Access Token (PAT)
 
@@ -109,7 +109,7 @@ export ACCESS_TOKEN="tu-token-aqui"
 
 ---
 
-## Paso 2: Verifica la Conexión (Health Check)
+## Paso 2️⃣: Verifica la Conexión (Health Check)
 
 Antes de continuar, verifica que tu token funciona correctamente:
 
@@ -173,7 +173,7 @@ print('Estado del sistema:', response.json())
 
 ---
 
-## Paso 3: Crea una Solicitud de Certificado
+## Paso 3️⃣: Crea una Solicitud de Certificado
 
 Ahora crearemos una solicitud para emitir un certificado. Necesitarás proporcionar datos del solicitante:
 
@@ -278,7 +278,7 @@ Necesitarás el `id` de la solicitud para los siguientes pasos. En este ejemplo 
 
 ---
 
-## Paso 4: Monitorea el Estado de la Solicitud
+## Paso 4️⃣: Monitorea el Estado de la Solicitud
 
 Verifica el progreso de tu solicitud:
 
@@ -356,7 +356,7 @@ Repite esta petición cada 5-10 segundos hasta que el estado sea `COMPLETADO` o 
 
 ---
 
-## Paso 5: Descarga el Certificado
+## Paso 5️⃣: Descarga el Certificado
 
 Una vez que el estado sea `COMPLETADO`, descarga tu certificado:
 
@@ -411,7 +411,7 @@ print('Certificado descargado: certificado.p12')
 
 ---
 
-## Paso 6: Valida tu Certificado
+## Paso 6️⃣: Valida tu Certificado
 
 Verifica que el certificado es válido:
 
@@ -458,7 +458,7 @@ console.log('Validación:', data);
 
 ---
 
-## ¡Felicidades!
+## 🎉 ¡Felicidades!
 
 Has completado exitosamente el flujo de emisión de certificados. Ahora puedes:
 
@@ -469,7 +469,7 @@ Has completado exitosamente el flujo de emisión de certificados. Ahora puedes:
 
 ---
 
-## Solución de Problemas
+## 🆘 Solución de Problemas
 
 ### Error: "Token inválido"
 - Verifica que el token no haya expirado
