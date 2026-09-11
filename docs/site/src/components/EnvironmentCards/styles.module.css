@@ -1,0 +1,169 @@
+/**
+ * Tarjetas de entorno (Producción / Sandbox).
+ * Compartidas entre la portada y la guía de Primeros Pasos.
+ */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.card {
+  --env-accent: var(--ifm-color-primary);
+  --env-accent-soft: rgba(37, 86, 163, 0.08);
+
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  padding: 1.75rem;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 14px;
+  background: var(--ifm-card-background-color, var(--ifm-background-surface-color));
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+/* Franja de acento superior que identifica el entorno */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  background: var(--env-accent);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: var(--env-accent);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.1);
+}
+
+.production {
+  --env-accent: var(--ifm-color-primary);
+  --env-accent-soft: rgba(37, 86, 163, 0.08);
+}
+
+.sandbox {
+  --env-accent: var(--ifm-color-warning-dark, #e6a700);
+  --env-accent-soft: rgba(230, 167, 0, 0.12);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--ifm-heading-color);
+}
+
+.badge {
+  margin-left: auto;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--env-accent-soft);
+  color: var(--env-accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.description {
+  margin: 0 0 1.25rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--ifm-color-content-secondary);
+}
+
+.urls {
+  margin: 0 0 1.5rem;
+}
+
+.urlLabel {
+  margin-bottom: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ifm-color-content-secondary);
+}
+
+.urlValue {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.urlValue:last-child {
+  margin-bottom: 0;
+}
+
+.appLink {
+  font-weight: 600;
+  color: var(--env-accent);
+  text-decoration: none;
+}
+
+.appLink:hover {
+  text-decoration: underline;
+}
+
+.external {
+  margin-left: 0.25rem;
+  font-size: 0.8em;
+}
+
+.apiUrl {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 6px;
+  background: var(--ifm-color-emphasis-100);
+  font-size: 0.85rem;
+  color: var(--ifm-color-content);
+}
+
+.button {
+  margin-top: auto;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--env-accent);
+  transition: filter 0.2s ease, transform 0.2s ease;
+}
+
+.button:hover {
+  color: #fff;
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+/* Respeta la preferencia de movimiento reducido del usuario */
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .button {
+    transition: none;
+  }
+  .card:hover,
+  .button:hover {
+    transform: none;
+  }
+}

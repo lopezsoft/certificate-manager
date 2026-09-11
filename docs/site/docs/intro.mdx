@@ -6,6 +6,8 @@ sidebar_position: 1
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import EnvironmentCards from '@site/src/components/EnvironmentCards';
+import NextSteps from '@site/src/components/NextSteps';
 
 # 🚀 Primeros Pasos con MATICERTS
 
@@ -19,44 +21,28 @@ MATICERTS es una solución empresarial que permite emitir, validar y gestionar c
 
 ## 🌍 Elige tu Entorno
 
-Contamos con dos entornos separados para que desarrolles sin riesgos:
+Contamos con dos entornos completamente independientes. Cada uno expone su propia **aplicación web** (el panel donde gestionas tu cuenta) y su propia **API REST** (la que integras en tu sistema).
 
-**Sandbox (Pruebas)** → Perfecto para aprender y probar  
-**Producción** → Para certificados con validez legal
+<EnvironmentCards />
 
-Parametriza la base URL en tu aplicación (`{{URL}}`) apuntando al entorno deseado:
+:::tip 🖥️ ¿Por dónde empiezo?
+Entra primero a la **aplicación web** de Sandbox: ahí creas tu cuenta y generas el **Personal Access Token (PAT)** que necesitarás para llamar a la API. Cuando tu integración funcione, repite el proceso en Producción.
+:::
 
-<div className="row margin-bottom--lg">
-  <div className="col col--6">
-    <div className="card shadow--md">
-      <div className="card__header">
-        <h3>🧪 Sandbox (Pruebas)</h3>
-      </div>
-      <div className="card__body">
-        <p>Entorno efímero y gratuito para el ciclo de desarrollo.</p>
-        <div className="alert alert--secondary">
-          <code>https://sandbox-api.maticerts.com</code>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div className="col col--6">
-    <div className="card shadow--md">
-      <div className="card__header">
-        <h3>🚀 Producción</h3>
-      </div>
-      <div className="card__body">
-        <p>Infraestructura real. Emite certificados con validez legal.</p>
-        <div className="alert alert--success">
-          <code>https://api.maticerts.com</code>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+### Parametriza la base URL
+
+En los ejemplos de esta documentación usamos `{'{{URL}}'}` como marcador de la base URL de la API. Configúralo por entorno:
+
+```bash title=".env"
+# Sandbox
+MATICERTS_API_URL=https://sandbox-api.maticerts.com
+
+# Producción
+# MATICERTS_API_URL=https://api.maticerts.com
+```
 
 :::warning 🔒 Buena Práctica de Seguridad
-**Nunca hardcodees las URLs en el código.** Usa variables de entorno (`.env`) para cambiar entre Sandbox y Producción sin recompilar tu aplicación.
+**Nunca hardcodees las URLs ni los tokens en el código.** Usa variables de entorno para cambiar entre Sandbox y Producción sin recompilar tu aplicación.
 :::
 
 ---
@@ -69,26 +55,30 @@ Todas las peticiones a MATICERTS deben incluir un **Bearer Token** en el encabez
 
 <Tabs groupId="auth-methods">
   <TabItem value="m2m" label="🤖 Backend (M2M) - Recomendado" default>
-    <p>
-      <strong>Ideal para:</strong> ERPs, CRMs, Cronjobs, integraciones automatizadas.
-    </p>
-    <p>
-      Usa un <strong>Personal Access Token (PAT)</strong> generado en el panel de administración. Estos tokens:
-    </p>
-    <ul>
-      <li>✅ No expiran automáticamente</li>
-      <li>✅ Máximo rendimiento</li>
-      <li>✅ Fácil de gestionar</li>
-    </ul>
+
+**Ideal para:** ERPs, CRMs, Cronjobs e integraciones automatizadas.
+
+Usa un **Personal Access Token (PAT)** que generas desde el panel de administración
+([Producción](https://app.maticerts.com/) · [Sandbox](https://sandbox-app.maticerts.com/)).
+
+| | Ventaja |
+| :--: | --- |
+| ✅ | No expiran automáticamente |
+| ✅ | Máximo rendimiento (sin ciclo de refresh) |
+| ✅ | Revocables en cualquier momento desde el panel |
+
+:::danger 🔑 Trata tu PAT como una contraseña
+Guárdalo en variables de entorno, nunca en el repositorio ni en el código del navegador. Si se filtra, revócalo de inmediato desde el panel.
+:::
+
   </TabItem>
   <TabItem value="frontend" label="👤 Aplicaciones Cliente">
-    <p>
-      <strong>Ideal para:</strong> Portales web, aplicaciones móviles, interfaces de usuario.
-    </p>
-    <p>
-      Obtén un token temporal autenticando al usuario final:
-    </p>
-    
+
+**Ideal para:** Portales web, aplicaciones móviles e interfaces de usuario.
+
+Obtén un token temporal autenticando al usuario final:
+
+
 ```bash
 curl -X POST "{{URL}}/api/v1/auth/login" \
      -H "Content-Type: application/json" \
@@ -155,12 +145,9 @@ print(response.json())
 
 ## 📚 Próximos Pasos
 
-¡Excelente! Ya tienes tu primer endpoint funcionando. Ahora:
+¡Excelente! Ya tienes tu primer endpoint funcionando. Continúa por aquí:
 
-1. **Explora el Catálogo de API** en el panel lateral para descubrir todos los endpoints disponibles
-2. **Lee la guía paso a paso** para implementar tu primer flujo de emisión de certificados
-3. **Consulta casos de uso** para ver ejemplos reales de integración
-4. **Revisa troubleshooting** si encuentras algún problema
+<NextSteps />
 
 :::success 🎉 ¿Necesitas ayuda?
 Si tienes dudas, consulta nuestra sección de **Preguntas Frecuentes** o contacta al equipo de soporte.

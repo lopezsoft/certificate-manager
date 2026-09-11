@@ -163,11 +163,68 @@ const config: Config = {
           position: 'right',
           target: '_blank'
         },
+        {
+          type: 'dropdown',
+          label: 'Ir a la App',
+          position: 'right',
+          items: [
+            {
+              label: '🚀 Producción',
+              href: 'https://app.maticerts.com/',
+            },
+            {
+              label: '🧪 Sandbox',
+              href: 'https://sandbox-app.maticerts.com/',
+            },
+          ],
+        },
       ],
     },
     footer: {
       style: 'dark',
-      copyright: `Copyright © ${new Date().getFullYear()} MATICERTS. Built with Docusaurus.`,
+      links: [
+        {
+          title: 'Plataforma',
+          items: [
+            {
+              label: '🚀 App (Producción)',
+              href: 'https://app.maticerts.com/',
+            },
+            {
+              label: '🧪 App (Sandbox)',
+              href: 'https://sandbox-app.maticerts.com/',
+            },
+          ],
+        },
+        {
+          title: 'Documentación',
+          items: [
+            {
+              label: 'Primeros Pasos',
+              to: '/docs/intro',
+            },
+            {
+              label: 'Catálogo de API',
+              to: '/docs/api',
+            },
+            {
+              label: 'Changelog',
+              to: '/changelog',
+            },
+          ],
+        },
+        {
+          title: 'Recursos',
+          items: [
+            {
+              label: 'Postman Collection',
+              href: 'pathname:///certificate-manager-api-v1.postman_collection.json',
+              target: '_blank',
+            },
+          ],
+        },
+      ],
+      copyright: `<strong>MATICERTS</strong> · Emisión y gestión de certificados digitales<br/>© ${new Date().getFullYear()} MATICERTS. Todos los derechos reservados.`,
     },
     prism: {
       theme: prismThemes.github,

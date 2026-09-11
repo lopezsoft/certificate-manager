@@ -41,3 +41,80 @@
     font-size: 16px; /* Better readability on small screens */
   }
 }
+
+/*
+  Footer
+  Ajusta el footer oscuro a la paleta del sistema y mejora la jerarquia
+  visual entre titulos, enlaces y la linea de copyright.
+*/
+.footer--dark {
+  --ifm-footer-background-color: #16233d;
+  --ifm-footer-color: rgba(255, 255, 255, 0.72);
+  --ifm-footer-link-color: rgba(255, 255, 255, 0.72);
+  --ifm-footer-title-color: #ffffff;
+
+  padding-top: 3rem;
+  padding-bottom: 2rem;
+  border-top: 3px solid var(--ifm-color-primary);
+}
+
+.footer__title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 1rem;
+}
+
+.footer__item {
+  font-size: 0.9rem;
+  line-height: 1.9;
+}
+
+.footer__link-item {
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.footer__link-item:hover {
+  color: #ffffff;
+  text-decoration: none;
+}
+
+/* Separador entre los enlaces y la linea inferior */
+.footer__bottom {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.footer__copyright {
+  font-size: 0.85rem;
+  line-height: 1.8;
+  opacity: 0.75;
+}
+
+/* El nombre de marca se destaca sobre la linea legal */
+.footer__copyright strong {
+  display: inline-block;
+  margin-bottom: 0.15rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+}
+
+@media (max-width: 996px) {
+  .footer--dark {
+    padding-top: 2.5rem;
+    text-align: center;
+  }
+  .footer__col {
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer__link-item {
+    transition: none;
+  }
+}

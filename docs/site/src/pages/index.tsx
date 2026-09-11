@@ -5,6 +5,8 @@ import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
 
+import EnvironmentCards from '@site/src/components/EnvironmentCards';
+
 import styles from './index.module.css';
 
 function HomepageHeader() {
@@ -22,6 +24,13 @@ function HomepageHeader() {
             className={clsx('button button--secondary button--lg', styles.heroButton)}
             to="/docs/intro">
             Explorar Documentación API 🚀
+          </Link>
+          <Link
+            className={clsx('button button--outline button--secondary button--lg', styles.heroButtonOutline)}
+            href="https://app.maticerts.com/"
+            target="_blank"
+            rel="noopener noreferrer">
+            Ir a la App 🔐
           </Link>
           <Link
             className={clsx('button button--outline button--secondary button--lg', styles.heroButtonOutline)}
@@ -68,6 +77,22 @@ function Features() {
             </div>
           ))}
         </div>
+      </div>
+    </section>
+  );
+}
+
+function Environments() {
+  return (
+    <section className={styles.environments}>
+      <div className="container">
+        <Heading as="h2" className={styles.sectionTitle}>
+          🌍 Accede a la Plataforma
+        </Heading>
+        <p className={styles.sectionSubtitle}>
+          Cada entorno cuenta con su propia aplicación web y su API REST.
+        </p>
+        <EnvironmentCards />
       </div>
     </section>
   );
@@ -124,6 +149,7 @@ export default function Home(): JSX.Element {
       <HomepageHeader />
       <main className={styles.mainContent}>
         <Features />
+        <Environments />
         <QuickStart />
       </main>
     </Layout>
