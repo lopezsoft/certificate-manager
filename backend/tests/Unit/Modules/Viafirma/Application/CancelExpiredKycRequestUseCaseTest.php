@@ -41,6 +41,7 @@ final class CancelExpiredKycRequestUseCaseTest extends TestCase
         $state->kyc_flow_completed_at  = $kycFlowCompletedAt;
 
         $certificateRequest = Mockery::mock(CertificateRequest::class)->makePartial();
+        $certificateRequest->id                   = 555;
         $certificateRequest->legal_rep_first_name = 'Juan';
         $certificateRequest->legal_rep_last_name  = 'Perez';
         $certificateRequest->company_name         = null;
@@ -77,19 +78,47 @@ final class CancelExpiredKycRequestUseCaseTest extends TestCase
         $stateMachine->shouldReceive('markExpired')->once()->with($entity);
 
         $quotaService = Mockery::mock(QuotaService::class);
-        $quotaService->shouldReceive('releaseQuotaForRequest')->once()->with(42)->andReturn(true);
+        $quotaService->shouldReceive('releaseQuotaForCancelledRequest')
+            ->once()
+            ->with($certificateRequest->id, 42)
+            ->andReturn(true);
 
         $logger = Mockery::mock(SafePemLogger::class);
         $logger->shouldReceive('info')->once()->with('viafirma.kyc_expire.cancelled', [
-            'id'          => 99,
-            'cod_request' => 'ABC123',
-            'company_id'  => 42,
+            'id'             => 99,
+            'cod_request'    => 'ABC123',
+            'company_id'     => 42,
+            'quota_released' => true,
         ]);
 
         $useCase = new CancelExpiredKycRequestUseCase($stateMachine, $quotaService, $logger);
         $result  = $useCase->handle($entity);
 
         $this->assertSame('Juan Perez', $result);
+    }
+
+    #[Test]
+    public function registra_warning_si_el_cupo_no_se_pudo_liberar(): void
+    {
+        // Regresión del bug real de producción (solicitud 1223): si
+        // releaseQuotaForCancelledRequest() no encuentra nada que liberar,
+        // debe quedar visible en logs — antes se descartaba el resultado
+        // silenciosamente.
+        $entity = $this->makeEntity();
+
+        $stateMachine = Mockery::mock(StateMachine::class);
+        $stateMachine->shouldReceive('markExpired')->once();
+
+        $quotaService = Mockery::mock(QuotaService::class);
+        $quotaService->shouldReceive('releaseQuotaForCancelledRequest')->once()->andReturn(false);
+
+        $logger = Mockery::mock(SafePemLogger::class);
+        $logger->shouldReceive('warning')->once()->with('viafirma.kyc_expire.quota_not_released', Mockery::type('array'));
+        $logger->shouldReceive('info')->once();
+
+        $useCase = new CancelExpiredKycRequestUseCase($stateMachine, $quotaService, $logger);
+
+        $this->assertSame('Juan Perez', $useCase->handle($entity));
     }
 
     #[Test]
@@ -103,7 +132,7 @@ final class CancelExpiredKycRequestUseCaseTest extends TestCase
         $stateMachine->shouldNotReceive('markExpired');
 
         $quotaService = Mockery::mock(QuotaService::class);
-        $quotaService->shouldNotReceive('releaseQuotaForRequest');
+        $quotaService->shouldNotReceive('releaseQuotaForCancelledRequest');
 
         $logger = Mockery::mock(SafePemLogger::class);
 
@@ -121,7 +150,7 @@ final class CancelExpiredKycRequestUseCaseTest extends TestCase
         $stateMachine->shouldNotReceive('markExpired');
 
         $quotaService = Mockery::mock(QuotaService::class);
-        $quotaService->shouldNotReceive('releaseQuotaForRequest');
+        $quotaService->shouldNotReceive('releaseQuotaForCancelledRequest');
 
         $logger = Mockery::mock(SafePemLogger::class);
 
@@ -142,7 +171,7 @@ final class CancelExpiredKycRequestUseCaseTest extends TestCase
         $stateMachine->shouldNotReceive('markExpired');
 
         $quotaService = Mockery::mock(QuotaService::class);
-        $quotaService->shouldNotReceive('releaseQuotaForRequest');
+        $quotaService->shouldNotReceive('releaseQuotaForCancelledRequest');
 
         $logger = Mockery::mock(SafePemLogger::class);
 
@@ -160,7 +189,7 @@ final class CancelExpiredKycRequestUseCaseTest extends TestCase
         $stateMachine->shouldNotReceive('markExpired');
 
         $quotaService = Mockery::mock(QuotaService::class);
-        $quotaService->shouldNotReceive('releaseQuotaForRequest');
+        $quotaService->shouldNotReceive('releaseQuotaForCancelledRequest');
 
         $logger = Mockery::mock(SafePemLogger::class);
         $logger->shouldReceive('warning')->once()->with('viafirma.kyc_expire.no_company', ['id' => 99]);
@@ -181,7 +210,7 @@ final class CancelExpiredKycRequestUseCaseTest extends TestCase
         $stateMachine->shouldReceive('markExpired')->once();
 
         $quotaService = Mockery::mock(QuotaService::class);
-        $quotaService->shouldReceive('releaseQuotaForRequest')->once()->andReturn(true);
+        $quotaService->shouldReceive('releaseQuotaForCancelledRequest')->once()->andReturn(true);
 
         $logger = Mockery::mock(SafePemLogger::class);
         $logger->shouldReceive('info')->once();

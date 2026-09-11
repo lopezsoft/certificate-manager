@@ -60,12 +60,26 @@ final class CancelExpiredKycRequestUseCase
         // — no se duplica esa escritura aquí.
         $this->stateMachine->markExpired($entity);
 
-        $this->quotaService->releaseQuotaForRequest($company->id);
+        // releaseQuotaForCancelledRequest() desvincula el item de ESTA
+        // solicitud antes de liberarlo — bug real detectado en producción
+        // (solicitud 1223): sin ese desvincule, releaseQuotaForRequest()
+        // (que solo encuentra items con certificate_request_id NULL) nunca
+        // lo encontraba y el cupo jamás se reintegraba.
+        $released = $this->quotaService->releaseQuotaForCancelledRequest($certificateRequest->id, $company->id);
+
+        if (!$released) {
+            $this->logger->warning('viafirma.kyc_expire.quota_not_released', [
+                'id'                     => $entity->id,
+                'certificate_request_id' => $certificateRequest->id,
+                'company_id'             => $company->id,
+            ]);
+        }
 
         $this->logger->info('viafirma.kyc_expire.cancelled', [
             'id'          => $entity->id,
             'cod_request' => $entity->cod_request,
             'company_id'  => $company->id,
+            'quota_released' => $released,
         ]);
 
         return $applicantName;

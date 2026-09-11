@@ -103,22 +103,32 @@ final class ViafirmaRequestStateChangedListener
         ]);
     }
 
+    /**
+     * InternalState::EXPIRED (Viafirma) mapea a CertificateRequestStatusEnum::CANCELLED
+     * — NO a EXPIRED, que ya significa "certificado emitido cuya vigencia venció"
+     * (MarkExpiredCertificatesJob). Este caso es distinto: la solicitud nunca
+     * llegó a emitirse porque el cliente no completó el KYC a tiempo.
+     */
     private function syncExpiredStatus($certificateRequest, ViafirmaStatusChanged $event): void
     {
+        $newStatus = InternalState::EXPIRED->toRequestStatus()->value;
+        $comment   = $event->entity->state?->last_error_message
+            ?? 'Solicitud cancelada por vencimiento del plazo de verificación KYC.';
+
         $certificateRequest->timestamps = false;
         $certificateRequest->update([
-            'request_status' => CertificateRequestStatusEnum::EXPIRED->value,
+            'request_status' => $newStatus,
         ]);
 
         ChangeHistory::create([
             'certificate_request_id' => $certificateRequest->id,
             'user_id'                => null,
             'user_of_change'         => 'SYSTEM',
-            'status'                 => CertificateRequestStatusEnum::EXPIRED->value,
-            'comments'               => 'El certificado expiró por superar el SLA de acreditación de Viafirma (72h).',
+            'status'                 => $newStatus,
+            'comments'               => $comment,
         ]);
 
-        $this->logger->info('viafirma.listener.auto_expire', [
+        $this->logger->info('viafirma.listener.auto_cancel_kyc_timeout', [
             'certificate_request_id' => $certificateRequest->id,
             'viafirma_request_id'    => $event->entity->id,
             'triggered_by'           => 'ViafirmaRequestStateChangedListener',

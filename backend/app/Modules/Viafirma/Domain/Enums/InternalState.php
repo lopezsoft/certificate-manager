@@ -77,7 +77,14 @@ enum InternalState: string
             self::COMPLETED          => CertificateRequestStatusEnum::PROCESSED,
             self::REVOKED            => CertificateRequestStatusEnum::REVOKED,
             self::FAILED             => CertificateRequestStatusEnum::REJECTED,
-            self::EXPIRED            => CertificateRequestStatusEnum::EXPIRED,
+            // CANCELLED, no EXPIRED: este InternalState::EXPIRED representa el
+            // SLA de acreditación Viafirma superado (el cliente nunca completó
+            // el KYC) — una solicitud que JAMÁS llegó a emitirse. Es un
+            // concepto distinto de CertificateRequestStatusEnum::EXPIRED, que
+            // significa "certificado ya emitido cuya vigencia venció"
+            // (MarkExpiredCertificatesJob, expiration_date). Reutilizar EXPIRED
+            // aquí habría mezclado ambos significados en el mismo estado visible.
+            self::EXPIRED            => CertificateRequestStatusEnum::CANCELLED,
         };
     }
 }

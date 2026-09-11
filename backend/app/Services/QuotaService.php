@@ -226,6 +226,30 @@ class QuotaService
     }
 
     /**
+     * Libera el cupo de una solicitud que se CANCELA pero NO se elimina
+     * (ej. vencimiento del plazo de verificación KYC — ver
+     * CancelExpiredKycRequestUseCase). A diferencia de releaseQuotaForRequest(),
+     * primero desvincula el item PREPAID de esta solicitud puntual —
+     * necesario porque releaseQuotaForRequest() solo encuentra items con
+     * certificate_request_id NULL, y un item recién consumido para una
+     * solicitud que sigue existiendo (solo cancelada, no borrada) todavía
+     * tiene ese vínculo. Sin este paso, el cupo nunca se reintegra
+     * (bug real detectado en producción, solicitud 1223).
+     *
+     * @return bool true si se liberó un cupo, false si no había nada que liberar
+     */
+    public function releaseQuotaForCancelledRequest(int $certificateRequestId, int $companyId): bool
+    {
+        return DB::transaction(function () use ($certificateRequestId, $companyId): bool {
+            DB::table('certificate_order_items')
+                ->where('certificate_request_id', $certificateRequestId)
+                ->update(['certificate_request_id' => null]);
+
+            return $this->releaseQuotaForRequest($companyId);
+        });
+    }
+
+    /**
      * Libera un cupo al eliminar una solicitud de certificado.
      *
      * Intenta devolver en orden inverso al consumo:
