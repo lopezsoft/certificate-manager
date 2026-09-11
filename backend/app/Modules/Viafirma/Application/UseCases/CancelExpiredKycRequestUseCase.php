@@ -94,15 +94,13 @@ final class CancelExpiredKycRequestUseCase
         $entity->state->next_poll_at = null;
         $entity->state->save();
 
-        // releaseQuotaForCancelledRequest() desvincula el item de ESTA
-        // solicitud antes de liberarlo — bug real detectado en producción
-        // (solicitud 1223): sin ese desvincule, releaseQuotaForRequest()
-        // (que solo encuentra items con certificate_request_id NULL) nunca
-        // lo encontraba y el cupo jamás se reintegraba.
+        // Libera el item EXACTO vinculado a esta solicitud
+        // (certificate_request_id = NULL, status = 'PENDING'), o el cupo
+        // POSTPAID del periodo si no hay item PREPAID vinculado.
         //
-        // Aislado también: un fallo liberando el cupo no debe impedir que se
-        // avise a la empresa de que su solicitud fue cancelada (bug real:
-        // un "undefined method" aquí abortaba correo + webhook del flujo).
+        // Aislado: un fallo liberando el cupo no debe impedir que se avise a
+        // la empresa de que su solicitud fue cancelada (bug real: un
+        // "undefined method" aquí abortaba correo + webhook del flujo).
         try {
             $released = $this->quotaService->releaseQuotaForCancelledRequest($certificateRequest->id, $company->id);
         } catch (\Throwable $e) {

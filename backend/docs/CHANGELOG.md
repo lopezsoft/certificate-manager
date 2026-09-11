@@ -9,6 +9,13 @@ El versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Corregido — Viafirma: la liberación de cupo podía soltar el item de OTRA solicitud
+
+- **Problema:** `releaseQuotaForCancelledRequest()` desvinculaba el item de la solicitud cancelada y luego delegaba en `releaseQuotaForRequest()`, que busca *cualquier* item `USED` sin vincular de la empresa, ordenado por `updated_at`. Con varias solicitudes en juego podía marcar como `PENDING` un item distinto al que correspondía.
+- **Fix:** ahora actúa sobre el item **exacto** vinculado a la solicitud — la solicitud se cancela pero no se borra, así que `certificate_request_id` la identifica sin ambigüedad. Equivale a `UPDATE certificate_order_items SET certificate_request_id = NULL, status = 'PENDING' WHERE certificate_request_id = ?`, en una sola sentencia atómica (antes eran dos pasos, y el primero ni siquiera ponía `status = 'PENDING'`).
+- Si no hay item PREPAID vinculado (empresa con cupo POSTPAID), cae al decremento de `used_quantity` del periodo vigente, extraído a `releasePostpaidQuota()` para no reutilizar la búsqueda difusa de PREPAID.
+- `releaseQuotaForRequest()` (usado por el borrado manual de solicitudes) queda intacto — ahí sí aplica la búsqueda por pool, porque la solicitud se elimina y el vínculo desaparece.
+
 ### Corregido — Viafirma: una excepción a mitad de la cancelación dejaba el flujo incompleto (sin cupo, sin correo a la empresa, sin WhatsApp)
 
 - **Síntoma en producción:** al cancelarse una solicitud por KYC vencido llegaba **solo** el correo interno al operador RA. No se reintegraba el cupo (había que hacerlo a mano), no llegaba el correo a la Casa de Software y no se disparaba el webhook de n8n.

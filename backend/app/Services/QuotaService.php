@@ -228,25 +228,88 @@ class QuotaService
     /**
      * Libera el cupo de una solicitud que se CANCELA pero NO se elimina
      * (ej. vencimiento del plazo de verificación KYC — ver
-     * CancelExpiredKycRequestUseCase). A diferencia de releaseQuotaForRequest(),
-     * primero desvincula el item PREPAID de esta solicitud puntual —
-     * necesario porque releaseQuotaForRequest() solo encuentra items con
-     * certificate_request_id NULL, y un item recién consumido para una
-     * solicitud que sigue existiendo (solo cancelada, no borrada) todavía
-     * tiene ese vínculo. Sin este paso, el cupo nunca se reintegra
-     * (bug real detectado en producción, solicitud 1223).
+     * CancelExpiredKycRequestUseCase).
+     *
+     * A diferencia de releaseQuotaForRequest(), actúa sobre el item EXACTO
+     * vinculado a esta solicitud en vez de buscar "alguno" del pool de la
+     * empresa: la solicitud no se borra, así que el item sigue vinculado por
+     * `certificate_request_id` y se puede identificar sin ambigüedad. Esto
+     * evita liberar por error el item de otra solicitud (riesgo real del
+     * enfoque anterior, que ordenaba por `updated_at` tras desvincular).
+     *
+     * Equivale a:
+     *   UPDATE certificate_order_items
+     *   SET certificate_request_id = NULL, status = 'PENDING'
+     *   WHERE certificate_request_id = ?
+     *
+     * Si no hay item PREPAID vinculado (empresa con cupo POSTPAID), cae al
+     * decremento de `used_quantity` del periodo vigente.
      *
      * @return bool true si se liberó un cupo, false si no había nada que liberar
      */
     public function releaseQuotaForCancelledRequest(int $certificateRequestId, int $companyId): bool
     {
         return DB::transaction(function () use ($certificateRequestId, $companyId): bool {
-            DB::table('certificate_order_items')
+            // 1. PREPAID — liberar el item exacto de ESTA solicitud.
+            $releasedItems = DB::table('certificate_order_items')
                 ->where('certificate_request_id', $certificateRequestId)
-                ->update(['certificate_request_id' => null]);
+                ->update([
+                    'certificate_request_id' => null,
+                    'status'                 => 'PENDING',
+                    'updated_at'             => now(),
+                ]);
 
-            return $this->releaseQuotaForRequest($companyId);
+            if ($releasedItems > 0) {
+                Log::info('[QUOTA] Item(s) PREPAID liberado(s) por cancelación de solicitud.', [
+                    'certificate_request_id' => $certificateRequestId,
+                    'company_id'             => $companyId,
+                    'items'                  => $releasedItems,
+                ]);
+
+                return true;
+            }
+
+            // 2. POSTPAID — no hay item vinculado; devolver cupo del periodo.
+            return $this->releasePostpaidQuota($companyId, $certificateRequestId);
         });
+    }
+
+    /**
+     * Devuelve un cupo POSTPAID del periodo vigente (decrementa
+     * `used_quantity` y reactiva el cupo si estaba agotado).
+     */
+    private function releasePostpaidQuota(int $companyId, ?int $certificateRequestId = null): bool
+    {
+        $quota = CertificateQuota::where('company_id', $companyId)
+            ->whereIn('status', [QuotaStatusEnum::ACTIVE->value, QuotaStatusEnum::EXHAUSTED->value])
+            ->where('period_end', '>=', now()->toDateString())
+            ->lockForUpdate()
+            ->orderByDesc('used_quantity')
+            ->first();
+
+        if (!$quota || $quota->used_quantity <= 0) {
+            Log::warning('[QUOTA] No se encontró cupo para liberar por cancelación.', [
+                'company_id'             => $companyId,
+                'certificate_request_id' => $certificateRequestId,
+            ]);
+
+            return false;
+        }
+
+        $quota->decrement('used_quantity');
+
+        if ($quota->status === QuotaStatusEnum::EXHAUSTED->value) {
+            $quota->update(['status' => QuotaStatusEnum::ACTIVE->value]);
+        }
+
+        Log::info('[QUOTA] Cupo POSTPAID liberado por cancelación de solicitud.', [
+            'company_id'             => $companyId,
+            'certificate_request_id' => $certificateRequestId,
+            'quota_id'               => $quota->id,
+            'remaining'              => $quota->fresh()->getRemaining(),
+        ]);
+
+        return true;
     }
 
     /**
