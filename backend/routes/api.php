@@ -173,6 +173,12 @@ Route::group(['prefix' => 'v1'], function () {
                     ->middleware('throttle:1,5');
                 Route::get('/certificates/expiring-by-company', 'expiringByCompany');
             });
+
+            // Estadísticas transversales (pagos por mes, cupos no consumidos)
+            Route::prefix('stats')->controller('AdminStatsController')->group(function () {
+                Route::get('/payments-by-month', 'paymentsByMonth');
+                Route::get('/unused-quotas',     'unusedQuotas');
+            });
         });
 
         // Webhooks
