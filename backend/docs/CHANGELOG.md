@@ -9,6 +9,13 @@ El versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Corregido — Viafirma: la cancelación por KYC vencido nunca se persistía (correo y webhook en bucle cada hora)
+
+- **Bug crítico en producción:** tras "cancelar" una solicitud por vencimiento de KYC, el correo informativo seguía llegando **cada hora**, indefinidamente (solicitud 1223, ID Viafirma 77: `poll_attempts` subió a 563 y seguía en `POLLING`). Las solicitudes afectadas mantenían `internal_state = POLLING` y `next_poll_at` programado en BD, pese a haber sido "canceladas".
+- **Causa raíz:** `StateMachine::markExpired()` cambia `internal_state` **solo en memoria** y dispara los eventos, pero nunca llama a `$state->save()` — la persistencia es responsabilidad del llamador, por convención del módulo (`PollViafirmaStatusJob` hace `$state->save()` en cada rama tras `transition()`). `CancelExpiredKycRequestUseCase` nunca guardaba, así que en la siguiente corrida del cron la solicitud seguía cumpliendo el criterio de "vencida y pendiente" → se recancelaba, reenviando correo + webhook cada hora. El mismo patrón existe en `markFailed()` (no corregido aquí: sus llamadores sí persisten).
+- **Fix:** `CancelExpiredKycRequestUseCase` ahora persiste el estado tras `markExpired()` y limpia `next_poll_at` para sacar la solicitud del ciclo de polling.
+- Tests de regresión nuevos (mockeados, sin BD): `persiste_el_estado_y_desprograma_el_polling` verifica explícitamente el `save()` y que `next_poll_at` quede en `null`. El helper del suite pasó a usar un mock parcial del `state` para interceptar `save()` — sin eso, los tests habrían intentado escribir en BD (fue precisamente lo que dejó pasar el bug: ningún test cubría la persistencia).
+
 ### Corregido — Viafirma: expiración por KYC no sincronizaba `change_histories` + correo interno engañoso
 
 - **Feedback de producción (real):** al probar la cancelación automática, el correo interno de alerta (`ViafirmaRequestFailedListener`) llegó como "SOLICITUD VIAFIRMA FALLIDA - ACCIÓN REQUERIDA... Requiere atención del operador RA" para un `POLL_EXPIRED` — pero no es un fallo real, es el cron nuevo funcionando exactamente como se diseñó (ya canceló y reintegró el cupo automáticamente). Además, el historial visible de la solicitud (tabla `change_histories`, distinta de `viafirma_status_history`) nunca se enteraba de la expiración.

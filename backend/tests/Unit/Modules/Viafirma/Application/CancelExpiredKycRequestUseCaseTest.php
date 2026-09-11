@@ -36,9 +36,12 @@ final class CancelExpiredKycRequestUseCaseTest extends TestCase
         ?\Illuminate\Support\Carbon $kycFlowCompletedAt = null,
         bool $withCompany = true,
     ): ViafirmaCertificateRequest {
-        $state = new ViafirmaCertificateRequestState();
+        // Mock parcial: intercepta save() para que el test nunca toque BD,
+        // pero conserva el comportamiento real del resto del modelo.
+        $state = Mockery::mock(ViafirmaCertificateRequestState::class)->makePartial();
         $state->internal_state         = $internalState;
         $state->kyc_flow_completed_at  = $kycFlowCompletedAt;
+        $state->next_poll_at           = now()->addMinutes(1);
 
         $certificateRequest = Mockery::mock(CertificateRequest::class)->makePartial();
         $certificateRequest->id                   = 555;
@@ -91,10 +94,47 @@ final class CancelExpiredKycRequestUseCaseTest extends TestCase
             'quota_released' => true,
         ]);
 
+        $entity->state->shouldReceive('save')->once()->andReturn(true);
+
         $useCase = new CancelExpiredKycRequestUseCase($stateMachine, $quotaService, $logger);
         $result  = $useCase->handle($entity);
 
         $this->assertSame('Juan Perez', $result);
+    }
+
+    /**
+     * Regresión del bug de producción (solicitud 1223): markExpired() solo
+     * cambia el estado en memoria — StateMachine nunca persiste, por
+     * convención lo hace el llamador. Sin este save(), internal_state seguía
+     * en POLLING en BD y el cron recancelaba la misma solicitud cada hora,
+     * reenviando correo y webhook indefinidamente.
+     */
+    #[Test]
+    public function persiste_el_estado_y_desprograma_el_polling(): void
+    {
+        $entity = $this->makeEntity();
+
+        $stateMachine = Mockery::mock(StateMachine::class);
+        // Simula lo que hace el markExpired() real: cambia el estado en memoria.
+        $stateMachine->shouldReceive('markExpired')->once()->andReturnUsing(
+            function (ViafirmaCertificateRequest $e): void {
+                $e->state->internal_state = InternalState::EXPIRED;
+            }
+        );
+
+        $quotaService = Mockery::mock(QuotaService::class);
+        $quotaService->shouldReceive('releaseQuotaForCancelledRequest')->once()->andReturn(true);
+
+        $logger = Mockery::mock(SafePemLogger::class);
+        $logger->shouldReceive('info')->once();
+
+        $entity->state->shouldReceive('save')->once()->andReturn(true);
+
+        $useCase = new CancelExpiredKycRequestUseCase($stateMachine, $quotaService, $logger);
+        $useCase->handle($entity);
+
+        $this->assertSame(InternalState::EXPIRED, $entity->state->internal_state);
+        $this->assertNull($entity->state->next_poll_at, 'Debe desprogramarse el polling para no re-procesarla.');
     }
 
     #[Test]
@@ -115,6 +155,8 @@ final class CancelExpiredKycRequestUseCaseTest extends TestCase
         $logger = Mockery::mock(SafePemLogger::class);
         $logger->shouldReceive('warning')->once()->with('viafirma.kyc_expire.quota_not_released', Mockery::type('array'));
         $logger->shouldReceive('info')->once();
+
+        $entity->state->shouldReceive('save')->once()->andReturn(true);
 
         $useCase = new CancelExpiredKycRequestUseCase($stateMachine, $quotaService, $logger);
 
@@ -214,6 +256,8 @@ final class CancelExpiredKycRequestUseCaseTest extends TestCase
 
         $logger = Mockery::mock(SafePemLogger::class);
         $logger->shouldReceive('info')->once();
+
+        $entity->state->shouldReceive('save')->once()->andReturn(true);
 
         $useCase = new CancelExpiredKycRequestUseCase($stateMachine, $quotaService, $logger);
 

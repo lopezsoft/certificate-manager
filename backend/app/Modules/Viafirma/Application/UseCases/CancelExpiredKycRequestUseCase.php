@@ -60,6 +60,15 @@ final class CancelExpiredKycRequestUseCase
         // — no se duplica esa escritura aquí.
         $this->stateMachine->markExpired($entity);
 
+        // StateMachine NUNCA persiste el state — por convención lo hace el
+        // llamador (igual que PollViafirmaStatusJob tras cada transition()).
+        // Sin este save(), internal_state seguía en POLLING en BD y el cron
+        // volvía a "cancelar" la misma solicitud cada hora, reenviando correo
+        // y webhook indefinidamente (bug real en producción, solicitud 1223).
+        // El estado también debe dejar de estar programado para polling.
+        $entity->state->next_poll_at = null;
+        $entity->state->save();
+
         // releaseQuotaForCancelledRequest() desvincula el item de ESTA
         // solicitud antes de liberarlo — bug real detectado en producción
         // (solicitud 1223): sin ese desvincule, releaseQuotaForRequest()
