@@ -109,8 +109,19 @@ final class ExpireStalledKycAccreditationsJob implements ShouldQueue
                     ]);
                 }
 
-                $entity->state->kyc_last_call_sent_at = now();
-                $entity->state->save();
+                // Aislado: si marcar el aviso falla, no debe abortar el lote
+                // completo. Se omite esta solicitud (se reintentará la
+                // próxima hora) y se sigue con las demás.
+                try {
+                    $entity->state->kyc_last_call_sent_at = now();
+                    $entity->state->save();
+                } catch (\Throwable $e) {
+                    $logger->error('viafirma.kyc_last_call.mark_failed', [
+                        'id'    => $entity->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    continue;
+                }
 
                 $solicitudes[] = ['codigo' => $entity->cod_request, 'enlace' => $link, 'nombre' => $applicantName];
             }
@@ -170,7 +181,20 @@ final class ExpireStalledKycAccreditationsJob implements ShouldQueue
             $solicitudes = [];
 
             foreach ($requests as $entity) {
-                $applicantName = $this->cancelSingleRequest($entity, $cancelUseCase, $logger);
+                // Aislado por solicitud: un fallo en una no debe abortar el
+                // resto del lote ni las demás empresas (antes, una excepción
+                // aquí mataba el job completo — tries=1 — dejando solicitudes
+                // sin procesar hasta la siguiente hora).
+                try {
+                    $applicantName = $this->cancelSingleRequest($entity, $cancelUseCase, $logger);
+                } catch (\Throwable $e) {
+                    $logger->error('viafirma.kyc_expire.request_failed', [
+                        'id'    => $entity->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    continue;
+                }
+
                 if ($applicantName === null) {
                     continue;
                 }

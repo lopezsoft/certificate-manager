@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Viafirma\Application\UseCases;
 
+use App\Modules\Viafirma\Domain\Enums\InternalState;
 use App\Modules\Viafirma\Domain\StateMachine;
 use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
@@ -58,7 +59,31 @@ final class CancelExpiredKycRequestUseCase
         // para sincronizar certificate_requests.request_status y registrar
         // el cambio en change_histories (historial visible de la solicitud)
         // — no se duplica esa escritura aquí.
-        $this->stateMachine->markExpired($entity);
+        //
+        // Los side-effects (historial, listeners que escriben en BD y envían
+        // correos) van aislados: si uno falla NO debe abortar la cancelación,
+        // o la solicitud quedaría a medias (estado sin persistir, cupo sin
+        // liberar, sin avisos) y el cron la reprocesaría cada hora.
+        try {
+            $this->stateMachine->markExpired($entity);
+        } catch (\Throwable $e) {
+            $this->logger->error('viafirma.kyc_expire.mark_expired_side_effect_failed', [
+                'id'    => $entity->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        // markExpired() asigna internal_state ANTES de cualquier side-effect,
+        // así que a este punto ya debe estar en EXPIRED aunque algo haya
+        // fallado. Si no lo está, la transición no ocurrió: no persistimos ni
+        // notificamos una cancelación que en realidad no se hizo.
+        if ($entity->state->internal_state !== InternalState::EXPIRED) {
+            $this->logger->error('viafirma.kyc_expire.transition_did_not_apply', [
+                'id'    => $entity->id,
+                'state' => $entity->state->internal_state?->value,
+            ]);
+            return null;
+        }
 
         // StateMachine NUNCA persiste el state — por convención lo hace el
         // llamador (igual que PollViafirmaStatusJob tras cada transition()).
@@ -74,7 +99,21 @@ final class CancelExpiredKycRequestUseCase
         // (solicitud 1223): sin ese desvincule, releaseQuotaForRequest()
         // (que solo encuentra items con certificate_request_id NULL) nunca
         // lo encontraba y el cupo jamás se reintegraba.
-        $released = $this->quotaService->releaseQuotaForCancelledRequest($certificateRequest->id, $company->id);
+        //
+        // Aislado también: un fallo liberando el cupo no debe impedir que se
+        // avise a la empresa de que su solicitud fue cancelada (bug real:
+        // un "undefined method" aquí abortaba correo + webhook del flujo).
+        try {
+            $released = $this->quotaService->releaseQuotaForCancelledRequest($certificateRequest->id, $company->id);
+        } catch (\Throwable $e) {
+            $released = false;
+            $this->logger->error('viafirma.kyc_expire.quota_release_failed', [
+                'id'                     => $entity->id,
+                'certificate_request_id' => $certificateRequest->id,
+                'company_id'             => $company->id,
+                'error'                  => $e->getMessage(),
+            ]);
+        }
 
         if (!$released) {
             $this->logger->warning('viafirma.kyc_expire.quota_not_released', [

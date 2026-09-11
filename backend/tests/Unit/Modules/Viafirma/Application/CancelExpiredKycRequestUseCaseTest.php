@@ -64,6 +64,21 @@ final class CancelExpiredKycRequestUseCaseTest extends TestCase
         return $entity;
     }
 
+    /**
+     * Mock de StateMachine fiel al comportamiento real: markExpired() SIEMPRE
+     * asigna internal_state = EXPIRED antes de sus side-effects. Un mock que
+     * no lo hiciera dejaría pasar regresiones en el guard de transición.
+     */
+    private function stateMachineThatTransitions(): StateMachine
+    {
+        $stateMachine = Mockery::mock(StateMachine::class);
+        $stateMachine->shouldReceive('markExpired')->once()->andReturnUsing(
+            fn (ViafirmaCertificateRequest $e) => $e->state->internal_state = InternalState::EXPIRED
+        );
+
+        return $stateMachine;
+    }
+
     #[Test]
     public function cancela_y_reintegra_el_cupo_en_el_caso_feliz(): void
     {
@@ -77,8 +92,7 @@ final class CancelExpiredKycRequestUseCaseTest extends TestCase
         // cuenta (evitaría una doble escritura).
         $certificateRequest->shouldNotReceive('save');
 
-        $stateMachine = Mockery::mock(StateMachine::class);
-        $stateMachine->shouldReceive('markExpired')->once()->with($entity);
+        $stateMachine = $this->stateMachineThatTransitions();
 
         $quotaService = Mockery::mock(QuotaService::class);
         $quotaService->shouldReceive('releaseQuotaForCancelledRequest')
@@ -137,6 +151,106 @@ final class CancelExpiredKycRequestUseCaseTest extends TestCase
         $this->assertNull($entity->state->next_poll_at, 'Debe desprogramarse el polling para no re-procesarla.');
     }
 
+    /**
+     * Regresión del fallo real de producción: un `Call to undefined method
+     * QuotaService::releaseQuotaForCancelledRequest()` (worker con la clase
+     * vieja en memoria tras el deploy) abortaba TODO el flujo — la solicitud
+     * quedaba marcada y con el correo interno enviado, pero sin cupo
+     * liberado, sin correo a la empresa y sin webhook de WhatsApp.
+     *
+     * Un fallo liberando el cupo debe quedar registrado como error, pero el
+     * flujo debe continuar para que la empresa sí reciba su aviso.
+     */
+    #[Test]
+    public function una_excepcion_liberando_el_cupo_no_aborta_el_aviso_a_la_empresa(): void
+    {
+        $entity = $this->makeEntity();
+
+        $stateMachine = Mockery::mock(StateMachine::class);
+        $stateMachine->shouldReceive('markExpired')->once()->andReturnUsing(
+            fn (ViafirmaCertificateRequest $e) => $e->state->internal_state = InternalState::EXPIRED
+        );
+
+        $quotaService = Mockery::mock(QuotaService::class);
+        $quotaService->shouldReceive('releaseQuotaForCancelledRequest')
+            ->once()
+            ->andThrow(new \Error('Call to undefined method releaseQuotaForCancelledRequest()'));
+
+        $logger = Mockery::mock(SafePemLogger::class);
+        $logger->shouldReceive('error')->once()->with('viafirma.kyc_expire.quota_release_failed', Mockery::type('array'));
+        $logger->shouldReceive('warning')->once()->with('viafirma.kyc_expire.quota_not_released', Mockery::type('array'));
+        $logger->shouldReceive('info')->once();
+
+        $entity->state->shouldReceive('save')->once()->andReturn(true);
+
+        $useCase = new CancelExpiredKycRequestUseCase($stateMachine, $quotaService, $logger);
+
+        // Debe devolver el nombre (→ el job envía correo a la empresa y webhook).
+        $this->assertSame('Juan Perez', $useCase->handle($entity));
+    }
+
+    /**
+     * Si un listener de markExpired() revienta (escritura de historial,
+     * correo interno, etc.), la cancelación debe completarse igual: estado
+     * persistido y cupo liberado. De lo contrario el cron reprocesaría la
+     * solicitud cada hora.
+     */
+    #[Test]
+    public function una_excepcion_en_los_side_effects_no_aborta_la_cancelacion(): void
+    {
+        $entity = $this->makeEntity();
+
+        $stateMachine = Mockery::mock(StateMachine::class);
+        $stateMachine->shouldReceive('markExpired')->once()->andReturnUsing(
+            function (ViafirmaCertificateRequest $e): void {
+                // Replica el orden real: transiciona y LUEGO falla un side-effect.
+                $e->state->internal_state = InternalState::EXPIRED;
+                throw new \RuntimeException('listener explotó');
+            }
+        );
+
+        $quotaService = Mockery::mock(QuotaService::class);
+        $quotaService->shouldReceive('releaseQuotaForCancelledRequest')->once()->andReturn(true);
+
+        $logger = Mockery::mock(SafePemLogger::class);
+        $logger->shouldReceive('error')->once()->with('viafirma.kyc_expire.mark_expired_side_effect_failed', Mockery::type('array'));
+        $logger->shouldReceive('info')->once();
+
+        $entity->state->shouldReceive('save')->once()->andReturn(true);
+
+        $useCase = new CancelExpiredKycRequestUseCase($stateMachine, $quotaService, $logger);
+
+        $this->assertSame('Juan Perez', $useCase->handle($entity));
+        $this->assertNull($entity->state->next_poll_at);
+    }
+
+    /**
+     * Si la transición nunca llegó a aplicarse, NO se debe notificar una
+     * cancelación que no ocurrió ni persistir un estado incorrecto.
+     */
+    #[Test]
+    public function no_notifica_si_la_transicion_no_se_aplico(): void
+    {
+        $entity = $this->makeEntity();
+
+        $stateMachine = Mockery::mock(StateMachine::class);
+        // Falla ANTES de transicionar: el estado sigue en POLLING.
+        $stateMachine->shouldReceive('markExpired')->once()->andThrow(new \RuntimeException('falló antes de transicionar'));
+
+        $quotaService = Mockery::mock(QuotaService::class);
+        $quotaService->shouldNotReceive('releaseQuotaForCancelledRequest');
+
+        $logger = Mockery::mock(SafePemLogger::class);
+        $logger->shouldReceive('error')->once()->with('viafirma.kyc_expire.mark_expired_side_effect_failed', Mockery::type('array'));
+        $logger->shouldReceive('error')->once()->with('viafirma.kyc_expire.transition_did_not_apply', Mockery::type('array'));
+
+        $entity->state->shouldNotReceive('save');
+
+        $useCase = new CancelExpiredKycRequestUseCase($stateMachine, $quotaService, $logger);
+
+        $this->assertNull($useCase->handle($entity));
+    }
+
     #[Test]
     public function registra_warning_si_el_cupo_no_se_pudo_liberar(): void
     {
@@ -146,8 +260,7 @@ final class CancelExpiredKycRequestUseCaseTest extends TestCase
         // silenciosamente.
         $entity = $this->makeEntity();
 
-        $stateMachine = Mockery::mock(StateMachine::class);
-        $stateMachine->shouldReceive('markExpired')->once();
+        $stateMachine = $this->stateMachineThatTransitions();
 
         $quotaService = Mockery::mock(QuotaService::class);
         $quotaService->shouldReceive('releaseQuotaForCancelledRequest')->once()->andReturn(false);
@@ -248,8 +361,7 @@ final class CancelExpiredKycRequestUseCaseTest extends TestCase
         $entity->certificateRequest->company_name = 'ACME SAS';
         $entity->certificateRequest->shouldNotReceive('save');
 
-        $stateMachine = Mockery::mock(StateMachine::class);
-        $stateMachine->shouldReceive('markExpired')->once();
+        $stateMachine = $this->stateMachineThatTransitions();
 
         $quotaService = Mockery::mock(QuotaService::class);
         $quotaService->shouldReceive('releaseQuotaForCancelledRequest')->once()->andReturn(true);

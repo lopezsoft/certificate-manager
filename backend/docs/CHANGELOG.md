@@ -9,6 +9,17 @@ El versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Corregido — Viafirma: una excepción a mitad de la cancelación dejaba el flujo incompleto (sin cupo, sin correo a la empresa, sin WhatsApp)
+
+- **Síntoma en producción:** al cancelarse una solicitud por KYC vencido llegaba **solo** el correo interno al operador RA. No se reintegraba el cupo (había que hacerlo a mano), no llegaba el correo a la Casa de Software y no se disparaba el webhook de n8n.
+- **Causa inmediata:** `Call to undefined method QuotaService::releaseQuotaForCancelledRequest()`. El worker de colas quedó con la versión anterior de `QuotaService` cargada en memoria tras el deploy (las clases *nuevas* se autocargan frescas, las *ya cargadas* en un proceso long-running no) — se resuelve con `php artisan queue:restart`, el método sí estaba commiteado en `65c6b83`.
+- **Causa de fondo (lo que se corrige aquí):** el flujo era frágil. La excepción ocurría justo después de `markExpired()` (que ya había enviado el correo interno) y abortaba todo lo que venía: persistencia, cupo, correo a la empresa y webhook. Un fallo puntual dejaba la cancelación a medias y, además, mataba el job completo (`tries=1`), saltándose el resto de solicitudes y empresas del lote.
+- **Fix — aislamiento de fallos en `CancelExpiredKycRequestUseCase`:**
+  - Los side-effects de `markExpired()` (historial, listeners que escriben en BD y envían correos) van en `try/catch`: si uno falla, la cancelación se completa igual. Se añadió un guard que verifica que la transición a `EXPIRED` realmente se aplicó antes de persistir o notificar — si no, no se notifica una cancelación que no ocurrió.
+  - La liberación del cupo va en `try/catch`: un fallo ahí queda como `error` en logs pero **ya no impide** avisar a la empresa.
+- **Fix — aislamiento por solicitud en `ExpireStalledKycAccreditationsJob`:** cada solicitud se procesa en su propio `try/catch` (tanto en el paso de último llamado como en el de cancelación), así una que falle no aborta el lote ni deja a otras empresas sin procesar.
+- Tests de regresión nuevos (mockeados, sin BD): `una_excepcion_liberando_el_cupo_no_aborta_el_aviso_a_la_empresa` (reproduce el `undefined method` exacto de producción), `una_excepcion_en_los_side_effects_no_aborta_la_cancelacion` y `no_notifica_si_la_transicion_no_se_aplico`. Además, el mock de `StateMachine` del suite ahora es fiel al comportamiento real (`markExpired()` siempre aplica la transición antes de sus side-effects) — un mock no-op estaba ocultando el guard.
+
 ### Corregido — Viafirma: la cancelación por KYC vencido nunca se persistía (correo y webhook en bucle cada hora)
 
 - **Bug crítico en producción:** tras "cancelar" una solicitud por vencimiento de KYC, el correo informativo seguía llegando **cada hora**, indefinidamente (solicitud 1223, ID Viafirma 77: `poll_attempts` subió a 563 y seguía en `POLLING`). Las solicitudes afectadas mantenían `internal_state = POLLING` y `next_poll_at` programado en BD, pese a haber sido "canceladas".
