@@ -185,15 +185,27 @@ class StateMachine
         $hoursExceeded = config('viafirma.polling.expiration_hours', 96);
         $state->last_error_message = "SLA de acreditación superado ({$hoursExceeded}h).";
 
+        // Último remote_status conocido, para el evento de sincronización.
+        // Fallback a ACCREDITATION porque el único llamador actual (cron de
+        // vencimiento de KYC) siempre opera sobre solicitudes atascadas en
+        // la familia de acreditación.
+        $remote = RemoteStatus::tryFrom((string) $state->remote_status) ?? RemoteStatus::ACCREDITATION;
+
         $this->recordHistory(
             $entity,
             $previous,
             InternalState::EXPIRED,
-            null,
+            $remote,
             ['reason' => 'expiration_hours_exceeded'],
         );
 
         event(new ViafirmaRequestFailed($entity, 'POLL_EXPIRED', $state->last_error_message));
+
+        // Dispara la sincronización ya existente de request_status +
+        // ChangeHistory (ViafirmaRequestStateChangedListener::syncExpiredStatus()) —
+        // sin este evento, el historial visible de la solicitud (tabla
+        // change_histories) nunca se enteraba de la expiración.
+        event(new ViafirmaStatusChanged($entity, $previous, InternalState::EXPIRED, $remote));
 
         $this->logger->warning('viafirma.fsm.expired', ['id' => $entity->id]);
     }

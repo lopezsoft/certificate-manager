@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Viafirma\Application\UseCases;
 
-use App\Modules\Viafirma\Domain\Enums\InternalState;
 use App\Modules\Viafirma\Domain\StateMachine;
 use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
@@ -54,10 +53,12 @@ final class CancelExpiredKycRequestUseCase
 
         $applicantName = $certificateRequest->applicantDisplayName();
 
+        // markExpired() dispara ViafirmaStatusChanged, que
+        // ViafirmaRequestStateChangedListener::syncExpiredStatus() escucha
+        // para sincronizar certificate_requests.request_status y registrar
+        // el cambio en change_histories (historial visible de la solicitud)
+        // — no se duplica esa escritura aquí.
         $this->stateMachine->markExpired($entity);
-
-        $certificateRequest->request_status = InternalState::EXPIRED->toRequestStatus()->value;
-        $certificateRequest->save();
 
         $this->quotaService->releaseQuotaForRequest($company->id);
 

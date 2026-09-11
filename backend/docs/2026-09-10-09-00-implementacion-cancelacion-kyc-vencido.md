@@ -3,6 +3,11 @@
 > Estado: **IMPLEMENTADO Y CON TESTS — PENDIENTE DE PRUEBA MANUAL Y DEPLOY**. Respuestas del usuario (2026-09-10): (1) sí a los dos avisos, último llamado 24h antes tal como se definió desde el mensaje original; (2) cron cada hora confirmado; (3) sí, la cuenta maestra (Casa de Software) debe recibir correo en **todos** los avisos/notificaciones, no solo WhatsApp — esto amplió el alcance, ver sección 3.1; (4) no se eliminan adjuntos.
 >
 > Implementado: `ExpireStalledKycAccreditationsJob`, `CancelExpiredKycRequestUseCase`, `ViafirmaKycLastCallNotification`, `ViafirmaKycExpiredNotification`, migración+DDL (no ejecutado), entrada en `Kernel.php`. 12 tests unitarios nuevos, 100% mockeados sin BD, todos pasando. No se ejecutó el job completo contra la BD local (a diferencia del webhook de la sesión anterior) porque cancela solicitudes y reintegra cupos reales — pendiente de que el usuario decida cómo/cuándo probarlo manualmente antes del deploy.
+>
+> **Revisión 2026-09-10 (feedback post-implementación):** el usuario detectó 2 huecos reales:
+> 1. **Historial visible faltante:** `StateMachine::markExpired()` nunca disparaba `ViafirmaStatusChanged`, solo `ViafirmaRequestFailed` — sin ese evento, `ViafirmaRequestStateChangedListener::syncExpiredStatus()` (que ya existía y ya escribe en `change_histories`) nunca corría. **Corregido**: `markExpired()` ahora dispara ambos eventos; se quitó la sincronización manual duplicada de `CancelExpiredKycRequestUseCase`.
+> 2. **Correo interno engañoso:** `ViafirmaRequestFailedListener` enviaba el mismo correo de "FALLIDA - ACCIÓN REQUERIDA" para cualquier causa, incluyendo `POLL_EXPIRED` — que no es un fallo real, es el cron funcionando como se diseñó. **Corregido**: mensaje/asunto distintos para `POLL_EXPIRED` (informativo, aclara que ya se canceló y el cupo ya se reintegró, sin pedir acción).
+> 3. **Revocación en el proveedor: NO existe endpoint para esto.** `getRevocationCode()`/`revokeCertificate()` solo aplican a certificados que llegaron a `inProcess` o superior — las solicitudes que cancela este cron nunca pasan de `accreditation`, así que Viafirma nunca les asigna código de revocación. **El usuario va a solicitar a Viafirma un endpoint para cancelar/rechazar una solicitud en curso** — pendiente de su respuesta, ver sección 9.
 
 ## 1. Contexto
 
@@ -165,6 +170,10 @@ Los dos bloques `else if` compartidos por el usuario en el mensaje original ya s
 | `app/Modules/Viafirma/Application/Notifications/ViafirmaKycExpiredNotification.php` | Nueva — correo de cancelación |
 | `app/Console/Kernel.php` | + entrada de scheduler horaria |
 | Tests nuevos (mockeados, sin BD) | `ExpireStalledKycAccreditationsJob`, ambas notificaciones |
+| `app/Modules/Viafirma/Domain/StateMachine.php` | `markExpired()` ahora también dispara `ViafirmaStatusChanged` (faltaba — sin él, `ViafirmaRequestStateChangedListener::syncExpiredStatus()` nunca sincronizaba `change_histories`) |
+| `app/Modules/Viafirma/Application/UseCases/CancelExpiredKycRequestUseCase.php` | Quitada la sincronización manual duplicada de `request_status` — ahora la hace el listener vía el evento |
+| `app/Modules/Viafirma/Application/Listeners/ViafirmaRequestFailedListener.php` | Correo distinto (informativo, sin "ACCIÓN REQUERIDA") cuando `error_code === POLL_EXPIRED` |
+| `tests/Unit/Modules/Viafirma/Domain/StateMachineMarkExpiredTest.php` | Nuevo — cubre el guard clause de `markExpired()`; el camino feliz no es mockeable sin BD (ver nota en el archivo) |
 
 ## 8. Plan de rollout
 
@@ -175,3 +184,13 @@ Los dos bloques `else if` compartidos por el usuario en el mensaje original ya s
 5. Agregar la entrada al scheduler en `Kernel.php`.
 6. Probar en local con una solicitud real (mismo procedimiento manual vía tinker usado para validar el webhook la sesión anterior) antes de desplegar.
 7. Documentar en `CHANGELOG.md`.
+
+## 9. Pendiente — endpoint de cancelación en el proveedor (bloqueante para el punto 1 de la sección 1)
+
+**No existe en nuestro contrato actual ningún endpoint de Viafirma para cancelar/rechazar una solicitud que nunca llegó a `inProcess`.** `getRevocationCode()`/`revokeCertificate()` solo aplican a certificados ya emitidos o en proceso avanzado — las solicitudes que cancela este cron se quedan atascadas en `accreditation`, sin código de revocación asignado nunca.
+
+El usuario va a solicitar a Viafirma (Benito/Cesar, mismo canal usado para `advancedStatus`) un endpoint para cancelar una solicitud en curso desde nuestro lado. **Una vez confirmado ese endpoint**, agregar:
+
+- Método nuevo en `ViafirmaClient` (ej. `cancelRequest(string $codRequest): void`).
+- Llamada desde `CancelExpiredKycRequestUseCase::handle()`, después de `markExpired()` y antes/después de `releaseQuotaForRequest()` (a definir orden según qué tan crítico sea que la cancelación remota sea atómica con el reintegro del cupo).
+- Manejo de fallo: si Viafirma rechaza la cancelación (ya fue procesada de su lado, códigos inválidos, etc.), decidir si igual se reintegra el cupo localmente o se deja pendiente para revisión manual.

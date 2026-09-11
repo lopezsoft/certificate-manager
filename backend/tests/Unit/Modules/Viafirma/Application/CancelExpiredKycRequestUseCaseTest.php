@@ -65,7 +65,13 @@ final class CancelExpiredKycRequestUseCaseTest extends TestCase
     {
         $entity = $this->makeEntity();
         $certificateRequest = $entity->certificateRequest;
-        $certificateRequest->shouldReceive('save')->once()->andReturn(true);
+        // Ya no se guarda aquí — StateMachine::markExpired() dispara
+        // ViafirmaStatusChanged, que ViafirmaRequestStateChangedListener
+        // escucha para sincronizar request_status + change_histories.
+        // Como StateMachine está mockeado, ese evento no se dispara en este
+        // test — se verifica solo que el use case NO intente guardar por su
+        // cuenta (evitaría una doble escritura).
+        $certificateRequest->shouldNotReceive('save');
 
         $stateMachine = Mockery::mock(StateMachine::class);
         $stateMachine->shouldReceive('markExpired')->once()->with($entity);
@@ -84,10 +90,6 @@ final class CancelExpiredKycRequestUseCaseTest extends TestCase
         $result  = $useCase->handle($entity);
 
         $this->assertSame('Juan Perez', $result);
-        $this->assertSame(
-            InternalState::EXPIRED->toRequestStatus()->value,
-            $certificateRequest->request_status
-        );
     }
 
     #[Test]
@@ -173,7 +175,7 @@ final class CancelExpiredKycRequestUseCaseTest extends TestCase
     {
         $entity = $this->makeEntity();
         $entity->certificateRequest->company_name = 'ACME SAS';
-        $entity->certificateRequest->shouldReceive('save')->once()->andReturn(true);
+        $entity->certificateRequest->shouldNotReceive('save');
 
         $stateMachine = Mockery::mock(StateMachine::class);
         $stateMachine->shouldReceive('markExpired')->once();

@@ -67,12 +67,20 @@ final class ViafirmaRequestFailedListener
                 return;
             }
 
+            $isExpiration = $context['error_code'] === 'POLL_EXPIRED';
+
             \Illuminate\Support\Facades\Mail::raw(
-                $this->buildEmailMessage($entity, $context),
-                function ($message) use ($supportEmail, $context) {
+                $isExpiration
+                    ? $this->buildExpirationEmailMessage($context)
+                    : $this->buildEmailMessage($entity, $context),
+                function ($message) use ($supportEmail, $context, $isExpiration) {
+                    $subject = $isExpiration
+                        ? 'ℹ️ Viafirma: Solicitud cancelada por vencimiento de KYC - ' . $context['company_name']
+                        : '🚨 Viafirma: Fallo en solicitud - ' . $context['company_name'];
+
                     $message
                         ->to($supportEmail)
-                        ->subject('🚨 Viafirma: Fallo en solicitud - ' . $context['company_name'])
+                        ->subject($subject)
                         ->from(config('mail.from.address'), config('mail.from.name'));
                 }
             );
@@ -114,6 +122,38 @@ Enviada: {$context['submitted_at']}
 Detectado: {$context['timestamp']}
 
 Requiere atención del operador RA para investigar y resolver.
+TEXT;
+    }
+
+    /**
+     * A diferencia de un fallo real, POLL_EXPIRED es un resultado esperado
+     * del cron ExpireStalledKycAccreditationsJob: el usuario final nunca
+     * completó la verificación KYC dentro del plazo. El cron YA canceló la
+     * solicitud y reintegró el cupo automáticamente — no requiere ninguna
+     * acción del operador RA ni del proveedor (nunca hubo un certificado
+     * emitido que revocar). Este correo es solo informativo.
+     */
+    private function buildExpirationEmailMessage(array $context): string
+    {
+        $company = $context['company_name'];
+        $nit     = $context['company_nit'];
+        $remote  = $context['remote_status'];
+
+        return <<<TEXT
+SOLICITUD CANCELADA POR VENCIMIENTO DE VERIFICACIÓN KYC (informativo)
+
+Empresa: {$company} (NIT: {$nit})
+ID Viafirma: {$context['viafirma_request_id']}
+ID Solicitud: {$context['certificate_request_id']}
+
+El usuario final no completó la verificación de identidad (KYC) dentro del
+plazo configurado. La solicitud fue cancelada automáticamente y el cupo
+consumido ya fue reintegrado — no requiere ninguna acción de tu parte.
+
+ESTADO REMOTO AL MOMENTO DE CANCELAR: {$remote}
+Intentos de polling: {$context['poll_attempts']}
+Enviada: {$context['submitted_at']}
+Cancelada: {$context['timestamp']}
 TEXT;
     }
 

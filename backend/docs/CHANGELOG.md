@@ -9,6 +9,15 @@ El versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Corregido — Viafirma: expiración por KYC no sincronizaba `change_histories` + correo interno engañoso
+
+- **Feedback de producción (real):** al probar la cancelación automática, el correo interno de alerta (`ViafirmaRequestFailedListener`) llegó como "SOLICITUD VIAFIRMA FALLIDA - ACCIÓN REQUERIDA... Requiere atención del operador RA" para un `POLL_EXPIRED` — pero no es un fallo real, es el cron nuevo funcionando exactamente como se diseñó (ya canceló y reintegró el cupo automáticamente). Además, el historial visible de la solicitud (tabla `change_histories`, distinta de `viafirma_status_history`) nunca se enteraba de la expiración.
+- **Causa raíz:** `StateMachine::markExpired()` solo disparaba `ViafirmaRequestFailed` — nunca `ViafirmaStatusChanged`. `ViafirmaRequestStateChangedListener::syncExpiredStatus()` (que YA existía y ya sincroniza `certificate_requests.request_status` + escribe en `change_histories` para casos EXPIRED) solo escucha ese segundo evento, así que nunca se ejecutaba para las expiraciones de este cron.
+- **Fix:** `markExpired()` ahora dispara ambos eventos. Se quitó la sincronización manual duplicada de `request_status` en `CancelExpiredKycRequestUseCase` (ahora la hace el listener, evitando doble escritura).
+- **Correo interno diferenciado:** `ViafirmaRequestFailedListener` ahora usa un mensaje informativo (sin "ACCIÓN REQUERIDA") cuando `error_code === POLL_EXPIRED` — aclara que ya se canceló y el cupo ya se reintegró, sin pedir intervención.
+- **Revocación en el proveedor — NO implementada, requiere endpoint nuevo de Viafirma:** `getRevocationCode()`/`revokeCertificate()` solo aplican a certificados que llegaron a `inProcess` o superior; las solicitudes que cancela este cron nunca pasan de `accreditation`, así que Viafirma nunca les asigna código de revocación. Pendiente: el usuario solicitará a Viafirma un endpoint para cancelar/rechazar una solicitud en curso — ver sección 9 de `docs/2026-09-10-09-00-implementacion-cancelacion-kyc-vencido.md`.
+- Test nuevo (mockeado, sin BD): `StateMachineMarkExpiredTest` — cubre el guard clause de terminal; el camino feliz de `markExpired()` no es mockeable sin BD por el `recordHistory()` interno (gap ya documentado, mismo patrón que `PollingSchedulerTest`).
+
 ### Añadido — Viafirma: cancelación automática por vencimiento de KYC + reintegro de cupo
 
 - **Problema cerrado:** desde que se eliminó la auto-expiración del polling (sesión anterior), nada liberaba el cupo consumido por una solicitud cuyo usuario final nunca completaba la verificación KYC — quedaba en `POLLING` indefinidamente, con el cupo bloqueado.
