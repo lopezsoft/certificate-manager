@@ -7,11 +7,13 @@ use App\Common\HttpResponseMessages;
 use App\Common\MessageExceptionResponse;
 use App\Common\VerificationDigit;
 use App\Enums\CertificateRequestStatusEnum;
+use App\Enums\TermsConsentScopeEnum;
 use App\Events\CertificateRequestCreated;
 use App\Models\CertificateRequest;
 use App\Models\ChangeHistory;
 use App\Models\Company;
 use App\Models\FileManager;
+use App\Models\TermsAcceptance;
 use App\Jobs\Certificate\AutoIssueViafirmaJob;
 use App\Notifications\CertificateRequestCreateNotification;
 use App\Services\Base64DecoderService;
@@ -116,6 +118,10 @@ class CreateCertificateRequestHandler
                 'user_id'                => $command->userId,
             ]);
 
+            // Evidencia de aceptación de T&C (cláusula 5: ejecución inmediata
+            // del servicio). Misma transacción: sin consentimiento no hay solicitud.
+            $this->recordTermsAcceptance($certificate, $command);
+
             // Excel solo para flujo mail
             if ($requiresFiles) {
                 $certificate->load(['city', 'identity']);
@@ -169,6 +175,28 @@ class CreateCertificateRequestHandler
 
             return MessageExceptionResponse::response($e);
         }
+    }
+
+    // ── Evidencia legal ───────────────────────────────────────────────────────
+
+    /**
+     * Registra la aceptación de la versión vigente de los T&C asociada a la
+     * solicitud. La versión ya fue validada como vigente en el FormRequest;
+     * aquí solo se persiste la evidencia (timestamp de servidor, IP, UA).
+     */
+    private function recordTermsAcceptance(CertificateRequest $certificate, CreateCertificateRequestCommand $command): void
+    {
+        TermsAcceptance::create([
+            'terms_version_id' => $command->termsVersionId,
+            'user_id'          => $command->userId,
+            'company_id'       => $command->companyId,
+            'acceptable_type'  => CertificateRequest::class,
+            'acceptable_id'    => $certificate->id,
+            'consent_scope'    => TermsConsentScopeEnum::MATICERTS_TERMS_IMMEDIATE_EXECUTION->value,
+            'accepted_at'      => now('UTC'),
+            'ip_address'       => $command->ipAddress,
+            'user_agent'       => $command->userAgent,
+        ]);
     }
 
     // ── Validaciones ──────────────────────────────────────────────────────────

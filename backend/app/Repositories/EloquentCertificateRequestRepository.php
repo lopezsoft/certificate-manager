@@ -23,6 +23,7 @@ class EloquentCertificateRequestRepository implements CertificateRequestReposito
         'organization:id,description',
         'city',
         'files:id,uuid,certificate_request_id,file_name,file_path,extension_file,mime_type,file_size,last_modified,status,document_type',
+        'termsAcceptances.termsVersion:id,version,published_at,source_url,content_hash',
     ];
 
     /** Relaciones extendidas para la vista admin */
@@ -32,7 +33,8 @@ class EloquentCertificateRequestRepository implements CertificateRequestReposito
         'city',
         'files:id,uuid,certificate_request_id,file_name,file_path,extension_file,mime_type,file_size,last_modified,status,document_type',
         'company:id,company_name,dni,dv,address,email,phone,issuance_provider,has_agreement,active,uuid',
-        'history'
+        'history',
+        'termsAcceptances.termsVersion:id,version,published_at,source_url,content_hash',
     ];
 
     public function findByCompany(int $companyId, array $filters = []): LengthAwarePaginator

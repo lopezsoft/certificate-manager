@@ -41,6 +41,9 @@ final class CreateCertificateRequestCommand implements CertificateCommandInterfa
         public readonly ?string $phone,
         public readonly array   $attachments,
         public readonly int     $userId,
+        public readonly int     $termsVersionId,
+        public readonly string  $ipAddress,
+        public readonly ?string $userAgent,
     ) {}
 }
 

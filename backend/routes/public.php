@@ -10,3 +10,7 @@
         Route::get('entity-document-types',     'getEntityDocumentTypes');
     });
 
+    // Términos y Condiciones — versión vigente (público, la consume el
+    // formulario de solicitud para enviar terms_version_id)
+    Route::get('terms/current', [\App\Http\Controllers\TermsController::class, 'current'])
+        ->name('v1.terms.current');

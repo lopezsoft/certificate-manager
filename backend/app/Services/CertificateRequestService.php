@@ -59,6 +59,10 @@ class CertificateRequestService
             info:                  $request->input('info'),
             attachments:           array_values($attachments),
             userId:                auth()->id(),
+            termsVersionId:        (int) $request->input('terms_version_id'),
+            // IP y User-Agent se capturan SIEMPRE en servidor (evidencia)
+            ipAddress:             (string) $request->ip(),
+            userAgent:             $request->userAgent() ? mb_substr($request->userAgent(), 0, 512) : null,
         ));
     }
 

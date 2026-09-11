@@ -8,6 +8,7 @@ use App\Models\Location\Country;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 
 class CertificateRequest extends CoreModel
@@ -108,6 +109,15 @@ class CertificateRequest extends CoreModel
         }
 
         return $name;
+    }
+
+    /**
+     * Evidencia de aceptación de T&C asociada a esta solicitud
+     * (una fila por consent_scope). Solo lectura: nunca se edita.
+     */
+    public function termsAcceptances(): MorphMany
+    {
+        return $this->morphMany(TermsAcceptance::class, 'acceptable');
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Http\Requests\Certificate;
 
 use App\Models\Company;
 use App\Models\EntityDocumentType;
+use App\Models\TermsVersion;
 use App\Modules\Company\CompanyQueries;
 use App\Modules\Viafirma\Domain\Enums\OrganizationType;
 use App\Services\Base64DecoderService;
@@ -41,6 +42,10 @@ class CreateCertificateRequestFormRequest extends FormRequest
             'company_name'             => ['required', 'string', 'max:120'],
             'dni'                      => ['required', 'string', 'max:30'],
             'life'                     => ['required', 'integer', 'in:1,2'],
+            // Consentimiento T&C MATICERTS (evidencia legal, cláusula 5):
+            // el checkbox debe venir aceptado y referenciar la versión vigente.
+            'accept_terms'             => ['required', 'accepted'],
+            'terms_version_id'         => ['required', 'integer', 'exists:terms_versions,id'],
             'attachments'                    => ['nullable', 'array'],
             'attachments.*.base64'           => ['required', 'string'],
             'attachments.*.name'             => ['nullable', 'string', 'max:255'],
@@ -73,6 +78,10 @@ class CreateCertificateRequestFormRequest extends FormRequest
             'life.required'                    => 'La vigencia del certificado es requerida',
             'life.integer'                     => 'La vigencia del certificado debe ser un número entero',
             'life.in'                          => 'La vigencia del certificado debe ser 1 o 2 años',
+            'accept_terms.required'            => 'Debe aceptar los Términos y Condiciones para continuar',
+            'accept_terms.accepted'            => 'Debe aceptar los Términos y Condiciones para continuar',
+            'terms_version_id.required'        => 'La versión de los Términos y Condiciones aceptada es requerida',
+            'terms_version_id.exists'          => 'La versión de los Términos y Condiciones no existe',
             'attachments.array'                => 'Los adjuntos deben ser un array',
             'attachments.*.base64.required'    => 'El contenido en base64 es requerido para cada adjunto',
             'attachments.*.base64.string'      => 'El contenido en base64 debe ser un texto',
@@ -118,7 +127,32 @@ class CreateCertificateRequestFormRequest extends FormRequest
             function (Validator $validator) {
                 $this->validateEntityDocumentTypeMapsToOrganizationType($validator);
             },
+            function (Validator $validator) {
+                $this->validateAcceptedTermsVersionIsCurrent($validator);
+            },
         ];
+    }
+
+    /**
+     * La aceptación solo es válida sobre la versión VIGENTE de los T&C.
+     * Evita que una pestaña abierta antes de una republicación registre
+     * consentimiento sobre un texto ya retirado.
+     */
+    private function validateAcceptedTermsVersionIsCurrent(Validator $validator): void
+    {
+        $termsVersionId = $this->input('terms_version_id');
+        if (empty($termsVersionId)) {
+            return; // Ya cubierto por required/exists
+        }
+
+        $current = TermsVersion::current();
+
+        if ($current === null || (int) $current->id !== (int) $termsVersionId) {
+            $validator->errors()->add(
+                'terms_version_id',
+                'Los Términos y Condiciones fueron actualizados. Recargue la página y acepte la versión vigente.'
+            );
+        }
     }
 
     /**
