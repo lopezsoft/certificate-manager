@@ -33,11 +33,12 @@ class KycImmediateWebhookBatcher
         ?string $whatsapp,
         string $codigo,
         string $enlace,
+        string $nombre,
     ): void {
         $bufferKey = $this->bufferKey($companyId);
 
         $buffer = Cache::get($bufferKey, []);
-        $buffer[] = ['codigo' => $codigo, 'enlace' => $enlace];
+        $buffer[] = ['codigo' => $codigo, 'enlace' => $enlace, 'nombre' => $nombre];
         Cache::put($bufferKey, $buffer, now()->addMinutes(self::BUFFER_TTL_MINUTES));
 
         $lockKey = $this->lockKey($companyId);
@@ -54,7 +55,7 @@ class KycImmediateWebhookBatcher
     }
 
     /**
-     * @return array<int, array{codigo: string, enlace: string}>
+     * @return array<int, array{codigo: string, enlace: string, nombre: string}>
      */
     public function pullBuffer(int $companyId): array
     {

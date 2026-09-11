@@ -13,7 +13,7 @@ namespace App\Modules\Viafirma\Domain\Contracts;
 interface KycWebhookNotifierContract
 {
     /**
-     * @param array<int, array{codigo: string, enlace: string}> $solicitudes
+     * @param array<int, array{codigo: string, enlace: string, nombre: string}> $solicitudes
      * @param string $tipo 'inmediato' o 'recordatorio'
      */
     public function notify(string $casaSoftware, ?string $whatsapp, array $solicitudes, string $tipo): void;

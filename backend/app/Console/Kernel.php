@@ -195,6 +195,25 @@ class Kernel extends ConsoleKernel
             ->appendOutputTo(storage_path('logs/scheduled-viafirma-kyc-reminder.log'));
 
         /**
+         * Job 7.55: Aviso de último llamado + cancelación por vencimiento de KYC
+         *
+         * Frecuencia: Cada hora
+         * Función: Avisa 24h antes del vencimiento (tipo: ultimo_llamado) y
+         *          cancela + reintegra el cupo al vencer (tipo: cancelacion).
+         *          Correo a la Casa de Software + webhook WhatsApp (n8n) en
+         *          ambos casos.
+         * Queue: notifications
+         */
+        $schedule->job(new \App\Modules\Viafirma\Infrastructure\Jobs\ExpireStalledKycAccreditationsJob())
+            ->hourly()
+            ->timezone('America/Bogota')
+            ->name('viafirma:kyc-expire-and-notify')
+            ->withoutOverlapping(55)
+            ->onOneServer()
+            ->emailOutputOnFailure(env('MAIL_SUPPORT_ADDRESS', config('mail.from.address')))
+            ->appendOutputTo(storage_path('logs/scheduled-viafirma-kyc-expire.log'));
+
+        /**
          * Job 7.5: Reintentar emisiones estancadas
          *
          * Frecuencia: Cada minuto

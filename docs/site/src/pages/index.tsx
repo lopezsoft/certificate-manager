@@ -1,5 +1,4 @@
 import React from 'react';
-import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
@@ -9,88 +8,61 @@ import EnvironmentCards from '@site/src/components/EnvironmentCards';
 
 import styles from './index.module.css';
 
-function HomepageHeader() {
+/**
+ * Portada de la documentacion.
+ *
+ * Es una pantalla de transito: su unico trabajo es llevar al integrador
+ * a su primera peticion. Sin hero de marketing ni tarjetas de features;
+ * el contenido real vive en /docs.
+ */
+function Masthead() {
   const { siteConfig } = useDocusaurusContext();
+
   return (
-    <header className={clsx('hero hero--primary', styles.heroBanner)}>
-      <div className={styles.heroBackground}></div>
-      <div className={clsx('container', styles.heroContainer)}>
-        <Heading as="h1" className={styles.heroTitle}>
+    <header className={styles.masthead}>
+      <div className="container">
+        <Heading as="h1" className={styles.title}>
           {siteConfig.title}
         </Heading>
-        <p className={styles.heroSubtitle}>{siteConfig.tagline}</p>
-        <div className={styles.buttons}>
-          <Link
-            className={clsx('button button--secondary button--lg', styles.heroButton)}
-            to="/docs/intro">
-            Explorar Documentación API 🚀
+        <p className={styles.lead}>
+          API REST para emitir, consultar y descargar certificados digitales
+          desde tu backend. Autenticas con un token, creas la solicitud y
+          recuperas el archivo P12.
+        </p>
+
+        <nav className={styles.entry} aria-label="Accesos principales">
+          <Link className={styles.entryPrimary} to="/docs/intro">
+            Empezar
+          </Link>
+          <Link className={styles.entryLink} to="/docs/api">
+            Referencia de la API
           </Link>
           <Link
-            className={clsx('button button--outline button--secondary button--lg', styles.heroButtonOutline)}
-            href="https://app.maticerts.com/"
-            target="_blank"
-            rel="noopener noreferrer">
-            Ir a la App 🔐
-          </Link>
-          <Link
-            className={clsx('button button--outline button--secondary button--lg', styles.heroButtonOutline)}
+            className={styles.entryLink}
             to="/certificate-manager-api-v1.postman_collection.json"
             target="_blank">
-            Descargar Postman
+            Colección de Postman
           </Link>
-        </div>
+        </nav>
       </div>
     </header>
   );
 }
 
-function Features() {
-  const featureList = [
-    {
-      title: 'Emisión Zero-Touch',
-      icon: '⚡',
-      description: 'Generación local de CSR y conexión automática con Viafirma RA mediante polling. Integración fácil y rápida.'
-    },
-    {
-      title: 'Arquitectura Segura',
-      icon: '🔐',
-      description: 'Seguridad OAuth 2.0 y Personal Access Tokens (PAT). Diseño orientado a microservicios y escalabilidad nativa.'
-    },
-    {
-      title: 'Ambiente Sandbox',
-      icon: '🧪',
-      description: 'Prueba la API sin impacto real usando el modo Sandbox. Emulación completa del ciclo de emisión local.'
-    }
-  ];
-
-  return (
-    <section className={styles.features}>
-      <div className="container">
-        <div className="row">
-          {featureList.map((props, idx) => (
-            <div key={idx} className={clsx('col col--4')}>
-              <div className={styles.featureCard}>
-                <div className={styles.featureIcon}>{props.icon}</div>
-                <Heading as="h3" className={styles.featureTitle}>{props.title}</Heading>
-                <p className={styles.featureDescription}>{props.description}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
+/**
+ * La primera decision real del integrador es a que entorno apunta,
+ * asi que la portada la resuelve antes de que entre a la documentacion.
+ */
 function Environments() {
   return (
     <section className={styles.environments}>
       <div className="container">
         <Heading as="h2" className={styles.sectionTitle}>
-          🌍 Accede a la Plataforma
+          Entornos
         </Heading>
-        <p className={styles.sectionSubtitle}>
-          Cada entorno cuenta con su propia aplicación web y su API REST.
+        <p className={styles.sectionNote}>
+          Sandbox y Producción son independientes: cuentas, tokens y
+          certificados no se comparten entre ellos.
         </p>
         <EnvironmentCards />
       </div>
@@ -98,59 +70,16 @@ function Environments() {
   );
 }
 
-function QuickStart() {
-  const steps = [
-    {
-      number: '1',
-      title: 'Obtén tu Token',
-      description: 'Genera un Personal Access Token (PAT) desde el panel de administración'
-    },
-    {
-      number: '2',
-      title: 'Crea una Solicitud',
-      description: 'Envía los datos del solicitante para iniciar el proceso de emisión'
-    },
-    {
-      number: '3',
-      title: 'Descarga tu Certificado',
-      description: 'Una vez completado, descarga el certificado digital en formato P12'
-    }
-  ];
-
-  return (
-    <section className={styles.quickStart}>
-      <div className="container">
-        <Heading as="h2" className={styles.quickStartTitle}>
-          🚀 Comienza en 3 Pasos
-        </Heading>
-        <div className="row">
-          {steps.map((step, idx) => (
-            <div key={idx} className={clsx('col col--4')}>
-              <div className={styles.stepCard}>
-                <div className={styles.stepNumber}>{step.number}</div>
-                <Heading as="h3" className={styles.stepTitle}>{step.title}</Heading>
-                <p className={styles.stepDescription}>{step.description}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-
 export default function Home(): JSX.Element {
   const { siteConfig } = useDocusaurusContext();
+
   return (
     <Layout
       title={`Inicio | ${siteConfig.title}`}
-      description="MATICERTS API - Emisión y gestión de certificados digitales.">
-      <HomepageHeader />
-      <main className={styles.mainContent}>
-        <Features />
+      description="Documentación de la API de MATICERTS: emisión y gestión de certificados digitales.">
+      <Masthead />
+      <main>
         <Environments />
-        <QuickStart />
       </main>
     </Layout>
   );

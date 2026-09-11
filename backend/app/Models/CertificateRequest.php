@@ -84,6 +84,33 @@ class CertificateRequest extends CoreModel
     }
 
     /**
+     * Nombre para mostrar del solicitante (persona que hace la verificación
+     * biométrica KYC), usado en notificaciones donde se necesita identificar
+     * rápidamente a quién pertenece una solicitud sin entrar al sistema.
+     *
+     * FE-PN: solo el nombre de la persona.
+     * FE-PJ: representante legal + nombre de la empresa titular entre
+     * paréntesis (ej. "Juan Pérez (ACME SAS)") — se usa la presencia de
+     * `company_name` como señal de FE-PJ en vez de resolver el perfil
+     * completo, que depende de lógica de dominio más compleja no necesaria aquí.
+     *
+     * Método normal (no accessor de Eloquent) a propósito, para no alterar
+     * la serialización JSON existente del modelo en otros endpoints.
+     */
+    public function applicantDisplayName(): string
+    {
+        $name = trim(trim((string) $this->legal_rep_first_name) . ' ' . trim((string) $this->legal_rep_last_name));
+
+        if ($name === '') {
+            $name = (string) ($this->company_name ?? 'Solicitante');
+        } elseif (!empty($this->company_name)) {
+            $name .= " ({$this->company_name})";
+        }
+
+        return $name;
+    }
+
+    /**
      * Get the type document identification that owns the company.
      */
     public function identity(): BelongsTo

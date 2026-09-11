@@ -1,230 +1,89 @@
 /**
- * Estilos modernos para el HomePage
- * Incluye Glassmorphism, Gradientes vivos y Animaciones
+ * Portada de la documentacion.
+ *
+ * Media pantalla y fuera: el lector viene a buscar un endpoint, no una
+ * propuesta de valor. Sin gradientes, sin sombras difusas, sin animacion
+ * de fondo. La separacion la hacen el espacio y una regla de 1px.
  */
 
-.heroBanner {
-  position: relative;
-  padding: 6rem 0;
-  text-align: center;
-  background: linear-gradient(135deg, #2556a3 0%, #1a3c72 100%);
-  overflow: hidden;
-  color: white;
+.masthead {
+  padding: 5rem 0 3.5rem;
+  border-bottom: 1px solid var(--mc-rule);
 }
 
-.heroBackground {
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
-  animation: rotate 30s linear infinite;
-  z-index: 0;
+.title {
+  margin: 0 0 1rem;
+  font-size: var(--mc-size-2xl);
+  font-weight: 650;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
 }
 
-@keyframes rotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.heroContainer {
-  position: relative;
-  z-index: 1;
-}
-
-.heroTitle {
-  font-size: 3.5rem;
-  font-weight: 800;
-  margin-bottom: 1rem;
-  letter-spacing: -1px;
-  text-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-}
-
-.heroSubtitle {
-  font-size: 1.5rem;
-  font-weight: 300;
-  margin-bottom: 2.5rem;
-  opacity: 0.9;
-}
-
-.buttons {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.heroButton {
-  border-radius: 8px;
-  padding: 0.8rem 1.5rem;
-  font-weight: 600;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  background-color: white !important;
-  color: #2556a3 !important;
-  border: none !important;
-}
-
-.heroButton:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
-  color: #1a3c72 !important;
-}
-
-.heroButtonOutline {
-  border-radius: 8px;
-  padding: 0.8rem 1.5rem;
-  font-weight: 600;
-  border: 2px solid white !important;
-  color: white !important;
-  background: transparent !important;
-  backdrop-filter: blur(5px);
-  transition: all 0.2s ease;
-}
-
-.heroButtonOutline:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-  transform: translateY(-2px);
-}
-
-.mainContent {
-  background-color: var(--ifm-background-color);
-  padding-bottom: 4rem;
-}
-
-.features {
-  padding: 4rem 0;
-  position: relative;
-  margin-top: -3rem;
-  z-index: 2;
-}
-
-.featureCard {
-  background: var(--ifm-color-emphasis-100);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--ifm-color-emphasis-200);
-  border-radius: 12px;
-  padding: 2rem;
-  height: 100%;
-  text-align: center;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.featureCard:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
-  border-color: var(--ifm-color-primary);
-}
-
-.featureIcon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  display: inline-block;
-  background: linear-gradient(135deg, var(--ifm-color-primary-light), var(--ifm-color-primary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.featureTitle {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-}
-
-.featureDescription {
-  font-size: 1rem;
+.lead {
+  max-width: 58ch;
+  margin: 0 0 2.25rem;
+  font-size: var(--mc-size-md);
+  line-height: 1.5;
   color: var(--ifm-color-content-secondary);
-  line-height: 1.6;
+}
+
+.entry {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 2rem;
+}
+
+/* Un solo destino enfatizado: el resto son alternativas, no competencia */
+.entryPrimary {
+  padding: 0.6rem 1.4rem;
+  border-radius: 5px;
+  background: var(--ifm-color-primary);
+  color: #ffffff;
+  font-size: var(--mc-size-base);
+  font-weight: 600;
+}
+
+.entryPrimary:hover {
+  background: var(--ifm-color-primary-dark);
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.entryLink {
+  font-size: var(--mc-size-base);
+  font-weight: 550;
 }
 
 .environments {
-  padding: 4rem 0;
+  padding: 3.5rem 0 5rem;
 }
 
 .sectionTitle {
-  text-align: center;
-  margin-bottom: 0.75rem;
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: var(--ifm-color-primary);
+  margin: 0 0 0.5rem;
+  font-size: var(--mc-size-lg);
+  font-weight: 650;
+  letter-spacing: -0.01em;
 }
 
-.sectionSubtitle {
-  text-align: center;
-  margin-bottom: 3rem;
-  font-size: 1.1rem;
-  color: var(--ifm-color-content-secondary);
-}
-
-.quickStart {
-  padding: 4rem 0;
-  background: linear-gradient(135deg, rgba(37, 86, 163, 0.05) 0%, rgba(37, 86, 163, 0.02) 100%);
-}
-
-.quickStartTitle {
-  text-align: center;
-  margin-bottom: 3rem;
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: var(--ifm-color-primary);
-}
-
-.stepCard {
-  background: var(--ifm-card-background-color, var(--ifm-background-surface-color));
-  border: 2px solid var(--ifm-color-emphasis-200);
-  border-radius: 12px;
-  padding: 2rem;
-  height: 100%;
-  text-align: center;
-  transition: all 0.3s ease;
-  position: relative;
-}
-
-.stepCard:hover {
-  border-color: var(--ifm-color-primary);
-  box-shadow: 0 10px 30px rgba(37, 86, 163, 0.15);
-  transform: translateY(-3px);
-}
-
-.stepNumber {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 50px;
-  height: 50px;
-  background: linear-gradient(135deg, var(--ifm-color-primary-light), var(--ifm-color-primary));
-  color: white;
-  border-radius: 50%;
-  font-size: 1.5rem;
-  font-weight: 800;
-  margin-bottom: 1rem;
-}
-
-.stepTitle {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin-bottom: 0.75rem;
-  color: var(--ifm-color-primary);
-}
-
-.stepDescription {
-  font-size: 0.95rem;
-  color: var(--ifm-color-content-secondary);
+.sectionNote {
+  max-width: var(--mc-measure);
+  margin: 0 0 2rem;
+  font-size: var(--mc-size-sm);
   line-height: 1.6;
-  margin: 0;
+  color: var(--ifm-color-content-secondary);
 }
 
 @media (max-width: 996px) {
-  .heroTitle {
-    font-size: 2.5rem;
+  .masthead {
+    padding: 3rem 0 2.5rem;
   }
-  .features {
-    margin-top: 0;
+
+  .entry {
+    gap: 0.75rem 1.5rem;
   }
-  .quickStartTitle,
-  .sectionTitle {
-    font-size: 2rem;
+
+  .environments {
+    padding: 2.5rem 0 3.5rem;
   }
 }

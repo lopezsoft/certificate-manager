@@ -85,7 +85,11 @@ final class ResendPendingKycAccreditationNotificationsJob implements ShouldQueue
                         )
                     );
 
-                    $solicitudes[] = ['codigo' => $entity->cod_request, 'enlace' => $link];
+                    $solicitudes[] = [
+                        'codigo' => $entity->cod_request,
+                        'enlace' => $link,
+                        'nombre' => $entity->certificateRequest?->applicantDisplayName() ?? 'Solicitante',
+                    ];
                 } catch (\Throwable $e) {
                     $logger->warning('viafirma.kyc_reminder.email_failed', [
                         'id'    => $entity->id,

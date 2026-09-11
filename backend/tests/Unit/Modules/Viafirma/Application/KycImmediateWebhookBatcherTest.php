@@ -22,9 +22,9 @@ final class KycImmediateWebhookBatcherTest extends TestCase
         Queue::fake();
 
         $batcher = new KycImmediateWebhookBatcher();
-        $batcher->enqueue(999, 'EMPRESA TEST', '3001234567', 'COD1', 'https://link1');
-        $batcher->enqueue(999, 'EMPRESA TEST', '3001234567', 'COD2', 'https://link2');
-        $batcher->enqueue(999, 'EMPRESA TEST', '3001234567', 'COD3', 'https://link3');
+        $batcher->enqueue(999, 'EMPRESA TEST', '3001234567', 'COD1', 'https://link1', 'Juan Perez');
+        $batcher->enqueue(999, 'EMPRESA TEST', '3001234567', 'COD2', 'https://link2', 'Maria Lopez');
+        $batcher->enqueue(999, 'EMPRESA TEST', '3001234567', 'COD3', 'https://link3', 'Pedro Ruiz (ACME SAS)');
 
         Queue::assertPushed(FlushKycImmediateWebhookJob::class, 1);
 
@@ -32,9 +32,9 @@ final class KycImmediateWebhookBatcherTest extends TestCase
         $this->assertCount(3, $buffer);
         $this->assertSame(
             [
-                ['codigo' => 'COD1', 'enlace' => 'https://link1'],
-                ['codigo' => 'COD2', 'enlace' => 'https://link2'],
-                ['codigo' => 'COD3', 'enlace' => 'https://link3'],
+                ['codigo' => 'COD1', 'enlace' => 'https://link1', 'nombre' => 'Juan Perez'],
+                ['codigo' => 'COD2', 'enlace' => 'https://link2', 'nombre' => 'Maria Lopez'],
+                ['codigo' => 'COD3', 'enlace' => 'https://link3', 'nombre' => 'Pedro Ruiz (ACME SAS)'],
             ],
             $buffer
         );
@@ -46,7 +46,7 @@ final class KycImmediateWebhookBatcherTest extends TestCase
         Queue::fake();
 
         $batcher = new KycImmediateWebhookBatcher();
-        $batcher->enqueue(111, 'EMPRESA X', '3001234567', 'COD', 'https://link');
+        $batcher->enqueue(111, 'EMPRESA X', '3001234567', 'COD', 'https://link', 'Juan Perez');
 
         $first  = $batcher->pullBuffer(111);
         $second = $batcher->pullBuffer(111);
@@ -61,13 +61,13 @@ final class KycImmediateWebhookBatcherTest extends TestCase
         Queue::fake();
 
         $batcher = new KycImmediateWebhookBatcher();
-        $batcher->enqueue(1, 'EMPRESA A', '3001111111', 'A1', 'https://a1');
-        $batcher->enqueue(2, 'EMPRESA B', '3002222222', 'B1', 'https://b1');
+        $batcher->enqueue(1, 'EMPRESA A', '3001111111', 'A1', 'https://a1', 'Ana Torres');
+        $batcher->enqueue(2, 'EMPRESA B', '3002222222', 'B1', 'https://b1', 'Beto Diaz');
 
         Queue::assertPushed(FlushKycImmediateWebhookJob::class, 2);
 
-        $this->assertSame([['codigo' => 'A1', 'enlace' => 'https://a1']], $batcher->pullBuffer(1));
-        $this->assertSame([['codigo' => 'B1', 'enlace' => 'https://b1']], $batcher->pullBuffer(2));
+        $this->assertSame([['codigo' => 'A1', 'enlace' => 'https://a1', 'nombre' => 'Ana Torres']], $batcher->pullBuffer(1));
+        $this->assertSame([['codigo' => 'B1', 'enlace' => 'https://b1', 'nombre' => 'Beto Diaz']], $batcher->pullBuffer(2));
     }
 
     #[Test]
@@ -76,10 +76,10 @@ final class KycImmediateWebhookBatcherTest extends TestCase
         Queue::fake();
 
         $batcher = new KycImmediateWebhookBatcher();
-        $batcher->enqueue(42, 'EMPRESA', '3001234567', 'COD1', 'https://link1');
+        $batcher->enqueue(42, 'EMPRESA', '3001234567', 'COD1', 'https://link1', 'Juan Perez');
         $batcher->pullBuffer(42);
 
-        $batcher->enqueue(42, 'EMPRESA', '3001234567', 'COD2', 'https://link2');
+        $batcher->enqueue(42, 'EMPRESA', '3001234567', 'COD2', 'https://link2', 'Juan Perez');
 
         Queue::assertPushed(FlushKycImmediateWebhookJob::class, 2);
     }

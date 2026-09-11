@@ -29,7 +29,7 @@ use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
  * NOTA: Tras la normalización, los campos de estado se encuentran en
  * $entity->state (ViafirmaCertificateRequestState). La FSM muta ese objeto.
  */
-final class StateMachine
+class StateMachine
 {
     /**
      * Familia de estados remotos de acreditación (bruto + sub-estados documentados

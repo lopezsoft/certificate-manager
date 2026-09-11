@@ -171,6 +171,7 @@ final class FetchKycAccreditationLinkJob implements ShouldQueue, ShouldBeUnique
             whatsapp: $company->phone,
             codigo: (string) $entity->cod_request,
             enlace: $link,
+            nombre: $entity->certificateRequest?->applicantDisplayName() ?? 'Solicitante',
         );
     }
 }

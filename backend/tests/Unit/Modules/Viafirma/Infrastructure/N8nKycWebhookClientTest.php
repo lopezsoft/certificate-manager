@@ -32,7 +32,7 @@ final class N8nKycWebhookClientTest extends TestCase
         Http::fake();
 
         $client = new N8nKycWebhookClient(Mockery::mock(SafePemLogger::class));
-        $client->notify('ACME', '3001234567', [['codigo' => 'X', 'enlace' => 'https://x']], 'inmediato');
+        $client->notify('ACME', '3001234567', [['codigo' => 'X', 'enlace' => 'https://x', 'nombre' => 'Juan Perez']], 'inmediato');
 
         Http::assertNothingSent();
     }
@@ -59,7 +59,7 @@ final class N8nKycWebhookClientTest extends TestCase
         $logger->shouldReceive('warning')->once()->with('n8n.kyc_webhook.no_whatsapp', Mockery::type('array'));
 
         $client = new N8nKycWebhookClient($logger);
-        $client->notify('ACME', null, [['codigo' => 'X', 'enlace' => 'https://x']], 'inmediato');
+        $client->notify('ACME', null, [['codigo' => 'X', 'enlace' => 'https://x', 'nombre' => 'Juan Perez']], 'inmediato');
 
         Http::assertNothingSent();
     }
@@ -90,7 +90,7 @@ final class N8nKycWebhookClientTest extends TestCase
             $logger->shouldReceive('info')->once();
 
             $client = new N8nKycWebhookClient($logger);
-            $client->notify('ACME', $input, [['codigo' => 'X', 'enlace' => 'https://x']], 'inmediato');
+            $client->notify('ACME', $input, [['codigo' => 'X', 'enlace' => 'https://x', 'nombre' => 'Juan Perez']], 'inmediato');
 
             Http::assertSent(fn (Request $request) => $request->data()['whatsapp'] === $expected);
         }
@@ -110,8 +110,8 @@ final class N8nKycWebhookClientTest extends TestCase
             'OFILAFT',
             '573001234567',
             [
-                ['codigo' => 'P386BY149', 'enlace' => 'https://viafirma.com/kyc/1'],
-                ['codigo' => 'MEFBND7DG', 'enlace' => 'https://viafirma.com/kyc/2'],
+                ['codigo' => 'P386BY149', 'enlace' => 'https://viafirma.com/kyc/1', 'nombre' => 'Juan Perez'],
+                ['codigo' => 'MEFBND7DG', 'enlace' => 'https://viafirma.com/kyc/2', 'nombre' => 'Maria Lopez (ACME SAS)'],
             ],
             'recordatorio',
         );
@@ -124,8 +124,8 @@ final class N8nKycWebhookClientTest extends TestCase
                 && $body['whatsapp'] === '573001234567'
                 && $body['count'] === 2
                 && $body['tipo'] === 'recordatorio'
-                && $body['solicitudes'][0] === ['codigo' => 'P386BY149', 'enlace' => 'https://viafirma.com/kyc/1']
-                && $body['solicitudes'][1] === ['codigo' => 'MEFBND7DG', 'enlace' => 'https://viafirma.com/kyc/2'];
+                && $body['solicitudes'][0] === ['codigo' => 'P386BY149', 'enlace' => 'https://viafirma.com/kyc/1', 'nombre' => 'Juan Perez']
+                && $body['solicitudes'][1] === ['codigo' => 'MEFBND7DG', 'enlace' => 'https://viafirma.com/kyc/2', 'nombre' => 'Maria Lopez (ACME SAS)'];
         });
     }
 
@@ -139,7 +139,7 @@ final class N8nKycWebhookClientTest extends TestCase
         $logger->shouldReceive('warning')->once()->with('n8n.kyc_webhook.non_2xx', Mockery::type('array'));
 
         $client = new N8nKycWebhookClient($logger);
-        $client->notify('ACME', '3001234567', [['codigo' => 'X', 'enlace' => 'https://x']], 'inmediato');
+        $client->notify('ACME', '3001234567', [['codigo' => 'X', 'enlace' => 'https://x', 'nombre' => 'Juan Perez']], 'inmediato');
 
         Http::assertSentCount(1);
     }
@@ -158,7 +158,7 @@ final class N8nKycWebhookClientTest extends TestCase
         $client = new N8nKycWebhookClient($logger);
 
         // No debe lanzar — fire-and-forget.
-        $client->notify('ACME', '3001234567', [['codigo' => 'X', 'enlace' => 'https://x']], 'inmediato');
+        $client->notify('ACME', '3001234567', [['codigo' => 'X', 'enlace' => 'https://x', 'nombre' => 'Juan Perez']], 'inmediato');
         $this->assertTrue(true);
     }
 }

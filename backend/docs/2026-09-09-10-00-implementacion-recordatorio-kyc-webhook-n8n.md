@@ -1,6 +1,8 @@
 # Implementación: Job de recordatorio diario KYC + Webhook n8n (WhatsApp)
 
 > Estado: **IMPLEMENTADO Y VERIFICADO — v1.12.0 (2026-09-09)**. Preguntas de la sección 6 resueltas por el usuario (definición de "pendiente" confirmada, `companies.phone` confirmado como fuente, tope de recordatorio en 14 días). Probado end-to-end contra un webhook real de n8n: normalización de teléfono, agrupamiento de solicitudes simultáneas en un solo flush, y payload recibido exitosamente (`n8n.kyc_webhook.sent`).
+>
+> **Revisión 2026-09-10:** feedback post-producción — con varios códigos pendientes, la Casa de Software tenía que entrar al sistema para identificar a quién pertenecía cada uno. Se agregó `nombre` a cada solicitud del payload (`{codigo, enlace, nombre}`), resuelto vía `CertificateRequest::applicantDisplayName()` — FE-PN muestra el nombre del titular, FE-PJ agrega la empresa entre paréntesis. Ver `## [Unreleased]` en `docs/CHANGELOG.md`.
 
 ## 1. Contexto
 

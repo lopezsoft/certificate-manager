@@ -123,31 +123,31 @@ const config: Config = {
           position: 'left',
           items: [
             {
-              label: '🗂️ Dashboard General',
+              label: 'Dashboard General',
               to: '/docs/api',
             },
             {
-              label: '🔑 Autenticación',
+              label: 'Autenticación',
               to: '/docs/api/autenticacion',
             },
             {
-              label: '📄 Emisión de Certificados',
+              label: 'Emisión de Certificados',
               to: '/docs/api/emision-de-certificados',
             },
             {
-              label: '📋 Solicitudes',
+              label: 'Solicitudes',
               to: '/docs/api/solicitudes-de-certificado',
             },
             {
-              label: '⚙️ Configuración',
+              label: 'Configuración',
               to: '/docs/api/configuracion',
             },
             {
-              label: '🎫 Tokens (PAT)',
+              label: 'Tokens (PAT)',
               to: '/docs/api/tokens',
             },
             {
-              label: '🖥️ Sistema',
+              label: 'Sistema',
               to: '/docs/api/sistema',
             }
           ]
@@ -169,11 +169,11 @@ const config: Config = {
           position: 'right',
           items: [
             {
-              label: '🚀 Producción',
+              label: 'Producción',
               href: 'https://app.maticerts.com/',
             },
             {
-              label: '🧪 Sandbox',
+              label: 'Sandbox',
               href: 'https://sandbox-app.maticerts.com/',
             },
           ],
@@ -187,11 +187,11 @@ const config: Config = {
           title: 'Plataforma',
           items: [
             {
-              label: '🚀 App (Producción)',
+              label: 'App (Producción)',
               href: 'https://app.maticerts.com/',
             },
             {
-              label: '🧪 App (Sandbox)',
+              label: 'App (Sandbox)',
               href: 'https://sandbox-app.maticerts.com/',
             },
           ],

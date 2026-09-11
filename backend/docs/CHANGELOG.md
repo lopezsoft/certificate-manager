@@ -9,6 +9,27 @@ El versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Añadido — Viafirma: cancelación automática por vencimiento de KYC + reintegro de cupo
+
+- **Problema cerrado:** desde que se eliminó la auto-expiración del polling (sesión anterior), nada liberaba el cupo consumido por una solicitud cuyo usuario final nunca completaba la verificación KYC — quedaba en `POLLING` indefinidamente, con el cupo bloqueado.
+- **`ExpireStalledKycAccreditationsJob`** (nuevo, cron cada hora): dos pasos sobre el mismo criterio "pendiente de KYC" (`internal_state=POLLING`, link generado, `kyc_flow_completed_at` nulo):
+  - **Último llamado** (24h antes de `expires_at`, una sola vez, marcado con `kyc_last_call_sent_at`): correo `ViafirmaKycLastCallNotification` + webhook n8n `tipo: ultimo_llamado`.
+  - **Cancelación efectiva** (`expires_at <= now()` — deliberadamente no es igualdad exacta, para recoger en cada pasada todas las vencidas acumuladas): marca `EXPIRED` (reutilizando `StateMachine::markExpired()`, que existía pero estaba huérfano desde la sesión anterior), sincroniza `certificate_requests.request_status`, reintegra el cupo (`QuotaService::releaseQuotaForRequest()`, ya existía, mismo método que usa el borrado manual de solicitudes), correo `ViafirmaKycExpiredNotification` + webhook n8n `tipo: cancelacion`.
+- **No se borra nada** — a diferencia de `DeleteCertificateRequestHandler` (acción manual explícita), un cron automático no debe eliminar registros ni archivos. Solo transiciona a `EXPIRED`, preservando el histórico completo para trazabilidad.
+- **`CancelExpiredKycRequestUseCase`** (nuevo): extrae la lógica de cancelación individual a un use case puro (recibe la entidad ya cargada, no vuelve a tocar BD para leer) — permite testear la decisión de negocio con mocks, sin BD. Incluye protección de carrera: si `kyc_flow_completed_at` ya no es null (el usuario completó el KYC justo en el margen), no cancela aunque `internal_state` aún no lo refleje.
+- El job orquesta el mutex distribuido (misma clave que usa `PollViafirmaStatusJob`) y la recarga fresca desde BD antes de delegar al use case — evita cancelar una solicitud que un poll concurrente esté resolviendo en ese instante.
+- Migración (no ejecutada) + DDL manual para `kyc_last_call_sent_at` en `viafirma_certificate_request_states`.
+- Se quitó `final` de `StateMachine` — igual que con `SafePemLogger` antes, era necesario para poder mockearlo en el test del use case.
+- 12 tests unitarios nuevos (100% mockeados, sin BD): `CancelExpiredKycRequestUseCaseTest` (6 casos, incluyendo la protección de carrera), `ViafirmaKycLastCallNotificationTest`, `ViafirmaKycExpiredNotificationTest`.
+- Diseño completo documentado en `docs/2026-09-10-09-00-implementacion-cancelacion-kyc-vencido.md`.
+
+### Añadido — Viafirma: nombre del solicitante en el aviso de WhatsApp (n8n)
+
+- **Feedback de producción:** con varios códigos pendientes en un mismo mensaje, había que entrar al sistema para saber a quién pertenecía cada uno.
+- `CertificateRequest::applicantDisplayName()` (nuevo método, no accessor de Eloquent para no alterar la serialización existente): FE-PN muestra solo el nombre del titular (`legal_rep_first_name` + `legal_rep_last_name`); FE-PJ agrega el nombre de la empresa entre paréntesis (ej. `"Juan Pérez (ACME SAS)"`), usando la presencia de `company_name` como señal de perfil en vez de resolver el perfil completo.
+- Cada `solicitud` del payload del webhook ahora incluye `nombre`: `{codigo, enlace, nombre}` — aplica tanto al envío inmediato como al recordatorio diario.
+- 4 tests nuevos para `applicantDisplayName()` (FE-PN, FE-PJ, sin representante, sin ningún dato) + tests existentes del webhook actualizados. Verificado con datos reales de una solicitud en BD local.
+
 ## [1.12.0] - 2026-09-09
 
 ### Añadido — Viafirma: recordatorio diario KYC + webhook WhatsApp (n8n)

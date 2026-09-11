@@ -65,5 +65,45 @@ class CertificateRequestTest extends TestCase
 
         $this->assertEmpty($withValue, 'El modelo no debe tener $with global para evitar N+1');
     }
+
+    public function test_applicant_display_name_para_persona_natural_solo_muestra_el_nombre(): void
+    {
+        $cert = CertificateRequest::make([
+            'legal_rep_first_name' => 'Juan',
+            'legal_rep_last_name'  => 'Perez',
+            'company_name'         => null,
+        ]);
+
+        $this->assertSame('Juan Perez', $cert->applicantDisplayName());
+    }
+
+    public function test_applicant_display_name_para_persona_juridica_incluye_la_empresa_entre_parentesis(): void
+    {
+        $cert = CertificateRequest::make([
+            'legal_rep_first_name' => 'Juan',
+            'legal_rep_last_name'  => 'Perez',
+            'company_name'         => 'ACME SAS',
+        ]);
+
+        $this->assertSame('Juan Perez (ACME SAS)', $cert->applicantDisplayName());
+    }
+
+    public function test_applicant_display_name_sin_nombre_de_representante_usa_la_empresa(): void
+    {
+        $cert = CertificateRequest::make([
+            'legal_rep_first_name' => null,
+            'legal_rep_last_name'  => null,
+            'company_name'         => 'SOLO EMPRESA SAS',
+        ]);
+
+        $this->assertSame('SOLO EMPRESA SAS', $cert->applicantDisplayName());
+    }
+
+    public function test_applicant_display_name_sin_ningun_dato_retorna_fallback(): void
+    {
+        $cert = new CertificateRequest();
+
+        $this->assertSame('Solicitante', $cert->applicantDisplayName());
+    }
 }
 

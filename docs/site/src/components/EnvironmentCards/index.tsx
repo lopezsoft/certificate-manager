@@ -1,56 +1,53 @@
 import React from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
-import Heading from '@theme/Heading';
 
 import { ENVIRONMENTS, type Environment } from './environments';
 import styles from './styles.module.css';
 
-function EnvironmentCard({ env }: { env: Environment }) {
+/**
+ * Los entornos son datos comparables: misma estructura, valores distintos.
+ * Se presentan como tabla para que la comparacion sea fila a fila, en lugar
+ * de obligar a saltar entre dos tarjetas.
+ */
+function EnvironmentRow({ env }: { env: Environment }) {
   return (
-    <div className={clsx(styles.card, styles[env.variant])}>
-      <div className={styles.header}>
-        <span className={styles.icon} aria-hidden="true">{env.icon}</span>
-        <Heading as="h3" className={styles.title}>{env.title}</Heading>
+    <div className={clsx(styles.row, styles[env.variant])}>
+      <div className={styles.identity}>
+        <h3 className={styles.title}>{env.title}</h3>
         <span className={styles.badge}>{env.badge}</span>
+        <p className={styles.description}>{env.description}</p>
       </div>
 
-      <p className={styles.description}>{env.description}</p>
-
       <dl className={styles.urls}>
-        <dt className={styles.urlLabel}>Aplicación web</dt>
-        <dd className={styles.urlValue}>
-          <Link
-            className={styles.appLink}
-            href={env.appUrl}
-            target="_blank"
-            rel="noopener noreferrer">
-            {env.appLabel}
-            <span className={styles.external} aria-hidden="true">↗</span>
-          </Link>
-        </dd>
-        <dt className={styles.urlLabel}>API REST</dt>
-        <dd className={styles.urlValue}>
-          <code className={styles.apiUrl}>{env.apiUrl}</code>
-        </dd>
+        <div className={styles.field}>
+          <dt className={styles.fieldLabel}>Aplicación web</dt>
+          <dd className={styles.fieldValue}>
+            <Link
+              className={styles.appLink}
+              href={env.appUrl}
+              target="_blank"
+              rel="noopener noreferrer">
+              {env.appLabel}
+            </Link>
+          </dd>
+        </div>
+        <div className={styles.field}>
+          <dt className={styles.fieldLabel}>API REST</dt>
+          <dd className={styles.fieldValue}>
+            <code className={styles.apiUrl}>{env.apiUrl}</code>
+          </dd>
+        </div>
       </dl>
-
-      <Link
-        className={clsx('button button--block', styles.button)}
-        href={env.appUrl}
-        target="_blank"
-        rel="noopener noreferrer">
-        {env.buttonLabel}
-      </Link>
     </div>
   );
 }
 
 export default function EnvironmentCards(): React.ReactElement {
   return (
-    <div className={styles.grid}>
+    <div className={styles.table}>
       {ENVIRONMENTS.map((env) => (
-        <EnvironmentCard key={env.key} env={env} />
+        <EnvironmentRow key={env.key} env={env} />
       ))}
     </div>
   );

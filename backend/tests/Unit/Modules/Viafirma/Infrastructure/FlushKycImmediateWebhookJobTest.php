@@ -27,8 +27,8 @@ final class FlushKycImmediateWebhookJobTest extends TestCase
     public function envia_el_webhook_con_tipo_inmediato_y_todo_lo_acumulado_en_el_buffer(): void
     {
         $solicitudes = [
-            ['codigo' => 'ABC123', 'enlace' => 'https://viafirma.com/kyc/1'],
-            ['codigo' => 'DEF456', 'enlace' => 'https://viafirma.com/kyc/2'],
+            ['codigo' => 'ABC123', 'enlace' => 'https://viafirma.com/kyc/1', 'nombre' => 'Juan Perez'],
+            ['codigo' => 'DEF456', 'enlace' => 'https://viafirma.com/kyc/2', 'nombre' => 'Maria Lopez (ACME SAS)'],
         ];
 
         $batcher = Mockery::mock(KycImmediateWebhookBatcher::class);

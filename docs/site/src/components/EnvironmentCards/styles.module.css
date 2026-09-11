@@ -1,169 +1,123 @@
 /**
- * Tarjetas de entorno (Producción / Sandbox).
- * Compartidas entre la portada y la guía de Primeros Pasos.
+ * Entornos (Produccion / Sandbox).
+ * Compartido entre la portada y la guia de Primeros Pasos.
+ *
+ * Tabla, no tarjetas: los dos entornos exponen los mismos campos con
+ * valores distintos, asi que la lectura util es horizontal (que cambia
+ * de uno a otro), no vertical.
  */
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
+.table {
   margin-bottom: 2rem;
+  border-top: 1px solid var(--mc-rule);
 }
 
-.card {
+.row {
   --env-accent: var(--ifm-color-primary);
-  --env-accent-soft: rgba(37, 86, 163, 0.08);
 
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow: hidden;
-  padding: 1.75rem;
-  border: 1px solid var(--ifm-color-emphasis-200);
-  border-radius: 14px;
-  background: var(--ifm-card-background-color, var(--ifm-background-surface-color));
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 1.5rem 2.5rem;
+  padding: 1.5rem 0;
+  border-bottom: 1px solid var(--mc-rule);
 }
 
-/* Franja de acento superior que identifica el entorno */
-.card::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 4px;
-  background: var(--env-accent);
-}
-
-.card:hover {
-  transform: translateY(-4px);
-  border-color: var(--env-accent);
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.1);
-}
-
+/* El acento distingue el entorno sin recurrir a un icono */
 .production {
   --env-accent: var(--ifm-color-primary);
-  --env-accent-soft: rgba(37, 86, 163, 0.08);
 }
 
 .sandbox {
-  --env-accent: var(--ifm-color-warning-dark, #e6a700);
-  --env-accent-soft: rgba(230, 167, 0, 0.12);
+  --env-accent: var(--mc-pending);
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.icon {
-  font-size: 1.5rem;
-  line-height: 1;
+.identity {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-content: start;
+  justify-content: start;
+  gap: 0.4rem 0.6rem;
 }
 
 .title {
   margin: 0;
-  font-size: 1.35rem;
-  font-weight: 700;
+  font-size: var(--mc-size-md);
+  font-weight: 650;
+  line-height: 1.2;
   color: var(--ifm-heading-color);
 }
 
+/* Estado del entorno: informacion, no adorno */
 .badge {
-  margin-left: auto;
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-  background: var(--env-accent-soft);
+  align-self: center;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--env-accent);
+  border-radius: 3px;
   color: var(--env-accent);
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-size: var(--mc-size-xs);
+  font-weight: 600;
   white-space: nowrap;
 }
 
 .description {
-  margin: 0 0 1.25rem;
-  font-size: 0.95rem;
-  line-height: 1.6;
+  grid-column: 1 / -1;
+  margin: 0;
+  max-width: 42ch;
+  font-size: var(--mc-size-sm);
+  line-height: 1.55;
   color: var(--ifm-color-content-secondary);
 }
 
 .urls {
-  margin: 0 0 1.5rem;
+  display: grid;
+  align-content: start;
+  gap: 0.75rem;
+  margin: 0;
 }
 
-.urlLabel {
-  margin-bottom: 0.3rem;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+.field {
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.fieldLabel {
+  margin: 0;
+  font-size: var(--mc-size-xs);
+  font-weight: 600;
   color: var(--ifm-color-content-secondary);
 }
 
-.urlValue {
-  margin: 0 0 1rem;
-  font-size: 0.9rem;
+.fieldValue {
+  margin: 0;
+  font-size: var(--mc-size-sm);
   overflow-wrap: anywhere;
 }
 
-.urlValue:last-child {
-  margin-bottom: 0;
-}
-
 .appLink {
-  font-weight: 600;
+  font-weight: 550;
   color: var(--env-accent);
-  text-decoration: none;
 }
 
-.appLink:hover {
-  text-decoration: underline;
-}
-
-.external {
-  margin-left: 0.25rem;
-  font-size: 0.8em;
-}
-
+/* La URL de la API se copia: se tipografia como el literal que es */
 .apiUrl {
-  display: inline-block;
-  padding: 0.15rem 0.45rem;
+  padding: 0.1rem 0.35rem;
   border: 1px solid var(--ifm-color-emphasis-200);
-  border-radius: 6px;
-  background: var(--ifm-color-emphasis-100);
-  font-size: 0.85rem;
+  border-radius: 3px;
+  background: var(--mc-surface);
+  font-size: var(--mc-size-sm);
   color: var(--ifm-color-content);
 }
 
-.button {
-  margin-top: auto;
-  border: none;
-  border-radius: 8px;
-  padding: 0.7rem 1rem;
-  font-weight: 600;
-  color: #fff;
-  background: var(--env-accent);
-  transition: filter 0.2s ease, transform 0.2s ease;
-}
-
-.button:hover {
-  color: #fff;
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-}
-
-/* Respeta la preferencia de movimiento reducido del usuario */
-@media (prefers-reduced-motion: reduce) {
-  .card,
-  .button {
-    transition: none;
+@media (max-width: 996px) {
+  .row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
-  .card:hover,
-  .button:hover {
-    transform: none;
+
+  .field {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
   }
 }

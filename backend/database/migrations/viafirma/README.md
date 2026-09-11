@@ -49,6 +49,16 @@
   ⚠️ `RecordKycFlowCompletedUseCase` ya asume que estas columnas existen —
   aplicar la migración **antes** de desplegar ese código.
 
+- **`2026_09_10_090000_add_kyc_last_call_sent_at_to_viafirma_certificate_request_states.php`**
+  Agrega `kyc_last_call_sent_at` a `viafirma_certificate_request_states` — marca
+  cuándo se envió el aviso de "último llamado" (24h antes del vencimiento del
+  plazo de verificación KYC), para que el cron horario `ExpireStalledKycAccreditationsJob`
+  no lo reenvíe en cada corrida dentro de la misma ventana de 24h.
+  **Producción corre MariaDB 10.3** — usar el DDL manual equivalente en
+  `2026_09_10_090000_add_kyc_last_call_sent_at_to_viafirma_certificate_request_states.sql`.
+  ⚠️ `ExpireStalledKycAccreditationsJob` ya asumirá que esta columna existe —
+  aplicar la migración **antes** de desplegar ese código.
+
 ## Cambios de código relacionados (sin migración nueva)
 
 Sesión 2026-08-19 también corrigió, sin requerir cambios de esquema adicionales:
