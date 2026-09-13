@@ -6,169 +6,138 @@ namespace Tests\Unit\Modules\Viafirma\Models;
 
 use App\Modules\Viafirma\Domain\Enums\InternalState;
 use App\Modules\Viafirma\Domain\Enums\RemoteStatus;
-use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequestState;
 use Tests\TestCase;
+use Tests\Unit\Modules\Viafirma\CreatesViafirmaSchemaInMemory;
 
 /**
  * Tests para scopePendingAutoRedownload (Iniciativa 3).
  *
- * Verifica que el scope excluya correctamente casos sin P7B (rues_error, etc.)
- * e incluya solo casos con P7B disponible (GENERATED_NOT_DOWNLOADED, GENERATED_AND_DOWNLOADED).
+ * Un scope ES una consulta SQL: probarlo exige una tabla real. Se usa SQLite
+ * `:memory:` con el esquema mínimo — ninguna base de datos real se toca. Las
+ * filas se insertan directamente (sin factories, que no existen para estos
+ * modelos).
+ *
+ * Verifica que el scope excluya los casos sin P7B disponible (rues_error,
+ * accreditation_rejected, fail) e incluya sólo los que sí lo tienen.
  */
 class ViafirmaCertificateRequestStateTest extends TestCase
 {
+    use CreatesViafirmaSchemaInMemory;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->createViafirmaRequestTables();
+    }
+
     /**
-     * El scope debe excluir casos con remote_status = rues_error.
+     * Inserta un estado con los atributos dados y devuelve su id.
      */
+    private function makeState(
+        RemoteStatus $remoteStatus,
+        int          $attempts = 0,
+        int          $minutesAgo = 5,
+        InternalState $internalState = InternalState::FAILED_RECOVERABLE,
+    ): int {
+        $state = new ViafirmaCertificateRequestState();
+        $state->viafirma_certificate_request_id = random_int(1, PHP_INT_MAX);
+        $state->internal_state           = $internalState;
+        $state->remote_status            = $remoteStatus->value;
+        $state->auto_redownload_attempts = $attempts;
+        $state->save();
+
+        // `updated_at` se fija después: el save() lo sobrescribe con now().
+        ViafirmaCertificateRequestState::where('id', $state->id)
+            ->update(['updated_at' => now()->subMinutes($minutesAgo)]);
+
+        return $state->id;
+    }
+
+    /** @return int[] ids devueltos por el scope */
+    private function pendingIds(): array
+    {
+        return ViafirmaCertificateRequestState::pendingAutoRedownload()
+            ->pluck('id')
+            ->all();
+    }
+
+    // ── Exclusiones: estados remotos SIN P7B disponible ───────────────────
+
     public function test_scope_pending_auto_redownload_excludes_rues_error(): void
     {
-        // Crear un caso con FAILED_RECOVERABLE + rues_error (sin P7B)
-        $viafirmaRequest = ViafirmaCertificateRequest::factory()->create();
-        $state = ViafirmaCertificateRequestState::factory()->create([
-            'viafirma_certificate_request_id' => $viafirmaRequest->id,
-            'internal_state'                  => InternalState::FAILED_RECOVERABLE->value,
-            'remote_status'                   => RemoteStatus::RUES_ERROR->value,
-            'updated_at'                      => now()->subMinutes(5), // > 2 min
-            'auto_redownload_attempts'        => 0,
-        ]);
+        $id = $this->makeState(RemoteStatus::RUES_ERROR);
 
-        // El scope NO debe incluir este caso
-        $results = ViafirmaCertificateRequestState::pendingAutoRedownload()->get();
-        $this->assertFalse($results->contains('id', $state->id));
+        $this->assertNotContains($id, $this->pendingIds());
     }
 
-    /**
-     * El scope debe excluir casos con remote_status = accreditation_rejected.
-     */
     public function test_scope_pending_auto_redownload_excludes_accreditation_rejected(): void
     {
-        $viafirmaRequest = ViafirmaCertificateRequest::factory()->create();
-        $state = ViafirmaCertificateRequestState::factory()->create([
-            'viafirma_certificate_request_id' => $viafirmaRequest->id,
-            'internal_state'                  => InternalState::FAILED_RECOVERABLE->value,
-            'remote_status'                   => RemoteStatus::ACCREDITATION_REJECTED->value,
-            'updated_at'                      => now()->subMinutes(5),
-            'auto_redownload_attempts'        => 0,
-        ]);
+        $id = $this->makeState(RemoteStatus::ACCREDITATION_REJECTED);
 
-        $results = ViafirmaCertificateRequestState::pendingAutoRedownload()->get();
-        $this->assertFalse($results->contains('id', $state->id));
+        $this->assertNotContains($id, $this->pendingIds());
     }
 
-    /**
-     * El scope debe excluir casos con remote_status = fail.
-     */
     public function test_scope_pending_auto_redownload_excludes_fail(): void
     {
-        $viafirmaRequest = ViafirmaCertificateRequest::factory()->create();
-        $state = ViafirmaCertificateRequestState::factory()->create([
-            'viafirma_certificate_request_id' => $viafirmaRequest->id,
-            'internal_state'                  => InternalState::FAILED_RECOVERABLE->value,
-            'remote_status'                   => RemoteStatus::FAIL->value,
-            'updated_at'                      => now()->subMinutes(5),
-            'auto_redownload_attempts'        => 0,
-        ]);
+        $id = $this->makeState(RemoteStatus::FAIL);
 
-        $results = ViafirmaCertificateRequestState::pendingAutoRedownload()->get();
-        $this->assertFalse($results->contains('id', $state->id));
+        $this->assertNotContains($id, $this->pendingIds());
     }
 
-    /**
-     * El scope DEBE incluir casos con remote_status = GENERATED_NOT_DOWNLOADED.
-     */
+    /** Sólo FAILED_RECOVERABLE califica: un estado terminal no se reintenta. */
+    public function test_scope_pending_auto_redownload_excludes_non_recoverable_internal_state(): void
+    {
+        $id = $this->makeState(
+            RemoteStatus::GENERATED_NOT_DOWNLOADED,
+            internalState: InternalState::COMPLETED,
+        );
+
+        $this->assertNotContains($id, $this->pendingIds());
+    }
+
+    // ── Inclusiones: estados remotos CON P7B disponible ───────────────────
+
     public function test_scope_pending_auto_redownload_includes_generated_not_downloaded(): void
     {
-        $viafirmaRequest = ViafirmaCertificateRequest::factory()->create();
-        $state = ViafirmaCertificateRequestState::factory()->create([
-            'viafirma_certificate_request_id' => $viafirmaRequest->id,
-            'internal_state'                  => InternalState::FAILED_RECOVERABLE->value,
-            'remote_status'                   => RemoteStatus::GENERATED_NOT_DOWNLOADED->value,
-            'updated_at'                      => now()->subMinutes(5),
-            'auto_redownload_attempts'        => 0,
-        ]);
+        $id = $this->makeState(RemoteStatus::GENERATED_NOT_DOWNLOADED);
 
-        $results = ViafirmaCertificateRequestState::pendingAutoRedownload()->get();
-        $this->assertTrue($results->contains('id', $state->id));
+        $this->assertContains($id, $this->pendingIds());
     }
 
-    /**
-     * El scope DEBE incluir casos con remote_status = GENERATED_AND_DOWNLOADED.
-     */
     public function test_scope_pending_auto_redownload_includes_generated_and_downloaded(): void
     {
-        $viafirmaRequest = ViafirmaCertificateRequest::factory()->create();
-        $state = ViafirmaCertificateRequestState::factory()->create([
-            'viafirma_certificate_request_id' => $viafirmaRequest->id,
-            'internal_state'                  => InternalState::FAILED_RECOVERABLE->value,
-            'remote_status'                   => RemoteStatus::GENERATED_AND_DOWNLOADED->value,
-            'updated_at'                      => now()->subMinutes(5),
-            'auto_redownload_attempts'        => 0,
-        ]);
+        $id = $this->makeState(RemoteStatus::GENERATED_AND_DOWNLOADED);
 
-        $results = ViafirmaCertificateRequestState::pendingAutoRedownload()->get();
-        $this->assertTrue($results->contains('id', $state->id));
+        $this->assertContains($id, $this->pendingIds());
     }
 
-    /**
-     * El scope debe respetar el máximo de intentos configurado.
-     */
+    // ── Puertas de intentos y tiempo ──────────────────────────────────────
+
     public function test_scope_pending_auto_redownload_respects_max_attempts(): void
     {
-        $maxAttempts = config('viafirma.auto_redownload.max_attempts', 5);
-        $viafirmaRequest = ViafirmaCertificateRequest::factory()->create();
+        $maxAttempts = (int) config('viafirma.auto_redownload.max_attempts', 5);
 
-        // Caso 1: intentos < máximo (debe incluirse)
-        $state1 = ViafirmaCertificateRequestState::factory()->create([
-            'viafirma_certificate_request_id' => $viafirmaRequest->id,
-            'internal_state'                  => InternalState::FAILED_RECOVERABLE->value,
-            'remote_status'                   => RemoteStatus::GENERATED_NOT_DOWNLOADED->value,
-            'updated_at'                      => now()->subMinutes(5),
-            'auto_redownload_attempts'        => $maxAttempts - 1,
-        ]);
+        $below  = $this->makeState(RemoteStatus::GENERATED_NOT_DOWNLOADED, attempts: $maxAttempts - 1);
+        $atCap  = $this->makeState(RemoteStatus::GENERATED_NOT_DOWNLOADED, attempts: $maxAttempts);
 
-        // Caso 2: intentos = máximo (debe excluirse)
-        $state2 = ViafirmaCertificateRequestState::factory()->create([
-            'viafirma_certificate_request_id' => $viafirmaRequest->id,
-            'internal_state'                  => InternalState::FAILED_RECOVERABLE->value,
-            'remote_status'                   => RemoteStatus::GENERATED_NOT_DOWNLOADED->value,
-            'updated_at'                      => now()->subMinutes(5),
-            'auto_redownload_attempts'        => $maxAttempts,
-        ]);
+        $pending = $this->pendingIds();
 
-        $results = ViafirmaCertificateRequestState::pendingAutoRedownload()->get();
-        $this->assertTrue($results->contains('id', $state1->id));
-        $this->assertFalse($results->contains('id', $state2->id));
+        $this->assertContains($below, $pending);
+        $this->assertNotContains($atCap, $pending, 'Alcanzado el tope, deja de reintentarse.');
     }
 
-    /**
-     * El scope debe respetar el tiempo mínimo configurado.
-     */
     public function test_scope_pending_auto_redownload_respects_time_gate(): void
     {
-        $minWaitMinutes = config('viafirma.auto_redownload.min_wait_minutes', 2);
-        $viafirmaRequest = ViafirmaCertificateRequest::factory()->create();
+        $minWait = (int) config('viafirma.auto_redownload.min_wait_minutes', 2);
 
-        // Caso 1: tiempo mínimo (debe incluirse)
-        $state1 = ViafirmaCertificateRequestState::factory()->create([
-            'viafirma_certificate_request_id' => $viafirmaRequest->id,
-            'internal_state'                  => InternalState::FAILED_RECOVERABLE->value,
-            'remote_status'                   => RemoteStatus::GENERATED_NOT_DOWNLOADED->value,
-            'updated_at'                      => now()->subMinutes($minWaitMinutes),
-            'auto_redownload_attempts'        => 0,
-        ]);
+        $old    = $this->makeState(RemoteStatus::GENERATED_NOT_DOWNLOADED, minutesAgo: $minWait + 1);
+        $recent = $this->makeState(RemoteStatus::GENERATED_NOT_DOWNLOADED, minutesAgo: 0);
 
-        // Caso 2: menor que el mínimo (debe excluirse)
-        $state2 = ViafirmaCertificateRequestState::factory()->create([
-            'viafirma_certificate_request_id' => $viafirmaRequest->id,
-            'internal_state'                  => InternalState::FAILED_RECOVERABLE->value,
-            'remote_status'                   => RemoteStatus::GENERATED_NOT_DOWNLOADED->value,
-            'updated_at'                      => now()->subMinutes(max(1, $minWaitMinutes - 1)),
-            'auto_redownload_attempts'        => 0,
-        ]);
+        $pending = $this->pendingIds();
 
-        $results = ViafirmaCertificateRequestState::pendingAutoRedownload()->get();
-        $this->assertTrue($results->contains('id', $state1->id));
-        $this->assertFalse($results->contains('id', $state2->id));
+        $this->assertContains($old, $pending);
+        $this->assertNotContains($recent, $pending, 'Debe esperar el tiempo mínimo antes de reintentar.');
     }
 }

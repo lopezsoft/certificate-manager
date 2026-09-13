@@ -140,7 +140,7 @@ class AssembleP12Test extends TestCase
 
         // Try to assemble P12 with keyPair1 (mismatch)
         $this->expectException(CryptoException::class);
-        $this->expectExceptionMessage('no se encontró un certificado que corresponda');
+        $this->expectExceptionMessage('No se encontró un certificado que corresponda');
 
         $this->crypto->assembleP12(
             $keyPair1->privateKeyPem,

@@ -12,229 +12,220 @@ use App\Modules\Viafirma\Domain\Enums\RemoteStatus;
 use App\Modules\Viafirma\Domain\Events\ViafirmaStatusChanged;
 use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
+use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequestState;
+use Mockery;
+use Psr\Log\NullLogger;
 use Tests\TestCase;
+use Tests\Unit\Modules\Viafirma\CreatesViafirmaSchemaInMemory;
 
 /**
- * Tests para ViafirmaRequestStateChangedListener (Iniciativa 2).
+ * Tests para ViafirmaRequestStateChangedListener.
  *
- * Verifica que:
- * - InternalState::FAILED dispara cambio automático a request_status = REJECTED
- * - InternalState::FAILED_RECOVERABLE NO dispara cambio a REJECTED (permanece PROCESSING)
- * - Validación de transiciones permitidas
- * - Sincronización de REVOKED y EXPIRED
+ * Sin BD real: la solicitud es un mock parcial de CertificateRequest, de modo
+ * que `update()` se verifica como expectativa en lugar de escribir. La única
+ * tabla creada es `change_histories` en SQLite :memory:, porque el listener
+ * hace `ChangeHistory::create()` directo y no es interceptable.
  */
 class ViafirmaRequestStateChangedListenerTest extends TestCase
 {
+    use CreatesViafirmaSchemaInMemory;
+
     private ViafirmaRequestStateChangedListener $listener;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->listener = app(ViafirmaRequestStateChangedListener::class);
+
+        $this->createChangeHistoriesTable();
+
+        $this->listener = new ViafirmaRequestStateChangedListener(
+            new SafePemLogger(new NullLogger()),
+        );
+    }
+
+    protected function tearDown(): void
+    {
+        Mockery::close();
+        parent::tearDown();
     }
 
     /**
-     * Cuando InternalState cambia a FAILED, request_status debe cambiar a REJECTED.
+     * Verifica las expectativas de Mockery AQUÍ (no en tearDown) para que
+     * cuenten como aserciones y PHPUnit no marque el test como "risky".
      */
+    private function assertMockExpectationsMet(): void
+    {
+        Mockery::getContainer()->mockery_verify();
+        $this->addToAssertionCount(1);
+    }
+
+    /**
+     * Mock parcial: se comporta como el modelo pero `update()` es una
+     * expectativa, nunca una escritura.
+     *
+     * @return CertificateRequest&Mockery\MockInterface
+     */
+    private function makeCertificateRequest(string $status)
+    {
+        $mock = Mockery::mock(CertificateRequest::class)->makePartial();
+        $mock->id             = 42;
+        $mock->request_status = $status;
+
+        return $mock;
+    }
+
+    private function makeEntity(
+        CertificateRequest $certificateRequest,
+        InternalState      $newState,
+        string             $remoteStatus = 'fail',
+    ): ViafirmaCertificateRequest {
+        $entity = new ViafirmaCertificateRequest();
+        $entity->id = 1;
+        $entity->certificate_request_id = 42;
+
+        $state = new ViafirmaCertificateRequestState();
+        $state->internal_state     = $newState;
+        $state->remote_status      = $remoteStatus;
+        $state->last_error_message = null;
+        $entity->setRelation('state', $state);
+        $entity->setRelation('certificateRequest', $certificateRequest);
+
+        return $entity;
+    }
+
+    private function fire(
+        ViafirmaCertificateRequest $entity,
+        InternalState              $previous,
+        InternalState              $new,
+    ): void {
+        $this->listener->handle(new ViafirmaStatusChanged(
+            entity:        $entity,
+            previousState: $previous,
+            newState:      $new,
+            remoteStatus:  RemoteStatus::FAIL,
+        ));
+    }
+
     public function test_auto_reject_when_internal_state_is_failed(): void
     {
-        // Crear entidades
-        $certificateRequest = CertificateRequest::factory()->create([
-            'request_status' => CertificateRequestStatusEnum::PROCESSING->value,
-        ]);
-
-        $viafirmaRequest = ViafirmaCertificateRequest::factory()
-            ->has($certificateRequest, 'certificateRequest')
-            ->create();
-
-        $viafirmaRequest->load('state');
-        $viafirmaRequest->state->update([
-            'internal_state' => InternalState::FAILED->value,
-            'remote_status'  => RemoteStatus::FAIL->value,
-        ]);
-
-        // Disparar evento
-        $event = new ViafirmaStatusChanged(
-            entity: $viafirmaRequest,
-            previousState: InternalState::POLLING,
-            newState: InternalState::FAILED,
-            remoteStatus: RemoteStatus::FAIL,
+        $certificateRequest = $this->makeCertificateRequest(
+            CertificateRequestStatusEnum::PROCESSING->value,
         );
 
-        $this->listener->handle($event);
+        $certificateRequest->shouldReceive('update')
+            ->once()
+            ->with(['request_status' => CertificateRequestStatusEnum::REJECTED->value]);
 
-        // Verificar que request_status cambió a REJECTED
-        $certificateRequest->refresh();
-        $this->assertEquals(
-            CertificateRequestStatusEnum::REJECTED->value,
-            $certificateRequest->request_status
-        );
+        $entity = $this->makeEntity($certificateRequest, InternalState::FAILED);
+
+        $this->fire($entity, InternalState::POLLING, InternalState::FAILED);
+
+        $this->assertMockExpectationsMet();
     }
 
     /**
-     * Cuando InternalState es FAILED_RECOVERABLE, request_status NO debe cambiar a REJECTED.
-     * Debe permanecer como PROCESSING.
+     * FAILED_RECOVERABLE es recuperable: la solicitud debe permanecer en
+     * PROCESSING, sin tocarse.
      */
     public function test_does_not_reject_when_internal_state_is_failed_recoverable(): void
     {
-        $certificateRequest = CertificateRequest::factory()->create([
-            'request_status' => CertificateRequestStatusEnum::PROCESSING->value,
-        ]);
-
-        $viafirmaRequest = ViafirmaCertificateRequest::factory()
-            ->has($certificateRequest, 'certificateRequest')
-            ->create();
-
-        $viafirmaRequest->load('state');
-        $viafirmaRequest->state->update([
-            'internal_state' => InternalState::FAILED_RECOVERABLE->value,
-            'remote_status'  => RemoteStatus::RUES_ERROR->value,
-        ]);
-
-        // Disparar evento
-        $event = new ViafirmaStatusChanged(
-            entity: $viafirmaRequest,
-            previousState: InternalState::POLLING,
-            newState: InternalState::FAILED_RECOVERABLE,
-            remoteStatus: RemoteStatus::RUES_ERROR,
+        $certificateRequest = $this->makeCertificateRequest(
+            CertificateRequestStatusEnum::PROCESSING->value,
         );
 
-        $this->listener->handle($event);
+        $certificateRequest->shouldNotReceive('update');
 
-        // Verificar que request_status sigue siendo PROCESSING (no cambió a REJECTED)
-        $certificateRequest->refresh();
-        $this->assertEquals(
+        $entity = $this->makeEntity(
+            $certificateRequest,
+            InternalState::FAILED_RECOVERABLE,
+            'rues_error',
+        );
+
+        $this->fire($entity, InternalState::POLLING, InternalState::FAILED_RECOVERABLE);
+
+        $this->assertSame(
             CertificateRequestStatusEnum::PROCESSING->value,
-            $certificateRequest->request_status
+            $certificateRequest->request_status,
         );
     }
 
-    /**
-     * Cuando InternalState cambia a REVOKED, request_status debe cambiar a REVOKED.
-     */
     public function test_auto_revoke_when_internal_state_is_revoked(): void
     {
-        $certificateRequest = CertificateRequest::factory()->create([
-            'request_status' => CertificateRequestStatusEnum::PROCESSED->value,
-        ]);
-
-        $viafirmaRequest = ViafirmaCertificateRequest::factory()
-            ->has($certificateRequest, 'certificateRequest')
-            ->create();
-
-        $viafirmaRequest->load('state');
-        $viafirmaRequest->state->update([
-            'internal_state' => InternalState::REVOKED->value,
-            'remote_status'  => null,
-        ]);
-
-        $event = new ViafirmaStatusChanged(
-            entity: $viafirmaRequest,
-            previousState: InternalState::COMPLETED,
-            newState: InternalState::REVOKED,
-            remoteStatus: RemoteStatus::GENERATED_AND_DOWNLOADED,
+        $certificateRequest = $this->makeCertificateRequest(
+            CertificateRequestStatusEnum::PROCESSED->value,
         );
 
-        $this->listener->handle($event);
+        $certificateRequest->shouldReceive('update')
+            ->once()
+            ->with(['request_status' => CertificateRequestStatusEnum::REVOKED->value]);
 
-        $certificateRequest->refresh();
-        $this->assertEquals(
-            CertificateRequestStatusEnum::REVOKED->value,
-            $certificateRequest->request_status
-        );
+        $entity = $this->makeEntity($certificateRequest, InternalState::REVOKED, 'revoked');
+
+        $this->fire($entity, InternalState::COMPLETED, InternalState::REVOKED);
+
+        $this->assertMockExpectationsMet();
     }
 
     /**
-     * Cuando InternalState cambia a EXPIRED, request_status debe cambiar a EXPIRED.
+     * EXPIRED (Viafirma) mapea a CANCELLED, NO a EXPIRED: la solicitud nunca
+     * llegó a emitirse porque el cliente no completó el KYC. EXPIRED está
+     * reservado para certificados emitidos cuya vigencia venció.
      */
-    public function test_auto_expire_when_internal_state_is_expired(): void
+    public function test_auto_expire_maps_to_cancelled_not_expired(): void
     {
-        $certificateRequest = CertificateRequest::factory()->create([
-            'request_status' => CertificateRequestStatusEnum::PROCESSING->value,
-        ]);
-
-        $viafirmaRequest = ViafirmaCertificateRequest::factory()
-            ->has($certificateRequest, 'certificateRequest')
-            ->create();
-
-        $viafirmaRequest->load('state');
-        $viafirmaRequest->state->update([
-            'internal_state' => InternalState::EXPIRED->value,
-            'remote_status'  => null,
-        ]);
-
-        $event = new ViafirmaStatusChanged(
-            entity: $viafirmaRequest,
-            previousState: InternalState::POLLING,
-            newState: InternalState::EXPIRED,
-            remoteStatus: RemoteStatus::RUES_CHECK,
+        $certificateRequest = $this->makeCertificateRequest(
+            CertificateRequestStatusEnum::PROCESSING->value,
         );
 
-        $this->listener->handle($event);
+        $certificateRequest->shouldReceive('update')
+            ->once()
+            ->with(Mockery::on(fn (array $attrs) =>
+                ($attrs['request_status'] ?? null) === CertificateRequestStatusEnum::CANCELLED->value
+            ));
 
-        $certificateRequest->refresh();
-        $this->assertEquals(
-            CertificateRequestStatusEnum::EXPIRED->value,
-            $certificateRequest->request_status
-        );
+        $entity = $this->makeEntity($certificateRequest, InternalState::EXPIRED, 'accreditation');
+
+        $this->fire($entity, InternalState::POLLING, InternalState::EXPIRED);
+
+        $this->assertMockExpectationsMet();
     }
 
     /**
-     * Si no existe certificateRequest relacionado, el listener debe ignorar sin error.
+     * Sin solicitud asociada el listener registra un aviso y sale: no debe
+     * lanzar, o abortaría la transición de estado que lo disparó.
      */
     public function test_handles_missing_certificate_request_gracefully(): void
     {
-        // Crear ViafirmaCertificateRequest SIN certificateRequest
-        $viafirmaRequest = ViafirmaCertificateRequest::factory()->create([
-            'certificate_request_id' => null,
-        ]);
+        $entity = new ViafirmaCertificateRequest();
+        $entity->id = 1;
 
-        $event = new ViafirmaStatusChanged(
-            entity: $viafirmaRequest,
-            previousState: InternalState::POLLING,
-            newState: InternalState::FAILED,
-            remoteStatus: RemoteStatus::FAIL,
-        );
+        $state = new ViafirmaCertificateRequestState();
+        $state->internal_state = InternalState::FAILED;
+        $state->remote_status  = 'fail';
+        $entity->setRelation('state', $state);
+        $entity->setRelation('certificateRequest', null);
 
-        // No debe lanzar excepción
-        $this->listener->handle($event);
-        $this->assertTrue(true);
+        $this->fire($entity, InternalState::POLLING, InternalState::FAILED);
+
+        $this->assertTrue(true, 'No debe lanzar excepción.');
     }
 
     /**
-     * Cuando la transición de estado no es permitida, debe loguear warning sin actualizar.
+     * Desde un estado terminal la transición a REJECTED no está permitida:
+     * el listener avisa y no actualiza nada.
      */
     public function test_logs_warning_on_invalid_transition(): void
     {
-        $certificateRequest = CertificateRequest::factory()->create([
-            'request_status' => CertificateRequestStatusEnum::REJECTED->value,
-        ]);
-
-        $viafirmaRequest = ViafirmaCertificateRequest::factory()
-            ->has($certificateRequest, 'certificateRequest')
-            ->create();
-
-        $viafirmaRequest->load('state');
-        $viafirmaRequest->state->update([
-            'internal_state' => InternalState::FAILED->value,
-            'remote_status'  => RemoteStatus::FAIL->value,
-        ]);
-
-        // REJECTED -> REJECTED es transición inválida
-        $event = new ViafirmaStatusChanged(
-            entity: $viafirmaRequest,
-            previousState: InternalState::POLLING,
-            newState: InternalState::FAILED,
-            remoteStatus: RemoteStatus::FAIL,
+        $certificateRequest = $this->makeCertificateRequest(
+            CertificateRequestStatusEnum::REVOKED->value,
         );
 
-        $this->listener->handle($event);
+        $certificateRequest->shouldNotReceive('update');
 
-        // request_status no debe cambiar
-        $certificateRequest->refresh();
-        $this->assertEquals(
-            CertificateRequestStatusEnum::REJECTED->value,
-            $certificateRequest->request_status
-        );
+        $entity = $this->makeEntity($certificateRequest, InternalState::FAILED);
+
+        $this->fire($entity, InternalState::POLLING, InternalState::FAILED);
+
+        $this->assertMockExpectationsMet();
     }
 }

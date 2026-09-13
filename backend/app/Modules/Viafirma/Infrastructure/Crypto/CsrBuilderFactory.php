@@ -13,7 +13,9 @@ use Illuminate\Contracts\Container\Container;
  *
  * Patrón: Strategy + Factory Method.
  */
-final class CsrBuilderFactory
+// `final` retirado: Mockery no puede doblar clases finales y esta fábrica se
+// inyecta en IssueCertificateUseCase, que debe poder probarse sin OpenSSL real.
+class CsrBuilderFactory
 {
     public function __construct(private readonly Container $container) {}
 

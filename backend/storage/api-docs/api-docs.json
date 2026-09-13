@@ -7,7 +7,7 @@
             "name": "Soporte Matias",
             "email": "soporte@matias.com.co"
         },
-        "version": "1.9.0"
+        "version": "1.9.1"
     },
     "servers": [
         {
@@ -16,6 +16,179 @@
         }
     ],
     "paths": {
+        "/admin/stats/payments-by-month": {
+            "get": {
+                "tags": [
+                    "Estadísticas Admin"
+                ],
+                "summary": "Pagos por mes de cada cliente",
+                "description": "Órdenes PAID agrupadas por empresa y mes de pago para el año indicado. Incluye totales por mes y globales.",
+                "operationId": "6434e66d85a93769c05c5789be433050",
+                "parameters": [
+                    {
+                        "name": "year",
+                        "in": "query",
+                        "description": "Año (default: actual)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2026
+                        }
+                    },
+                    {
+                        "name": "company_id",
+                        "in": "query",
+                        "description": "Filtrar por empresa",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Matriz empresa × mes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "year": {
+                                                    "type": "integer"
+                                                },
+                                                "available_years": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "months": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "companies": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "totals": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    },
+                    "403": {
+                        "description": "Se requieren permisos de administrador"
+                    },
+                    "422": {
+                        "description": "Parámetros inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/stats/unused-quotas": {
+            "get": {
+                "tags": [
+                    "Estadísticas Admin"
+                ],
+                "summary": "Cupos no consumidos por empresa",
+                "description": "Cupos POSTPAID con saldo disponible e items PREPAID pendientes, agrupados por empresa.",
+                "operationId": "3cc4e9f7401fc24f650edabd10256a02",
+                "parameters": [
+                    {
+                        "name": "company_id",
+                        "in": "query",
+                        "description": "Filtrar por empresa",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "include_expired",
+                        "in": "query",
+                        "description": "Incluir cupos POSTPAID vencidos con saldo",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": false
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cupos sin consumir",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 4
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "companies": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "totals": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    },
+                    "403": {
+                        "description": "Se requieren permisos de administrador"
+                    },
+                    "422": {
+                        "description": "Parámetros inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/tokens": {
             "get": {
                 "tags": [
@@ -1148,7 +1321,7 @@
                     "Solicitudes de Certificado"
                 ],
                 "summary": "Listar mis solicitudes",
-                "description": "Retorna las solicitudes de la empresa autenticada. Estados: DRAFT|SENT|PENDING|ACCEPTED|PROCESSING|PROCESSED|REJECTED",
+                "description": "Retorna las solicitudes de la empresa autenticada. Estados: DRAFT|SENT|PENDING|ACCEPTED|PROCESSING|PROCESSED|REJECTED|REVOKED|EXPIRED|CANCELLED",
                 "operationId": "c42bb2f191e46810104726026a014fd3",
                 "parameters": [
                     {
@@ -1360,11 +1533,24 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Solicitud creada exitosamente",
+                        "description": "Solicitud creada exitosamente. Devuelve la solicitud completa en `dataRecords`, incluido el `uuid` — identificador público requerido por los endpoints de descarga y revocación.",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Solicitud de certificado creada exitosamente"
+                                        },
+                                        "dataRecords": {
+                                            "$ref": "#/components/schemas/CertificateRequest"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -1549,11 +1735,24 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Solicitud actualizada",
+                        "description": "Solicitud actualizada. Devuelve la solicitud completa en `dataRecords`.",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Solicitud actualizada exitosamente"
+                                        },
+                                        "dataRecords": {
+                                            "$ref": "#/components/schemas/CertificateRequest"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -1679,7 +1878,7 @@
                                 ],
                                 "properties": {
                                     "request_status": {
-                                        "description": "DRAFT|SENT|PENDING|ACCEPTED|PROCESSING|PROCESSED|REJECTED",
+                                        "description": "DRAFT|SENT|PENDING|ACCEPTED|PROCESSING|PROCESSED|REJECTED|REVOKED|EXPIRED|CANCELLED",
                                         "type": "string",
                                         "example": "PROCESSING"
                                     },
@@ -1700,11 +1899,24 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Estado actualizado",
+                        "description": "Estado actualizado. Devuelve la solicitud completa en `dataRecords`.",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Estado actualizado exitosamente"
+                                        },
+                                        "dataRecords": {
+                                            "$ref": "#/components/schemas/CertificateRequest"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -5026,6 +5238,62 @@
                 ]
             }
         },
+        "/terms/current": {
+            "get": {
+                "tags": [
+                    "Términos y Condiciones"
+                ],
+                "summary": "Versión vigente de los Términos y Condiciones",
+                "description": "Público. Devuelve id, versión, fecha, URL oficial y hash SHA-256 del texto vigente. El `id` debe enviarse como `terms_version_id` al crear una solicitud.",
+                "operationId": "c0bcab4b8c8b72231a00766138b15fb3",
+                "responses": {
+                    "200": {
+                        "description": "Versión vigente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dataRecords": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "version": {
+                                                    "type": "string",
+                                                    "example": "1.0"
+                                                },
+                                                "published_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "source_url": {
+                                                    "type": "string",
+                                                    "example": "https://maticerts.com/terminos/"
+                                                },
+                                                "content_hash": {
+                                                    "type": "string",
+                                                    "example": "dddf9aa9..."
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No hay versión publicada"
+                    }
+                }
+            }
+        },
         "/certificate-request/{id}/kyc-link": {
             "get": {
                 "tags": [
@@ -5922,6 +6190,7 @@
                         "nullable": true
                     },
                     "request_status": {
+                        "description": "REVOKED: certificado revocado. EXPIRED: certificado emitido cuya vigencia venció. CANCELLED: solicitud cancelada antes de emitirse (p. ej. el titular no completó la verificación KYC en plazo).",
                         "type": "string",
                         "enum": [
                             "DRAFT",
@@ -5930,7 +6199,10 @@
                             "ACCEPTED",
                             "PROCESSING",
                             "PROCESSED",
-                            "REJECTED"
+                            "REJECTED",
+                            "REVOKED",
+                            "EXPIRED",
+                            "CANCELLED"
                         ],
                         "readOnly": true,
                         "example": "DRAFT"
@@ -6860,6 +7132,37 @@
                         "type": "integer",
                         "example": 3,
                         "nullable": true
+                    },
+                    "kyc_accreditation_link": {
+                        "description": "Link de onboarding KYC remitido por Viafirma. Disponible mientras remote_status esté en la familia de acreditación.",
+                        "type": "string",
+                        "example": "https://signup.metamap.com?merchantToken=...",
+                        "nullable": true
+                    },
+                    "kyc_flow_completed_at": {
+                        "description": "Cuándo el navegador del suscriptor llegó al callback tras completar MetaMap. Es solo una señal de que el cliente terminó el flujo — NO confirma que Viafirma aprobó la identidad; eso lo determina remote_status/internal_state.",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-08-21T15:40:00Z",
+                        "nullable": true
+                    },
+                    "poll_attempts": {
+                        "description": "Cantidad de veces que se ha consultado el estado remoto en Viafirma.",
+                        "type": "integer",
+                        "example": 12,
+                        "nullable": true
+                    },
+                    "last_error_code": {
+                        "description": "Código del último error reportado (remoto o interno). Null si no ha habido errores.",
+                        "type": "string",
+                        "example": "accreditation_rejected",
+                        "nullable": true
+                    },
+                    "last_error_message": {
+                        "description": "Mensaje descriptivo del último error. Null si no ha habido errores.",
+                        "type": "string",
+                        "example": "Acreditación KYC rechazada por el operador RA.",
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -7249,7 +7552,7 @@
                 ],
                 "properties": {
                     "revoking_code": {
-                        "description": "Código de revocación emitido por Viafirma RA. Obtenible con GET /certificate-request/{id}/kyc-link una vez el certificado está activo.",
+                        "description": "Código de revocación emitido por Viafirma RA. Obtenible automáticamente cuando el certificado está en estado ASSEMBLED o COMPLETED.",
                         "type": "string",
                         "example": "MOCK-REV-CODE-A1B2C3D4"
                     },
@@ -7406,7 +7709,7 @@
         },
         {
             "name": "Viafirma",
-            "description": "Operaciones específicas del proveedor Viafirma RA: revocación de certificados emitidos y obtención del link KYC para el proceso de acreditación biométrica. Requiere que el trámite exista en `viafirma_certificate_requests`."
+            "description": "Operaciones específicas del proveedor Viafirma RA: obtención del link KYC para acreditación biométrica (GET /kyc-link) y revocación de certificados emitidos (POST /revoke). El link KYC se captura automáticamente al entrar en estado 'accreditation' y se persiste en BD para disponibilidad permanente. Requiere que el trámite exista en `viafirma_certificate_requests`."
         },
         {
             "name": "Perfil",
@@ -7461,12 +7764,20 @@
             "description": "Health check de servicios externos: verifica la conectividad con WOMPI y otros servicios críticos."
         },
         {
+            "name": "Estadísticas Admin",
+            "description": "Estadísticas Admin"
+        },
+        {
             "name": "Sincronización",
             "description": "Sincronización"
         },
         {
             "name": "Cupos",
             "description": "Cupos"
+        },
+        {
+            "name": "Términos y Condiciones",
+            "description": "Términos y Condiciones"
         }
     ]
 }

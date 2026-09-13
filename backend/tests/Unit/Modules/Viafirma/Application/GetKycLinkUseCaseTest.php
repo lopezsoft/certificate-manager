@@ -1,4 +1,6 @@
-﻿<?php
+<?php
+
+declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Viafirma\Application;
 
@@ -10,145 +12,129 @@ use App\Modules\Viafirma\Domain\Exceptions\ViafirmaException;
 use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequestState;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use PHPUnit\Framework\Attributes\Test;
+use Psr\Log\NullLogger;
 use Tests\TestCase;
+use Tests\Unit\Modules\Viafirma\CreatesViafirmaSchemaInMemory;
 
+/**
+ * El use case hace `ViafirmaCertificateRequest::with('state')->findOrFail()`,
+ * una consulta estática que no admite dobles, así que las filas se insertan en
+ * SQLite `:memory:` con el esquema mínimo. Ninguna base real se toca.
+ */
 final class GetKycLinkUseCaseTest extends TestCase
 {
-    use DatabaseTransactions;
+    use CreatesViafirmaSchemaInMemory;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->createViafirmaRequestTables();
+    }
+
+    private function makeUseCase(?ViafirmaClient $client = null): GetKycLinkUseCase
+    {
+        return new GetKycLinkUseCase(
+            client: $client ?? $this->createMock(ViafirmaClient::class),
+            logger: new SafePemLogger(new NullLogger()),
+        );
+    }
+
+    /**
+     * Persiste entidad + estado y devuelve la entidad.
+     */
+    private function persistEntity(
+        RemoteStatus $remoteStatus,
+        ?string      $codRequest = 'TEST-COD-001',
+        ?string      $cachedLink = null,
+        InternalState $internalState = InternalState::POLLING,
+    ): ViafirmaCertificateRequest {
+        $entity = new ViafirmaCertificateRequest();
+        $entity->certificate_request_id = 42;
+        $entity->cod_request = $codRequest;
+        $entity->public_id   = 'PUB-001';
+        $entity->save();
+
+        $state = new ViafirmaCertificateRequestState();
+        $state->viafirma_certificate_request_id = $entity->id;
+        $state->internal_state         = $internalState;
+        $state->remote_status          = $remoteStatus->value;
+        $state->kyc_accreditation_link = $cachedLink;
+        $state->save();
+
+        return $entity->fresh();
+    }
 
     #[Test]
     public function retorna_link_cacheado_sin_llamar_cliente(): void
     {
-        // Arrange
-        $state = ViafirmaCertificateRequestState::factory()->create([
-            'internal_state' => InternalState::POLLING,
-            'remote_status' => RemoteStatus::ACCREDITATION->value,
-            'kyc_accreditation_link' => 'https://kyc.viafirma.com/accreditation/cached',
-        ]);
+        $cached = 'https://kyc.viafirma.com/accreditation/cached';
 
-        $entity = ViafirmaCertificateRequest::factory()->create([
-            'viafirma_certificate_request_state_id' => $state->id,
-            'cod_request' => 'TEST-COD-001',
-        ]);
+        $entity = $this->persistEntity(RemoteStatus::ACCREDITATION, cachedLink: $cached);
 
-        $mockClient = $this->createMock(ViafirmaClient::class);
-        $mockClient->expects($this->never())->method('getAccreditationLink');
+        // Si el link ya está capturado no debe hacerse llamada HTTP: permite
+        // servirlo aunque Viafirma ya haya avanzado más allá de 'accreditation'.
+        $client = $this->createMock(ViafirmaClient::class);
+        $client->expects($this->never())->method('getAccreditationLink');
 
-        $useCase = new GetKycLinkUseCase(
-            client: $mockClient,
-            logger: app(SafePemLogger::class),
-        );
-
-        // Act
-        $link = $useCase->handle($entity->id);
-
-        // Assert
-        $this->assertEquals('https://kyc.viafirma.com/accreditation/cached', $link);
+        $this->assertSame($cached, $this->makeUseCase($client)->handle($entity->id));
     }
 
     #[Test]
     public function lanza_excepcion_con_estado_real_cuando_no_es_accreditation(): void
     {
-        // Arrange
-        $state = ViafirmaCertificateRequestState::factory()->create([
-            'internal_state' => InternalState::SUBMITTED,
-            'remote_status' => RemoteStatus::RUES_CHECK->value,
-        ]);
-
-        $entity = ViafirmaCertificateRequest::factory()->create([
-            'viafirma_certificate_request_state_id' => $state->id,
-            'cod_request' => 'TEST-COD-002',
-        ]);
-
-        $useCase = new GetKycLinkUseCase(
-            client: $this->createMock(ViafirmaClient::class),
-            logger: app(SafePemLogger::class),
+        $entity = $this->persistEntity(
+            RemoteStatus::RUES_CHECK,
+            codRequest: 'TEST-COD-002',
+            internalState: InternalState::SUBMITTED,
         );
 
-        // Act & Assert
         $this->expectException(ViafirmaException::class);
         $this->expectExceptionMessageMatches('/rues_check/');
 
-        $useCase->handle($entity->id);
+        $this->makeUseCase()->handle($entity->id);
     }
 
     #[Test]
     public function lanza_excepcion_cuando_no_hay_cod_request(): void
     {
-        // Arrange
-        $state = ViafirmaCertificateRequestState::factory()->create([
-            'internal_state' => InternalState::POLLING,
-            'remote_status' => RemoteStatus::ACCREDITATION->value,
-        ]);
+        $entity = $this->persistEntity(RemoteStatus::ACCREDITATION, codRequest: null);
 
-        $entity = ViafirmaCertificateRequest::factory()->create([
-            'viafirma_certificate_request_state_id' => $state->id,
-            'cod_request' => null,
-        ]);
-
-        $useCase = new GetKycLinkUseCase(
-            client: $this->createMock(ViafirmaClient::class),
-            logger: app(SafePemLogger::class),
-        );
-
-        // Act & Assert
         $this->expectException(ViafirmaException::class);
         $this->expectExceptionMessageMatches('/cod_request/');
 
-        $useCase->handle($entity->id);
+        $this->makeUseCase()->handle($entity->id);
     }
 
     #[Test]
     public function obtiene_y_persiste_link_en_vivo_cuando_no_esta_cacheado(): void
     {
-        // Arrange
-        $state = ViafirmaCertificateRequestState::factory()->create([
-            'internal_state' => InternalState::POLLING,
-            'remote_status' => RemoteStatus::ACCREDITATION->value,
-            'kyc_accreditation_link' => null,
-        ]);
+        $entity   = $this->persistEntity(RemoteStatus::ACCREDITATION, codRequest: 'TEST-COD-003');
+        $expected = 'https://kyc.viafirma.com/accreditation/live';
 
-        $entity = ViafirmaCertificateRequest::factory()->create([
-            'viafirma_certificate_request_state_id' => $state->id,
-            'cod_request' => 'TEST-COD-003',
-        ]);
-
-        $expectedLink = 'https://kyc.viafirma.com/accreditation/live';
-
-        $mockClient = $this->createMock(ViafirmaClient::class);
-        $mockClient->expects($this->once())
+        $client = $this->createMock(ViafirmaClient::class);
+        $client->expects($this->once())
             ->method('getAccreditationLink')
-            ->with('TEST-COD-003')
-            ->willReturn($expectedLink);
+            ->with('TEST-COD-003', 'PUB-001')
+            ->willReturn($expected);
 
-        $useCase = new GetKycLinkUseCase(
-            client: $mockClient,
-            logger: app(SafePemLogger::class),
+        $link = $this->makeUseCase($client)->handle($entity->id);
+
+        $this->assertSame($expected, $link);
+
+        // Debe quedar cacheado para no repetir la llamada HTTP.
+        $this->assertSame(
+            $expected,
+            $entity->fresh()->state->kyc_accreditation_link,
         );
-
-        // Act
-        $link = $useCase->handle($entity->id);
-
-        // Assert
-        $this->assertEquals($expectedLink, $link);
-
-        // Verificar que se persistiÃ³
-        $state->refresh();
-        $this->assertEquals($expectedLink, $state->kyc_accreditation_link);
     }
 
     #[Test]
     public function lanza_excepcion_cuando_entidad_no_existe(): void
     {
-        $useCase = new GetKycLinkUseCase(
-            client: $this->createMock(ViafirmaClient::class),
-            logger: app(SafePemLogger::class),
-        );
-
         $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
 
-        $useCase->handle(99999);
+        $this->makeUseCase()->handle(99999);
     }
 }

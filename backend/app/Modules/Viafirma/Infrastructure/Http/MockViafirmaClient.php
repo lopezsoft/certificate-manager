@@ -10,7 +10,6 @@ use App\Modules\Viafirma\Application\DTOs\SubmitCsrInputDto;
 use App\Modules\Viafirma\Application\DTOs\SubmitCsrResultDto;
 use App\Modules\Viafirma\Domain\Contracts\ViafirmaClient;
 use App\Modules\Viafirma\Domain\Enums\RemoteStatus;
-use App\Modules\Viafirma\Infrastructure\Http\Concerns\AppendsKycRedirectParams;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -33,7 +32,6 @@ use Illuminate\Support\Facades\Cache;
  */
 class MockViafirmaClient implements ViafirmaClient
 {
-    use AppendsKycRedirectParams;
 
     public function getProfiles(string $raCode): array
     {
@@ -78,6 +76,13 @@ class MockViafirmaClient implements ViafirmaClient
             'polls'    => 0,
             'publicId' => $publicId,
         ], now()->addHours(2));
+
+        // Guardamos la CSR indexada por publicId para que downloadP7b() pueda
+        // emitir un certificado con el MISMO subject y la MISMA llave pública
+        // que se solicitaron. Sin esto el P7B simulado no correspondería a la
+        // llave privada del vault y el ensamblado fallaría — que es justo el
+        // error que este mock debe dejar de producir.
+        Cache::put("mock_viafirma_csr_{$publicId}", $input->csrBase64, now()->addHours(2));
 
         return new SubmitCsrResultDto(
             codRequest:    $codRequest,
@@ -129,13 +134,209 @@ class MockViafirmaClient implements ViafirmaClient
         );
     }
 
+    /**
+     * Devuelve un bundle PKCS#7 REAL y parseable, con un certificado emitido
+     * sobre la CSR original (mismo subject, misma llave pública) y firmado por
+     * una CA autofirmada simulada.
+     *
+     * Antes devolvía `base64_encode('MOCK_P7B_DATA_...')`, que no es un PKCS#7:
+     * OpenSSL fallaba con "asn1 encoding routines::too long | bad object header",
+     * el ensamblado nunca llegaba a ASSEMBLED y ningún integrador podía cerrar
+     * una emisión completa en Sandbox. Emitir un bundle válido no introduce una
+     * diferencia de comportamiento entre entornos: la elimina, porque el
+     * Viafirma real tampoco devolvería jamás un bundle inparseable.
+     *
+     * El certificado se emite CON EL SUBJECT DE LA CSR para no disparar
+     * IdentityMismatchException, y CON LA LLAVE PÚBLICA DE LA CSR para que
+     * findEndEntityCertificate() lo reconozca como el de nuestra llave privada.
+     */
     public function downloadP7b(string $publicId): string
     {
-        // Retornamos una cadena Base64 dummy válida sintácticamente como P7B falso,
-        // o simplemente un string dummy (el CryptoService local debería poder manejar fallos
-        // si intenta parsearlo, pero para el Sandbox es suficiente devolver un string de prueba).
-        // En este caso devolvemos la palabra "MOCK_P7B_DATA" codificada en Base64 para simular binario.
-        return base64_encode('MOCK_P7B_DATA_FOR_PUBLIC_ID_' . $publicId);
+        $csrBase64 = Cache::get("mock_viafirma_csr_{$publicId}");
+
+        if (!is_string($csrBase64) || $csrBase64 === '') {
+            throw new \RuntimeException(
+                "MockViafirmaClient: no hay CSR en caché para publicId {$publicId}. " .
+                'El sandbox necesita la CSR original para simular la emisión; ' .
+                'verifica que CACHE_DRIVER no sea "array" y que el trámite se haya ' .
+                'creado en esta misma instalación.'
+            );
+        }
+
+        return $this->issueSimulatedP7b($csrBase64);
+    }
+
+    /**
+     * Emite un PKCS#7 (DER) que contiene el certificado del titular más la CA
+     * simulada que lo firma, replicando la estructura que entrega Viafirma.
+     */
+    private function issueSimulatedP7b(string $csrBase64): string
+    {
+        $csrPem = $this->normalizeCsrToPem($csrBase64);
+
+        $csr = @openssl_csr_get_subject($csrPem);
+        if ($csr === false) {
+            throw new \RuntimeException('MockViafirmaClient: la CSR almacenada no se pudo parsear.');
+        }
+
+        // Mismo openssl.cnf que usa OpenSslCryptoService: en Windows/WAMP sin
+        // OPENSSL_CONF en el entorno, openssl_pkey_new() y openssl_csr_new()
+        // fallan sin él.
+        $sslOpts = ['digest_alg' => 'sha256'];
+        $conf    = config('viafirma.crypto.openssl_conf');
+        if (is_string($conf) && is_file($conf)) {
+            $sslOpts['config'] = $conf;
+        }
+
+        // ── CA simulada (efímera, sólo para firmar en sandbox) ──────────────
+        $caKey = openssl_pkey_new($sslOpts + [
+            'private_key_bits' => 2048,
+            'private_key_type' => OPENSSL_KEYTYPE_RSA,
+        ]);
+        if ($caKey === false) {
+            throw new \RuntimeException(
+                'MockViafirmaClient: no se pudo generar la llave de la CA simulada: '
+                . $this->collectOpenSslErrors()
+            );
+        }
+
+        $caCsr = openssl_csr_new(
+            ['CN' => 'MATICERTS Sandbox Mock CA', 'O' => 'MATICERTS', 'C' => 'CO'],
+            $caKey,
+            $sslOpts,
+        );
+        if ($caCsr === false) {
+            throw new \RuntimeException('MockViafirmaClient: no se pudo generar la CSR de la CA simulada.');
+        }
+
+        // CA autofirmada ($caCert = null la vuelve self-signed).
+        $caCert = openssl_csr_sign($caCsr, null, $caKey, 3650, $sslOpts, random_int(1, PHP_INT_MAX));
+        if ($caCert === false) {
+            throw new \RuntimeException('MockViafirmaClient: no se pudo autofirmar la CA simulada.');
+        }
+
+        // ── Certificado del titular, firmado por la CA simulada ─────────────
+        // Se firma la CSR REAL: conserva subject y llave pública originales.
+        $endEntityCert = openssl_csr_sign(
+            $csrPem,
+            $caCert,
+            $caKey,
+            (int) config('viafirma.mock_cert_validity_days', 730),
+            $sslOpts,
+            random_int(1, PHP_INT_MAX),
+        );
+        if ($endEntityCert === false) {
+            throw new \RuntimeException(
+                'MockViafirmaClient: no se pudo firmar el certificado del titular: '
+                . $this->collectOpenSslErrors()
+            );
+        }
+
+        // ── Empaquetar como PKCS#7 (titular + cadena CA) ────────────────────
+        openssl_x509_export($endEntityCert, $endEntityPem);
+        openssl_x509_export($caCert, $caPem);
+
+        return $this->buildPkcs7Der($endEntityPem, $caPem, $caKey);
+    }
+
+    /**
+     * Acepta la CSR tal como viaja en el DTO (base64 del PEM, o base64 del DER)
+     * y la devuelve siempre como PEM.
+     */
+    private function normalizeCsrToPem(string $csrBase64): string
+    {
+        $decoded = base64_decode($csrBase64, true);
+
+        if (is_string($decoded) && str_contains($decoded, 'BEGIN CERTIFICATE REQUEST')) {
+            return $decoded;
+        }
+
+        // Ya venía en PEM sin codificar.
+        if (str_contains($csrBase64, 'BEGIN CERTIFICATE REQUEST')) {
+            return $csrBase64;
+        }
+
+        // Era DER en base64: reconstruimos el envoltorio PEM.
+        return "-----BEGIN CERTIFICATE REQUEST-----\n"
+            . chunk_split($csrBase64, 64, "\n")
+            . "-----END CERTIFICATE REQUEST-----\n";
+    }
+
+    /**
+     * Construye un contenedor PKCS#7 con el certificado del titular y su CA.
+     *
+     * Se intenta primero un PKCS#7 DER real (vía openssl_pkcs7_sign sobre un
+     * contenido vacío, la única forma que expone PHP de construir un
+     * contenedor con cadena). Si el entorno no lo permite, se cae a un P7B en
+     * PEM concatenado: `OpenSslCryptoService::extractCertsFromPemP7b()` ya
+     * contempla ese formato explícitamente como fallback, así que el
+     * ensamblado funciona igual.
+     */
+    private function buildPkcs7Der(string $endEntityPem, string $caPem, \OpenSSLAsymmetricKey $caKey): string
+    {
+        $pemBundle = $endEntityPem . "\n" . $caPem;
+
+        $conf       = config('viafirma.crypto.openssl_conf');
+        $exportArgs = (is_string($conf) && is_file($conf)) ? ['config' => $conf] : null;
+
+        $exported = $exportArgs !== null
+            ? openssl_pkey_export($caKey, $caKeyPem, null, $exportArgs)
+            : openssl_pkey_export($caKey, $caKeyPem);
+
+        if (!$exported) {
+            return $pemBundle;
+        }
+
+        $chainFile   = tempnam(sys_get_temp_dir(), 'mockca_');
+        $contentFile = tempnam(sys_get_temp_dir(), 'mockp7_');
+        $outFile     = tempnam(sys_get_temp_dir(), 'mockp7out_');
+
+        try {
+            file_put_contents($chainFile, $endEntityPem);
+            file_put_contents($contentFile, '');
+
+            // Firma la CA (de la que sí tenemos la llave); el certificado del
+            // titular viaja como cadena adjunta. Lo relevante no es la firma,
+            // sino que el contenedor incluya ambos certificados.
+            $signed = @openssl_pkcs7_sign(
+                $contentFile,
+                $outFile,
+                $caPem,
+                $caKeyPem,
+                [],
+                PKCS7_BINARY | PKCS7_NOATTR,
+                $chainFile,
+            );
+
+            if ($signed === false) {
+                return $pemBundle;
+            }
+
+            // openssl_pkcs7_sign emite S/MIME; extraemos el cuerpo base64 y lo
+            // devolvemos como DER binario, que es lo que entrega Viafirma.
+            $smime = (string) file_get_contents($outFile);
+            if (preg_match('/\r?\n\r?\n(.+)$/s', $smime, $m)) {
+                $der = base64_decode(preg_replace('/\s+/', '', $m[1]) ?? '', true);
+                if (is_string($der) && $der !== '') {
+                    return $der;
+                }
+            }
+
+            return $pemBundle;
+        } finally {
+            @unlink($chainFile);
+            @unlink($contentFile);
+            @unlink($outFile);
+        }
+    }
+
+    private function collectOpenSslErrors(): string
+    {
+        $errors = [];
+        while (($e = openssl_error_string()) !== false) {
+            $errors[] = $e;
+        }
+        return $errors === [] ? '(sin detalle)' : implode(' | ', $errors);
     }
 
     public function revokeCertificate(string $revokingCode, int $revocationReason): string
@@ -143,12 +344,20 @@ class MockViafirmaClient implements ViafirmaClient
         return 'MOCK-REVOKED-REQ-' . strtoupper(uniqid());
     }
 
+    /**
+     * En Sandbox no hay una pasarela MetaMap real que abrir. Antes se devolvía
+     * `https://sandbox.viafirma.com/accreditation/success?...`: un host real
+     * con una ruta inexistente, así que el enlace daba 404 y nadie podía
+     * completar el KYC por navegador (Posyma tuvo que invocar el callback a mano).
+     *
+     * Se apunta directamente a nuestro callback público —el mismo destino al
+     * que MetaMap redirige en producción tras la verificación—, de modo que
+     * abrir el enlace simula el flujo completo: registra la finalización y
+     * reenvía al destino configurado. No requiere página nueva en el front.
+     */
     public function getAccreditationLink(string $codRequest, string $publicId): string
     {
-        return $this->appendKycRedirectParams(
-            'https://sandbox.viafirma.com/accreditation/success?req=' . $codRequest,
-            $publicId,
-        );
+        return route('viafirma.kyc-callback', ['publicId' => $publicId]);
     }
 
     public function getRevocationCode(string $codRequest): string

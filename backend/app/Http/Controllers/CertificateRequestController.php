@@ -56,7 +56,13 @@ class CertificateRequestController extends Controller
      *             )
      *         )
      *     ),
-     *     @OA\Response(response=200, description="Solicitud creada exitosamente", @OA\JsonContent(ref="#/components/schemas/ApiSuccessResponse")),
+     *     @OA\Response(response=200, description="Solicitud creada exitosamente. Devuelve la solicitud completa en `dataRecords`, incluido el `uuid` — identificador público requerido por los endpoints de descarga y revocación.",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Solicitud de certificado creada exitosamente"),
+     *             @OA\Property(property="dataRecords", ref="#/components/schemas/CertificateRequest")
+     *         )
+     *     ),
      *     @OA\Response(response=400, description="Validación fallida o solicitud duplicada", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
      *     @OA\Response(response=402, description="Sin cupo disponible — debe adquirir certificados", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
      *     @OA\Response(response=429, description="Demasiadas solicitudes", @OA\JsonContent(ref="#/components/schemas/ApiErrorResponse")),
@@ -73,7 +79,7 @@ class CertificateRequestController extends Controller
      *     path="/certificate-request",
      *     tags={"Solicitudes de Certificado"},
      *     summary="Listar mis solicitudes",
-     *     description="Retorna las solicitudes de la empresa autenticada. Estados: DRAFT|SENT|PENDING|ACCEPTED|PROCESSING|PROCESSED|REJECTED",
+     *     description="Retorna las solicitudes de la empresa autenticada. Estados: DRAFT|SENT|PENDING|ACCEPTED|PROCESSING|PROCESSED|REJECTED|REVOKED|EXPIRED|CANCELLED",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="request_status", in="query", description="Filtrar por estado del certificado", @OA\Schema(type="string")),
      *     @OA\Parameter(name="query", in="query", description="Búsqueda por razón social, NIT, documento o representante", @OA\Schema(type="string")),
@@ -165,7 +171,13 @@ class CertificateRequestController extends Controller
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
      *     @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/CertificateRequest")),
-     *     @OA\Response(response=200, description="Solicitud actualizada", @OA\JsonContent(ref="#/components/schemas/ApiSuccessResponse")),
+     *     @OA\Response(response=200, description="Solicitud actualizada. Devuelve la solicitud completa en `dataRecords`.",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Solicitud actualizada exitosamente"),
+     *             @OA\Property(property="dataRecords", ref="#/components/schemas/CertificateRequest")
+     *         )
+     *     ),
      *     @OA\Response(response=422, description="Validación fallida"),
      *     @OA\Response(response=401, description="No autenticado")
      * )
@@ -187,12 +199,18 @@ class CertificateRequestController extends Controller
      *         @OA\JsonContent(
      *             schema="UpdateStatusBody",
      *             required={"request_status"},
-     *             @OA\Property(property="request_status", type="string", example="PROCESSING", description="DRAFT|SENT|PENDING|ACCEPTED|PROCESSING|PROCESSED|REJECTED"),
+     *             @OA\Property(property="request_status", type="string", example="PROCESSING", description="DRAFT|SENT|PENDING|ACCEPTED|PROCESSING|PROCESSED|REJECTED|REVOKED|EXPIRED|CANCELLED"),
      *             @OA\Property(property="comments", type="string", nullable=true),
      *             @OA\Property(property="user_of_change", type="string", example="MANAGER", description="USER|MANAGER")
      *         )
      *     ),
-     *     @OA\Response(response=200, description="Estado actualizado", @OA\JsonContent(ref="#/components/schemas/ApiSuccessResponse")),
+     *     @OA\Response(response=200, description="Estado actualizado. Devuelve la solicitud completa en `dataRecords`.",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Estado actualizado exitosamente"),
+     *             @OA\Property(property="dataRecords", ref="#/components/schemas/CertificateRequest")
+     *         )
+     *     ),
      *     @OA\Response(response=401, description="No autenticado")
      * )
      */

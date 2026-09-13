@@ -90,7 +90,7 @@ namespace App\Http\Controllers;
  *     @OA\Property(property="dv", type="integer", readOnly=true, example=8),
  *     @OA\Property(property="life", type="integer", example=1, description="Vigencia en años"),
  *     @OA\Property(property="info", type="string", nullable=true, example="Información adicional"),
- *     @OA\Property(property="request_status", type="string", readOnly=true, enum={"DRAFT","SENT","PENDING","ACCEPTED","PROCESSING","PROCESSED","REJECTED"}, example="DRAFT"),
+ *     @OA\Property(property="request_status", type="string", readOnly=true, enum={"DRAFT","SENT","PENDING","ACCEPTED","PROCESSING","PROCESSED","REJECTED","REVOKED","EXPIRED","CANCELLED"}, example="DRAFT", description="REVOKED: certificado revocado. EXPIRED: certificado emitido cuya vigencia venció. CANCELLED: solicitud cancelada antes de emitirse (p. ej. el titular no completó la verificación KYC en plazo)."),
  *     @OA\Property(property="expiration_date", type="string", format="date-time", nullable=true, readOnly=true),
  *     @OA\Property(property="created_at", type="string", format="date-time", readOnly=true)
  * )

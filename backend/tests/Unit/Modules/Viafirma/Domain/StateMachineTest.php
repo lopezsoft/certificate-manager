@@ -10,7 +10,9 @@ use App\Modules\Viafirma\Domain\Events\ViafirmaReadyToDownload;
 use App\Modules\Viafirma\Domain\Events\ViafirmaRequestFailed;
 use App\Modules\Viafirma\Domain\Events\ViafirmaStatusChanged;
 use App\Modules\Viafirma\Domain\StateMachine;
+use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
+use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequestState;
 use Illuminate\Support\Facades\Event;
 use Psr\Log\NullLogger;
 use Tests\TestCase;
@@ -20,12 +22,20 @@ use Tests\TestCase;
  */
 class StateMachineTest extends TestCase
 {
+    use \Tests\Unit\Modules\Viafirma\CreatesViafirmaSchemaInMemory;
+
     private StateMachine $fsm;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->fsm = new StateMachine(new NullLogger());
+
+        // StateMachine::recordHistory() hace un create() directo que no se
+        // puede interceptar (método privado). Se crea sólo esa tabla en
+        // SQLite :memory: — ninguna base real se toca.
+        $this->createViafirmaStatusHistoryTable();
+
+        $this->fsm = new StateMachine(new SafePemLogger(new NullLogger()));
     }
 
     // ── Transiciones válidas ──────────────────────────────────────────────
@@ -41,7 +51,7 @@ class StateMachineTest extends TestCase
 
         $this->assertTrue($changed);
         $this->assertEquals(InternalState::POLLING, $entity->internal_state);
-        $this->assertEquals('rues_check', $entity->remote_status);
+        $this->assertEquals('rues_check', $entity->state->remote_status);
 
         Event::assertDispatched(ViafirmaStatusChanged::class, fn ($e) =>
             $e->previousState === InternalState::SUBMITTED
@@ -75,8 +85,8 @@ class StateMachineTest extends TestCase
         $this->fsm->transition($entity, RemoteStatus::RUES_ERROR);
 
         $this->assertEquals(InternalState::FAILED_RECOVERABLE, $entity->internal_state);
-        $this->assertNotNull($entity->last_error_code);
-        $this->assertNotNull($entity->last_error_message);
+        $this->assertNotNull($entity->state->last_error_code);
+        $this->assertNotNull($entity->state->last_error_message);
 
         Event::assertDispatched(ViafirmaRequestFailed::class);
     }
@@ -136,7 +146,7 @@ class StateMachineTest extends TestCase
         $this->assertFalse($changed);
         $this->assertEquals(InternalState::POLLING, $entity->internal_state);
         // remote_status should update even without internal change
-        $this->assertEquals('accreditation', $entity->remote_status);
+        $this->assertEquals('accreditation', $entity->state->remote_status);
 
         Event::assertNotDispatched(ViafirmaStatusChanged::class);
     }
@@ -153,7 +163,7 @@ class StateMachineTest extends TestCase
         $this->fsm->markFailed($entity, 'MAX_ATTEMPTS', 'Superado máximo de intentos.');
 
         $this->assertEquals(InternalState::FAILED, $entity->internal_state);
-        $this->assertEquals('MAX_ATTEMPTS', $entity->last_error_code);
+        $this->assertEquals('MAX_ATTEMPTS', $entity->state->last_error_code);
 
         Event::assertDispatched(ViafirmaRequestFailed::class);
     }
@@ -168,7 +178,7 @@ class StateMachineTest extends TestCase
         $this->fsm->markExpired($entity);
 
         $this->assertEquals(InternalState::EXPIRED, $entity->internal_state);
-        $this->assertEquals('POLL_EXPIRED', $entity->last_error_code);
+        $this->assertEquals('POLL_EXPIRED', $entity->state->last_error_code);
 
         Event::assertDispatched(ViafirmaRequestFailed::class);
     }
@@ -188,16 +198,30 @@ class StateMachineTest extends TestCase
 
     // ── Helpers ──────────────────────────────────────────────────────────
 
+    /**
+     * Construye la entidad EN MEMORIA, sin BD.
+     *
+     * Tras la normalización, internal_state / remote_status / poll_attempts
+     * viven en viafirma_certificate_request_states y en la entidad son
+     * accesores de sólo lectura que hacen proxy a `$entity->state`. Por eso
+     * se monta la relación con setRelation() en vez de asignar los atributos.
+     */
     private function makeEntity(InternalState $state, ?string $remoteStatus = null): ViafirmaCertificateRequest
     {
         $entity = new ViafirmaCertificateRequest();
         $entity->id = 1;
         $entity->certificate_request_id = 42;
         $entity->company_id = 1;
-        $entity->internal_state = $state;
-        $entity->remote_status = $remoteStatus;
-        $entity->poll_attempts = 0;
         $entity->exists = true; // Simulate persisted
+
+        $stateModel = new ViafirmaCertificateRequestState();
+        $stateModel->viafirma_certificate_request_id = 1;
+        $stateModel->internal_state = $state;
+        $stateModel->remote_status  = $remoteStatus;
+        $stateModel->poll_attempts  = 0;
+        $stateModel->exists = true;
+
+        $entity->setRelation('state', $stateModel);
 
         return $entity;
     }

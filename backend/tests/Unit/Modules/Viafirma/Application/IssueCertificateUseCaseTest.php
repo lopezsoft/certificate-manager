@@ -59,9 +59,17 @@ class IssueCertificateUseCaseTest extends TestCase
     private MockInterface $repository;
     private IssueCertificateUseCase $useCase;
 
+    use \Tests\Unit\Modules\Viafirma\CreatesViafirmaSchemaInMemory;
+
     protected function setUp(): void
     {
         parent::setUp();
+
+        // IssueCertificateUseCase hace CertificateRequest::query()->findOrFail(),
+        // una llamada estática no interceptable. Se crea el esquema mínimo en
+        // SQLite :memory: — ninguna base real se toca.
+        $this->createCertificateRequestsTable();
+        $this->createCatalogTables();
 
         $this->crypto            = Mockery::mock(CryptoServiceContract::class);
         $this->csrBuilderFactory = Mockery::mock(CsrBuilderFactory::class);
@@ -81,7 +89,7 @@ class IssueCertificateUseCaseTest extends TestCase
             repository:         $this->repository,
             identityTypeMapper: new IdentityTypeMapper(),
             profileTypeMapper:  new ProfileTypeMapper(),
-            logger:             new NullLogger(),
+            logger:             new \App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger(new NullLogger()),
         );
     }
 
@@ -89,65 +97,63 @@ class IssueCertificateUseCaseTest extends TestCase
 
     private function makeCertificateRequest(int $orgTypeCode = 1): CertificateRequest
     {
-        $country = new \stdClass();
-        $country->abbreviation_A2 = 'CO';
+        // El use case hace CertificateRequest::query()->with([...])->findOrFail():
+        // una llamada estática con eager-load, que no admite dobles y además
+        // descarta cualquier relación puesta con setRelation(). Por eso las
+        // filas se insertan en SQLite :memory: (esquema mínimo creado en
+        // setUp) — ninguna base real se toca.
+        \DB::table('countries')->insertOrIgnore([
+            'id' => 45, 'name_country' => 'COLOMBIA', 'abbreviation_A2' => 'CO', 'abbreviation_A3' => 'COL',
+        ]);
+        \DB::table('departments')->insertOrIgnore([
+            'id' => 5, 'country_id' => 45, 'name_department' => 'ANTIOQUIA',
+        ]);
+        \DB::table('cities')->insertOrIgnore([
+            'id' => 1, 'department_id' => 5, 'name_city' => 'MEDELLÍN',
+        ]);
+        \DB::table('identity_documents')->insertOrIgnore([
+            'id' => 1, 'code' => '13', 'abbreviation' => 'CC', 'description' => 'Cédula de Ciudadanía',
+        ]);
+        \DB::table('type_organization')->insertOrIgnore([
+            'id'          => $orgTypeCode,
+            'code'        => (string) $orgTypeCode,
+            'description' => $orgTypeCode === 1 ? 'Persona Jurídica' : 'Persona Natural',
+        ]);
+        \DB::table('companies')->insertOrIgnore([
+            'id'           => 1,
+            'country_id'   => 45,
+            'city_id'      => 1,
+            'company_name' => 'MI COMPAÑÍA SAS',
+            'trade_name'   => 'FACTURACIÓN',
+            'dni'          => '900400300',
+            'address'      => 'Carrera 65 #3',
+            'email'        => 'info@empresa.com',
+            'active'       => 1,
+        ]);
 
-        $department = new \stdClass();
-        $department->name_department = 'ANTIOQUIA';
-
-        $city = new \stdClass();
-        $city->name_city = 'MEDELLÍN';
-        $city->department = $department;
-
-        $company = Mockery::mock(Company::class)->makePartial();
-        $company->id = 1;
-        $company->country = $country;
-        $company->city = $city;
-        $company->address = 'Carrera 65 #3';
-        $company->dni = '900400300';
-        $company->company_name = 'MI COMPAÑÍA SAS';
-        $company->trade_name = 'FACTURACIÓN';
-        $company->email = 'info@empresa.com';
-        $company->country_id = 45;
-
-        $identityDoc = new IdentityDocument();
-        $identityDoc->id = 1;
-        $identityDoc->code = '13';
-        $identityDoc->abbreviation = 'CC';
-
-        $orgType = new TypeOrganization();
-        $orgType->id = $orgTypeCode;
-        $orgType->code = $orgTypeCode;
-        $orgType->description = $orgTypeCode === 1 ? 'Persona Jurídica' : 'Persona Natural';
-
-        $cr = Mockery::mock(CertificateRequest::class)->makePartial();
-        $cr->id = 42;
-        $cr->company_id = 1;
-        $cr->company = $company;
+        $cr = new CertificateRequest();
+        $cr->id                   = 42;
+        $cr->company_id           = 1;
+        $cr->country_id           = 45;
+        $cr->city_id              = 1;
         $cr->identity_document_id = 1;
         $cr->type_organization_id = $orgTypeCode;
-        $cr->document_number = '1098765432';
+        $cr->document_number      = '1098765432';
         $cr->legal_representative = 'Paula Ibarra';
-        $cr->legal_rep_identity_document_id = null;
-        $cr->legal_rep_identity_number = null;
-        $cr->address = 'Carrera 65 #3';
-        $cr->dni = '900400300';
-        $cr->email = 'info@empresa.com';
+        $cr->address              = 'Carrera 65 #3';
+        $cr->dni                  = '900400300';
+        $cr->email                = 'info@empresa.com';
+        $cr->company_name         = 'MI COMPAÑÍA SAS';
+        $cr->save();
 
-        // Relations
-        $cr->shouldReceive('getAttribute')->with('identity')->andReturn($identityDoc);
-        $cr->shouldReceive('getAttribute')->with('organization')->andReturn($orgType);
-        $cr->shouldReceive('getAttribute')->with('company')->andReturn($company);
-
-        return $cr;
+        return $cr->fresh();
     }
 
     private function setupStandardMocks(CertificateRequest $cr, CertificateProfile $profile): void
     {
-        // Make CertificateRequest findable
-        CertificateRequest::shouldReceive('query->with->findOrFail')
-            ->with($cr->id)
-            ->andReturn($cr);
+        // La solicitud ya existe en SQLite :memory' (la insertó
+        // makeCertificateRequest), así que findOrFail() la encuentra sin
+        // necesidad de doblar la llamada estática.
 
         // No existing Viafirma request
         $this->repository->shouldReceive('findByCertificateRequestId')
@@ -216,9 +222,6 @@ class IssueCertificateUseCaseTest extends TestCase
         $this->expectExceptionMessage('organizationType es obligatorio para perfiles FE-PJ');
 
         $cr = $this->makeCertificateRequest(1); // PJ
-        CertificateRequest::shouldReceive('query->with->findOrFail')
-            ->with(42)
-            ->andReturn($cr);
         $this->repository->shouldReceive('findByCertificateRequestId')
             ->with(42)
             ->andReturn(null);
@@ -240,9 +243,6 @@ class IssueCertificateUseCaseTest extends TestCase
         $this->expectExceptionMessage('organizationType NO debe enviarse para perfiles FE-PN');
 
         $cr = $this->makeCertificateRequest(2); // PN
-        CertificateRequest::shouldReceive('query->with->findOrFail')
-            ->with(42)
-            ->andReturn($cr);
         $this->repository->shouldReceive('findByCertificateRequestId')
             ->with(42)
             ->andReturn(null);
@@ -264,14 +264,16 @@ class IssueCertificateUseCaseTest extends TestCase
         $this->expectExceptionMessage('ya tiene un trámite Viafirma en curso');
 
         $cr = $this->makeCertificateRequest(1);
-        CertificateRequest::shouldReceive('query->with->findOrFail')
-            ->with(42)
-            ->andReturn($cr);
 
-        // Existing non-failed request
+        // Existing non-failed request. internal_state vive en la tabla de
+        // estados normalizada: se monta la relación para que isFailed() la lea
+        // sin consultar BD.
         $existing = new ViafirmaCertificateRequest();
         $existing->id = 99;
-        $existing->internal_state = InternalState::SUBMITTED;
+
+        $existingState = new \App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequestState();
+        $existingState->internal_state = InternalState::SUBMITTED;
+        $existing->setRelation('state', $existingState);
 
         $this->repository->shouldReceive('findByCertificateRequestId')
             ->with(42)
@@ -291,9 +293,6 @@ class IssueCertificateUseCaseTest extends TestCase
     public function it_cleans_orphan_key_on_submit_failure(): void
     {
         $cr = $this->makeCertificateRequest(1);
-        CertificateRequest::shouldReceive('query->with->findOrFail')
-            ->with(42)
-            ->andReturn($cr);
         $this->repository->shouldReceive('findByCertificateRequestId')
             ->with(42)
             ->andReturn(null);

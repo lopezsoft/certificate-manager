@@ -45,10 +45,25 @@ final class CatalogMappersTest extends TestCase
         $this->assertSame(IdentityType::PAS, (new IdentityTypeMapper())->fromIdentityDocument($this->identityDoc('41', 'PAS')));
     }
 
-    public function test_identity_nit_throws(): void
+    /**
+     * NIT (código DIAN '31') mapea a IDC. Viafirma sólo acepta IDC o PAS como
+     * identityType; el NIT de una persona jurídica viaja como IDC. Este test
+     * antes esperaba una excepción, comportamiento retirado al añadir '31' a
+     * IDC_CODES en IdentityTypeMapper.
+     */
+    public function test_identity_nit_maps_to_idc(): void
+    {
+        $this->assertSame(
+            IdentityType::IDC,
+            (new IdentityTypeMapper())->fromIdentityDocument($this->identityDoc('31', 'NIT')),
+        );
+    }
+
+    /** Un documento fuera del catálogo sí debe rechazarse. */
+    public function test_unsupported_identity_document_throws(): void
     {
         $this->expectException(UnsupportedIdentityDocumentException::class);
-        (new IdentityTypeMapper())->fromIdentityDocument($this->identityDoc('31', 'NIT'));
+        (new IdentityTypeMapper())->fromIdentityDocument($this->identityDoc('99', 'XYZ'));
     }
 
     public function test_type_organization_pj_maps_to_fe_pj(): void

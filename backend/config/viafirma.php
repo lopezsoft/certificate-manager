@@ -21,6 +21,10 @@ return [
     'client_secret' => env('VIAFIRMA_CLIENT_SECRET'),
     'ra_code'       => env('VIAFIRMA_RA_CODE'),
     'sandbox_mode'  => env('VIAFIRMA_SANDBOX_MODE', false),
+
+    // Vigencia (días) del certificado simulado que emite MockViafirmaClient.
+    // Sólo aplica en sandbox; en producción la define el perfil del RA.
+    'mock_cert_validity_days' => (int) env('VIAFIRMA_MOCK_CERT_VALIDITY_DAYS', 730),
     'cod_profile_corporate' => env('VIAFIRMA_COD_PROFILE_CORPORATE'),
     'cod_profile_individual' => env('VIAFIRMA_COD_PROFILE_INDIVIDUAL'),
 

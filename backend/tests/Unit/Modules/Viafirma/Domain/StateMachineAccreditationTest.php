@@ -1,4 +1,6 @@
-﻿<?php
+<?php
+
+declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Viafirma\Domain;
 
@@ -9,106 +11,113 @@ use App\Modules\Viafirma\Domain\StateMachine;
 use App\Modules\Viafirma\Infrastructure\Logging\SafePemLogger;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequestState;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
 use PHPUnit\Framework\Attributes\Test;
+use Psr\Log\NullLogger;
 use Tests\TestCase;
+use Tests\Unit\Modules\Viafirma\CreatesViafirmaSchemaInMemory;
 
+/**
+ * ViafirmaAccreditationReached es el evento que dispara la captura del link
+ * KYC y el aviso a la empresa maestra. Debe emitirse al ENTRAR en
+ * `accreditation`, aunque el internal_state siga siendo POLLING (varios
+ * remote_status distintos comparten ese internal_state).
+ *
+ * Sin BD: entidades en memoria. La única tabla creada es
+ * viafirma_status_history, porque StateMachine::recordHistory() escribe
+ * directo y es privado.
+ */
 final class StateMachineAccreditationTest extends TestCase
 {
-    use DatabaseTransactions;
+    use CreatesViafirmaSchemaInMemory;
+
+    private StateMachine $fsm;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->createViafirmaStatusHistoryTable();
+
+        $this->fsm = new StateMachine(new SafePemLogger(new NullLogger()));
+    }
+
+    private function makeEntity(string $remoteStatus, int $pollAttempts): ViafirmaCertificateRequest
+    {
+        $entity = new ViafirmaCertificateRequest();
+        $entity->id = 1;
+        $entity->certificate_request_id = 42;
+        $entity->exists = true;
+
+        $state = new ViafirmaCertificateRequestState();
+        $state->internal_state = InternalState::POLLING;
+        $state->remote_status  = $remoteStatus;
+        $state->poll_attempts  = $pollAttempts;
+        $state->exists = true;
+
+        $entity->setRelation('state', $state);
+
+        return $entity;
+    }
 
     #[Test]
     public function dispara_accreditation_reached_al_entrar_en_accreditation(): void
     {
-        // Arrange
         Event::fake();
 
-        $state = ViafirmaCertificateRequestState::factory()->create([
-            'internal_state' => InternalState::POLLING,
-            'remote_status' => RemoteStatus::RUES_CHECK->value,
-            'poll_attempts' => 1,
-        ]);
+        $entity = $this->makeEntity(RemoteStatus::RUES_CHECK->value, 1);
 
-        $entity = ViafirmaCertificateRequest::factory()->create([
-            'viafirma_certificate_request_state_id' => $state->id,
-        ]);
-
-        $fsm = new StateMachine(app(SafePemLogger::class));
-
-        // Act â€” transiciÃ³n rues_check â†’ accreditation (ambas en POLLING)
-        $stateChanged = $fsm->transition($entity, RemoteStatus::ACCREDITATION, [
+        // rues_check -> accreditation (ambos mapean a POLLING)
+        $stateChanged = $this->fsm->transition($entity, RemoteStatus::ACCREDITATION, [
             'code' => 'accreditation',
         ]);
 
-        // Assert
-        // El internal_state no cambiÃ³ (sigue POLLING), pero el evento debe dispararse
+        // El internal_state no cambia, pero el evento debe emitirse igual.
         $this->assertFalse($stateChanged);
 
-        // Verificar que se disparÃ³ el evento ViafirmaAccreditationReached
-        Event::assertDispatched(ViafirmaAccreditationReached::class, function ($event) use ($entity) {
-            return $event->entity->id === $entity->id;
-        });
+        Event::assertDispatched(
+            ViafirmaAccreditationReached::class,
+            fn ($event) => $event->entity->id === $entity->id,
+        );
     }
 
     #[Test]
     public function no_dispara_accreditation_reached_cuando_ya_estaba_en_accreditation(): void
     {
-        // Arrange
         Event::fake();
 
-        $state = ViafirmaCertificateRequestState::factory()->create([
-            'internal_state' => InternalState::POLLING,
-            'remote_status' => RemoteStatus::ACCREDITATION->value,
-            'poll_attempts' => 2,
-        ]);
+        $entity = $this->makeEntity(RemoteStatus::ACCREDITATION->value, 2);
 
-        $entity = ViafirmaCertificateRequest::factory()->create([
-            'viafirma_certificate_request_state_id' => $state->id,
-        ]);
-
-        $fsm = new StateMachine(app(SafePemLogger::class));
-
-        // Act â€” transiciÃ³n accreditation â†’ accreditation (sin cambio)
-        $fsm->transition($entity, RemoteStatus::ACCREDITATION, [
+        // accreditation -> accreditation: no es una ENTRADA, no debe reemitir
+        // (evitaría reenviar el correo del link KYC en cada poll).
+        $this->fsm->transition($entity, RemoteStatus::ACCREDITATION, [
             'code' => 'accreditation',
         ]);
 
-        // Assert
         Event::assertNotDispatched(ViafirmaAccreditationReached::class);
     }
 
     #[Test]
     public function dispara_accreditation_reached_incluso_si_internal_state_no_cambia(): void
     {
-        // Arrange
         Event::fake();
 
-        // MÃºltiples progresiones dentro de POLLING que no cambian internal_state
-        $state = ViafirmaCertificateRequestState::factory()->create([
-            'internal_state' => InternalState::POLLING,
-            'remote_status' => RemoteStatus::PROPOSED_TO_ACCEPTANCE->value,
-            'poll_attempts' => 3,
-        ]);
+        $entity = $this->makeEntity(RemoteStatus::PROPOSED_TO_ACCEPTANCE->value, 3);
 
-        $entity = ViafirmaCertificateRequest::factory()->create([
-            'viafirma_certificate_request_state_id' => $state->id,
-        ]);
-
-        $fsm = new StateMachine(app(SafePemLogger::class));
-
-        // Act â€” transiciÃ³n proposed_to_acceptance â†’ accreditation (ambas en POLLING)
-        $fsm->transition($entity, RemoteStatus::ACCREDITATION, [
+        $this->fsm->transition($entity, RemoteStatus::ACCREDITATION, [
             'code' => 'accreditation',
         ]);
 
-        // Assert
-        Event::assertDispatched(ViafirmaAccreditationReached::class, function ($event) use ($entity) {
-            return $event->entity->id === $entity->id;
-        });
+        Event::assertDispatched(
+            ViafirmaAccreditationReached::class,
+            fn ($event) => $event->entity->id === $entity->id,
+        );
 
-        // Verificar que el remote_status fue actualizado
-        $state->refresh();
-        $this->assertEquals(RemoteStatus::ACCREDITATION->value, $state->remote_status);
+        // El remote_status debe quedar actualizado en memoria aunque el
+        // internal_state no se mueva.
+        $this->assertSame(
+            RemoteStatus::ACCREDITATION->value,
+            $entity->state->remote_status,
+        );
     }
 }

@@ -6,6 +6,7 @@ namespace Tests\Unit\Modules\Viafirma\Infrastructure;
 
 use App\Modules\Viafirma\Domain\Enums\InternalState;
 use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequest;
+use App\Modules\Viafirma\Infrastructure\Persistence\Models\ViafirmaCertificateRequestState;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -14,12 +15,29 @@ use Tests\TestCase;
  */
 class DownloadAssemblePipelineTest extends TestCase
 {
-    /** @test */
-    public function download_endpoint_rejects_non_assembled_state(): void
+    /**
+     * `internal_state` es un accesor de sólo lectura que hace proxy a
+     * `$entity->state->internal_state` (tabla normalizada
+     * viafirma_certificate_request_states). Asignarlo directamente sobre la
+     * entidad no tiene efecto, así que se monta la relación en memoria.
+     */
+    private function entityInState(InternalState $state): ViafirmaCertificateRequest
     {
         $entity = new ViafirmaCertificateRequest();
         $entity->id = 1;
-        $entity->internal_state = InternalState::POLLING;
+
+        $stateModel = new ViafirmaCertificateRequestState();
+        $stateModel->internal_state = $state;
+
+        $entity->setRelation('state', $stateModel);
+
+        return $entity;
+    }
+
+    /** @test */
+    public function download_endpoint_rejects_non_assembled_state(): void
+    {
+        $entity = $this->entityInState(InternalState::POLLING);
         $entity->p12_storage_path = 'some/path.p12';
 
         // InternalState::POLLING is not in [ASSEMBLED, COMPLETED]
@@ -31,8 +49,7 @@ class DownloadAssemblePipelineTest extends TestCase
     /** @test */
     public function download_endpoint_accepts_assembled_state(): void
     {
-        $entity = new ViafirmaCertificateRequest();
-        $entity->internal_state = InternalState::ASSEMBLED;
+        $entity = $this->entityInState(InternalState::ASSEMBLED);
 
         $this->assertTrue(
             in_array($entity->internal_state, [InternalState::ASSEMBLED, InternalState::COMPLETED], true)
@@ -42,8 +59,7 @@ class DownloadAssemblePipelineTest extends TestCase
     /** @test */
     public function download_endpoint_accepts_completed_state(): void
     {
-        $entity = new ViafirmaCertificateRequest();
-        $entity->internal_state = InternalState::COMPLETED;
+        $entity = $this->entityInState(InternalState::COMPLETED);
 
         $this->assertTrue(
             in_array($entity->internal_state, [InternalState::ASSEMBLED, InternalState::COMPLETED], true)
